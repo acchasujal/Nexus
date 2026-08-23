@@ -38,7 +38,9 @@ class AuditEventType(str, Enum):
 
     # Entity Resolution & Evidence
     ENTITY_RESOLUTION_EXECUTED = "entity_resolution_executed"
+    ENTITY_VIEWED = "entity_viewed"
     EVIDENCE_VIEWED = "evidence_viewed"
+    EVIDENCE_HASH_COMPUTED = "evidence_hash_computed"
     TIMELINE_VIEWED = "timeline_viewed"
 
     # Copilot
@@ -55,6 +57,10 @@ class AuditEventType(str, Enum):
     INGESTION_COMPLETED = "ingestion_completed"
     INGESTION_FAILED = "ingestion_failed"
     SEED_COMPLETED = "seed_completed"
+
+    # Export (BE-05)
+    EXPORT_INITIATED = "export_initiated"
+    EXPORT_COMPLETED = "export_completed"
 
 
 class AuditService:
