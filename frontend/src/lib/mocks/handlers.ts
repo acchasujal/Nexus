@@ -303,7 +303,7 @@ export const handlers = [
     const body = (await request.json()) as { message?: string; query?: string; case_id?: string; conversation_id?: string }
     const msg = (body.message || body.query || '').toLowerCase()
     
-    let answer = "This query was successfully processed by the CaseClock AI pipeline against the investigation graph."
+    let answer = "This query was successfully processed by the NEXUS Intelligence Graph pipeline."
     
     if (msg.includes('guilty') || msg.includes('commit') || msg.includes('culpable')) {
       answer = "I cannot infer guilt, innocence, or risk of reoffense. These are matters of judicial determination."

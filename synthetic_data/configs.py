@@ -213,7 +213,7 @@ def build_random(seed: int) -> Random:
 
 def stable_uuid(*parts: str) -> UUID:
     token = "::".join(parts)
-    return uuid5(NAMESPACE_URL, f"caseclock::{token}")
+    return uuid5(NAMESPACE_URL, f"nexus::{token}")
 
 
 def utc_now() -> datetime:

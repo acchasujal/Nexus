@@ -109,11 +109,11 @@ def test_render_prompt_successfully(tmp_path: Path) -> None:
     result = manager.render(
         "greeting_prompt",
         user_name="Officer Davis",
-        system="CaseClock",
+        system="NEXUS",
     )
 
     # Assert
-    assert result == "Hello Officer Davis, welcome to CaseClock!"
+    assert result == "Hello Officer Davis, welcome to NEXUS!"
 
 
 def test_render_prompt_missing_placeholder_raises_prompt_error(tmp_path: Path) -> None:
