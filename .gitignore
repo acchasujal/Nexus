@@ -8,8 +8,7 @@ __pycache__/
 dist/
 build/
 .eggs/
-.env
-.venv
+.venv/
 venv/
 env/
 pip-wheel-metadata/
@@ -29,63 +28,20 @@ frontend/coverage/
 *.log
 npm-debug.log*
 
-# Environment files — never commit real credentials
+# Environment files & secrets
 .env
 .env.local
 .env.*.local
 *.env
+*.pem
+*.key
 
-# Catalyst credentials and deploy artifacts
-deployment/*.key
-deployment/*.pem
-catalyst.json.bak
-.zcatalyst/
-.catalystrc.bak
-frontend/.catalyst/
+# Local Data / Docker volumes
+data/
+*.sqlite3
+*.db
 
-# Vendored Python packages (pip install -t .) — never commit these
-# AppSail installs dependencies from requirements.txt at build time
-backend/vendor/
-backend/*.dist-info/
-backend/typing_extensions.py
-backend/py.py
-backend/bin/
-backend/_pytest/
-backend/annotated_doc/
-backend/annotated_types/
-backend/anyio/
-backend/certifi/
-backend/charset_normalizer/
-backend/click/
-backend/colorama/
-backend/dotenv/
-backend/fastapi/
-backend/h11/
-backend/httpcore/
-backend/httpx/
-backend/idna/
-backend/iniconfig/
-backend/networkx/
-backend/packaging/
-backend/pluggy/
-backend/pydantic/
-backend/pydantic_core/
-backend/pydantic_settings/
-backend/pygments/
-backend/pytest/
-backend/requests/
-backend/ruff/
-backend/starlette/
-backend/typing_inspection/
-backend/urllib3/
-backend/uvicorn/
-
-# backend/shared/ is a deployment-only copy of root shared/
-# It is synced before each AppSail deploy, not tracked in git
-backend/shared/
-backend/build-sha.txt
-
-# IDE
+# IDE & OS
 .idea/
 .vscode/settings.json
 *.swp
@@ -93,8 +49,7 @@ backend/build-sha.txt
 .DS_Store
 Thumbs.db
 
-# Test artifacts
+# Test & Benchmarks
 tests/scale/results/*.json
-ai/tests/refusal_testset/results/*.json
 artifacts/runtime_state/
 .test-tmp/

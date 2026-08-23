@@ -1,43 +1,27 @@
-# CaseClock Backend — Production Docker Image
-#
-# Build from the repo root:
-#   docker build -t caseclock-backend -f backend/Dockerfile .
-#
-# Run locally (development variables):
-#   docker run --rm -p 8000:8000 \
-#     -e CASECLOCK_REPOSITORY=local \
-#     -e ENVIRONMENT=development \
-#     -e CORS_ORIGINS=http://localhost:5173 \
-#     caseclock-backend
-#
-# Health check after start:
-#   curl http://localhost:8000/health
-
-FROM python:3.11-slim
+# NEXUS Backend Dockerfile
+FROM python:3.13-slim
 
 WORKDIR /app
 
-# Install Python dependencies first (layer caching)
-COPY backend/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy the shared contracts package (required by backend imports)
+# Install Python requirements
+COPY backend/requirements.txt ./backend/requirements.txt
+RUN pip install --no-cache-dir -r ./backend/requirements.txt
+
+# Copy application source
 COPY shared/ ./shared/
+COPY backend/ ./backend/
+COPY artifacts/ ./artifacts/
 
-# Copy the backend application code
-COPY backend/app/ ./app/
-COPY backend/app-config.json ./app-config.json
-
-# Copy the synthetic graph artifact (used by in-memory repository)
-COPY artifacts/synthetic_graph/synthetic_graph.json ./app/db/synthetic_graph.json
-
-# Runtime environment
 ENV PYTHONUNBUFFERED=1
+ENV ENVIRONMENT=development
 ENV PORT=8000
-ENV CASECLOCK_REPOSITORY=local
-ENV ENVIRONMENT=production
+ENV PYTHONPATH=/app
 
 EXPOSE 8000
 
-# Start CaseClock backend via AppSail-compatible entry point
-CMD ["sh", "-c", "python app/appsail_server.py"]
+CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
