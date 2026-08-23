@@ -105,8 +105,6 @@ except ImportError:  # pragma: no cover - deterministic fallback for local envir
             words = [self._rng.choice(("pending", "review", "contact", "report", "verify", "collect", "follow", "update", "scan", "confirm")) for _ in range(nb_words)]
             return " ".join(words).capitalize() + "."
 
-from shared.constants.clock_types import ClockType
-
 
 class SyntheticDataConfig(BaseModel):
     seed: int = 42

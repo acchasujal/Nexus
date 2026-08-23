@@ -1,0 +1,72 @@
+{
+  "planted_resolved_entities": [
+    {
+      "pair": [
+        "person-0001",
+        "person-0002"
+      ],
+      "reason": "Same individual with phonetic/alias variation"
+    },
+    {
+      "pair": [
+        "person-0001",
+        "person-0003"
+      ],
+      "reason": "Same individual with phonetic/alias variation"
+    }
+  ],
+  "planted_communities": [
+    {
+      "community_id": "COMM-ALPHA",
+      "name": "Coastal Narcotics Syndicate",
+      "members": [
+        "person-0011",
+        "person-0012",
+        "person-0013",
+        "person-0014",
+        "person-0015",
+        "person-0016",
+        "person-0017",
+        "person-0018",
+        "person-0019",
+        "person-0020"
+      ]
+    },
+    {
+      "community_id": "COMM-BETA",
+      "name": "Cyber Hawala Syndicate",
+      "members": [
+        "person-0026",
+        "person-0027",
+        "person-0028",
+        "person-0029",
+        "person-0030",
+        "person-0031",
+        "person-0032",
+        "person-0033",
+        "person-0034",
+        "person-0035",
+        "person-0036"
+      ]
+    }
+  ],
+  "planted_bridge_nodes": [
+    {
+      "node_id": "person-0051",
+      "name": "Ramesh Hegde",
+      "role": "Broker connecting Coastal Narcotics Syndicate and Cyber Hawala Syndicate"
+    }
+  ],
+  "planted_transaction_chains": [
+    {
+      "chain_id": "TXN-CHAIN-01",
+      "accounts": [
+        "account-0001",
+        "account-0002",
+        "account-0003",
+        "account-0004"
+      ],
+      "pattern": "4-hop layering and smurfing transfer"
+    }
+  ]
+}
