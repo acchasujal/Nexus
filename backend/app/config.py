@@ -80,6 +80,17 @@ class Settings(BaseSettings):
         return self.environment.lower() == "production"
 
 
+_DEV_JWT_SECRET = "nexus-dev-secret-key-2026-sih"
+
+
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    return Settings()
+    import logging as _logging
+
+    settings = Settings()
+    if settings.is_production and settings.jwt_secret_key == _DEV_JWT_SECRET:
+        _logging.getLogger(__name__).warning(
+            "WARNING: Using default JWT secret in production. "
+            "Set JWT_SECRET_KEY environment variable to a strong random value."
+        )
+    return settings

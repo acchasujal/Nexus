@@ -97,16 +97,15 @@ graph TD
 
 ### Member 3 — Backend Services, Evidence & Copilot
 - **Owned Scope:** `backend/app/api/`, `backend/app/services/`, `backend/app/auth/`, `shared/contracts/`
-- **Current Task:** `BE-04` (Cryptographic SHA-256 evidence chain verification endpoint).
-- **Next Task:** `BE-05` (Section 63 BSA PDF dossier exporter).
-- **Dependencies:** `GR-05` for graph traversals.
+- **Current Task:** None (Completed Phase 0–8 Implementation Roadmap).
+- **Completed Tasks:** `BE-04` (Cryptographic SHA-256 evidence chain verification & EvidenceService API), `BE-05` (Section 63 BSA PDF dossier exporter via ReportLab), `COPILOT-01` (Grounded Intelligence Copilot & full intent taxonomy), `ENTITY-01` (Entity profile & search API).
 - **PR Target:** `develop`
 
 ### Member 4 — Frontend Workspace, UX & Demo
 - **Owned Scope:** `frontend/src/`
 - **Current Task:** `FE-04` (React Flow cluster coloring by Louvain community partition ID).
 - **Next Task:** `FE-05` (1-Click Section 63 Evidence Dossier download button in Case Detail).
-- **Dependencies:** `BE-04` for export contract.
+- **Dependencies:** `BE-04` / `BE-05` (Endpoints ready on `develop`).
 - **PR Target:** `develop`
 
 ---
@@ -114,13 +113,13 @@ graph TD
 ## 3. Active Task Registry
 
 | ID | Area | Task Name | Owner | Status | Priority | Branch | Depends On | Acceptance Criteria |
-| :--- | :--- | :--- | :---: | :---: | :---: | :--- | :--- | :--- |
+| :--- | :--- | :--- | :--- | :---: | :---: | :--- | :--- | :--- |
 | **DATA-02** | Data | CDR & Bank CSV Ingestion Parsers | Member 1 | READY | P1 | `feature/data-parsers` | None | Ingests CSV telephony/bank logs into canonical nodes with 0 errors. |
 | **GR-05** | Graph | Southern Indian Alias Normalization | Member 2 | READY | P1 | `feature/alias-tuning` | None | Disambiguates complex regional patronymics with 100% precision. |
-| **BE-04** | Backend | SHA-256 Evidence Chain Verifier | Member 3 | READY | P1 | `feature/evidence-hasher` | None | Returns tamper-evident hash for graph paths and exported records. |
+| **BE-04** | Backend | SHA-256 Evidence Chain Verifier | Member 3 | ✅ DONE | P1 | `feature/p3-copilot` | None | Returns tamper-evident hash for graph paths and exported records. |
 | **FE-04** | Frontend | Louvain Syndicate Visual Coloring | Member 4 | READY | P1 | `feature/syndicate-colors`| None | Nodes render with distinct border colors per detected community ID. |
-| **BE-05** | Backend | Section 63 BSA PDF Dossier Generator | Member 3 | BACKLOG | P2 | `feature/dossier-export` | BE-04 | Generates structured PDF dossier with source citations and hash. |
-| **FE-05** | Frontend | Case Evidence Dossier Download UI | Member 4 | BACKLOG | P2 | `feature/dossier-ui` | BE-05 | Download button triggers PDF export and displays hash confirmation. |
+| **BE-05** | Backend | Section 63 BSA PDF Dossier Generator | Member 3 | ✅ DONE | P2 | `feature/p3-copilot` | BE-04 | Generates structured PDF dossier with source citations and hash. |
+| **FE-05** | Frontend | Case Evidence Dossier Download UI | Member 4 | READY | P2 | `feature/dossier-ui` | BE-05 | Download button triggers PDF export and displays hash confirmation. |
 
 ---
 
