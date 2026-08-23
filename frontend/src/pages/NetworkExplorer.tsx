@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Network, Filter, Search, RefreshCw, ZoomIn, ZoomOut, ShieldAlert, Cpu } from 'lucide-react'
+import { Network } from 'lucide-react'
 import { NetworkAnalysisPanel } from '@/components/NetworkAnalysisPanel'
 import { apiClient } from '@/lib/apiClient'
 
@@ -7,14 +7,13 @@ export default function NetworkExplorer() {
   const [selectedCaseId, setSelectedCaseId] = useState<string>('case-0001')
   const [cases, setCases] = useState<any[]>([])
   const [depth, setDepth] = useState<number>(2)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   useEffect(() => {
     // Fetch available investigations
     apiClient.getInvestigations().then((data: any) => {
       if (Array.isArray(data) && data.length > 0) {
         setCases(data)
-        if (!selectedCaseId) setSelectedCaseId(data[0].id)
+        setSelectedCaseId((prev) => prev || data[0].id)
       }
     }).catch(() => {
       // Fallback

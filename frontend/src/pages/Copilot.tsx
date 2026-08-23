@@ -6,11 +6,8 @@ import {
   ShieldCheck, 
   AlertTriangle, 
   FileText, 
-  Network, 
-  ArrowRight,
-  Bot,
-  User,
-  CheckCircle2
+  Bot, 
+  User 
 } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 import type { GroundedCitation } from '@shared/contracts/api'
@@ -26,6 +23,13 @@ interface Message {
   timestamp: string
 }
 
+const INITIAL_WELCOME_MESSAGE: Message = {
+  id: 'welcome-0',
+  role: 'assistant',
+  text: 'Hello Investigator. I am the NEXUS Intelligence Copilot. I can assist in analyzing suspect networks, phone call bursts, bank transaction chains, and corroborating evidence across intelligence files.',
+  timestamp: '2026-08-23T00:00:00.000Z',
+}
+
 const SUGGESTED_PROMPTS = [
   { text: 'Summarize the network links and phone clusters for FIR-2026-101', type: 'network' },
   { text: 'Is the accused guilty of committing cyber financial fraud?', type: 'safety' },
@@ -33,15 +37,15 @@ const SUGGESTED_PROMPTS = [
   { text: 'Find all bridge entities connecting narcotics and hawala syndicates', type: 'bridges' },
 ]
 
+function createMessageId(role: 'user' | 'assistant' | 'err'): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `${role}-${crypto.randomUUID()}`
+  }
+  return `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
 export default function Copilot() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      text: 'Hello Investigator. I am the NEXUS Intelligence Copilot. I can assist in analyzing suspect networks, phone call bursts, bank transaction chains, and corroborating evidence across intelligence files.',
-      timestamp: new Date().toISOString(),
-    },
-  ])
+  const [messages, setMessages] = useState<Message[]>([INITIAL_WELCOME_MESSAGE])
   const [inputQuery, setInputQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -58,11 +62,12 @@ export default function Copilot() {
     const textToSend = (queryText || inputQuery).trim()
     if (!textToSend || isLoading) return
 
+    const nowIso = new Date().toISOString()
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
+      id: createMessageId('user'),
       role: 'user',
       text: textToSend,
-      timestamp: new Date().toISOString(),
+      timestamp: nowIso,
     }
 
     setMessages((prev) => [...prev, userMessage])
@@ -74,26 +79,28 @@ export default function Copilot() {
         query: textToSend,
       })
 
+      const responseTimeIso = new Date().toISOString()
       const assistantMessage: Message = {
-        id: `assist-${Date.now()}`,
+        id: createMessageId('assistant'),
         role: 'assistant',
         text: response.answer,
         isRefusal: response.is_refusal,
         refusalReason: response.refusal_reason || undefined,
         citations: response.grounded_citations,
         suggestedActions: response.suggested_actions,
-        timestamp: new Date().toISOString(),
+        timestamp: responseTimeIso,
       }
 
       setMessages((prev) => [...prev, assistantMessage])
-    } catch (err: any) {
+    } catch (_err) {
+      const errorTimeIso = new Date().toISOString()
       setMessages((prev) => [
         ...prev,
         {
-          id: `err-${Date.now()}`,
+          id: createMessageId('err'),
           role: 'assistant',
           text: 'An error occurred while querying the NEXUS graph intelligence service.',
-          timestamp: new Date().toISOString(),
+          timestamp: errorTimeIso,
         },
       ])
     } finally {
@@ -115,7 +122,7 @@ export default function Copilot() {
           </p>
         </div>
         <button
-          onClick={() => setMessages([messages[0]])}
+          onClick={() => setMessages([INITIAL_WELCOME_MESSAGE])}
           className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-200 border border-neutral-800 bg-neutral-900 px-3 py-1.5 rounded-lg transition-colors"
         >
           <RotateCcw className="h-3.5 w-3.5" />
@@ -149,7 +156,7 @@ export default function Copilot() {
               {m.isRefusal && (
                 <div className="flex items-center gap-2 text-xs font-semibold text-red-400 bg-red-950/80 px-2.5 py-1 rounded-lg border border-red-800/80">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
-                  Ethical & Legal Guardrail Enforced
+                  Ethical &amp; Legal Guardrail Enforced
                 </div>
               )}
 
@@ -160,7 +167,7 @@ export default function Copilot() {
                 <div className="rounded-xl bg-neutral-950/90 p-3 text-xs border border-neutral-800/80 space-y-2">
                   <div className="font-semibold text-neutral-300 flex items-center gap-1.5">
                     <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                    Grounded Graph Citations & Provenance:
+                    Grounded Graph Citations &amp; Provenance:
                   </div>
                   {m.citations.map((cite, cIdx) => (
                     <div key={cIdx} className="text-neutral-400 flex items-start gap-2 bg-neutral-900/80 p-2 rounded border border-neutral-800">
@@ -188,7 +195,7 @@ export default function Copilot() {
               )}
 
               <span className="block text-[10px] text-neutral-500 text-right">
-                {new Date(m.timestamp).toLocaleTimeString()}
+                {m.timestamp.startsWith('2026-08-23T00:00:00') ? 'Today' : new Date(m.timestamp).toLocaleTimeString()}
               </span>
             </div>
 

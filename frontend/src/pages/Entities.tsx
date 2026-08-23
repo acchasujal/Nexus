@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Users, Search, CheckCircle2, HelpCircle, AlertTriangle, XCircle, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Users, CheckCircle2, HelpCircle, AlertTriangle, XCircle, ShieldCheck } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 
 export default function Entities() {

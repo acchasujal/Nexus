@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { DataTable, type ColumnDef } from '@/components/DataTable'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
@@ -11,9 +11,7 @@ import {
   Network, 
   FileText, 
   Users, 
-  AlertTriangle,
-  ArrowRight,
-  Sparkles
+  ArrowRight
 } from 'lucide-react'
 
 export default function Worklist() {
@@ -27,7 +25,7 @@ export default function Worklist() {
   const [districtFilter, setDistrictFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
 
-  const fetchInvestigations = () => {
+  const fetchInvestigations = useCallback(() => {
     setIsLoading(true)
     apiClient.getInvestigations()
       .then((data) => {
@@ -39,10 +37,32 @@ export default function Worklist() {
         setError('Unable to connect to NEXUS backend intelligence service.')
       })
       .finally(() => setIsLoading(false))
-  }
+  }, [])
 
   useEffect(() => {
-    fetchInvestigations()
+    let isMounted = true
+    apiClient.getInvestigations()
+      .then((data) => {
+        if (isMounted) {
+          setInvestigations(Array.isArray(data) ? data : [])
+          setError(null)
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          console.error('Failed to load investigations:', err)
+          setError('Unable to connect to NEXUS backend intelligence service.')
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   // Filtered dataset
@@ -61,26 +81,34 @@ export default function Worklist() {
     })
   }, [investigations, searchQuery, districtFilter, categoryFilter])
 
+  // Unique filter options
+  const districts = useMemo(() => {
+    return Array.from(new Set(investigations.map((i) => i.district).filter(Boolean)))
+  }, [investigations])
+
+  const categories = useMemo(() => {
+    return Array.from(new Set(investigations.map((i) => i.offence_category).filter(Boolean)))
+  }, [investigations])
+
   const columns: ColumnDef<any>[] = [
     {
-      header: 'FIR Number / Title',
+      header: 'FIR / Case ID',
       accessorKey: 'fir_number',
       cell: (row) => (
-        <div>
-          <div className="font-bold text-neutral-100 flex items-center gap-1.5">
-            {row.fir_number}
-          </div>
-          <div className="text-xs text-neutral-400 max-w-sm truncate">{row.title}</div>
+        <div className="flex items-center gap-2">
+          <FileText className="h-4 w-4 text-blue-400 shrink-0" />
+          <span className="font-semibold text-neutral-100">{row.fir_number || row.id}</span>
         </div>
       ),
     },
     {
-      header: 'Category',
-      accessorKey: 'offence_category',
+      header: 'Case Title & Offence',
+      accessorKey: 'title',
       cell: (row) => (
-        <span className="inline-flex items-center rounded-md bg-neutral-800 px-2.5 py-1 text-xs font-medium text-neutral-200 border border-neutral-700">
-          {row.offence_category}
-        </span>
+        <div>
+          <div className="font-medium text-neutral-200">{row.title}</div>
+          <div className="text-xs text-neutral-400">{row.offence_category}</div>
+        </div>
       ),
     },
     {
@@ -88,52 +116,71 @@ export default function Worklist() {
       accessorKey: 'station_name',
       cell: (row) => (
         <div>
-          <div className="text-sm font-medium text-neutral-200">{row.station_name}</div>
-          <div className="text-xs text-neutral-400">{row.district}</div>
+          <div className="text-neutral-200">{row.station_name}</div>
+          <div className="text-xs text-neutral-500">{row.district}</div>
         </div>
       ),
     },
     {
-      header: 'Accused / Evidence',
+      header: 'Accused',
       accessorKey: 'accused_count',
       cell: (row) => (
-        <div className="flex items-center gap-3 text-xs text-neutral-300">
-          <span className="flex items-center gap-1">
-            <Users className="h-3.5 w-3.5 text-blue-400" />
-            {row.accused_count} Accused
-          </span>
-          <span className="flex items-center gap-1">
-            <FileText className="h-3.5 w-3.5 text-emerald-400" />
-            {row.evidence_count} Evidence
-          </span>
-        </div>
+        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded bg-neutral-800 text-neutral-300">
+          <Users className="h-3 w-3" /> {row.accused_count || 0}
+        </span>
       ),
     },
     {
       header: 'Status',
       accessorKey: 'status',
-      cell: (row) => (
-        <span className="inline-flex items-center rounded-full bg-blue-950/70 px-2.5 py-0.5 text-xs font-semibold text-blue-400 border border-blue-800/50">
-          {row.status}
-        </span>
-      ),
+      cell: (row) => {
+        const isChargesheeted = row.status === 'CHARGESHEETED'
+        return (
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+              isChargesheeted
+                ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                : 'bg-blue-950 text-blue-400 border border-blue-800'
+            }`}
+          >
+            {row.status || 'UNDER_INVESTIGATION'}
+          </span>
+        )
+      },
     },
     {
-      header: 'Action',
+      header: 'Actions',
       accessorKey: 'id',
       cell: (row) => (
-        <button
-          onClick={() => navigate(`/cases/${row.id}`)}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors"
-        >
-          Explore Graph <ArrowRight className="h-3 w-3" />
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            to={`/investigations/${row.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 font-semibold p-1 hover:bg-neutral-800 rounded transition-colors"
+          >
+            Open <ArrowRight className="h-3 w-3" />
+          </Link>
+          <Link
+            to={`/network?case_id=${row.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 font-semibold p-1 hover:bg-neutral-800 rounded transition-colors"
+          >
+            <Network className="h-3 w-3" /> Graph
+          </Link>
+        </div>
       ),
     },
   ]
 
-  if (isLoading) return <LoadingSkeleton layout="table" />
-  if (error) return <ErrorState message={error} onRetry={fetchInvestigations} />
+  if (error) {
+    return (
+      <ErrorState
+        title="Failed to Load Investigations"
+        description={error}
+        onRetry={fetchInvestigations}
+      />
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -142,71 +189,68 @@ export default function Worklist() {
         <div>
           <h1 className="text-2xl font-bold text-neutral-100 flex items-center gap-2.5">
             <ShieldAlert className="h-6 w-6 text-blue-500" />
-            Active Criminal Network Investigations
+            Active Investigation Worklist
           </h1>
           <p className="text-sm text-neutral-400 mt-1">
-            Cross-jurisdictional intelligence overview with multi-hop link analysis and provenance tracking.
+            Browse and query ongoing criminal investigations and cross-case intelligence graphs.
           </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <Link
-            to="/network"
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-blue-500 transition-colors shadow-sm"
-          >
-            <Network className="h-4 w-4" />
-            Open Graph Explorer
-          </Link>
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* Filter Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-neutral-900/60 p-3 rounded-xl border border-neutral-800">
         <div className="relative">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-500" />
           <input
             type="text"
+            placeholder="Search FIR, title, police station..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by FIR number, station, or title..."
-            className="w-full rounded-lg border border-neutral-800 bg-neutral-900/80 pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:border-blue-500 focus:outline-none"
+            className="w-full bg-neutral-950 border border-neutral-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-blue-500"
           />
         </div>
 
-        <select
-          value={districtFilter}
-          onChange={(e) => setDistrictFilter(e.target.value)}
-          className="rounded-lg border border-neutral-800 bg-neutral-900/80 px-3 py-2 text-sm text-neutral-200 focus:border-blue-500 focus:outline-none"
-        >
-          <option value="all">All Districts</option>
-          <option value="Bengaluru Urban">Bengaluru Urban</option>
-          <option value="Bengaluru Rural">Bengaluru Rural</option>
-          <option value="Mysuru">Mysuru</option>
-          <option value="Mangaluru">Mangaluru</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <Filter className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
+          <select
+            value={districtFilter}
+            onChange={(e) => setDistrictFilter(e.target.value)}
+            className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-xs text-neutral-200 focus:outline-none focus:border-blue-500"
+          >
+            <option value="all">All Districts</option>
+            {districts.map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+        </div>
 
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="rounded-lg border border-neutral-800 bg-neutral-900/80 px-3 py-2 text-sm text-neutral-200 focus:border-blue-500 focus:outline-none"
-        >
-          <option value="all">All Crime Categories</option>
-          <option value="Narcotics & Drug Trafficking">Narcotics & Drug Trafficking</option>
-          <option value="Cyber Financial Fraud & Phishing">Cyber Financial Fraud</option>
-          <option value="Organized Extortion & Protection Racketeering">Organized Extortion</option>
-          <option value="Illegal Arms Trafficking">Illegal Arms Trafficking</option>
-          <option value="Hawala & Money Laundering">Hawala & Money Laundering</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <Filter className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-xs text-neutral-200 focus:outline-none focus:border-blue-500"
+          >
+            <option value="all">All Offence Categories</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Investigations Table */}
-      <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 overflow-hidden shadow-lg">
-        <DataTable
-          columns={columns}
-          data={filteredData}
-          onRowClick={(row) => navigate(`/cases/${row.id}`)}
-        />
-      </div>
+      {/* Content */}
+      {isLoading ? (
+        <LoadingSkeleton />
+      ) : (
+        <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 overflow-hidden shadow-xl">
+          <DataTable
+            data={filteredData}
+            columns={columns}
+            onRowClick={(row) => navigate(`/investigations/${row.id}`)}
+          />
+        </div>
+      )}
     </div>
   )
 }

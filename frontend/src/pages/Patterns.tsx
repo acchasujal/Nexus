@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Layers, Network, Users, Share2, AlertTriangle, ShieldCheck, Activity, BarChart3 } from 'lucide-react'
+import { Layers, Network, Users, Share2, AlertTriangle } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 
 export default function Patterns() {
@@ -7,7 +7,6 @@ export default function Patterns() {
   const [bridges, setBridges] = useState<any[]>([])
   const [repeatOffenders, setRepeatOffenders] = useState<any[]>([])
   const [sharedClusters, setSharedClusters] = useState<any[]>([])
-  const [influenceRankings, setInfluenceRankings] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -16,13 +15,11 @@ export default function Patterns() {
       apiClient.getBridges().catch(() => []),
       apiClient.getRepeatOffenders().catch(() => []),
       apiClient.getSharedClusters().catch(() => []),
-      apiClient.getInfluenceRankings().catch(() => []),
-    ]).then(([commData, bridgeData, repeatData, clusterData, rankData]) => {
+    ]).then(([commData, bridgeData, repeatData, clusterData]) => {
       setCommunities(Array.isArray(commData) ? commData : [])
       setBridges(Array.isArray(bridgeData) ? bridgeData : [])
       setRepeatOffenders(Array.isArray(repeatData) ? repeatData : [])
       setSharedClusters(Array.isArray(clusterData) ? clusterData : [])
-      setInfluenceRankings(Array.isArray(rankData) ? rankData : [])
     }).finally(() => {
       setIsLoading(false)
     })

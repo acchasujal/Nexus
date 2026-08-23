@@ -1,7 +1,7 @@
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import type { UserRole } from '@shared/contracts/api'
-import { Network, ShieldCheck, ShieldAlert, Cpu, Lock } from 'lucide-react'
+import { Network, ShieldCheck, ShieldAlert } from 'lucide-react'
 
 export default function Login() {
   const { role, login, isAuthenticated } = useAuth()

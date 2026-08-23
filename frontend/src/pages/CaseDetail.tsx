@@ -1,10 +1,8 @@
-import { useState } from 'react'
 import { Link, useSearchParams, useParams } from 'react-router-dom'
-import { ArrowLeft, ShieldAlert, Network, Layers, MessageSquareCode, Calendar, FileText, Users, Building, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Network, Layers, MessageSquareCode, Calendar, FileText, Users, Building, AlertCircle } from 'lucide-react'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
-import { useAuth } from '@/contexts/AuthContext'
 import { useCaseDetail } from '@/hooks/useCaseDetail'
 import { NetworkAnalysisPanel } from '@/components/NetworkAnalysisPanel'
 import { SimilarityPanel } from '@/components/SimilarityPanel'
@@ -23,7 +21,6 @@ type TabId = (typeof tabs)[number]['id']
 
 export default function CaseDetail() {
   const { id } = useParams<{ id: string }>()
-  const { role } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   
   const activeTab = (tabs.some((tab) => tab.id === searchParams.get('tab'))
@@ -60,7 +57,7 @@ export default function CaseDetail() {
               </span>
             </div>
             <p className="text-sm text-neutral-400 mt-1">
-              Station: <strong className="text-neutral-300">{caseDetail.station_name}</strong> • Updated: {new Date(caseDetail.updated_at || Date.now()).toLocaleDateString()}
+              Station: <strong className="text-neutral-300">{caseDetail.station_name}</strong> • Updated: {caseDetail.updated_at ? new Date(caseDetail.updated_at).toLocaleDateString() : 'Recent'}
             </p>
           </div>
         </div>

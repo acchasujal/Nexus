@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Clock, Calendar, MapPin, Users, Activity, FileText } from 'lucide-react'
+import { Clock, Calendar, Users } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 
 export default function Timeline() {

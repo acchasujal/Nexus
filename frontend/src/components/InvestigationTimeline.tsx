@@ -1,16 +1,11 @@
 import { useMemo, useState } from 'react'
-import { ClockBadge } from '@/components/ClockBadge'
 import { 
   Briefcase, 
-  User, 
   ShieldAlert, 
   Layers, 
   AlertTriangle, 
-  FileText, 
   TrendingUp, 
-  ChevronRight, 
   Printer, 
-  Download,
   Calendar,
   Sparkles
 } from 'lucide-react'

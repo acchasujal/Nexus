@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
-import { FileText, ShieldCheck, Database, Calendar, Tag, ExternalLink } from 'lucide-react'
+import { FileText, ShieldCheck, Calendar } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 
 export default function Evidence() {
   const [evidenceItems, setEvidenceItems] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     // Fetch cases and extract evidence
