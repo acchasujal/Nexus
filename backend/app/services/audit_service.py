@@ -1,17 +1,7 @@
 """backend/app/services/audit_service.py
 
-Durable audit trail service for CaseClock.
-
-Phase 3 implementation of the audit layer:
-  - Replaces the list-of-dicts in InMemoryBackendRepository with a proper service
-  - Best-effort writes: audit failures never propagate to the caller
-  - Correlates events by request_id for cross-service tracing
-  - Phase 4 will wire this to AuditRepository (Catalyst Data Store)
-
-## Event taxonomy (from BACKEND_IMPLEMENTATION_PLAN.md §9 Phase 3)
-
-All event_type values must come from the AuditEventType enum.
-No free-form strings: this ensures audit reports are queryable.
+Durable audit trail service for the NEXUS Criminal Intelligence Platform.
+Records immutable events with correlation tracking, principal attribution, and timestamps.
 """
 
 from __future__ import annotations
@@ -25,142 +15,100 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-class AuditEventType(str, Enum):
-    """Exhaustive audit event taxonomy.
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
-    Every event recorded through the audit service must use one of these values.
-    Adding new event types: add to this enum first, then the callsite.
-    """
-    # Worklist / case views
-    WORKLIST_VIEWED = "worklist_viewed"
-    CASE_VIEWED = "case_viewed"
+
+class AuditEventType(str, Enum):
+    """Exhaustive audit event taxonomy for NEXUS."""
+    # Investigation views
+    INVESTIGATION_VIEWED = "investigation_viewed"
+    INVESTIGATION_LIST_VIEWED = "investigation_list_viewed"
+    WORKLIST_VIEWED = "worklist_viewed"  # legacy compatibility
+    CASE_VIEWED = "case_viewed"  # legacy compatibility
     CASE_NETWORK_VIEWED = "case_network_viewed"
 
-    # Dependency lifecycle
-    DEPENDENCY_UPDATED = "dependency_updated"
+    # Network & Analytics
+    NETWORK_EXPLORED = "network_explored"
+    GRAPH_QUERY_EXECUTED = "graph_query_executed"
+    COMMUNITY_DETECTION_EXECUTED = "community_detection_executed"
+    BRIDGE_ANALYSIS_EXECUTED = "bridge_analysis_executed"
+    SIMILARITY_SEARCH_EXECUTED = "similarity_search_executed"
+    PATTERN_SEARCH_EXECUTED = "pattern_search_executed"
 
-    # Escalation lifecycle
-    ESCALATIONS_VIEWED = "escalations_viewed"
-    MANUAL_ESCALATION_CREATED = "manual_escalation_created"
+    # Entity Resolution & Evidence
+    ENTITY_RESOLUTION_EXECUTED = "entity_resolution_executed"
+    EVIDENCE_VIEWED = "evidence_viewed"
+    TIMELINE_VIEWED = "timeline_viewed"
 
     # Copilot
     COPILOT_ANSWERED = "copilot_answered"
     COPILOT_REFUSED = "copilot_refused"
 
-    # Auth
+    # Auth & Security
     ACCESS_DENIED = "access_denied"
+    USER_LOGGED_IN = "user_logged_in"
     TOKEN_INVALID = "token_invalid"
 
-    # Admin & Cron
-    SEED_STARTED = "seed_started"
+    # Ingestion
+    INGESTION_STARTED = "ingestion_started"
+    INGESTION_COMPLETED = "ingestion_completed"
+    INGESTION_FAILED = "ingestion_failed"
     SEED_COMPLETED = "seed_completed"
-    SEED_FAILED = "seed_failed"
-    DEADLINE_SWEEP_COMPLETED = "deadline_sweep_completed"
-
-    # Document Intelligence
-    DOCUMENT_UPLOADED = "document_uploaded"
-    DOCUMENT_OCR_COMPLETED = "document_ocr_completed"
-    DOCUMENT_FACTS_CONFIRMED = "document_facts_confirmed"
-
-    # Graph read model
-    GRAPH_QUERY_EXECUTED = "graph_query_executed"
 
 
 class AuditService:
-    """Application-layer service for writing audit events.
-
-    In Phase 3 (before Catalyst persistence):
-      - Stores events in the in-memory list on InMemoryBackendRepository.
-      - All writes are best-effort; exceptions are swallowed and logged.
-
-    In Phase 4 (after AuditRepository wiring):
-      - Delegates to AuditRepository.append().
-      - Same interface for callers.
-
-    Usage:
-        audit = AuditService(repository=repo)
-        audit.record(
-            AuditEventType.CASE_VIEWED,
-            actor_id=principal.user_id,
-            case_id=case_id,
-            request_id=request_id,
-        )
-    """
+    """Application-layer service for writing and querying audit logs."""
 
     def __init__(self, repository: Any) -> None:
-        """
-        Args:
-            repository: InMemoryBackendRepository (Phase 1/3) or any object
-                        with an `audit_events: list[dict]` attribute.
-        """
         self._repository = repository
 
     def record(
         self,
         event_type: AuditEventType,
-        *,
-        actor_id: str | None = None,
+        actor_id: str,
         case_id: str | None = None,
+        entity_id: str | None = None,
+        entity_type: str | None = None,
         request_id: str | None = None,
-        **metadata: Any,
+        details: dict[str, Any] | None = None,
     ) -> None:
-        """Append one audit event.  Never raises; logs failures.
-
-        Args:
-            event_type: Must be an AuditEventType enum member.
-            actor_id:   Catalyst ZUID or dev placeholder; None for system events.
-            case_id:    Case scoping for queries; None for cross-case events.
-            request_id: Correlation ID from RequestIDMiddleware.
-            **metadata: Additional key-value pairs stored as event metadata.
-        """
+        """Record an audit event without ever throwing exceptions to callers."""
         try:
-            event: dict[str, Any] = {
+            payload = {
                 "id": str(uuid.uuid4()),
-                "event_type": event_type.value,
-                "occurred_at": datetime.now(timezone.utc).isoformat(),
+                "event_type": event_type.value if hasattr(event_type, "value") else str(event_type),
                 "actor_id": actor_id,
                 "case_id": case_id,
+                "entity_id": entity_id,
+                "entity_type": entity_type,
                 "request_id": request_id,
-                "metadata": metadata if metadata else None,
+                "occurred_at": _utcnow().isoformat(),
+                "timestamp": _utcnow().isoformat(),
+                "details": details or {},
             }
-            # Phase 1/3: write to in-memory list
-            if hasattr(self._repository, "audit_events"):
-                self._repository.audit_events.append(event)
-            else:
-                logger.warning(
-                    "AuditService: repository has no audit_events attribute; event not stored "
-                    "[event_type=%s, request_id=%s]",
-                    event_type.value,
-                    request_id,
-                )
-        except Exception:
-            logger.exception(
-                "AuditService: failed to record event [event_type=%s, request_id=%s]",
-                event_type.value,
-                request_id,
-            )
+            if hasattr(self._repository, "audit_events") and isinstance(self._repository.audit_events, list):
+                self._repository.audit_events.append(payload)
+            logger.info("AUDIT: event=%s actor=%s entity=%s", event_type, actor_id, entity_id or case_id)
+        except Exception as exc:
+            logger.warning("Audit log write failed (best-effort): %s", exc)
 
     def list_events(
         self,
-        limit: int = 100,
         case_id: str | None = None,
-        actor_id: str | None = None,
-        event_type: AuditEventType | None = None,
+        event_type: AuditEventType | str | None = None,
+        limit: int = 50,
     ) -> list[dict[str, Any]]:
-        """Read audit events from the in-memory store.
-
-        Phase 4 delegates to AuditRepository.list_events().
-        """
-        if not hasattr(self._repository, "audit_events"):
-            return []
-
-        events: list[dict[str, Any]] = list(self._repository.audit_events)
-
-        if case_id:
-            events = [e for e in events if e.get("case_id") == case_id]
-        if actor_id:
-            events = [e for e in events if e.get("actor_id") == actor_id]
-        if event_type:
-            events = [e for e in events if e.get("event_type") == event_type.value]
-
-        return events[-limit:]
+        events = getattr(self._repository, "audit_events", [])
+        results: list[dict[str, Any]] = []
+        for e in reversed(events):
+            if case_id and e.get("case_id") != case_id:
+                continue
+            if event_type:
+                target_type = event_type.value if hasattr(event_type, "value") else str(event_type)
+                if e.get("event_type") != target_type:
+                    continue
+            results.append(e)
+            if len(results) >= limit:
+                break
+        return results

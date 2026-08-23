@@ -1,33 +1,35 @@
-"""FastAPI entry point for the CaseClock backend.
+"""backend/app/main.py
 
+FastAPI entry point for the NEXUS Criminal Intelligence Platform.
 Wires together:
-  - Application settings (config-driven CORS, paths)
-  - Error handlers and request-ID middleware
-  - Core routes and graph routes
-  - Repository stored on app.state for dependency injection
+  - Local-first config-driven settings & CORS
+  - Request-ID correlation middleware & structured error handlers
+  - Core investigation, entity resolution, network explorer, and copilot routers
+  - Dependency-injected in-memory/persistent repository on app.state
 """
+
 from __future__ import annotations
 
+import logging
 import sys
 from pathlib import Path
-import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.app.db.in_memory import InMemoryBackendRepository
-from backend.app.config import Settings, get_settings
-from backend.app.api.core_routes import create_core_router
-from backend.app.api.errors import install_error_handlers
-from backend.app.api.graph_routes import create_graph_router
 
-# Add project root to sys.path to allow absolute 'backend' imports
-# when running uvicorn from the backend directory
+# Ensure root directory is on sys.path
 root_dir = Path(__file__).resolve().parents[2]
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
 
-
-
+from backend.app.api.core_routes import create_core_router
+from backend.app.api.errors import install_error_handlers
+from backend.app.api.graph_routes import create_graph_router
+from backend.app.api.routes import chat
+from backend.app.api.system_routes import create_system_router
+from backend.app.config import Settings, get_settings
+from backend.app.core.graph.repositories.graph_repository import GraphRepository
+from backend.app.db.in_memory import InMemoryBackendRepository
 
 logger = logging.getLogger(__name__)
 
@@ -36,112 +38,67 @@ def create_app(
     repository: InMemoryBackendRepository | None = None,
     settings: Settings | None = None,
 ) -> FastAPI:
-    """Application factory.
-
-    Args:
-        repository: Override the repository for testing.  If None the default
-            in-memory repository is constructed from settings.
-        settings: Override settings for testing.  If None the cached singleton
-            from the environment is used.
-
-    Returns:
-        Configured FastAPI application.
-    """
+    """Application factory for NEXUS backend."""
     cfg = settings or get_settings()
 
     # ── Repository ───────────────────────────────────────────────────────────
     if repository is None:
         artifact_path: Path | None = None
-        if cfg.artifact_path and cfg.artifact_path != Path("artifacts/synthetic_graph/synthetic_graph.json"):
+        if cfg.artifact_path and cfg.artifact_path.exists():
             artifact_path = cfg.artifact_path
 
         state_path = cfg.effective_state_path
-        # Phase 1 acceptance criterion: no production default JSON state path.
-        # In production (ENVIRONMENT=production), state_path must be explicitly
-        # configured; otherwise we refuse to run with a mutable local file.
-        if cfg.is_production and state_path is None and cfg.caseclock_repository.lower() != "catalyst":
-            logger.warning(
-                "Running in production without a configured STATE_PATH. "
-                "Dependency mutations will not be persisted across restarts. "
-                "Set STATE_PATH or integrate Catalyst Data Store (Phase 2)."
-            )
+        repository = InMemoryBackendRepository(
+            artifact_path=artifact_path,
+            state_path=state_path,
+        )
 
-        if cfg.caseclock_repository.lower() == "catalyst":
-            try:
-                from backend.app.db.catalyst import CatalystBackendRepository
-                repository = CatalystBackendRepository()
-            except Exception as err:
-                logger.warning(
-                    "Failed to initialize CatalystBackendRepository (%s); falling back to InMemoryBackendRepository.",
-                    err,
-                )
-                repository = InMemoryBackendRepository(
-                    artifact_path=artifact_path,
-                    state_path=state_path,
-                )
-        else:
-            repository = InMemoryBackendRepository(
-                artifact_path=artifact_path,
-                state_path=state_path,
-            )
-
-    # ── FastAPI app ───────────────────────────────────────────────────────────
+    # ── FastAPI App ───────────────────────────────────────────────────────────
     app = FastAPI(
         title=cfg.app_name,
         version=cfg.app_version,
-        description="Deterministic legal-clock-aware investigation backend.",
+        description="Evidence-Grounded Criminal Network Intelligence Platform for SIH 2026 PS 26189.",
     )
 
-    # Store repository on app.state so route dependencies can access it without
-    # a module-level singleton (enables isolation between test clients).
+    # Store repository on app.state for dependency injection
     app.state.repository = repository
     app.state.settings = cfg
 
     # ── Middleware and error handlers ────────────────────────────────────────
-    # install_error_handlers adds RequestIDMiddleware first (innermost),
-    # so request IDs are set before any handler runs.
     install_error_handlers(app)
 
-    # In production (e.g. Catalyst AppSail environment), Catalyst's reverse proxy / gateway
-    # (Whitelisting & Authorized Domains) automatically injects CORS headers for cross-origin calls.
-    # Emitting CORS headers in FastAPI in production causes duplicate Access-Control-Allow-Origin headers.
-    # Thus, CORS middleware is only enabled in development for local testing.
-    if cfg.is_development:
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=cfg.cors_origins_list,
-            allow_origin_regex=r"https://.*\.onslate\.in|https://.*\.catalystappsail\.in",
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cfg.cors_origins_list,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-    from backend.app.api.cron_routes import create_cron_router
-    from backend.app.api.document_routes import create_document_router
-    from backend.app.api.routes import chat
-    from backend.app.api.system_routes import create_system_router
-    from backend.app.api.convokraft_routes import create_convokraft_router
+    # ── Routers ───────────────────────────────────────────────────────────────
+    # Core routes (both root and /api/v1 prefixes)
+    core_router = create_core_router()
+    app.include_router(core_router)
+    app.include_router(core_router, prefix="/api/v1")
 
-    # ── Routes ───────────────────────────────────────────────────────────────
-    app.include_router(create_core_router())
-    app.include_router(create_cron_router())
+    # Graph intelligence routes
+    graph_repo = GraphRepository(repository.to_graph_store())
     app.include_router(
-        create_document_router(),
+        create_graph_router(graph_repo),
         prefix="/api/v1",
     )
-    app.include_router(
-        create_graph_router(repository.graph_repository),
-        prefix="/api/v1",
-    )
+
+    # System routes
     app.include_router(
         create_system_router(),
         prefix="/api/v1",
     )
+
+    # Chat / Copilot routes
     app.include_router(chat.router, prefix="/api")
-    app.include_router(create_convokraft_router())
 
     return app
 
 
-# Module-level app instance for uvicorn: `uvicorn backend.app.main:app`
+# Module-level instance for uvicorn: uvicorn backend.app.main:app
 app = create_app()

@@ -1,103 +1,50 @@
 """backend/app/api/routes/chat.py
 
-Presentation layer router for AI Chat operations.
-Provides FastAPI HTTP transport, dependency injection, and domain exception mapping
-for the CaseClock AI subsystem.
+AI Copilot chat presentation layer for NEXUS.
 """
 
 from __future__ import annotations
 
 import logging
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request, status
+from pydantic import BaseModel, Field
 
-from backend.app.ai.exceptions import (
-    AIError,
-    AIValidationError,
-    PromptError,
-    QuickMLAuthError,
-    QuickMLConfigurationError,
-    QuickMLConnectionError,
-    QuickMLError,
-    QuickMLRateLimitError,
-    QuickMLResponseError,
-    QuickMLTimeoutError,
-)
-from backend.app.ai.prompt_manager import PromptManager
-from backend.app.ai.quickml_client import QuickMLClient
-from backend.app.ai.quickml_service import QuickMLService
-from backend.app.ai.schemas import ChatRequest, ChatResponse
-from backend.app.dependencies.ai import get_quickml_service
+from backend.app.api.dependencies import get_principal, get_request_id
+from backend.app.auth.principal import Principal
+from backend.app.dependencies.ai import get_copilot_service_dep
+from backend.app.services.copilot_service import CopilotService
+from shared.contracts.api import CopilotQueryRequest, CopilotQueryResponse
 
-router = APIRouter()
+router = APIRouter(tags=["copilot-chat"])
 logger = logging.getLogger(__name__)
 
+
+class ChatRequestPayload(BaseModel):
+    query: str
+    case_id: str | None = None
+    investigation_id: str | None = None
+    session_id: str | None = None
 
 
 @router.post(
     "/chat",
-    response_model=ChatResponse,
+    response_model=CopilotQueryResponse,
     status_code=status.HTTP_200_OK,
-    summary="Process AI Chat Query",
-    description="Accepts a ChatRequest payload, processes query via QuickMLService, and returns a ChatResponse.",
+    summary="Process Investigator Copilot Chat Query",
 )
 def chat(
-    request: ChatRequest,
+    request: ChatRequestPayload,
     http_request: Request,
-    service: QuickMLService = Depends(get_quickml_service),
-) -> ChatResponse:
-    """FastAPI endpoint handling POST /chat requests."""
-    try:
-        return service.chat(request)
-    except QuickMLConfigurationError as e:
-        logger.error("QuickML provider configuration failure", extra={"request_id": getattr(http_request.state, "request_id", None), "provider": "quickml", "status": 503, "category": "configuration"})
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Case Copilot is temporarily unavailable.") from e
-    except QuickMLAuthError as e:
-        logger.warning("QuickML provider authentication failure", extra={"request_id": getattr(http_request.state, "request_id", None), "provider": "quickml", "status": 401, "category": "authentication"})
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Case Copilot is temporarily unavailable.",
-        ) from e
-    except QuickMLRateLimitError as e:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="QuickML API rate limit exceeded.",
-        ) from e
-    except QuickMLTimeoutError as e:
-        logger.warning("QuickML provider timeout", extra={"request_id": getattr(http_request.state, "request_id", None), "provider": "quickml", "status": 504, "category": "timeout"})
-        raise HTTPException(
-            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-            detail="QuickML API request timed out.",
-        ) from e
-    except QuickMLConnectionError as e:
-        logger.warning("QuickML provider connection failure", extra={"request_id": getattr(http_request.state, "request_id", None), "provider": "quickml", "status": 503, "category": "unavailable"})
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Unable to connect to QuickML provider.",
-        ) from e
-    except QuickMLResponseError as e:
-        logger.error("QuickML provider response failure", extra={"request_id": getattr(http_request.state, "request_id", None), "provider": "quickml", "status": 502, "category": "malformed_response"})
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Invalid response from QuickML provider.",
-        ) from e
-    except QuickMLError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED if "auth" in str(e).lower() or "token" in str(e).lower() else status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"QuickML provider error: {e}",
-        ) from e
-    except PromptError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to load or render prompt template.",
-        ) from e
-    except AIValidationError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid AI request payload.",
-        ) from e
-    except AIError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An AI subsystem error occurred.",
-        ) from e
+    copilot_svc: CopilotService = Depends(get_copilot_service_dep),
+    principal: Principal = Depends(get_principal),
+    request_id: str = Depends(get_request_id),
+) -> CopilotQueryResponse:
+    query_req = CopilotQueryRequest(
+        query=request.query,
+        case_id=request.case_id,
+        investigation_id=request.investigation_id,
+        session_id=request.session_id,
+    )
+    return copilot_svc.handle_query(query_req, principal=principal, request_id=request_id)
