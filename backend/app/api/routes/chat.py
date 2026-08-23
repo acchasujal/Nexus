@@ -6,10 +6,9 @@ AI Copilot chat presentation layer for NEXUS.
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from fastapi import APIRouter, Depends, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from backend.app.api.dependencies import get_principal, get_request_id
 from backend.app.auth.principal import Principal

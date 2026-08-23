@@ -90,7 +90,7 @@ class AuditService:
             if hasattr(self._repository, "audit_events") and isinstance(self._repository.audit_events, list):
                 self._repository.audit_events.append(payload)
             logger.info("AUDIT: event=%s actor=%s entity=%s", event_type, actor_id, entity_id or case_id)
-        except Exception as exc:
+        except (AttributeError, TypeError, ValueError, KeyError, OSError) as exc:
             logger.warning("Audit log write failed (best-effort): %s", exc)
 
     def list_events(

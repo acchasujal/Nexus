@@ -8,12 +8,12 @@ and graph store extraction for analytical algorithms.
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord
-from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from shared.contracts.api import (
     AuditLogEntry,
     EvidenceItemResponse,
@@ -23,8 +23,9 @@ from shared.contracts.api import (
     InvestigationDetailResponse,
     InvestigationSummaryResponse,
     NetworkGraphResponse,
-    UserRole,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _utcnow() -> datetime:
@@ -98,8 +99,8 @@ class InMemoryBackendRepository:
                 if node_id in self.nodes:
                     self.nodes[node_id].setdefault("properties", {}).update(patch)
             self.audit_events = list(raw.get("audit_events", []))
-        except Exception:
-            pass
+        except (json.JSONDecodeError, OSError, ValueError, TypeError) as exc:
+            logger.debug("Optional state file loading skipped: %s", exc)
 
     def _save_state(self) -> None:
         if self.state_path is None:

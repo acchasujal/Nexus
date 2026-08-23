@@ -30,7 +30,6 @@ from backend.app.core.graph.algorithms.traversals import (
     get_subgraph,
     get_co_accused,
 )
-from backend.app.core.graph.algorithms.utils import iter_nodes_by_type
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.core.graph.services.serializers import (
     serialize_node,

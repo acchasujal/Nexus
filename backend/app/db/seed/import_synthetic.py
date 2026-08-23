@@ -144,6 +144,6 @@ if __name__ == "__main__":
         summary = run_seed(artifact, dry_run=dry_run)
         print("\nSeed summary:")
         print(json.dumps(summary, indent=2))
-    except Exception as exc:
+    except (FileNotFoundError, ValueError, json.JSONDecodeError, OSError) as exc:
         print(f"\nError during seed: {exc}", file=sys.stderr)
         sys.exit(1)

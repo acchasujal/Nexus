@@ -15,13 +15,10 @@ Wires together all core endpoints:
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
 from typing import Any, Optional
 
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
 
 from backend.app.api.dependencies import (
     get_audit_service,
@@ -50,7 +47,6 @@ from shared.contracts.api import (
     EntityResolutionMatchResponse,
     EntityResolutionQuery,
     EntityResolutionResponse,
-    EvidenceItemResponse,
     InfluenceRankingResponse,
     InvestigationDetailResponse,
     InvestigationSummaryResponse,

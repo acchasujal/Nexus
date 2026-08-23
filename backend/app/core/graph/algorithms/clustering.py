@@ -125,7 +125,7 @@ def detect_communities(store: GraphStore) -> list[CommunityResult]:
     # Community detection using greedy modularity or connected components fallback
     try:
         raw_communities = list(nx.community.greedy_modularity_communities(G))
-    except Exception:
+    except (nx.NetworkXError, ValueError, ZeroDivisionError):
         raw_communities = list(nx.connected_components(G))
 
     results: list[CommunityResult] = []

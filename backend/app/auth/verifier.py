@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any
 
 import jwt
 from fastapi import Request
@@ -65,7 +64,7 @@ class DevelopmentVerifier(TokenVerifier):
                 raw_role = payload.get("role", "INVESTIGATOR")
                 role = self._ROLE_MAP.get(str(raw_role).strip().lower(), UserRole.INVESTIGATOR)
                 return Principal(user_id=user_id, email=email, role=role, is_anonymous=False)
-            except Exception:
+            except (jwt.PyJWTError, ValueError):
                 # Token decode failed; if in production, raise forbidden
                 if self._is_production:
                     raise ForbiddenError("Invalid or expired authentication token.")
@@ -73,12 +72,12 @@ class DevelopmentVerifier(TokenVerifier):
         # 2. Check X-Role or X-Dev-Role headers
         raw_role = request.headers.get("X-Role") or request.headers.get("X-Dev-Role")
         if not raw_role:
-            qp = getattr(request, "query_params", None)
-            if qp is not None and type(qp).__name__ not in ("Mock", "MagicMock"):
-                try:
+            try:
+                qp = request.query_params
+                if qp is not None and type(qp).__name__ not in ("Mock", "MagicMock"):
                     raw_role = qp.get("role")
-                except AttributeError:
-                    pass
+            except (KeyError, AttributeError):
+                pass
 
         if not raw_role or type(raw_role).__name__ in ("Mock", "MagicMock"):
             raw_role = "INVESTIGATOR"

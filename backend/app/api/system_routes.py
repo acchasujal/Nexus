@@ -5,14 +5,12 @@ Read-only status, telemetry, and graph health endpoints for NEXUS.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from backend.app.api.dependencies import get_audit_service, get_principal, get_repository
+from backend.app.api.dependencies import get_principal, get_repository
 from backend.app.auth.principal import Principal
-from backend.app.services.audit_service import AuditService
 
 
 class SystemHealthResponse(BaseModel):
