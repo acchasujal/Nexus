@@ -18,7 +18,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from backend.app.api.dependencies import (
     get_audit_service,
@@ -145,22 +145,29 @@ def create_core_router() -> APIRouter:
             raise HTTPException(status_code=404, detail=f"Investigation '{case_id}' not found")
         return detail
 
-    # Backward compatibility worklist endpoint
-    @router.get("/worklist")
+    # Backward compatibility: /worklist (deprecated — use /investigations)
+    @router.get("/worklist", deprecated=True)
     def worklist_legacy(
+        response: Response,
         principal: Principal = Depends(get_principal),
         service: InvestigationService = Depends(get_case_service),
         request_id: str = Depends(get_request_id),
     ) -> list[Any]:
+        response.headers["Deprecation"] = "true"
+        response.headers["Link"] = '</investigations>; rel="successor-version"'
         return service.list_worklist(principal=principal, request_id=request_id)
 
-    @router.get("/cases/{case_id}")
+    # Backward compatibility: /cases/{case_id} (deprecated — use /investigations/{case_id})
+    @router.get("/cases/{case_id}", deprecated=True)
     def case_detail_legacy(
         case_id: str,
+        response: Response,
         principal: Principal = Depends(get_principal),
         service: InvestigationService = Depends(get_case_service),
         request_id: str = Depends(get_request_id),
     ) -> Any:
+        response.headers["Deprecation"] = "true"
+        response.headers["Link"] = f'</investigations/{case_id}>; rel="successor-version"'
         detail = service.get_case_detail(case_id, principal=principal, request_id=request_id)
         if detail is None:
             raise HTTPException(status_code=404, detail=f"Case '{case_id}' not found")
@@ -565,6 +572,8 @@ def create_core_router() -> APIRouter:
     @router.get("/audit", response_model=list[AuditLogEntry])
     def get_audit_trail(
         case_id: Optional[str] = Query(None),
+        event_type: Optional[str] = Query(None, description="Filter by audit event type"),
+        actor_id: Optional[str] = Query(None, description="Filter by actor user ID"),
         limit: int = Query(50, ge=1, le=200),
         principal: Principal = Depends(get_principal),
         audit_svc: AuditService = Depends(get_audit_service),
@@ -572,6 +581,11 @@ def create_core_router() -> APIRouter:
         if not principal.can_view_audit_log():
             raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges to view audit log.")
         raw_events = audit_svc.list_events(case_id=case_id, limit=limit)
+        # Apply optional filters not yet in AuditService.list_events
+        if event_type:
+            raw_events = [e for e in raw_events if e.get("event_type") == event_type]
+        if actor_id:
+            raw_events = [e for e in raw_events if e.get("actor_id") == actor_id]
         return [
             AuditLogEntry(
                 id=e["id"],
