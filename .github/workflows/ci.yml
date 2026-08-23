@@ -1,12 +1,14 @@
 name: CI
 
 on:
+  push:
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   backend:
-    name: Backend — Lint + Test
+    name: Backend — Lint + Test + Ground Truth
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,8 +24,11 @@ jobs:
       - name: Lint (ruff)
         run: python -m ruff check backend/ shared/
 
-      - name: Tests
+      - name: Pytest Suite
         run: python -m pytest -v --tb=short
+
+      - name: Ground Truth Evaluation
+        run: python scripts/evaluate_ground_truth.py
 
   frontend:
     name: Frontend — Lint + Test + Build
@@ -43,8 +48,8 @@ jobs:
       - name: Lint
         run: cd frontend && npm run lint
 
-      - name: Test
+      - name: Vitest Suite
         run: cd frontend && npm run test:run
 
-      - name: Build
+      - name: Production Build
         run: cd frontend && npm run build
