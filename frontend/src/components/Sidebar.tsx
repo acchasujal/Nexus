@@ -1,10 +1,14 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
+  Network, 
+  Users, 
+  Share2, 
+  Layers, 
   Clock, 
-  AlertTriangle, 
-  BarChart3, 
+  FileText, 
   MessageSquareCode, 
+  ShieldCheck, 
   Settings, 
   LogOut,
   LayoutDashboard
@@ -20,38 +24,55 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const navItems = [
     {
-      name: 'Worklist',
+      name: 'Overview',
       to: '/worklist',
       icon: LayoutDashboard,
-      roles: ['IO', 'SHO']
+      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
-      name: 'Escalation Queue',
-      to: '/escalations',
-      icon: AlertTriangle,
-      roles: ['SHO', 'SP']
+      name: 'Network Explorer',
+      to: '/network',
+      icon: Network,
+      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
-      name: 'District Rollup',
-      to: '/rollup',
-      icon: BarChart3,
-      roles: ['SP']
+      name: 'Entity Resolution',
+      to: '/entities',
+      icon: Users,
+      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
-      name: 'Patterns & Trends',
+      name: 'Patterns & Communities',
       to: '/patterns',
-      icon: BarChart3,
-      roles: ['IO', 'SHO', 'SP']
+      icon: Layers,
+      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
-      name: 'Copilot',
+      name: 'Timeline & Events',
+      to: '/timeline',
+      icon: Clock,
+      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+    },
+    {
+      name: 'Evidence & Provenance',
+      to: '/evidence',
+      icon: FileText,
+      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+    },
+    {
+      name: 'Investigator Copilot',
       to: '/copilot',
       icon: MessageSquareCode,
-      roles: ['IO', 'SHO', 'SP']
+      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+    },
+    {
+      name: 'Audit Trail',
+      to: '/audit',
+      icon: ShieldCheck,
+      roles: ['SUPERVISOR', 'ADMIN', 'SHO', 'SP']
     }
   ]
 
-  // Filter navigation by role permission
   const filteredNavItems = navItems.filter(item => !role || item.roles.includes(role))
 
   return (
@@ -65,33 +86,38 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-sidebar flex-col border-r border-neutral-200 bg-neutral-900 text-neutral-100 transition-transform duration-normal lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-sidebar flex-col border-r border-neutral-800 bg-neutral-950 text-neutral-100 transition-transform duration-normal lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Brand Wordmark */}
-        <div className="flex h-16 items-center border-b border-neutral-800 px-6">
-          <Clock className="mr-3 h-6 w-6 text-status-info" />
-          <span className="text-h2 font-bold tracking-tight text-neutral-50">CaseClock</span>
+        <div className="flex h-16 items-center border-b border-neutral-800 px-6 gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 shadow-md">
+            <Network className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <span className="text-lg font-bold tracking-tight text-white">NEXUS</span>
+            <div className="text-[10px] font-medium text-blue-400 uppercase tracking-wider">Network Intelligence</div>
+          </div>
         </div>
 
         {/* User Role Badge */}
-        <div className="px-6 py-4 border-b border-neutral-800">
+        <div className="px-6 py-4 border-b border-neutral-800/80 bg-neutral-900/40">
           <div className="flex items-center space-x-3">
-            <div className="h-8 w-8 rounded-radius-full bg-neutral-800 flex items-center justify-center font-bold text-status-info text-small">
-              {role ? role.substring(0, 2) : 'U'}
+            <div className="h-8 w-8 rounded-full bg-blue-900/50 border border-blue-500/30 flex items-center justify-center font-bold text-blue-300 text-xs">
+              {role ? role.substring(0, 2) : 'NV'}
             </div>
             <div>
-              <div className="text-small font-semibold text-neutral-200">{role || 'Guest'}</div>
-              <div className="text-caption text-neutral-400">
-                {role === 'SP' ? 'Superintendent' : role === 'SHO' ? 'Station Head Officer' : 'Investigating Officer'}
+              <div className="text-xs font-semibold text-neutral-200">{role || 'Investigator'}</div>
+              <div className="text-[11px] text-neutral-400">
+                {role === 'SP' || role === 'SUPERVISOR' ? 'Supervisor / SP' : role === 'ANALYST' ? 'Intelligence Analyst' : 'Investigating Officer'}
               </div>
             </div>
           </div>
         </div>
 
         {/* Primary Navigation */}
-        <nav className="flex-1 space-y-1 px-4 py-6 overflow-y-auto">
+        <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
           {filteredNavItems.map((item) => {
             const Icon = item.icon
             return (
@@ -99,42 +125,42 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 key={item.name}
                 to={item.to}
                 onClick={onClose}
-                className={({ isActive }) =>
-                  `flex min-h-11 items-center px-4 py-2 text-body rounded-radius-md transition-colors duration-fast ${
-                    isActive
-                      ? 'bg-neutral-800 text-neutral-50 font-medium'
-                      : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
-                  }`
-                }
+                className={({ isActive }) => `
+                  flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all
+                  ${isActive 
+                    ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold' 
+                    : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200'
+                  }
+                `}
               >
-                <Icon className="mr-3 h-5 w-5" />
+                <Icon className="mr-3 h-4 w-4" />
                 {item.name}
               </NavLink>
             )
           })}
         </nav>
 
-        {/* Footer Area */}
+        {/* Secondary Navigation & Logout */}
         <div className="border-t border-neutral-800 p-4 space-y-1">
           <NavLink
             to="/settings"
             onClick={onClose}
-            className={({ isActive }) =>
-              `flex min-h-11 items-center px-4 py-2 text-body rounded-radius-md transition-colors duration-fast ${
-                isActive
-                  ? 'bg-neutral-800 text-neutral-50 font-medium'
-                  : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
-              }`
-            }
+            className={({ isActive }) => `
+              flex items-center px-3 py-2 rounded-md text-xs font-medium transition-all
+              ${isActive ? 'bg-neutral-800 text-neutral-200' : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200'}
+            `}
           >
-            <Settings className="mr-3 h-5 w-5" />
+            <Settings className="mr-3 h-4 w-4" />
             Settings
           </NavLink>
           <button
-            onClick={logout}
-            className="flex min-h-11 w-full items-center px-4 py-2 text-body text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200 rounded-radius-md transition-colors duration-fast focus-visible:ring-2 focus-visible:ring-status-info"
+            onClick={() => {
+              logout()
+              onClose()
+            }}
+            className="flex w-full items-center px-3 py-2 rounded-md text-xs font-medium text-red-400 hover:bg-neutral-900 hover:text-red-300 transition-all"
           >
-            <LogOut className="mr-3 h-5 w-5" />
+            <LogOut className="mr-3 h-4 w-4" />
             Sign Out
           </button>
         </div>

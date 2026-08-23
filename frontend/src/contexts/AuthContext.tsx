@@ -13,7 +13,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 function createSessionToken(role: UserRole): string {
   const payload = {
     sub: `officer_${role.toLowerCase()}`,
-    email: `officer_${role.toLowerCase()}@caseclock.ksp.gov.in`,
+    email: `officer_${role.toLowerCase()}@nexus.gov.in`,
     role: role,
     iat: Math.floor(Date.now() / 1000),
   }
@@ -22,10 +22,10 @@ function createSessionToken(role: UserRole): string {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<UserRole | null>(() => {
-    const saved = localStorage.getItem('caseclock_role')
-    if (saved && !localStorage.getItem('caseclock_token')) {
+    const saved = localStorage.getItem('nexus_role') || localStorage.getItem('caseclock_role')
+    if (saved && !localStorage.getItem('nexus_token')) {
       const token = createSessionToken(saved as UserRole)
-      localStorage.setItem('caseclock_token', token)
+      localStorage.setItem('nexus_token', token)
     }
     return (saved as UserRole) || null
   })
@@ -33,12 +33,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = (newRole: UserRole) => {
     setRole(newRole)
     const token = createSessionToken(newRole)
-    localStorage.setItem('caseclock_role', newRole)
-    localStorage.setItem('caseclock_token', token)
+    localStorage.setItem('nexus_role', newRole)
+    localStorage.setItem('nexus_token', token)
   }
 
   const logout = () => {
     setRole(null)
+    localStorage.removeItem('nexus_role')
+    localStorage.removeItem('nexus_token')
     localStorage.removeItem('caseclock_role')
     localStorage.removeItem('caseclock_token')
   }

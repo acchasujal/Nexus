@@ -363,12 +363,12 @@ function NetworkAnalysisPanelContent({ caseId, selectedEntityId, onEntitySelect 
       {isPrinting && (
         <div className="hidden print:block absolute inset-0 bg-white text-black p-8 font-serif z-50">
           <div className="border-b-2 border-black pb-4 mb-6">
-            <h1 className="text-2xl font-bold uppercase tracking-wide">CaseClock Statutory Investigation Board</h1>
+            <h1 className="text-2xl font-bold uppercase tracking-wide">NEXUS Criminal Intelligence Network Board</h1>
             <div className="grid grid-cols-2 gap-4 text-xs mt-2 font-mono">
               <div><strong>CASE ID:</strong> {caseId}</div>
               <div><strong>DATE GENERATED:</strong> {new Date().toLocaleDateString()}</div>
-              <div><strong>OFFICER ROLE:</strong> Investigating Officer (IO)</div>
-              <div><strong>COMMISSIONED UNDER:</strong> BNSS Guidelines</div>
+              <div><strong>OFFICER ROLE:</strong> Investigator</div>
+              <div><strong>INTELLIGENCE SYSTEM:</strong> NEXUS Intelligence Graph</div>
             </div>
           </div>
           <div className="space-y-4">

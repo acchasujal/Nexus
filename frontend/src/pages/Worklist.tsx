@@ -1,430 +1,212 @@
-import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useWorklist } from '@/hooks/useWorklist'
+import { useState, useMemo, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import { DataTable, type ColumnDef } from '@/components/DataTable'
-import { ClockBadge } from '@/components/ClockBadge'
-import { RiskBadge } from '@/components/RiskBadge'
-import { StatusChip } from '@/components/StatusChip'
-import { Button } from '@/components/Button'
-import { Input } from '@/components/Input'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
-import { clockStatusToRisk } from '@/lib/utils'
-import type { CaseSummaryResponse } from '@shared/contracts/api'
-import { ShieldAlert } from 'lucide-react'
-
-import { DeadlineMonitorBanner } from '@/components/DeadlineMonitorBanner'
-
-const PAGE_SIZE = 15
-
-// Shared select class to avoid repetition
-const SELECT_CLASS =
-  'block w-full rounded-radius-sm border border-neutral-300 bg-neutral-50 px-3 py-1.5 text-small text-neutral-900 focus:border-status-info focus:ring-1 focus:ring-status-info'
-
-const relativeTimeFormatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
-
-function formatRelativeTime(timestamp: string): string {
-  const elapsedSeconds = (Date.parse(timestamp) - Date.now()) / 1000
-  const absoluteSeconds = Math.abs(elapsedSeconds)
-  const units: Array<[Intl.RelativeTimeFormatUnit, number]> = [
-    ['year', 31_536_000],
-    ['month', 2_592_000],
-    ['day', 86_400],
-    ['hour', 3_600],
-    ['minute', 60],
-  ]
-  const [unit, secondsPerUnit] = units.find(([, seconds]) => absoluteSeconds >= seconds) ?? ['second', 1]
-  return relativeTimeFormatter.format(Math.round(elapsedSeconds / secondsPerUnit), unit)
-}
-
-function formatExactDateTime(timestamp: string): string {
-  return new Intl.DateTimeFormat('en-IN', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(timestamp))
-}
+import { apiClient } from '@/lib/apiClient'
+import { 
+  ShieldAlert, 
+  Search, 
+  Filter, 
+  Network, 
+  FileText, 
+  Users, 
+  AlertTriangle,
+  ArrowRight,
+  Sparkles
+} from 'lucide-react'
 
 export default function Worklist() {
   const navigate = useNavigate()
-  const { data: cases, isLoading, error, refetch } = useWorklist()
+  const [investigations, setInvestigations] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Search and Filter States
+  // Filters
   const [searchQuery, setSearchQuery] = useState('')
-  const [stationFilter, setStationFilter] = useState('all')
-  const [clockStatusFilter, setClockStatusFilter] = useState('all')
-  const [riskFilter, setRiskFilter] = useState('all')
-  const [sortBy, setSortBy] = useState('risk_rank')
+  const [districtFilter, setDistrictFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
 
-  // Pagination State
-  const [currentPage, setCurrentPage] = useState(1)
+  const fetchInvestigations = () => {
+    setIsLoading(true)
+    apiClient.getInvestigations()
+      .then((data) => {
+        setInvestigations(Array.isArray(data) ? data : [])
+        setError(null)
+      })
+      .catch((err) => {
+        console.error('Failed to load investigations:', err)
+        setError('Unable to connect to NEXUS backend intelligence service.')
+      })
+      .finally(() => setIsLoading(false))
+  }
 
-  // Extract unique stations dynamically for filter dropdown
-  const uniqueStations = useMemo(() => {
-    if (!cases) return []
-    return Array.from(new Set(cases.map((c) => c.station_name))).sort()
-  }, [cases])
+  useEffect(() => {
+    fetchInvestigations()
+  }, [])
 
-  // Filter & Search Logic
-  const filteredCases = useMemo(() => {
-    if (!cases) return []
+  // Filtered dataset
+  const filteredData = useMemo(() => {
+    return investigations.filter((item) => {
+      const matchesSearch = 
+        !searchQuery ||
+        item.fir_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.station_name?.toLowerCase().includes(searchQuery.toLowerCase())
 
-    return cases.filter((c) => {
-      const matchesSearch =
-        c.fir_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.offence_category.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesDistrict = districtFilter === 'all' || item.district === districtFilter
+      const matchesCategory = categoryFilter === 'all' || item.offence_category === categoryFilter
 
-      const matchesStation = stationFilter === 'all' || c.station_name === stationFilter
-      const matchesClock = clockStatusFilter === 'all' || c.clock.status === clockStatusFilter
-
-      const riskLevel = clockStatusToRisk(c.clock.status)
-      const matchesRisk = riskFilter === 'all' || riskLevel === riskFilter
-
-      return matchesSearch && matchesStation && matchesClock && matchesRisk
+      return matchesSearch && matchesDistrict && matchesCategory
     })
-  }, [cases, searchQuery, stationFilter, clockStatusFilter, riskFilter])
+  }, [investigations, searchQuery, districtFilter, categoryFilter])
 
-  // Sorting Logic
-  const sortedCases = useMemo(() => {
-    const list = [...filteredCases]
-
-    list.sort((a, b) => {
-      if (sortBy === 'risk_rank') return a.risk_rank - b.risk_rank
-      if (sortBy === 'days_remaining') {
-        if (a.clock.status === 'overdue' && b.clock.status !== 'overdue') return -1
-        if (b.clock.status === 'overdue' && a.clock.status !== 'overdue') return 1
-        return a.clock.days_remaining - b.clock.days_remaining
-      }
-      if (sortBy === 'unresolved_dependencies') {
-        return b.unresolved_dependency_count - a.unresolved_dependency_count
-      }
-      return 0
-    })
-
-    return list
-  }, [filteredCases, sortBy])
-
-  // Pagination Logic
-  const totalPages = Math.ceil(sortedCases.length / PAGE_SIZE)
-  const paginatedCases = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE
-    return sortedCases.slice(start, start + PAGE_SIZE)
-  }, [sortedCases, currentPage])
-
-  // Reset page on filter change
-  const handleFilterChange = <T,>(setter: (value: T) => void) => (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-    setter(e.target.value as T)
-    setCurrentPage(1)
-  }
-
-  // Handle Loading State
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-h1 font-bold text-neutral-900">Risk-Ranked Worklist</h1>
-          <p className="text-body text-neutral-500">Loading active cases...</p>
-        </div>
-        <LoadingSkeleton layout="table" rows={PAGE_SIZE} />
-      </div>
-    )
-  }
-
-  // Handle Error State
-  if (error) {
-    return (
-      <div className="py-12">
-        <ErrorState
-          message={error instanceof Error ? error.message : 'Failed to load the active case worklist. Please verify server connectivity.'}
-          onRetry={refetch}
-        />
-      </div>
-    )
-  }
-
-  // Define table columns
-  const columns: ColumnDef<CaseSummaryResponse>[] = [
+  const columns: ColumnDef<any>[] = [
     {
-      header: 'Priority',
-      accessorKey: 'risk_rank',
-      cell: (row) => (
-        <span className="font-bold text-neutral-600 font-mono">#{row.risk_rank}</span>
-      ),
-    },
-    {
-      header: 'Risk Level',
-      accessorKey: 'clock.status',
-      cell: (row) => <RiskBadge level={clockStatusToRisk(row.clock.status)} />,
-    },
-    {
-      header: 'Statutory Clock',
-      accessorKey: 'clock.days_remaining',
-      cell: (row) => (
-        <ClockBadge daysRemaining={row.clock.days_remaining} status={row.clock.status} variant="compact" />
-      ),
-    },
-    {
-      header: 'FIR Number',
+      header: 'FIR Number / Title',
       accessorKey: 'fir_number',
       cell: (row) => (
-        <span className="font-semibold text-neutral-900 font-mono hover:text-status-info transition-colors duration-fast">
-          {row.fir_number}
+        <div>
+          <div className="font-bold text-neutral-100 flex items-center gap-1.5">
+            {row.fir_number}
+          </div>
+          <div className="text-xs text-neutral-400 max-w-sm truncate">{row.title}</div>
+        </div>
+      ),
+    },
+    {
+      header: 'Category',
+      accessorKey: 'offence_category',
+      cell: (row) => (
+        <span className="inline-flex items-center rounded-md bg-neutral-800 px-2.5 py-1 text-xs font-medium text-neutral-200 border border-neutral-700">
+          {row.offence_category}
         </span>
       ),
     },
     {
-      header: 'Station',
+      header: 'Police Station / District',
       accessorKey: 'station_name',
-    },
-    {
-      header: 'Offence Category',
-      accessorKey: 'offence_category',
-    },
-    {
-      header: 'Blockers',
-      accessorKey: 'unresolved_dependency_count',
       cell: (row) => (
-        <StatusChip
-          status={row.unresolved_dependency_count > 0 ? 'stale' : 'healthy'}
-          label={row.unresolved_dependency_count > 0 ? `${row.unresolved_dependency_count} Pending` : 'Clear'}
-        />
+        <div>
+          <div className="text-sm font-medium text-neutral-200">{row.station_name}</div>
+          <div className="text-xs text-neutral-400">{row.district}</div>
+        </div>
       ),
     },
     {
-      header: 'Case Status',
-      accessorKey: 'unresolved_dependency_count',
+      header: 'Accused / Evidence',
+      accessorKey: 'accused_count',
       cell: (row) => (
-        <StatusChip
-          status={row.unresolved_dependency_count > 0 ? 'pending' : 'resolved'}
-          label={row.unresolved_dependency_count > 0 ? 'Under Investigation' : 'Ready to File'}
-        />
+        <div className="flex items-center gap-3 text-xs text-neutral-300">
+          <span className="flex items-center gap-1">
+            <Users className="h-3.5 w-3.5 text-blue-400" />
+            {row.accused_count} Accused
+          </span>
+          <span className="flex items-center gap-1">
+            <FileText className="h-3.5 w-3.5 text-emerald-400" />
+            {row.evidence_count} Evidence
+          </span>
+        </div>
       ),
     },
     {
-      header: 'Last Updated',
-      accessorKey: 'updated_at',
+      header: 'Status',
+      accessorKey: 'status',
       cell: (row) => (
-        <time
-          dateTime={row.updated_at}
-          title={formatExactDateTime(row.updated_at)}
-          className="whitespace-nowrap text-caption text-neutral-600"
-        >
-          {formatRelativeTime(row.updated_at)}
-        </time>
+        <span className="inline-flex items-center rounded-full bg-blue-950/70 px-2.5 py-0.5 text-xs font-semibold text-blue-400 border border-blue-800/50">
+          {row.status}
+        </span>
       ),
     },
     {
-      header: 'Actions',
+      header: 'Action',
       accessorKey: 'id',
       cell: (row) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation()
-            navigate(`/case/${row.id}`)
-          }}
-          aria-label={`View details for case ${row.fir_number}`}
+        <button
+          onClick={() => navigate(`/cases/${row.id}`)}
+          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors"
         >
-          View Details
-        </Button>
+          Explore Graph <ArrowRight className="h-3 w-3" />
+        </button>
       ),
     },
   ]
 
+  if (isLoading) return <LoadingSkeleton layout="table" />
+  if (error) return <ErrorState message={error} onRetry={fetchInvestigations} />
+
   return (
     <div className="space-y-6">
-      {/* Page Title Header */}
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-h1 font-bold text-neutral-900">Risk-Ranked Worklist</h1>
-          <span className="rounded-radius-sm border border-neutral-300 bg-neutral-100 px-2 py-1 text-caption font-semibold text-neutral-700">
-            Synthetic Data
-          </span>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-800 pb-5">
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-100 flex items-center gap-2.5">
+            <ShieldAlert className="h-6 w-6 text-blue-500" />
+            Active Criminal Network Investigations
+          </h1>
+          <p className="text-sm text-neutral-400 mt-1">
+            Cross-jurisdictional intelligence overview with multi-hop link analysis and provenance tracking.
+          </p>
         </div>
-        <p className="text-body text-neutral-500">
-          Statutory-deadline investigation command center for Mysuru District
-        </p>
+
+        <div className="flex items-center gap-2.5">
+          <Link
+            to="/network"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-blue-500 transition-colors shadow-sm"
+          >
+            <Network className="h-4 w-4" />
+            Open Graph Explorer
+          </Link>
+        </div>
       </div>
 
-      {/* Autonomous Deadline Monitor Status Banner */}
-      <DeadlineMonitorBanner />
-
-      {/* Filter and Search Action Bar */}
-      <div
-        className="flex flex-col gap-4 rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 lg:flex-row lg:items-end"
-        role="search"
-        aria-label="Filter and search worklist"
-      >
-        {/* Search Input */}
-        <div className="flex-1">
-          <Input
-            label="Search cases"
+      {/* Search and Filters */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-500" />
+          <input
+            type="text"
             value={searchQuery}
-            onChange={handleFilterChange<string>(setSearchQuery)}
-            placeholder="Search by FIR or category..."
-            className="w-full"
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by FIR number, station, or title..."
+            className="w-full rounded-lg border border-neutral-800 bg-neutral-900/80 pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:border-blue-500 focus:outline-none"
           />
         </div>
 
-        {/* Station Filter */}
-        <div className="w-full lg:w-48">
-          <label htmlFor="station-filter" className="block text-small font-semibold text-neutral-700 mb-1.5">
-            Police Station
-          </label>
-          <select
-            id="station-filter"
-            value={stationFilter}
-            onChange={handleFilterChange<string>(setStationFilter)}
-            className={SELECT_CLASS}
-          >
-            <option value="all">All Stations</option>
-            {uniqueStations.map((station) => (
-              <option key={station} value={station}>{station}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Clock Status Filter */}
-        <div className="w-full lg:w-48">
-          <label htmlFor="clock-filter" className="block text-small font-semibold text-neutral-700 mb-1.5">
-            Clock Status
-          </label>
-          <select
-            id="clock-filter"
-            value={clockStatusFilter}
-            onChange={handleFilterChange<string>(setClockStatusFilter)}
-            className={SELECT_CLASS}
-          >
-            <option value="all">All Clocks</option>
-            <option value="green">Healthy (Green)</option>
-            <option value="amber">Approaching (Amber)</option>
-            <option value="red">Critical (Red)</option>
-            <option value="overdue">Breached (Overdue)</option>
-          </select>
-        </div>
-
-        {/* Risk Level Filter */}
-        <div className="w-full lg:w-48">
-          <label htmlFor="risk-filter" className="block text-small font-semibold text-neutral-700 mb-1.5">
-            Risk Rank
-          </label>
-          <select
-            id="risk-filter"
-            value={riskFilter}
-            onChange={handleFilterChange<string>(setRiskFilter)}
-            className={SELECT_CLASS}
-          >
-            <option value="all">All Risks</option>
-            <option value="HIGH">High Risk</option>
-            <option value="MEDIUM">Medium Risk</option>
-            <option value="LOW">Low Risk</option>
-          </select>
-        </div>
-
-        {/* Sort Trigger */}
-        <div className="w-full lg:w-48">
-          <label htmlFor="sort-by" className="block text-small font-semibold text-neutral-700 mb-1.5">
-            Sort Priority
-          </label>
-          <select
-            id="sort-by"
-            value={sortBy}
-            onChange={handleFilterChange<string>(setSortBy)}
-            className={SELECT_CLASS}
-          >
-            <option value="risk_rank">Risk Rank (Urgent First)</option>
-            <option value="days_remaining">Days Left (Fewest First)</option>
-            <option value="unresolved_dependencies">Blockers Count (Most First)</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Main Table Area */}
-      <div className="space-y-4">
-        {paginatedCases.length === 0 ? (
-          <div
-            className="py-12 border border-dashed border-neutral-300 rounded-radius-md bg-neutral-50 text-center"
-            role="status"
-            aria-live="polite"
-          >
-            <ShieldAlert className="mx-auto h-12 w-12 text-neutral-400 mb-4" aria-hidden="true" />
-            <h3 className="text-h2 font-semibold text-neutral-700">No cases match filters</h3>
-            <p className="text-body text-neutral-500 mt-1 mb-6">
-              Adjust search query or filter parameters to locate the active case files.
-            </p>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setSearchQuery('')
-                setStationFilter('all')
-                setClockStatusFilter('all')
-                setRiskFilter('all')
-                setSortBy('risk_rank')
-                setCurrentPage(1)
-              }}
-            >
-              Clear Filters
-            </Button>
-          </div>
-        ) : (
-          <div className="relative">
-            {/* Keyboard shortcut hint for sighted users */}
-            <div className="hidden lg:flex justify-end mb-1">
-              <p className="text-caption text-neutral-400 italic">
-                Use{' '}
-                <kbd className="bg-neutral-200 px-1 rounded-radius-sm text-neutral-600 font-mono">↑</kbd>{' '}
-                <kbd className="bg-neutral-200 px-1 rounded-radius-sm text-neutral-600 font-mono">↓</kbd>{' '}
-                to navigate,{' '}
-                <kbd className="bg-neutral-200 px-1 rounded-radius-sm text-neutral-600 font-mono">Enter</kbd>{' '}
-                to open — or press{' '}
-                <kbd className="bg-neutral-200 px-1 rounded-radius-sm text-neutral-600 font-mono">?</kbd>{' '}
-                for all shortcuts
-              </p>
-            </div>
-            <DataTable
-              columns={columns}
-              data={paginatedCases}
-              isLoading={false}
-              onRowClick={(row) => navigate(`/case/${row.id}`)}
-              ariaLabel={`Investigation worklist — ${paginatedCases.length} cases, page ${currentPage} of ${totalPages}`}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Pagination Bar */}
-      {totalPages > 1 && (
-        <nav
-          className="flex items-center justify-between border-t border-neutral-200 pt-4"
-          aria-label="Worklist pagination"
+        <select
+          value={districtFilter}
+          onChange={(e) => setDistrictFilter(e.target.value)}
+          className="rounded-lg border border-neutral-800 bg-neutral-900/80 px-3 py-2 text-sm text-neutral-200 focus:border-blue-500 focus:outline-none"
         >
-          <div className="text-small text-neutral-500" aria-live="polite" aria-atomic="true">
-            Page <span className="font-bold text-neutral-800">{currentPage}</span> of{' '}
-            <span className="font-bold text-neutral-800">{totalPages}</span>{' '}
-            ({sortedCases.length} total cases)
-          </div>
-          <div className="flex space-x-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              aria-label="Previous page"
-            >
-              Previous
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              aria-label="Next page"
-            >
-              Next
-            </Button>
-          </div>
-        </nav>
-      )}
+          <option value="all">All Districts</option>
+          <option value="Bengaluru Urban">Bengaluru Urban</option>
+          <option value="Bengaluru Rural">Bengaluru Rural</option>
+          <option value="Mysuru">Mysuru</option>
+          <option value="Mangaluru">Mangaluru</option>
+        </select>
+
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="rounded-lg border border-neutral-800 bg-neutral-900/80 px-3 py-2 text-sm text-neutral-200 focus:border-blue-500 focus:outline-none"
+        >
+          <option value="all">All Crime Categories</option>
+          <option value="Narcotics & Drug Trafficking">Narcotics & Drug Trafficking</option>
+          <option value="Cyber Financial Fraud & Phishing">Cyber Financial Fraud</option>
+          <option value="Organized Extortion & Protection Racketeering">Organized Extortion</option>
+          <option value="Illegal Arms Trafficking">Illegal Arms Trafficking</option>
+          <option value="Hawala & Money Laundering">Hawala & Money Laundering</option>
+        </select>
+      </div>
+
+      {/* Investigations Table */}
+      <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 overflow-hidden shadow-lg">
+        <DataTable
+          columns={columns}
+          data={filteredData}
+          onRowClick={(row) => navigate(`/cases/${row.id}`)}
+        />
+      </div>
     </div>
   )
 }
