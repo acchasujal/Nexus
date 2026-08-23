@@ -13,7 +13,7 @@ from __future__ import annotations
 import time
 import pytest
 
-from backend.app.core.graph.algorithms.clustering import detect_communities, find_bridge_nodes
+from backend.app.core.graph.algorithms.clustering import detect_communities
 from backend.app.core.graph.algorithms.entity_resolution import resolve_entity
 from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord, bfs
 from synthetic_data.nexus_generator import generate_nexus_synthetic_dataset
