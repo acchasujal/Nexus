@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "IntentExtractionSchema",
+  "description": "JSON schema for structured intent and entity extraction in CaseClock AI.",
+  "type": "object",
+  "properties": {
+    "intent": {
+      "type": "string",
+      "enum": [
+        "GET_CASE",
+        "GET_CASE_DETAILS",
+        "SEARCH_CASES",
+        "GET_SIMILAR_CASES",
+        "GET_REPEAT_OFFENDERS",
+        "GET_NETWORK",
+        "GET_HOTSPOTS",
+        "GET_DEPENDENCIES",
+        "GET_CLOCK",
+        "GENERAL_CHAT",
+        "UNKNOWN"
+      ],
+      "description": "Extracted primary intent category."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence score between 0.0 and 1.0."
+    },
+    "entities": {
+      "type": "array",
+      "description": "Extracted entities from user prompt.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Entity category (e.g., case_id, officer_id, zone, rank, status)."
+          },
+          "value": {
+            "type": "string",
+            "description": "Extracted literal entity value."
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Entity extraction confidence score."
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "intent",
+    "entities"
+  ],
+  "additionalProperties": false
+}

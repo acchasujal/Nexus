@@ -1,0 +1,32 @@
+name: Deployment
+description: Catalyst deploy, environment config, or CI/CD change
+labels: ["type/deployment", "lane/4-ai-arch"]
+body:
+  - type: dropdown
+    id: target
+    attributes:
+      label: Target Environment
+      options:
+        - Catalyst — AppSail (backend)
+        - Catalyst — Slate (frontend)
+        - Catalyst — Data Store
+        - CI/CD Pipeline (.github/workflows)
+        - Local dev setup
+        - All services
+    validations:
+      required: true
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Deployment Checklist
+      options:
+        - label: Fresh-clone verification planned (verify_deployment.sh)
+        - label: Fallback / rollback path identified
+        - label: Catalyst service configs updated in deployment/
+        - label: "If this is the first deploy (M0 Walking Skeleton): also verify from a second machine"

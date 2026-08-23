@@ -1,0 +1,71 @@
+name: Feature
+description: A new capability or user-facing behavior
+labels: ["type/feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Read `EXECUTION_RULES.md` §"Mandatory Reasoning Workflow" before filling this out.
+  - type: dropdown
+    id: lane
+    attributes:
+      label: Owning Lane
+      options:
+        - Lane 1 — Backend Core
+        - Lane 2 — Frontend
+        - Lane 3 — Graph Intelligence
+        - Lane 4 — AI + Architecture + Integration
+    validations:
+      required: true
+  - type: input
+    id: branch
+    attributes:
+      label: Branch
+      placeholder: "laneN/short-task-name  (e.g. lane1/clock-engine)"
+    validations:
+      required: true
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What is this doing? One paragraph. Link to FEATURE_REGISTRY.md entry if it exists.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Bullet list. Each item must be independently verifiable.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Blocking Dependencies
+      description: Other issues, Catalyst spikes, or schema decisions this requires first.
+  - type: textarea
+    id: dod
+    attributes:
+      label: Definition of Done
+      value: |
+        - [ ] Merged to lane branch
+        - [ ] Unit tests pass
+        - [ ] TASK.md updated
+        - [ ] If arch changed: ARCHITECTURE.md + DECISION_LOG.md updated in same session
+        - [ ] If feature added/cut: FEATURE_REGISTRY.md updated
+  - type: checkboxes
+    id: antihal
+    attributes:
+      label: Anti-Hallucination Pre-Check (EXECUTION_RULES.md)
+      options:
+        - label: This doesn't invent a schema field that doesn't exist in the organizer ER
+          required: true
+        - label: No legal citation asserted without [VERIFIED] or [UNVERIFIED] marker
+          required: true
+        - label: No new parallel data store introduced (one graph, many lenses)
+          required: true
+        - label: Nothing labeled AI/ML that is actually a rule engine
+          required: true

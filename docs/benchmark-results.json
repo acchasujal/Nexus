@@ -1,0 +1,10 @@
+{
+  "commit": "working-tree-after-879afd8",
+  "environment": {"os": "Windows-11-10.0.26200-SP0", "python": "3.13.1", "vite": "6.4.3"},
+  "method": {"seed": 42, "reference_time": "2026-01-01T00:00:00+00:00", "runs": 7, "api_requests_per_endpoint": 100, "graph_queries_per_depth": 200},
+  "historical_deadline": {"100": {"clocks": 134, "p50_ms": 0.513, "p95_ms": 0.689, "throughput_clocks_per_sec": 261208.5}, "500": {"clocks": 667, "p50_ms": 6.356, "p95_ms": 7.787, "throughput_clocks_per_sec": 104933.6}, "1000": {"clocks": 1334, "p50_ms": 9.054, "p95_ms": 11.179, "throughput_clocks_per_sec": 147333.3}, "5000": {"clocks": 6667, "p50_ms": 131.713, "p95_ms": 386.578, "throughput_clocks_per_sec": 50617.5}},
+  "mixed_state_deadline": {"5000": {"clocks": 6667, "p50_ms": 97.017, "p95_ms": 108.567, "throughput_clocks_per_sec": 68720.1, "status_counts": {"green": 1334, "amber": 1334, "red": 2666, "overdue": 1333}}},
+  "autonomous_sweep": {"cases_scanned": 375, "clocks_evaluated": 500, "state_transitions": 0, "escalations_created": 0, "errors": 0, "duration_ms": 3.69, "cases_per_sec": 101626.0, "clocks_per_sec": 135501.4},
+  "graph_network": {"cases": 4000, "nodes": 22296, "edges": 45448, "queries": 200, "depth_1": {"p50_ms": 0.092, "p95_ms": 0.12, "mean_ms": 0.086, "queries_per_sec_p50": 10869.6}, "depth_2": {"p50_ms": 18.962, "p95_ms": 29.431, "mean_ms": 21.523, "queries_per_sec_p50": 52.7}},
+  "local_api": {"requests": 100, "success_rate": 1.0, "worklist_p50_ms": 11.341, "worklist_p95_ms": 18.67, "case_detail_p50_ms": 1.715, "case_detail_p95_ms": 4.931, "similar_cases_p50_ms": 19.14, "similar_cases_p95_ms": 29.739, "network_p50_ms": 30.267, "network_p95_ms": 84.422, "deadline_monitor_p50_ms": 1.256, "deadline_monitor_p95_ms": 3.51}
+}

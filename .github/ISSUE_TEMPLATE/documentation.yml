@@ -1,0 +1,33 @@
+name: Documentation
+description: Update to docs/ files — triggered when implementation makes a doc stale
+labels: ["type/docs"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Per `EXECUTION_RULES.md` §"Documentation Update Rules" — architectural changes update `ARCHITECTURE.md` and `DECISION_LOG.md` in the **same commit/session**, not deferred. New or cut features update `FEATURE_REGISTRY.md`. `TASK.md` is updated at the start and end of every session.
+  - type: dropdown
+    id: doc
+    attributes:
+      label: Document(s) being updated
+      options:
+        - ARCHITECTURE.md
+        - DECISION_LOG.md
+        - EXECUTION_RULES.md
+        - FEATURE_REGISTRY.md
+        - HACKATHON_MASTER_GUIDE.md
+        - IMPLEMENTATION_PLAN.md
+        - PROJECT_CONTEXT.md
+        - TASK.md
+        - TEAM_PLAYBOOK.md
+        - README.md
+        - CONTRIBUTING.md
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What changed in the implementation that makes this doc stale?
+    validations:
+      required: true

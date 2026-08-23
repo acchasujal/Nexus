@@ -1,0 +1,73 @@
+# Backend .dockerignore
+# Exclude files that should not be in the Docker build context
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Vendored packages (installed via pip install -t .)
+# These are NOT used in Docker — requirements.txt is used instead
+fastapi/
+uvicorn/
+starlette/
+pydantic/
+pydantic_core/
+pydantic_settings/
+anyio/
+certifi/
+charset_normalizer/
+click/
+colorama/
+h11/
+httpcore/
+httpx/
+idna/
+networkx/
+packaging/
+pluggy/
+pygments/
+requests/
+ruff/
+urllib3/
+annotated_doc/
+annotated_types/
+iniconfig/
+typing_inspection/
+dotenv/
+pytest/
+_pytest/
+bin/
+*.dist-info/
+typing_extensions.py
+py.py
+*.so
+
+# backend/shared is a deployment-only copy; Docker uses the repo root shared/
+shared/
+
+# Test files
+tests/
+
+# Environment files (never copy secrets into images)
+.env
+.env.*
+
+# Editor and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore

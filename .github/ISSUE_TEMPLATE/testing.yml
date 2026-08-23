@@ -1,0 +1,38 @@
+name: Testing
+description: Adding or executing a test suite (unit, integration, scale, refusal-gate)
+labels: ["type/testing"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The refusal-gate test and scale test are **mandatory** before submission (M5 milestone).
+        Neither has been executed as of the last TASK.md update — these must not be claimed as done until results are logged.
+  - type: dropdown
+    id: type
+    attributes:
+      label: Test Type
+      options:
+        - "Unit — Clock Engine (BNSS offence-category → clock-type mapping)"
+        - "Unit — Escalation Rules"
+        - "Unit — Dependency Tracker"
+        - "Refusal Gate — 10-15 question test set (MANDATORY, unexecuted)"
+        - "Scale / Load — 1-2 lakh records with measured latency (MANDATORY, unexecuted)"
+        - Integration
+        - E2E
+    validations:
+      required: true
+  - type: textarea
+    id: objective
+    attributes:
+      label: What is being tested?
+    validations:
+      required: true
+  - type: textarea
+    id: dod
+    attributes:
+      label: Definition of Done
+      description: |
+        Refusal gate: 10-15 questions scored, results logged in ai/tests/refusal_testset/.
+        Scale test: measured (not estimated) latency number at 1-2 lakh records logged in tests/scale/.
+    validations:
+      required: true

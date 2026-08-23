@@ -1,0 +1,80 @@
+name: Release — Tag to Catalyst
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'       # triggers on v1.0.0, v1.0.0-rc1, etc.
+
+jobs:
+  deploy:
+    name: Deploy to Catalyst
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract tag version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install backend deps
+        run: pip install -r backend/requirements.txt
+
+      - name: Run all tests before deploy
+        run: python -m pytest -v --tb=short
+
+      - name: Install frontend deps and build
+        run: |
+          cd frontend
+          npm ci
+          npm run lint
+          npm run test:run
+          npm run build
+
+      # Catalyst deploy steps — fill in actual Catalyst CLI commands once M1 spike is complete
+      # These are placeholders until Catalyst CLI behavior is verified (per TEAM_PLAYBOOK.md spikes)
+      - name: Deploy backend to Catalyst AppSail
+        run: |
+          echo "TODO: Catalyst AppSail deploy command — verify in M1 spike"
+          echo "Deploy version ${{ steps.version.outputs.VERSION }}"
+        # run: zcatalyst deploy --service appsail --project caseclock
+        env:
+          CATALYST_TOKEN: ${{ secrets.CATALYST_TOKEN }}
+
+      - name: Deploy frontend to Catalyst Slate
+        run: |
+          echo "TODO: Catalyst Slate deploy command — verify in M1 spike"
+        # run: zcatalyst deploy --service slate --project caseclock
+        env:
+          CATALYST_TOKEN: ${{ secrets.CATALYST_TOKEN }}
+
+      - name: Smoke test — verify deployment
+        run: |
+          echo "TODO: run scripts/verify_deployment.sh against Catalyst URL"
+          echo "Deployment URL should be in deployment/catalyst.json"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: "CaseClock ${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## CaseClock ${{ steps.version.outputs.VERSION }}
+
+            See [TASK.md](docs/TASK.md) for what is built vs. not built.
+            See [DECISION_LOG.md](docs/DECISION_LOG.md) for architecture decisions.
+
+            **Mandatory pre-submission checks:**
+            - [ ] Refusal-gate test executed and scored
+            - [ ] Scale test executed and scored (1-2 lakh records, measured latency)
+            - [ ] BNSS citations verified or marked [UNVERIFIED]
+            - [ ] Fresh-clone deployment verified
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

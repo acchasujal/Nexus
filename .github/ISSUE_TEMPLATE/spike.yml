@@ -1,0 +1,55 @@
+name: Research Spike
+description: Time-boxed investigation of an unknown (Catalyst capability, schema field, API behavior)
+labels: ["type/spike"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A spike must answer a **specific, binary question** within a fixed timebox.
+        The three mandatory spikes (per `TEAM_PLAYBOOK.md`) are: AppSail Python support, Data Store recursive queries, QuickML general grounded-completion support. These block all feature work.
+  - type: dropdown
+    id: lane
+    attributes:
+      label: Owning Lane
+      options:
+        - Lane 1 — Backend Core
+        - Lane 2 — Frontend
+        - Lane 3 — Graph Intelligence
+        - Lane 4 — AI + Architecture + Integration
+    validations:
+      required: true
+  - type: input
+    id: question
+    attributes:
+      label: Specific Question to Answer
+      description: Must be answerable with a yes/no or a concrete measured result. No open-ended explorations.
+    validations:
+      required: true
+  - type: input
+    id: timebox
+    attributes:
+      label: Timebox (hours)
+      placeholder: "4"
+    validations:
+      required: true
+  - type: dropdown
+    id: blocks
+    attributes:
+      label: What milestone is blocked by this spike?
+      options:
+        - M0 — Walking Skeleton
+        - M1 — Catalyst Spikes Done
+        - M2 — Core Engine
+        - M3 — Frontend Core
+        - M4 — Graph + Copilot
+        - M5 — Integration RC
+        - M6 — Submission
+    validations:
+      required: true
+  - type: textarea
+    id: dod
+    attributes:
+      label: Definition of Done
+      description: What artifact (test result, log, doc update in DECISION_LOG.md) proves the spike is complete?
+    validations:
+      required: true
