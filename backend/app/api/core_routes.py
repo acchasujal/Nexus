@@ -26,6 +26,7 @@ from backend.app.api.dependencies import (
     get_copilot_service,
     get_entity_service,
     get_evidence_service,
+    get_export_service,
     get_principal,
     get_repository,
     get_request_id,
@@ -40,6 +41,7 @@ from backend.app.services.case_service import InvestigationService
 from backend.app.services.copilot_service import CopilotService
 from backend.app.services.entity_service import EntityService
 from backend.app.services.evidence_service import EvidenceService
+from backend.app.services.export_service import ExportService
 from shared.contracts.api import (
     AuditLogEntry,
     AuthLoginRequest,
@@ -565,6 +567,45 @@ def create_core_router() -> APIRouter:
             skipped_count=0,
             error_count=0,
             audit_event_id=request_id or "",
+        )
+
+    # ── Dossier Export (Phase 5 / BE-05) ────────────────────────────────────
+
+    @router.post("/export/dossier", response_model=DossierExportResponse)
+    def export_dossier(
+        req: DossierExportRequest,
+        principal: Principal = Depends(get_principal),
+        export_svc: ExportService = Depends(get_export_service),
+        request_id: str = Depends(get_request_id),
+    ) -> DossierExportResponse:
+        """Generate court-admissible electronic record dossier per Section 63 BSA 2023."""
+        _, meta = export_svc.generate_dossier_pdf(
+            request=req,
+            actor_id=principal.user_id,
+            request_id=request_id,
+        )
+        return meta
+
+    @router.post("/export/dossier/download")
+    def download_dossier(
+        req: DossierExportRequest,
+        principal: Principal = Depends(get_principal),
+        export_svc: ExportService = Depends(get_export_service),
+        request_id: str = Depends(get_request_id),
+    ) -> Response:
+        """Download raw PDF bytes for BSA Section 63 electronic record certificate."""
+        pdf_bytes, meta = export_svc.generate_dossier_pdf(
+            request=req,
+            actor_id=principal.user_id,
+            request_id=request_id,
+        )
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="NEXUS_Section63_Dossier_{req.case_id}.pdf"',
+                "X-Dossier-SHA256": meta.sha256_hash,
+            },
         )
 
     # ── Audit Trail ───────────────────────────────────────────────────────────

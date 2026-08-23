@@ -5,12 +5,15 @@ Read-only status, telemetry, and graph health endpoints for NEXUS.
 
 from __future__ import annotations
 
+import time
 from typing import Any
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from backend.app.api.dependencies import get_principal, get_repository
 from backend.app.auth.principal import Principal
+
+_START_TIME = time.time()
 
 
 class SystemHealthResponse(BaseModel):
@@ -23,6 +26,7 @@ class SystemHealthResponse(BaseModel):
     total_phones: int
     total_accounts: int
     uptime_seconds: float = 0.0
+    evidence_hash_version: str = "SHA256-BSA-S63-V1"
 
 
 def create_system_router() -> APIRouter:
@@ -41,6 +45,8 @@ def create_system_router() -> APIRouter:
         phones = sum(1 for n in nodes.values() if n.get("entity_type") in ("Phone", "PHONE"))
         accounts = sum(1 for n in nodes.values() if n.get("entity_type") in ("Account", "ACCOUNT"))
 
+        uptime = max(0.0, time.time() - _START_TIME)
+
         return SystemHealthResponse(
             status="healthy",
             version="1.0.0",
@@ -50,7 +56,8 @@ def create_system_router() -> APIRouter:
             total_persons=persons,
             total_phones=phones,
             total_accounts=accounts,
-            uptime_seconds=3600.0,
+            uptime_seconds=round(uptime, 2),
+            evidence_hash_version="SHA256-BSA-S63-V1",
         )
 
     return router
