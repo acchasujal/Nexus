@@ -1,252 +1,146 @@
-# CaseClock
-
-> Statutory-deadline-aware investigation tracking for Karnataka State Police  
-> Built for KSP Datathon 2026 (PS1 — Intelligent Conversational AI)
-
-[![CI](https://github.com/acchasujal/CaseClock/actions/workflows/ci.yml/badge.svg)](https://github.com/acchasujal/CaseClock/actions/workflows/ci.yml)
-
-## KSP Datathon 2026
-
-CaseClock is an Investigation Decision Intelligence Platform for Karnataka State Police that turns fragmented case data into timely, explainable action.
-
-[Live Prototype](https://caseclock-frontend-zaruqrfp.onslate.in) · [Demo Video](https://drive.google.com/file/d/1zmdwMHbuCU8Pvqoz40mblGX8S9lQ7v5L/view?usp=sharing) · [Prototype Deck](https://storage.googleapis.com/vision-hack2skill-production/innovator/USER00953434/1785087100169-CaseClockPS1TeamBruh.pdf)
-
-### The problem
-
-Investigators must coordinate statutory deadlines, forensic and evidentiary blockers, case relationships and supervisory escalation across fragmented records. A missed deadline can become a legal failure, while a generic dashboard rarely explains what needs attention or why.
-
-### Our solution
-
-CaseClock combines deterministic BNSS deadline rules with a unified investigation graph and evidence-grounded assistance. It helps IOs, SHOs and SPs see urgent clocks, named blockers, connected cases and explainable escalation context while retaining human confirmation for consequential actions.
-
-### Key capabilities
-
-- Statutory clock calculation and autonomous deadline sweeps.
-- Dependency/blocker tracking for FSL, CDR, statements and related evidence.
-- Risk-ranked worklists and supervisor escalation routing.
-- Case network, similar-case and pattern intelligence over one graph.
-- Case Copilot intent parsing with refusal gates and audit trails.
-- Role-aware IO/SHO/SP workflows using synthetic, non-PII demonstration data.
-
-### Submission documentation
-
-The concise final submission brief is in [`docs/datathon-2026-submission.md`](docs/datathon-2026-submission.md). Reproducible performance evidence is in [`docs/benchmark-report.md`](docs/benchmark-report.md) and [`docs/benchmark-results.json`](docs/benchmark-results.json).
-
-### Prototype performance
-
-Local synthetic measurements include 6,667 mixed-state statutory clocks at 97.0 ms p50 / 108.6 ms p95, a 4,000-case graph with 22,296 entities and 45,448 relationships, and a 29.4 ms p95 depth-2 graph query. These are prototype benchmarks—not production Catalyst SLOs.
-
-### Zoho Catalyst integration status
-
-| Integration | Repository-backed status | Workflow value |
-|---|---|---|
-| AppSail | Implemented/config-dependent; deployment URL documented | Hosts the FastAPI investigation services near the operational workflow. |
-| Slate | Implemented/config-dependent; frontend build passes | Delivers the role-aware investigator and supervisor interface. |
-| Data Store | Implemented/config-dependent; live provider not reverified in this run | Provides a durable adapter path for cases, graph records, clocks and audit state. |
-| Job Scheduling | Cron sweep route/service implemented; scheduler configuration-dependent | Keeps statutory monitoring running when officers are offline. |
-| ConvoKraft | Webhook integration implemented; Catalyst Action configuration required | Routes operational assistant actions to deterministic CaseClock worklist, clock, and case services. |
-| QuickML | Optional client and controlled intent-routing path preserved; live provider not benchmarked | Future provider for constrained intent routing when explicitly enabled. |
-| File Store + Zia OCR | Provider adapter implemented; live credentials/provider not verified | Supports evidence-document persistence and OCR when configured. |
-
-External-provider features are reported as configuration-dependent unless a live call has been reproduced. See [`docs/datathon-2026-submission.md`](docs/datathon-2026-submission.md) for the evidence boundary.
+# NEXUS — Evidence-Grounded Criminal Network Intelligence Platform
+> **SIH 2026 Problem Statement PS 26189**  
+> AI-Powered Criminal Network Analysis, Multi-Source Entity Resolution, and Co-Accused Graph Intelligence.
 
 ---
 
-## What This Is
+## 1. Executive Summary & Problem Context
 
-One unified investigation graph. Every organizer-required capability (network analysis, pattern discovery, conversational query) is a different lens on the same graph, anchored by real statutory-deadline tracking under BNSS.
+Modern law enforcement and intelligence agencies face immense challenges in uncovering complex, organized criminal syndicates. Critical intelligence is fragmented across disparate, siloed data sources:
+- **First Information Reports (FIRs)** and court chargesheets with inconsistent naming, spelling mistakes, and alias variations.
+- **Call Detail Records (CDRs)**, IMEI logs, and shared burner phones.
+- **Banking, Hawala, and Financial Transaction Ledgers** with multi-hop layering and smurfing.
+- **Vehicle Registrations & Fastag logs**.
+- **Field Intelligence Reports** and seized physical/digital evidence.
 
-Read [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) for full context. Read [`docs/TASK.md`](docs/TASK.md) for what is actually built vs. not built — that file is the only source of truth on real progress.
-
----
-
-## Repository Structure
-
-```
-CaseClock/
-├── backend/
-│   ├── app/
-│   │   ├── api/            # Route handlers
-│   │   ├── core/
-│   │   │   ├── clock/      # Legal Clock Engine (LOAD BEARING)
-│   │   │   ├── dependency/ # Dependency Tracker
-│   │   │   ├── escalation/ # Escalation Rule Engine
-│   │   │   ├── graph/      # Graph traversals, aggregation, similarity (Lane 3)
-│   │   │   ├── copilot/    # NL grounding, refusal gate (Lane 4)
-│   │   │   └── auth/
-│   │   ├── db/             # Storage adapter (Catalyst Data Store)
-│   │   ├── catalyst/       # Catalyst SDK wrappers — QuickML, SmartBrowz, Zia
-│   │   └── main.py
-│   └── tests/
-│       ├── unit/
-│       ├── integration/
-│       └── refusal_testset/
-├── frontend/               # Lane 2 — React app (Worklist, Case Detail, Escalation, Rollup)
-├── shared/                 # Cross-lane contracts & constants
-│   ├── contracts/          # API contract types (Python + TypeScript) — owned by Lane 4
-│   └── constants/          # clock_types.py — offence-category → clock-type mapping (Lane 1)
-├── tests/
-│   └── scale/              # 1-2 lakh record load tests only
-├── scripts/                # Seed data, refusal testset runner, deploy verifier
-├── deployment/             # Catalyst AppSail + Slate configs
-├── docs/                   # Consolidated project documentation
-└── .github/                # CI workflows, issue templates, PR template, CODEOWNERS
-```
+**NEXUS** is an enterprise-grade, evidence-grounded criminal intelligence platform that integrates multi-source law enforcement data into a unified, high-performance graph database. It provides deterministic, explainable entity resolution, automated syndicate community detection, bridge broker discovery, temporal event sequencing, and an investigator copilot protected by strict ethical refusal guardrails against autonomous guilt or predictive criminal inference.
 
 ---
 
-## Lane Ownership
+## 2. Core Capabilities
 
-Lanes represent **ownership domains**, not Git branches. Development uses **GitHub Flow** with short-lived feature branches targeting `main` directly. Ownership boundaries remain lane-based regardless of branch names.
+### 🔍 Explainable Entity Resolution (ER)
+- **Multi-Attribute Matching:** Correlates suspects across name variations, Indian phonetic normalization (`sh` ↔ `s`, `v` ↔ `b`, `ee` ↔ `i`, `ou` ↔ `u`), character-bigram Jaccard similarity, alias lists, phone numbers, vehicle registrations, and national identifiers.
+- **Deterministic Confidence Breakdown:** Categorizes resolution into clear status tiers (`MATCHED`, `PROBABLE_MATCH`, `REVIEW_REQUIRED`, `NOT_MATCHED`) with explicit mathematical contribution breakdown.
+- **Zero Silent Merges:** Preserves source entity distinctness while establishing cross-case resolution links with full provenance.
 
-| Lane | Owns | Key Directories/Files |
-|---|---|---|
-| 1 — Backend Core | Clock/Dependency/Escalation, Auth, APIs, Constants | `backend/app/core/clock/`, `backend/app/core/dependency/`, `backend/app/core/escalation/`, `backend/app/core/auth/`, `shared/constants/` |
-| 2 — Frontend | React UI, dashboard, timeline, charts, analytics | `frontend/` |
-| 3 — Graph Intelligence | Aggregations, similarity, pattern/risk/forecasting | `backend/app/core/graph/` |
-| 4 — AI + Architecture + Integration | Copilot, refusal gate, contracts, Catalyst deployment, CI/CD | `backend/app/core/copilot/`, `backend/app/catalyst/`, `shared/contracts/`, `deployment/`, `.github/`, `docs/` |
+### 🕸️ Graph Analytics & Syndicate Discovery
+- **Community Detection:** Applies NetworkX Louvain/Modularity clustering to discover hidden syndicates and operational criminal cells.
+- **Bridge Broker Identification:** Computes betweenness centrality and articulation points to highlight critical intermediary brokers connecting otherwise distinct criminal modules.
+- **Multi-Hop Traversal:** Real-time sub-millisecond BFS expansion across suspect networks, financial layering chains, and co-accused links.
+- **Repeat Accused & Shared Cluster Analysis:** Automatically detects cross-case recidivism and clusters of suspects sharing burner phones or getaway vehicles.
+
+### 🤖 Grounded Investigator Copilot
+- **Strict Ethical & Legal Guardrails:** Automated refusal gate strictly blocks queries asking for guilt/innocence determination, culpability, predictive dangerousness, or recidivism likelihood.
+- **Verifiable Citations:** Every response includes direct citations linked to source FIRs, CDR logs, bank transactions, and graph analytics procedures.
+- **Grounded Graph Context:** Returns suggested interactive graph actions and adjacent network structures.
+
+### 🛡️ Local-First Architecture & Audit Compliance
+- **Local Infrastructure:** Docker Compose configuration running PostgreSQL 16, Neo4j 5 Community, FastAPI backend, and React/Vite frontend.
+- **Immutable Audit Trail:** Logs all queries, entity resolution executions, and graph expansions with actor identity and timestamp for judicial defensibility.
 
 ---
 
-## Getting Started (Local)
+## 3. Technology Stack
+
+| Layer | Technology |
+| :--- | :--- |
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, React Flow, Lucide React, TanStack Query |
+| **Backend** | Python 3.13 / FastAPI, Pydantic v2, SQLAlchemy, NetworkX, Uvicorn |
+| **Graph & Storage** | Neo4j 5 Community (Cypher, APOC), PostgreSQL 16 (Relational/Audit), In-Memory Adjacency Index |
+| **Testing & Quality** | Pytest (325 tests), Vitest (35 tests), Docker Compose, GitHub Actions |
+
+---
+
+## 4. Quick Start (Local Development)
 
 ### Prerequisites
-- Python 3.11+
-- Node.js 20+
-- Git
+- Python 3.11+ (or 3.13)
+- Node.js 20+ & npm
+- Docker & Docker Compose (Optional for containerized run)
 
-### Backend
+### Running Locally
+
 ```bash
-# From repo root — shared/ is importable alongside backend/
+# 1. Clone the repository
+git clone <NEXUS_REPOSITORY_URL>
+cd nexus
+
+# 2. Setup and Run Backend
 pip install -r backend/requirements.txt
-uvicorn app.main:app --reload --app-dir backend
-```
+uvicorn backend.app.main:app --reload --port 8000
 
-### Frontend
-```bash
+# 3. Setup and Run Frontend (in a new terminal)
 cd frontend
 npm install
 npm run dev
 ```
+Open your browser at `http://localhost:5173`.
 
-### Run tests
+### Running with Docker Compose
+
 ```bash
-# Run all backend tests (from repo root)
-pytest tests/ -v
+docker compose up --build
+```
+- **Frontend:** `http://localhost:5173`
+- **Backend API Docs:** `http://localhost:8000/docs`
+- **Neo4j Browser:** `http://localhost:7474` (Credentials: `neo4j` / `nexuspassword`)
 
-# Skip large-scale load tests
-pytest tests/ -v --ignore=tests/scale
+---
+
+## 5. Verification & Benchmarking
+
+Execute the automated test suites and performance benchmarks:
+
+```bash
+# Run backend test suite (325 tests)
+pytest
+
+# Run frontend test suite (35 tests)
+cd frontend && npm test -- --run
+
+# Run Ground Truth Precision/Recall Evaluation
+python scripts/evaluate_ground_truth.py
+
+# Run Real-Time Graph Latency Benchmarks
+python scripts/benchmark_nexus.py
 ```
 
 ---
 
-## Key Rules
+## 6. Project Structure
 
-Before writing any code, read [`docs/EXECUTION_RULES.md`](docs/EXECUTION_RULES.md).
-
-**Critical anti-hallucination rules (enforced in every PR):**
-- Never invent a schema field, API endpoint, or table that doesn't exist
-- Never label a rule engine as AI/ML
-- Never generate free-text about a specific person's guilt or risk
-- All BNSS citations marked `[VERIFIED]` or `[UNVERIFIED]`
-
----
-
-## Contributing
-
-See [`CONTRIBUTING.md`](CONTRIBUTING.md). All PRs must pass the checklist in [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md).
-
-Contract changes (`shared/contracts/`) require Lane 4 (Sujal) review. Clock/escalation/graph schema changes require a `DECISION_LOG.md` entry before the PR.
-
----
-
-## Deployment
-
-Mandatory on Zoho Catalyst (AppSail + Slate) per organizer eligibility rules.
-
-### Live Deployment (Development Environment)
-
-| Component | URL |
-|---|---|
-| **Frontend (Slate)** | https://caseclock-frontend-zaruqrfp.onslate.in |
-| **Backend (AppSail)** | https://caseclock-backend-50043773125.development.catalystappsail.in |
-| **Catalyst Project** | 51441000000017001 (CaseClock, Datacenter: India) |
-
-### Health Verification
-```bash
-# Backend health
-curl https://caseclock-backend-50043773125.development.catalystappsail.in/health
-
-# OpenAPI schema
-curl https://caseclock-backend-50043773125.development.catalystappsail.in/openapi.json
 ```
-
-### Environment Variables (AppSail — caseclock-backend)
-
-Configured in Catalyst Console → AppSail → caseclock-backend → Configuration → Environment Variables:
-
-| Variable | Value | Notes |
-|---|---|---|
-| `ENVIRONMENT` | `production` | Enables production auth gate |
-| `CASECLOCK_REPOSITORY` | `local` | Use in-memory + synthetic data |
-| `CORS_ORIGINS` | `http://localhost:5173,...,https://caseclock-frontend-zaruqrfp.onslate.in` | Comma-separated allowed origins |
-
-> **Note:** `CORS_ORIGINS` is also set in `backend/app-config.json` `env_variables` for deployment tracking.
-
-### Manual Deploy Commands
-```bash
-# Verify active project before deploying
-catalyst project:list
-
-# Deploy backend only (after code changes)
-catalyst deploy --only appsail
-
-# Deploy frontend only (after frontend build)
-npm run build  # from frontend/
-catalyst deploy --only slate
-
-# Deploy both
-catalyst deploy --only appsail,slate
-```
-
-### Pre-Deploy Checklist
-1. `backend/shared/` must exist (copy of root `shared/` for AppSail PYTHONPATH)
-2. Frontend must be rebuilt with `npm run build` for `.env.production` to take effect
-3. Active Catalyst project must be `51441000000017001`
-
-### Docker (Local Development)
-```bash
-# Build from repo root
-docker build -t caseclock-backend -f backend/Dockerfile .
-
-# Run with development variables
-docker run --rm -p 8000:8000 \
-  -e ENVIRONMENT=development \
-  -e CORS_ORIGINS=http://localhost:5173 \
-  caseclock-backend
-
-# Verify
-curl http://localhost:8000/health
+├── artifacts/
+│   └── nexus_graph/          # Synthetic intelligence graph & ground truth dataset
+├── backend/
+│   ├── app/
+│   │   ├── api/              # FastAPI REST routers & error handlers
+│   │   ├── auth/             # RBAC principal & token verifier
+│   │   ├── core/graph/       # Graph schema, entities, edges, & algorithms (ER, clustering, similarity)
+│   │   ├── db/               # In-memory repository & persistence adapters
+│   │   ├── services/         # Case, Audit, and Grounded Copilot services
+│   │   └── main.py           # Application entrypoint
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── components/       # UI shell, NetworkAnalysisPanel, similarity & copilot widgets
+│   │   ├── pages/            # Overview, NetworkExplorer, Entities, Patterns, Timeline, Evidence, Copilot, Audit
+│   │   ├── lib/apiClient.ts  # Typed API transport layer
+│   │   └── routes/router.tsx # Application routing
+│   └── package.json
+├── shared/
+│   └── contracts/            # Single source-of-truth API schemas (Python & TypeScript)
+├── synthetic_data/
+│   └── nexus_generator.py    # Multi-source intelligence graph & ground truth generator
+├── scripts/
+│   ├── evaluate_ground_truth.py
+│   └── benchmark_nexus.py
+└── docker-compose.yml
 ```
 
 ---
 
+## 7. License & Compliance
 
-## Docs
-
-| Document | Purpose |
-|---|---|
-| [`PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) | Why the product exists |
-| [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System architecture |
-| [`TASK.md`](docs/TASK.md) | What is actually built (source of truth) |
-| [`EXECUTION_RULES.md`](docs/EXECUTION_RULES.md) | How to work on this repo (ops + AI rules) |
-| [`DECISION_LOG.md`](docs/DECISION_LOG.md) | Architecture decisions and trade-offs |
-| [`FEATURE_REGISTRY.md`](docs/FEATURE_REGISTRY.md) | Feature status and scope labels |
-| [`HACKATHON_MASTER_GUIDE.md`](docs/HACKATHON_MASTER_GUIDE.md) | Submission strategy (frozen) |
-| [`PROTOTYPE_SUBMISSION_GUIDE.md`](docs/PROTOTYPE_SUBMISSION_GUIDE.md) | Deliverable list |
-| [`docs/spikes/quickml.md`](docs/spikes/quickml.md) | QuickML capability spike results and architectural decision |
-| [`docs/graph-intelligence/DATA_MODEL.md`](docs/graph-intelligence/DATA_MODEL.md) | Detailed graph entity catalog with planned fields |
-| [`docs/graph-intelligence/EDGE_MODEL.md`](docs/graph-intelligence/EDGE_MODEL.md) | Stored and derived edge definitions |
-| [`docs/graph-intelligence/DATASTORE_SPIKE.md`](docs/graph-intelligence/DATASTORE_SPIKE.md) | Catalyst Data Store spike validation plan |
-| [`docs/graph-intelligence/MIGRATION_PLAN.md`](docs/graph-intelligence/MIGRATION_PLAN.md) | Adjacency-list mapping strategy for Catalyst |
-| [`docs/graph-intelligence/SYNTHETIC_DATA_SPEC.md`](docs/graph-intelligence/SYNTHETIC_DATA_SPEC.md) | Synthetic dataset targets and repeat-entity strategy |
+Developed for SIH 2026 PS 26189. Designed in compliance with Indian criminal procedure, evidentiary chain-of-custody standards, and responsible AI fairness principles.
