@@ -1,10 +1,13 @@
-"""Declarative schema for the unified investigation graph."""
+"""backend/app/core/graph/graph_schema.py
+
+Declarative schema for the NEXUS Unified Intelligence Graph.
+"""
 
 from __future__ import annotations
 
 from pydantic import BaseModel
 
-from .enums import EdgeStorageMode, GraphEntityType, GraphRelationshipType
+from .enums import GraphEntityType, GraphRelationshipType
 
 
 class GraphSchema(BaseModel):
@@ -16,52 +19,49 @@ class GraphSchema(BaseModel):
 
 
 GRAPH_SCHEMA = GraphSchema(
-    name="case_clock_investigation_graph",
-    version="1.1",
+    name="nexus_intelligence_graph",
+    version="2.0",
     entities=(
-        GraphEntityType.CASE,
         GraphEntityType.PERSON,
+        GraphEntityType.CASE,
+        GraphEntityType.PHONE,
+        GraphEntityType.VEHICLE,
+        GraphEntityType.LOCATION,
+        GraphEntityType.ORGANIZATION,
+        GraphEntityType.DEVICE,
+        GraphEntityType.ACCOUNT,
+        GraphEntityType.TRANSACTION,
+        GraphEntityType.EVENT,
+        GraphEntityType.INTELLIGENCE_REPORT,
+        GraphEntityType.EVIDENCE,
         GraphEntityType.OFFICER,
         GraphEntityType.UNIT,
         GraphEntityType.COURT,
-        GraphEntityType.LOCATION,
-        GraphEntityType.ACT,
-        GraphEntityType.SECTION,
-        GraphEntityType.CRIME_HEAD,
-        GraphEntityType.CRIME_SUB_HEAD,
-        GraphEntityType.EVIDENCE,
-        GraphEntityType.DEPENDENCY,
-        GraphEntityType.CLOCK_INSTANCE,
-        GraphEntityType.ESCALATION_EVENT,
-        GraphEntityType.CONVERSATION_LOG,
     ),
     relationships=(
+        GraphRelationshipType.INVOLVED_IN,
         GraphRelationshipType.ACCUSED_IN,
         GraphRelationshipType.VICTIM_IN,
         GraphRelationshipType.COMPLAINANT_IN,
         GraphRelationshipType.WITNESS_IN,
-        GraphRelationshipType.CASE_HAS_DEPENDENCY,
-        GraphRelationshipType.CASE_HAS_CLOCK,
-        GraphRelationshipType.CASE_HAS_EVIDENCE,
-        GraphRelationshipType.CASE_HAS_COURT,
-        GraphRelationshipType.CASE_HAS_CRIME_HEAD,
-        GraphRelationshipType.CASE_HAS_CRIME_SUB_HEAD,
-        GraphRelationshipType.CASE_HAS_ESCALATION_EVENT,
-        GraphRelationshipType.CASE_HAS_CONVERSATION_LOG,
-        GraphRelationshipType.INVESTIGATED_BY,
-        GraphRelationshipType.CHARGED_UNDER,
+        GraphRelationshipType.USED_PHONE,
+        GraphRelationshipType.USED_VEHICLE,
+        GraphRelationshipType.SEEN_AT,
+        GraphRelationshipType.ASSOCIATED_WITH,
+        GraphRelationshipType.CONNECTED_TO,
+        GraphRelationshipType.OWNS_ACCOUNT,
+        GraphRelationshipType.TRANSFERRED_TO,
+        GraphRelationshipType.OCCURRED_AT,
         GraphRelationshipType.OCCURRED_IN,
+        GraphRelationshipType.MENTIONED_IN,
+        GraphRelationshipType.HAS_EVIDENCE,
+        GraphRelationshipType.SUPPORTED_BY,
+        GraphRelationshipType.CHARGED_UNDER,
+        GraphRelationshipType.INVESTIGATED_BY,
         GraphRelationshipType.BELONGS_TO_UNIT,
-        GraphRelationshipType.BELONGS_TO_ACT,
     ),
     derived_relationships=(
         GraphRelationshipType.CO_ACCUSED_WITH,
         GraphRelationshipType.LINKED_TO,
     ),
-)
-
-
-GRAPH_STORAGE_MODES = (
-    EdgeStorageMode.STORED,
-    EdgeStorageMode.DERIVED_NOT_STORED,
 )
