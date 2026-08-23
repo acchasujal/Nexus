@@ -695,3 +695,18 @@ def detect_repeat_accused_resolved(
 
     results.sort(key=lambda r: (-r.case_count, r.canonical_person_name))
     return results
+
+
+find_repeat_accused = detect_repeat_accused
+
+
+def find_shared_clusters(store: GraphStore, cluster_type: str | None = None, min_persons: int = 2) -> list[ClusterResult]:
+    results: list[ClusterResult] = []
+    if cluster_type is None or cluster_type == "phone":
+        results.extend(detect_repeat_phone(store, min_persons=min_persons))
+    if cluster_type is None or cluster_type == "vehicle":
+        results.extend(detect_repeat_vehicle(store, min_persons=min_persons))
+    if cluster_type is None or cluster_type == "address":
+        results.extend(detect_repeat_address(store, min_persons=min_persons))
+    return results
+

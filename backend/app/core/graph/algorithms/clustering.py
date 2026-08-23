@@ -1,25 +1,7 @@
-"""
-graph/algorithms/clustering.py
+"""backend/app/core/graph/algorithms/clustering.py
 
-NetworkX-based clustering and centrality algorithms.
-
-Design rules
-------------
-* The ``GraphStore`` is converted to a ``networkx.DiGraph`` **once** per
-  call via ``_to_networkx``.  Callers that need multiple clustering metrics
-  should convert once and pass the DiGraph to the private helpers, or
-  simply call the public functions independently.
-* All algorithms are deterministic.  For betweenness centrality, exact
-  computation is used by default; an optional ``sample_k`` parameter
-  enables approximate BFS-sample mode for large graphs.
-* ``ClusterSummary`` provides human-readable descriptions so the output can
-  feed explanations directly.
-
-Requires
---------
-    networkx >= 3.0   (``pip install networkx``)
-
-No database calls.  No API code.  No ML.
+NetworkX-based clustering, centrality, community detection, and bridge-node analysis.
+Deterministic, explainable, and local-first.
 """
 
 from __future__ import annotations
@@ -37,11 +19,7 @@ except ImportError:  # pragma: no cover
 from backend.app.core.graph.algorithms.utils import GraphStore, safe_str
 
 
-# ── NetworkX bridge ───────────────────────────────────────────────────────────
-
-
 def _require_nx() -> None:
-    """Raise a clear error if NetworkX is not installed."""
     if not _NX_AVAILABLE:
         raise ImportError(
             "NetworkX is required for clustering algorithms. "
@@ -50,19 +28,12 @@ def _require_nx() -> None:
 
 
 def _to_networkx(store: GraphStore) -> Any:
-    """
-    Build a ``networkx.DiGraph`` from a ``GraphStore``.
-
-    Node attributes preserved: ``entity_type``.
-    Edge attributes preserved: ``edge_type``.
-
-    O(N + E).
-    """
+    """Build a networkx.DiGraph from a GraphStore."""
     _require_nx()
     G = nx.DiGraph()
 
     for nid, node in store.nodes.items():
-        G.add_node(nid, entity_type=node.entity_type)
+        G.add_node(nid, entity_type=node.entity_type, properties=node.properties)
 
     for etype, edges in store.edge_index.items():
         for edge in edges:
@@ -72,47 +43,36 @@ def _to_networkx(store: GraphStore) -> Any:
     return G
 
 
-# ── Return types ──────────────────────────────────────────────────────────────
-
-
 @dataclass
 class ClusterSummary:
-    """
-    Human-readable summary of a single weakly-connected component.
-
-    Attributes
-    ----------
-    size               : number of nodes in the component
-    entity_distribution: entity_type → count within this component
-    top_degree_node_id : node with the highest total degree (in + out)
-    top_degree_value   : degree of the top node
-    """
-
     size: int = 0
     entity_distribution: dict[str, int] = field(default_factory=dict)
     top_degree_node_id: str = ""
     top_degree_value: int = 0
 
 
-# ── Public functions ──────────────────────────────────────────────────────────
+@dataclass
+class CommunityResult:
+    community_id: str
+    size: int
+    member_ids: list[str]
+    dominant_entity_type: str
+    top_influencer_id: str
+    reason: str
+
+
+@dataclass
+class BridgeNodeResult:
+    node_id: str
+    entity_type: str
+    label: str
+    connected_components_count: int
+    betweenness_score: float
+    reason: str
 
 
 def connected_components(store: GraphStore) -> list[set[str]]:
-    """
-    Return all weakly-connected components of the graph.
-
-    A weakly-connected component treats every directed edge as undirected.
-
-    Parameters
-    ----------
-    store : GraphStore
-
-    Returns
-    -------
-    list[set[str]]
-        Sorted by component size descending (largest first).
-        Each element is a ``set[str]`` of node ids.
-    """
+    """Return all weakly-connected components sorted by size descending."""
     _require_nx()
     G = _to_networkx(store)
     components = list(nx.weakly_connected_components(G))
@@ -121,101 +81,121 @@ def connected_components(store: GraphStore) -> list[set[str]]:
 
 
 def largest_connected_component(store: GraphStore) -> set[str]:
-    """
-    Return the node ids of the largest weakly-connected component.
-
-    Parameters
-    ----------
-    store : GraphStore
-
-    Returns
-    -------
-    set[str]
-        Empty set if the graph has no nodes.
-    """
+    """Return node ids of the largest weakly-connected component."""
     components = connected_components(store)
     return components[0] if components else set()
 
 
 def degree_centrality(store: GraphStore) -> dict[str, float]:
-    """
-    Compute the degree centrality for every node.
-
-    Degree centrality = (in_degree + out_degree) / (N - 1).
-
-    Uses ``networkx.degree_centrality`` on the underlying DiGraph, which
-    computes this on the *undirected* view of the graph.
-
-    Parameters
-    ----------
-    store : GraphStore
-
-    Returns
-    -------
-    dict[str, float]
-        node_id → centrality score (0.0–1.0).
-        Empty dict if graph has fewer than 2 nodes.
-    """
+    """Compute degree centrality for all nodes."""
     _require_nx()
     G = _to_networkx(store)
-    if G.number_of_nodes() < 2:
-        return {}
-    return dict(nx.degree_centrality(G))
+    return nx.degree_centrality(G)
 
 
-def betweenness_centrality(
-    store: GraphStore,
-    sample_k: int | None = None,
-    normalized: bool = True,
-) -> dict[str, float]:
-    """
-    Compute betweenness centrality for every node.
-
-    Betweenness measures how often a node lies on the shortest path between
-    two other nodes — high values indicate structural brokers.
-
-    Parameters
-    ----------
-    store      : GraphStore
-    sample_k   : if given, use approximate computation sampling *k* source
-                 nodes (faster for large graphs).  ``None`` = exact.
-    normalized : divide by the maximum possible value (default True).
-
-    Returns
-    -------
-    dict[str, float]
-        node_id → centrality score.  Empty dict if graph has < 2 nodes.
-
-    Notes
-    -----
-    Exact betweenness is O(N·E) which is fine for N=500, E=8000.
-    For larger graphs, pass ``sample_k`` to use the approximate variant.
-    """
+def in_degree_centrality(store: GraphStore) -> dict[str, float]:
+    """Compute in-degree centrality."""
     _require_nx()
     G = _to_networkx(store)
-    if G.number_of_nodes() < 2:
-        return {}
-    return dict(
-        nx.betweenness_centrality(G, k=sample_k, normalized=normalized)
-    )
+    return nx.in_degree_centrality(G)
+
+
+def out_degree_centrality(store: GraphStore) -> dict[str, float]:
+    """Compute out-degree centrality."""
+    _require_nx()
+    G = _to_networkx(store)
+    return nx.out_degree_centrality(G)
+
+
+def betweenness_centrality(store: GraphStore, k: int | None = None) -> dict[str, float]:
+    """Compute betweenness centrality."""
+    _require_nx()
+    G = _to_networkx(store)
+    return nx.betweenness_centrality(G, k=k)
+
+
+def detect_communities(store: GraphStore) -> list[CommunityResult]:
+    """Detect discrete communities/gangs/cells using graph modularity / connected components."""
+    _require_nx()
+    G = _to_networkx(store).to_undirected()
+    
+    if len(G.nodes) == 0:
+        return []
+
+    # Community detection using greedy modularity or connected components fallback
+    try:
+        raw_communities = list(nx.community.greedy_modularity_communities(G))
+    except Exception:
+        raw_communities = list(nx.connected_components(G))
+
+    results: list[CommunityResult] = []
+    for idx, member_set in enumerate(raw_communities, start=1):
+        member_ids = list(member_set)
+        if len(member_ids) < 2:
+            continue
+
+        type_counts: dict[str, int] = {}
+        for nid in member_ids:
+            node = store.nodes.get(nid)
+            if node:
+                type_counts[node.entity_type] = type_counts.get(node.entity_type, 0) + 1
+
+        dominant_type = max(type_counts.items(), key=lambda x: x[1])[0] if type_counts else "Unknown"
+
+        # Find top influencer by degree within community
+        sub = G.subgraph(member_ids)
+        top_node = max(sub.nodes, key=lambda n: sub.degree(n)) if len(sub.nodes) > 0 else member_ids[0]
+
+        results.append(
+            CommunityResult(
+                community_id=f"COMM-{idx:03d}",
+                size=len(member_ids),
+                member_ids=member_ids,
+                dominant_entity_type=dominant_type,
+                top_influencer_id=top_node,
+                reason=f"Cohesive network module of {len(member_ids)} entities centered around {top_node}",
+            )
+        )
+
+    results.sort(key=lambda c: c.size, reverse=True)
+    return results
+
+
+def find_bridge_nodes(store: GraphStore) -> list[BridgeNodeResult]:
+    """Find articulation points / bridge brokers that connect disjoint criminal modules."""
+    _require_nx()
+    G = _to_networkx(store).to_undirected()
+    if len(G.nodes) == 0:
+        return []
+
+    betweenness = nx.betweenness_centrality(G)
+    articulation_points = set(nx.articulation_points(G)) if nx.is_connected(G) or len(G.nodes) > 2 else set()
+
+    bridge_results: list[BridgeNodeResult] = []
+    for nid in articulation_points:
+        node = store.nodes.get(nid)
+        if not node:
+            continue
+        props = node.properties or {}
+        label = props.get("full_name") or props.get("name") or props.get("registration_number") or props.get("phone_number") or nid
+
+        score = betweenness.get(nid, 0.0)
+        bridge_results.append(
+            BridgeNodeResult(
+                node_id=nid,
+                entity_type=node.entity_type,
+                label=label,
+                connected_components_count=2,
+                betweenness_score=round(score, 4),
+                reason=f"Critical bridge entity (articulation point) connecting multiple sub-networks (betweenness: {score:.3f})",
+            )
+        )
+
+    bridge_results.sort(key=lambda b: b.betweenness_score, reverse=True)
+    return bridge_results
 
 
 def node_degree(store: GraphStore, node_id: str) -> tuple[int, int]:
-    """
-    Return the ``(in_degree, out_degree)`` of a single node.
-
-    Uses the ``GraphStore`` adjacency maps directly — no NetworkX overhead.
-
-    Parameters
-    ----------
-    store   : GraphStore
-    node_id : str | UUID
-
-    Returns
-    -------
-    tuple[int, int]
-        ``(in_degree, out_degree)``.  ``(0, 0)`` if the node is unknown.
-    """
     nid = safe_str(node_id)
     in_deg = len(store.radj.get(nid, []))
     out_deg = len(store.adj.get(nid, []))
@@ -223,19 +203,6 @@ def node_degree(store: GraphStore, node_id: str) -> tuple[int, int]:
 
 
 def cluster_summary(store: GraphStore, component: set[str]) -> ClusterSummary:
-    """
-    Build a human-readable ``ClusterSummary`` for a connected component.
-
-    Parameters
-    ----------
-    store     : GraphStore
-    component : set of node ids (typically from ``connected_components``)
-
-    Returns
-    -------
-    ClusterSummary
-        Empty summary if *component* is empty.
-    """
     if not component:
         return ClusterSummary()
 
@@ -263,16 +230,4 @@ def cluster_summary(store: GraphStore, component: set[str]) -> ClusterSummary:
 
 
 def all_cluster_summaries(store: GraphStore) -> list[ClusterSummary]:
-    """
-    Return a ``ClusterSummary`` for every weakly-connected component,
-    ordered by component size descending.
-
-    Parameters
-    ----------
-    store : GraphStore
-
-    Returns
-    -------
-    list[ClusterSummary]
-    """
     return [cluster_summary(store, comp) for comp in connected_components(store)]
