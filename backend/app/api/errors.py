@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class DomainError(Exception):
-    """Base class for all CaseClock domain errors.
+    """Base class for all NEXUS domain errors.
 
     Subclasses map to specific HTTP status codes in `install_error_handlers`.
     Do not raise bare `DomainError`; always use a concrete subclass so the
@@ -72,7 +72,7 @@ class ValidationError(DomainError):
 
 
 class ExternalServiceUnavailableError(DomainError):
-    """Catalyst Data Store, QuickML, SmartBrowz, or another external dependency
+    """Neo4j, PostgreSQL, or another persistence dependency
     is unavailable or returned an unexpected error.
 
     Maps to HTTP 503.  The response should include a retry-after hint if

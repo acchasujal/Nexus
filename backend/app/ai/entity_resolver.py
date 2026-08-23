@@ -104,10 +104,10 @@ _IDENTIFIER_CLEANUP_REGEX: Final[re.Pattern] = re.compile(r"\s*([/\-])\s*")
 
 
 class EntityResolver:
-    """Deterministic entity normalization component for CaseClock.
+    """Deterministic entity normalization component for NEXUS.
 
     Converts natural language entity values extracted by NLU into canonical graph terms.
-    Does not use LLMs, QuickML, or probabilistic inference.
+    Does not use LLMs or ungrounded probabilistic inference.
     """
 
     def resolve(self, intent: Intent) -> Intent:

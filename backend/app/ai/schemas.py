@@ -1,6 +1,6 @@
 """backend/app/ai/schemas.py
 
-Provider-agnostic data models and contracts for the CaseClock AI subsystem.
+Provider-agnostic data models and contracts for the NEXUS AI subsystem.
 Defines typed request, response, intent, tool, and conversation schemas
 compatible with Pydantic v2.
 """

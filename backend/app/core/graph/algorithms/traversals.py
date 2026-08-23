@@ -1,7 +1,7 @@
 """
 graph/algorithms/traversals.py
 
-All deterministic graph traversal functions for CaseClock.
+All deterministic graph traversal functions for NEXUS.
 
 Design rules
 ------------

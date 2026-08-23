@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "IntentExtractionSchema",
-  "description": "JSON schema for structured intent and entity extraction in CaseClock AI.",
+  "description": "JSON schema for structured intent and entity extraction in NEXUS AI.",
   "type": "object",
   "properties": {
     "intent": {

@@ -1,14 +1,11 @@
 # .github/CODEOWNERS
-# Minimal CODEOWNERS - only paths where uncoordinated changes break other lanes
+# Minimal CODEOWNERS - only paths where uncoordinated changes break contracts
 
-# API contract types - change here breaks backend and frontend simultaneously
+# API contract types - change here affects backend and frontend simultaneously
 /shared/contracts/          @acchasujal
 
-# Clock mapping table - legal accuracy risk, feeds clock engine + graph aggregation
-/shared/constants/          @acchasujal
+# Core Graph schema and entity models
+/backend/app/core/graph/    @acchasujal
 
-# Catalyst deployment - broken deploy blocks all teams
-/deployment/                @acchasujal
-
-# CI/CD - broken CI blocks all merges
+# CI/CD workflows
 /.github/workflows/         @acchasujal

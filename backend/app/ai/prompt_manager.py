@@ -1,7 +1,7 @@
 """backend/app/ai/prompt_manager.py
 
 PromptManager is the single source of truth for prompt templates,
-JSON schemas, and prompt versioning within the CaseClock AI subsystem.
+JSON schemas, and prompt versioning within the NEXUS AI subsystem.
 """
 
 from __future__ import annotations

@@ -4,7 +4,7 @@ JWT token verification and role-based authentication for NEXUS.
 Supports:
   - Local JWT bearer tokens (using standard secret key)
   - Development / Demo verifier via X-Role or Authorization headers
-  - Zero cloud / Zoho dependencies
+  - Local-first architecture with zero external cloud dependencies
 """
 
 from __future__ import annotations

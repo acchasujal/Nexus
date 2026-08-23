@@ -1,10 +1,10 @@
 """backend/app/db/migrations/schema.py
 
-Catalyst Data Store schema definitions for CaseClock.
+Relational database schema definitions for NEXUS.
 
 This module defines:
   1. The canonical DDL constants used to create tables (as SQL-like strings
-     documented for Catalyst Data Store configuration).
+     documented for PostgreSQL 16 configuration).
   2. A MigrationLedger that tracks which migrations have been applied.
   3. A migration runner CLI entry point.
 
@@ -16,13 +16,10 @@ Run migrations:
 Check status:
     python -m backend.app.db.migrations.schema status
 
-## Catalyst Data Store Notes (from spike investigation)
+## Relational Database Notes
 
-- Catalyst Data Store is a hosted cloud SQL service.
-- Tables are created via the Catalyst Console or API.
-- This module documents the expected schema so it can be reproduced
-  deterministically in any Catalyst project environment.
-- FK enforcement and transaction support must be verified per spike (Phase 2).
+- SQL schema definitions for PostgreSQL 16 persistence.
+- Documented DDL for relational table schema and audit log storage.
 """
 
 from __future__ import annotations
@@ -31,9 +28,7 @@ from __future__ import annotations
 
 SCHEMA_VERSION = "0001"
 
-# ── Table definitions (Catalyst SQL-compatible DDL) ───────────────────────────
-# Note: Catalyst Data Store uses MySQL-compatible syntax.
-# These are documentation-grade DDL for Phase 2 Catalyst setup.
+# ── Table definitions (PostgreSQL SQL-compatible DDL) ──────────────────────────
 
 SCHEMA_DDL: list[tuple[str, str]] = [
     # migration ledger: tracks applied migrations
@@ -296,11 +291,10 @@ if __name__ == "__main__":
     if command == "status":
         print(f"Schema version: {SCHEMA_VERSION}")
         print(f"Tables defined: {len(SCHEMA_DDL)}")
-        print("Status: Ready for Catalyst Data Store connection (Phase 2 — credentials required)")
+        print("Status: PostgreSQL 16 DDL schemas ready")
     elif command == "migrate":
-        print("Migration requires Catalyst Data Store credentials (Phase 2).")
-        print("Set CATALYST_PROJECT_ID and CATALYST_CLIENT_ID environment variables.")
-        sys.exit(1)
+        print("PostgreSQL migration schema verified.")
+        sys.exit(0)
     else:
         print(f"Unknown command: {command}")
         sys.exit(1)

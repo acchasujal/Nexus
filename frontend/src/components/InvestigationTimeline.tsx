@@ -45,8 +45,8 @@ export function InvestigationTimeline({ caseDetail, selectedEntityId, onEntitySe
       id: `fir-${caseDetail.id}`,
       type: 'fir',
       timestamp: '12 Oct 2026',
-      title: 'FIR Registered & Clock Initiated',
-      description: `Statutory clock bounds configured for Ashok Nagar PS jurisdiction. Category: ${caseDetail.offence_category}.`,
+      title: 'FIR Registered & Investigation Opened',
+      description: `Investigation initiated. Category: ${caseDetail.offence_category}.`,
       severity: 'normal',
       milestone: true,
       entityId: caseDetail.id
@@ -58,14 +58,14 @@ export function InvestigationTimeline({ caseDetail, selectedEntityId, onEntitySe
       type: 'evidence',
       timestamp: '14 Oct 2026',
       title: 'CDR Phone logs acquired',
-      description: 'Call Detail Record logs for prime suspect Ramesh Gowda requested and parsed.',
+      description: 'Call Detail Record logs for prime suspect requested and parsed into intelligence graph.',
       severity: 'normal',
       milestone: false,
-      entityId: '2' // Ramesh Gowda
+      entityId: '2'
     })
 
     // 3. Dependencies created/escalated
-    caseDetail.dependencies.forEach((dep: any, index: number) => {
+    caseDetail.dependencies?.forEach((dep: any, index: number) => {
       list.push({
         id: `dep-created-${dep.id}`,
         type: 'dependency',
@@ -82,8 +82,8 @@ export function InvestigationTimeline({ caseDetail, selectedEntityId, onEntitySe
           id: `dep-esc-${dep.id}`,
           type: 'escalation',
           timestamp: `${20 + index} Oct 2026`,
-          title: `Blocker Escalated to SHO`,
-          description: `Evidentiary blocker '${dep.name}' exceeded statutory SLA threshold. Route escalation trigger.`,
+          title: `Blocker Escalated to Supervisor`,
+          description: `Evidentiary blocker '${dep.name}' exceeded SLA threshold. Escalation alert generated.`,
           severity: 'critical',
           milestone: true,
           entityId: dep.id
@@ -91,15 +91,15 @@ export function InvestigationTimeline({ caseDetail, selectedEntityId, onEntitySe
       }
     })
 
-    // 4. Clock warnings / breaches
-    caseDetail.clocks.forEach((clk: any) => {
+    // 4. Investigation timeline warnings
+    caseDetail.clocks?.forEach((clk: any) => {
       if (clk.status === 'red') {
         list.push({
           id: `clk-warn-${clk.id}`,
           type: 'clock',
           timestamp: '26 Oct 2026',
-          title: 'Statutory Clock Alert',
-          description: `Clock '${clk.clock_type}' has entered RED status under BNSS guidelines. Only ${clk.days_remaining} days remaining.`,
+          title: 'Investigation Timeline Alert',
+          description: `Timeline milestone '${clk.clock_type}' is in critical window. Only ${clk.days_remaining} days remaining.`,
           severity: 'warning',
           milestone: true,
           entityId: clk.id
@@ -109,8 +109,8 @@ export function InvestigationTimeline({ caseDetail, selectedEntityId, onEntitySe
           id: `clk-breach-${clk.id}`,
           type: 'clock',
           timestamp: '02 Nov 2026',
-          title: 'Statutory Clock Breached',
-          description: `Statutory clock bounds exceeded for '${clk.clock_type}'. High risk of default bail assignment.`,
+          title: 'Investigation SLA Milestone Exceeded',
+          description: `Target timeframe exceeded for '${clk.clock_type}'. Evidentiary review required.`,
           severity: 'critical',
           milestone: true,
           entityId: clk.id
@@ -133,7 +133,7 @@ export function InvestigationTimeline({ caseDetail, selectedEntityId, onEntitySe
   const pendingDeps = caseDetail?.dependencies?.filter((d: any) => d.status !== 'resolved').length || 0
 
   const summaryText = useMemo(() => {
-    return `Investigation has remained active. There are ${totalClocks} statutory clocks, ${breachedClocks} of which are breached. ${pendingDeps} unresolved evidentiary dependencies are currently blocking progress. Immediate review recommended.`
+    return `Investigation timeline is active. There are ${totalClocks} trackable milestones (${breachedClocks} overdue) and ${pendingDeps} pending evidentiary dependencies. Immediate review recommended.`
   }, [totalClocks, breachedClocks, pendingDeps])
 
   const handlePrint = () => {

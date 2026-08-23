@@ -22,7 +22,7 @@ function createSessionToken(role: UserRole): string {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<UserRole | null>(() => {
-    const saved = localStorage.getItem('nexus_role') || localStorage.getItem('caseclock_role')
+    const saved = localStorage.getItem('nexus_role')
     if (saved && !localStorage.getItem('nexus_token')) {
       const token = createSessionToken(saved as UserRole)
       localStorage.setItem('nexus_token', token)
@@ -41,8 +41,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(null)
     localStorage.removeItem('nexus_role')
     localStorage.removeItem('nexus_token')
-    localStorage.removeItem('caseclock_role')
-    localStorage.removeItem('caseclock_token')
   }
 
   return (

@@ -36,7 +36,7 @@ class GraphRepository:
         """
         Load entire graph from database into memory.
         
-        TODO: Dev 1 — replace with real SQLAlchemy/Catalyst queries:
+        # Populate graph from persistent store (PostgreSQL / Neo4j session):
         
         cases = session.query(Case).all()
         for case in cases:

@@ -31,8 +31,7 @@ export async function apiFetch<T>(
   options?: RequestInit,
 ): Promise<T> {
   const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
-  let fullUrl = path.startsWith('http') ? path : `${baseUrl}${path}`
-  const savedRole = localStorage.getItem('nexus_role') || localStorage.getItem('caseclock_role') || 'INVESTIGATOR'
+  const savedRole = localStorage.getItem('nexus_role') || 'INVESTIGATOR'
   const token = localStorage.getItem('nexus_token')
 
   const method = (options?.method || 'GET').toUpperCase()

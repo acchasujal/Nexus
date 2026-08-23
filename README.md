@@ -1,146 +1,124 @@
-# NEXUS — Evidence-Grounded Criminal Network Intelligence Platform
-> **SIH 2026 Problem Statement PS 26189**  
-> AI-Powered Criminal Network Analysis, Multi-Source Entity Resolution, and Co-Accused Graph Intelligence.
+# NEXUS — Evidence-Grounded Criminal Network Intelligence System
+
+> **Smart India Hackathon (SIH) 2026**  
+> **Problem Statement ID:** 26189  
+> **Problem Title:** AI-Powered Criminal Network Analysis System  
+> **Organization:** Ministry of Home Affairs (MHA) / National Crime Records Bureau (NCRB)  
+> **Department:** Women Safety Division | **Theme:** Blockchain & Cybersecurity  
+
+[![Pytest Tests](https://img.shields.io/badge/Pytest-296%20Passed-emerald.svg)](docs/TESTING.md)
+[![Vitest Tests](https://img.shields.io/badge/Vitest-35%20Passed-blue.svg)](docs/TESTING.md)
+[![ER Precision](https://img.shields.io/badge/ER%20Precision-100%25-green.svg)](docs/BENCHMARKS.md)
+[![Docker Ready](https://img.shields.io/badge/Docker-Postgres%20%7C%20Neo4j%20%7C%20FastAPI%20%7C%20Vite-blueviolet.svg)](docker-compose.yml)
 
 ---
 
-## 1. Executive Summary & Problem Context
+## 1. What is NEXUS?
+**NEXUS** is an **evidence-grounded criminal network intelligence system** that transforms fragmented, multi-source criminal records into an explainable, graph-native investigative workspace for law enforcement agencies.
 
-Modern law enforcement and intelligence agencies face immense challenges in uncovering complex, organized criminal syndicates. Critical intelligence is fragmented across disparate, siloed data sources:
-- **First Information Reports (FIRs)** and court chargesheets with inconsistent naming, spelling mistakes, and alias variations.
-- **Call Detail Records (CDRs)**, IMEI logs, and shared burner phones.
-- **Banking, Hawala, and Financial Transaction Ledgers** with multi-hop layering and smurfing.
-- **Vehicle Registrations & Fastag logs**.
-- **Field Intelligence Reports** and seized physical/digital evidence.
+## 2. What Problem Does it Solve?
+Police investigators face severe **intelligence-extraction bottlenecks** when analyzing cross-jurisdictional criminal syndicates. Critical connections between suspect aliases, shared burner phones (CDRs), and mule bank accounts remain trapped in disparate spreadsheets, PDF FIRs, and isolated departmental databases.
 
-**NEXUS** is an enterprise-grade, evidence-grounded criminal intelligence platform that integrates multi-source law enforcement data into a unified, high-performance graph database. It provides deterministic, explainable entity resolution, automated syndicate community detection, bridge broker discovery, temporal event sequencing, and an investigator copilot protected by strict ethical refusal guardrails against autonomous guilt or predictive criminal inference.
+## 3. Why Does This Problem Matter?
+Organized criminal rings (cyber fraud, extortion, narcotics trafficking, human trafficking) operate across state boundaries using multiple aliases and rotating burner SIMs. In manual investigations, identifying the true mastermind takes weeks or months of manual cross-referencing, while low-level operatives are often mistaken for kingpins simply due to call volume.
 
----
+## 4. Who is the User?
+- **Investigating Officers (IOs):** Discover cross-case suspect links, resolve aliases, and trace evidence chains.
+- **Intelligence Analysts:** Partition complex networks into criminal syndicates and isolate bridge brokers.
+- **Supervisory Officers (SHO / SP / DCP):** Review district intelligence rollups and immutable audit logs.
 
-## 2. Core Capabilities
+## 5. How Does NEXUS Work?
+NEXUS ingests multi-source data (FIRs, CDR telephony dumps, bank ledgers), normalizes Indian vernacular text and aliases, resolves duplicate entities using multi-factor phonetic and hard-identifier corroboration, builds an in-memory heterogeneous knowledge graph, executes network modularity and centrality algorithms, and surfaces evidence-backed leads through an interactive visual workspace and grounded copilot.
 
-### 🔍 Explainable Entity Resolution (ER)
-- **Multi-Attribute Matching:** Correlates suspects across name variations, Indian phonetic normalization (`sh` ↔ `s`, `v` ↔ `b`, `ee` ↔ `i`, `ou` ↔ `u`), character-bigram Jaccard similarity, alias lists, phone numbers, vehicle registrations, and national identifiers.
-- **Deterministic Confidence Breakdown:** Categorizes resolution into clear status tiers (`MATCHED`, `PROBABLE_MATCH`, `REVIEW_REQUIRED`, `NOT_MATCHED`) with explicit mathematical contribution breakdown.
-- **Zero Silent Merges:** Preserves source entity distinctness while establishing cross-case resolution links with full provenance.
+## 6. What Are Its Core Modules?
+1. **Multi-Source Ingestion & NLP Normalization:** Standardizes unstructured FIRs, CDR logs, and financial records.
+2. **Explainable Entity Resolution:** Multi-attribute disambiguation matching Indian names, aliases, phones, and vehicles.
+3. **Unified Knowledge Graph:** Heterogeneous property graph connecting 12 core entity types.
+4. **Syndicate Modularity & Community Detection:** Partitions graphs into operational criminal cells (Louvain algorithm).
+5. **Kingpin & Broker Isolation:** Computes Betweenness Centrality and PageRank to isolate hidden coordinators.
+6. **Temporal & Pattern Intelligence:** Sequences communication bursts, fund layering loops, and shared burner clusters.
+7. **Evidence Provenance & Grounded Copilot:** Clickable legal citations, Section 63 BSA compliance, and an ethical refusal gate.
 
-### 🕸️ Graph Analytics & Syndicate Discovery
-- **Community Detection:** Applies NetworkX Louvain/Modularity clustering to discover hidden syndicates and operational criminal cells.
-- **Bridge Broker Identification:** Computes betweenness centrality and articulation points to highlight critical intermediary brokers connecting otherwise distinct criminal modules.
-- **Multi-Hop Traversal:** Real-time sub-millisecond BFS expansion across suspect networks, financial layering chains, and co-accused links.
-- **Repeat Accused & Shared Cluster Analysis:** Automatically detects cross-case recidivism and clusters of suspects sharing burner phones or getaway vehicles.
+## 7. What is Genuinely Different?
+| Dimension | Traditional Tools | Typical Hackathon Projects | NEXUS Approach |
+| :--- | :--- | :--- | :--- |
+| **System Focus** | Manual desktop link charts | Generic 2D dot-and-line graphs | **Investigator Decision-Intelligence Layer** |
+| **Entity Resolution** | Manual profile merging | Exact string match (fails on Indian names) | **Deterministic Phonetic + Hard ID Corroboration** |
+| **Centrality Analysis** | Degree centrality (flags foot soldiers) | None | **Betweenness Centrality isolates hidden kingpins** |
+| **Explainability** | Manual annotation | Hallucinated text from LLMs | **Clickable Evidence Provenance for every link** |
+| **Legal Rigor** | Proprietary closed format | Unverified claims | **Section 63 BSA 2023 Tamper-Evident Hash Audit** |
 
-### 🤖 Grounded Investigator Copilot
-- **Strict Ethical & Legal Guardrails:** Automated refusal gate strictly blocks queries asking for guilt/innocence determination, culpability, predictive dangerousness, or recidivism likelihood.
-- **Verifiable Citations:** Every response includes direct citations linked to source FIRs, CDR logs, bank transactions, and graph analytics procedures.
-- **Grounded Graph Context:** Returns suggested interactive graph actions and adjacent network structures.
+## 8. What Technology Does It Use?
+- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, React Flow, Lucide React, TanStack Query
+- **Backend:** Python 3.13 / FastAPI, Pydantic v2, SQLAlchemy, NetworkX, Uvicorn
+- **Graph & Database:** Neo4j 5 Community (Cypher, APOC), PostgreSQL 16, In-Memory Double-Adjacency Index
+- **Containerization:** Docker, Docker Compose, Nginx
 
-### 🛡️ Local-First Architecture & Audit Compliance
-- **Local Infrastructure:** Docker Compose configuration running PostgreSQL 16, Neo4j 5 Community, FastAPI backend, and React/Vite frontend.
-- **Immutable Audit Trail:** Logs all queries, entity resolution executions, and graph expansions with actor identity and timestamp for judicial defensibility.
+## 9. How Do I Run It Locally?
 
----
-
-## 3. Technology Stack
-
-| Layer | Technology |
-| :--- | :--- |
-| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, React Flow, Lucide React, TanStack Query |
-| **Backend** | Python 3.13 / FastAPI, Pydantic v2, SQLAlchemy, NetworkX, Uvicorn |
-| **Graph & Storage** | Neo4j 5 Community (Cypher, APOC), PostgreSQL 16 (Relational/Audit), In-Memory Adjacency Index |
-| **Testing & Quality** | Pytest (325 tests), Vitest (35 tests), Docker Compose, GitHub Actions |
-
----
-
-## 4. Quick Start (Local Development)
-
-### Prerequisites
-- Python 3.11+ (or 3.13)
-- Node.js 20+ & npm
-- Docker & Docker Compose (Optional for containerized run)
-
-### Running Locally
-
+### Option A: Docker Compose (Recommended)
 ```bash
-# 1. Clone the repository
-git clone <NEXUS_REPOSITORY_URL>
-cd nexus
+docker compose up --build
+```
+- Frontend: `http://localhost:5173`
+- Backend Swagger: `http://localhost:8000/docs`
+- Neo4j Browser: `http://localhost:7474` (User: `neo4j`, Password: `nexuspassword`)
 
-# 2. Setup and Run Backend
+### Option B: Local Virtual Environment
+```bash
+# 1. Backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1  # or source venv/bin/activate
 pip install -r backend/requirements.txt
 uvicorn backend.app.main:app --reload --port 8000
 
-# 3. Setup and Run Frontend (in a new terminal)
+# 2. Frontend (in a new terminal)
 cd frontend
 npm install
 npm run dev
 ```
-Open your browser at `http://localhost:5173`.
 
-### Running with Docker Compose
+## 10. What Data Does It Use?
+NEXUS uses a **high-fidelity deterministic synthetic dataset** ([`synthetic_data/nexus_generator.py`](synthetic_data/nexus_generator.py)) containing 50 cases, 120 persons, 150 phones, 60 bank accounts, 445 nodes, and 530 relationships with planted ground-truth clusters. **No real citizen PII or classified police data is bundled.**
 
-```bash
-docker compose up --build
-```
-- **Frontend:** `http://localhost:5173`
-- **Backend API Docs:** `http://localhost:8000/docs`
-- **Neo4j Browser:** `http://localhost:7474` (Credentials: `neo4j` / `nexuspassword`)
+## 11. How is AI Constrained?
+NEXUS operates under a strict **Deterministic-Before-Generative** principle. AI models are **strictly prohibited** from outputting scores labeled "Guilt", "Probability of Criminality", or "Recidivism Risk". The Copilot features an architectural **Refusal Gate** that intercepts and blocks all unethical/illegal inference queries.
 
----
+## 12. How is Evidence & Provenance Handled?
+Every visual edge on the graph maintains an `EvidenceProvenance` object capturing the source document type (`FIR`, `CDR`, `BANK_TXN`), source ID, extraction timestamp, and derivation method, ensuring an unbroken evidentiary chain of custody under Section 63 of Bharatiya Sakshya Adhiniyam, 2023.
 
-## 5. Verification & Benchmarking
+## 13. What Has Actually Been Benchmarked?
+- **In-Memory Graph Index Build:** `6.05 ms` (Target: < 50ms)
+- **1-Hop / 2-Hop / 3-Hop BFS:** `0.013 – 0.024 ms` (Target: < 25ms)
+- **Louvain Community Detection:** `46.07 ms` (Target: < 200ms)
+- **Betweenness Centrality Bridge Discovery:** `363.40 ms` (Target: < 500ms)
+- **Entity Resolution Matching:** `3.36 ms` (Target: < 50ms)
+- **Entity Resolution Accuracy:** **100% Precision, 100% Recall, 100% F1** on planted ground truth.
 
-Execute the automated test suites and performance benchmarks:
+## 14. What Are the Limitations?
+- Full global graph centrality algorithms currently run in-memory; scaling beyond 100,000 nodes requires Neo4j GDS projections.
+- Ingestion of non-text scanned image PDFs currently requires OCR pre-processing.
 
-```bash
-# Run backend test suite (325 tests)
-pytest
-
-# Run frontend test suite (35 tests)
-cd frontend && npm test -- --run
-
-# Run Ground Truth Precision/Recall Evaluation
-python scripts/evaluate_ground_truth.py
-
-# Run Real-Time Graph Latency Benchmarks
-python scripts/benchmark_nexus.py
-```
+## 15. What is Planned Next?
+- Custom fine-tuned spaCy Indian Legal NER model integration.
+- On-premise quantized local LLM (vLLM / Ollama) for zero-shot natural language Cypher querying.
+- 1-Click Section 63 BSA cryptographically signed PDF Case Intelligence Dossier export.
 
 ---
 
-## 6. Project Structure
+## Documentation Directory
 
-```
-├── artifacts/
-│   └── nexus_graph/          # Synthetic intelligence graph & ground truth dataset
-├── backend/
-│   ├── app/
-│   │   ├── api/              # FastAPI REST routers & error handlers
-│   │   ├── auth/             # RBAC principal & token verifier
-│   │   ├── core/graph/       # Graph schema, entities, edges, & algorithms (ER, clustering, similarity)
-│   │   ├── db/               # In-memory repository & persistence adapters
-│   │   ├── services/         # Case, Audit, and Grounded Copilot services
-│   │   └── main.py           # Application entrypoint
-│   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── components/       # UI shell, NetworkAnalysisPanel, similarity & copilot widgets
-│   │   ├── pages/            # Overview, NetworkExplorer, Entities, Patterns, Timeline, Evidence, Copilot, Audit
-│   │   ├── lib/apiClient.ts  # Typed API transport layer
-│   │   └── routes/router.tsx # Application routing
-│   └── package.json
-├── shared/
-│   └── contracts/            # Single source-of-truth API schemas (Python & TypeScript)
-├── synthetic_data/
-│   └── nexus_generator.py    # Multi-source intelligence graph & ground truth generator
-├── scripts/
-│   ├── evaluate_ground_truth.py
-│   └── benchmark_nexus.py
-└── docker-compose.yml
-```
-
----
-
-## 7. License & Compliance
-
-Developed for SIH 2026 PS 26189. Designed in compliance with Indian criminal procedure, evidentiary chain-of-custody standards, and responsible AI fairness principles.
+| Document | Purpose |
+| :--- | :--- |
+| [**Project Overview**](docs/PROJECT_OVERVIEW.md) | Problem Statement 26189 context, ecosystem, and non-goals |
+| [**Problem & Domain**](docs/PROBLEM_AND_DOMAIN.md) | CCTNS/ICJS reality check and 5 technical bottlenecks |
+| [**System Architecture**](docs/ARCHITECTURE.md) | Subsystems, hybrid persistence, and status matrix |
+| [**Data Model & Ontology**](docs/DATA_MODEL.md) | 12 graph entities, typed edges, and provenance schemas |
+| [**Intelligence Pipeline**](docs/INTELLIGENCE_PIPELINE.md) | 7-stage processing pipeline specifications |
+| [**Security & Governance**](docs/SECURITY_AND_GOVERNANCE.md) | Responsible AI, ethical refusal gate, and BSA 2023 compliance |
+| [**Development Guide**](docs/DEVELOPMENT.md) | Local environment setup and synthetic data generation |
+| [**Testing Guide**](docs/TESTING.md) | Pytest, Vitest, and ground-truth evaluation instructions |
+| [**Benchmarks & SLA**](docs/BENCHMARKS.md) | Latency SLA measurements and scale benchmarks |
+| [**API Reference**](docs/API.md) | Complete REST API endpoint documentation |
+| [**Live Demo Script**](docs/DEMO.md) | 3-minute judge demonstration script |
+| [**Architectural Decisions**](docs/decisions/) | Accepted ADRs (Graph Architecture, Refusal Gate, Provenance) |

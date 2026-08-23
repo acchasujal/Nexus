@@ -1,11 +1,10 @@
 """backend/app/db/repositories/interfaces.py
 
-Abstract repository interfaces for CaseClock domain entities.
+Abstract repository interfaces for NEXUS domain entities.
 
 These interfaces decouple application services from the persistence layer.
 Phase 1 uses InMemoryBackendRepository (already implemented).
-Phase 2 plugs in Catalyst Data Store repositories that implement these ABCs.
-Phase 4 routes all service calls through these interfaces.
+Phase 2 plugs in PostgreSQL / Neo4j repositories that implement these ABCs.
 
 Design rules (from BACKEND_IMPLEMENTATION_PLAN.md §9):
   - Repositories own persistence reads/writes only — no business rules.
