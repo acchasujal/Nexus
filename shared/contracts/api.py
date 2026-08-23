@@ -234,6 +234,9 @@ class CopilotQueryRequest(BaseModel):
     case_id: Optional[str] = None
     investigation_id: Optional[str] = None
     session_id: Optional[str] = None
+    # Entity-centric query parameters (used by Copilot structured dispatch)
+    entity_id: Optional[str] = None
+    max_hops: int = 2
 
 
 class CopilotQueryResponse(BaseModel):
@@ -272,3 +275,70 @@ class AuthTokenResponse(BaseModel):
     user_id: str
     role: UserRole
     expires_in: int = 86400
+
+
+# ── Entity Profile ────────────────────────────────────────────────────────────
+
+class EntityProfileResponse(BaseModel):
+    """Full profile of a graph entity, including evidence and centrality data."""
+    entity_id: str
+    entity_type: str
+    label: str
+    properties: dict[str, Any] = Field(default_factory=dict)
+    aliases: list[str] = Field(default_factory=list)
+    degree: int = 0
+    community_id: Optional[str] = None
+    betweenness_score: Optional[float] = None
+    evidence_items: list[EvidenceItemResponse] = Field(default_factory=list)
+
+
+# ── Evidence Verification (BE-04) ─────────────────────────────────────────────
+
+class EvidenceVerificationResponse(BaseModel):
+    """SHA-256 hash chain verification result for Section 63 BSA 2023 compliance."""
+    evidence_hashes: dict[str, str] = Field(default_factory=dict)  # evidence_id -> sha256
+    chain_hash: str = ""
+    verified_at: datetime = Field(default_factory=_utcnow)
+    verification_status: str = "VERIFIED"  # VERIFIED | INCOMPLETE
+
+
+class EvidenceVerifyRequest(BaseModel):
+    """Request body for POST /evidence/verify."""
+    evidence_ids: list[str] = Field(default_factory=list)
+    path_node_ids: list[str] = Field(default_factory=list)
+
+
+# ── BSA Dossier Export (BE-05) ────────────────────────────────────────────────
+
+class DossierExportRequest(BaseModel):
+    """Request body for POST /export/dossier (Section 63 BSA 2023)."""
+    case_id: str
+    include_network: bool = True
+    include_evidence: bool = True
+    include_hash_chain: bool = True
+
+
+class DossierExportResponse(BaseModel):
+    """Response from POST /export/dossier."""
+    case_id: str
+    sha256_hash: str
+    generated_at: datetime = Field(default_factory=_utcnow)
+    page_count: int = 0
+    file_size_bytes: int = 0
+
+
+# ── File Ingestion ────────────────────────────────────────────────────────────
+
+class IngestRequest(BaseModel):
+    """Multi-source ingestion request body for POST /ingest."""
+    source_type: str  # CDR | BANK_TXN | FIR | INTEL_REPORT
+    file_name: str
+    records: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class IngestResponse(BaseModel):
+    """Response from POST /ingest."""
+    ingested_count: int = 0
+    skipped_count: int = 0
+    error_count: int = 0
+    audit_event_id: str = ""

@@ -18,12 +18,15 @@ from __future__ import annotations
 from typing import Any, Optional
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from backend.app.api.dependencies import (
     get_audit_service,
     get_case_service,
     get_copilot_service,
+    get_entity_service,
+    get_evidence_service,
+    get_export_service,
     get_principal,
     get_repository,
     get_request_id,
@@ -36,6 +39,9 @@ from backend.app.core.graph.algorithms.pattern_detection import find_repeat_accu
 from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.case_service import InvestigationService
 from backend.app.services.copilot_service import CopilotService
+from backend.app.services.entity_service import EntityService
+from backend.app.services.evidence_service import EvidenceService
+from backend.app.services.export_service import ExportService
 from shared.contracts.api import (
     AuditLogEntry,
     AuthLoginRequest,
@@ -44,10 +50,18 @@ from shared.contracts.api import (
     CommunityResponse,
     CopilotQueryRequest,
     CopilotQueryResponse,
+    DossierExportRequest,
+    DossierExportResponse,
+    EntityProfileResponse,
     EntityResolutionMatchResponse,
     EntityResolutionQuery,
     EntityResolutionResponse,
+    EvidenceItemResponse,
+    EvidenceVerificationResponse,
+    EvidenceVerifyRequest,
     InfluenceRankingResponse,
+    IngestRequest,
+    IngestResponse,
     InvestigationDetailResponse,
     InvestigationSummaryResponse,
     NetworkGraphResponse,
@@ -133,22 +147,29 @@ def create_core_router() -> APIRouter:
             raise HTTPException(status_code=404, detail=f"Investigation '{case_id}' not found")
         return detail
 
-    # Backward compatibility worklist endpoint
-    @router.get("/worklist")
+    # Backward compatibility: /worklist (deprecated — use /investigations)
+    @router.get("/worklist", deprecated=True)
     def worklist_legacy(
+        response: Response,
         principal: Principal = Depends(get_principal),
         service: InvestigationService = Depends(get_case_service),
         request_id: str = Depends(get_request_id),
     ) -> list[Any]:
+        response.headers["Deprecation"] = "true"
+        response.headers["Link"] = '</investigations>; rel="successor-version"'
         return service.list_worklist(principal=principal, request_id=request_id)
 
-    @router.get("/cases/{case_id}")
+    # Backward compatibility: /cases/{case_id} (deprecated — use /investigations/{case_id})
+    @router.get("/cases/{case_id}", deprecated=True)
     def case_detail_legacy(
         case_id: str,
+        response: Response,
         principal: Principal = Depends(get_principal),
         service: InvestigationService = Depends(get_case_service),
         request_id: str = Depends(get_request_id),
     ) -> Any:
+        response.headers["Deprecation"] = "true"
+        response.headers["Link"] = f'</investigations/{case_id}>; rel="successor-version"'
         detail = service.get_case_detail(case_id, principal=principal, request_id=request_id)
         if detail is None:
             raise HTTPException(status_code=404, detail=f"Case '{case_id}' not found")
@@ -388,11 +409,212 @@ def create_core_router() -> APIRouter:
     ) -> CopilotQueryResponse:
         return copilot_svc.handle_query(req, principal=principal, request_id=request_id)
 
+    # ── Evidence Retrieval (Phase 1 / BE-04) ──────────────────────────────
+
+    @router.get("/evidence/{evidence_id}", response_model=EvidenceItemResponse)
+    def get_evidence_by_id(
+        evidence_id: str,
+        principal: Principal = Depends(get_principal),
+        evidence_svc: EvidenceService = Depends(get_evidence_service),
+        request_id: str = Depends(get_request_id),
+    ) -> EvidenceItemResponse:
+        """Retrieve a single evidence item by its stable provenance-derived ID."""
+        item = evidence_svc.get_evidence_by_id(
+            evidence_id=evidence_id,
+            actor_id=principal.user_id,
+            request_id=request_id,
+        )
+        if item is None:
+            raise HTTPException(status_code=404, detail=f"Evidence '{evidence_id}' not found")
+        return item
+
+    @router.get("/evidence", response_model=list[EvidenceItemResponse])
+    def list_evidence(
+        case_id: Optional[str] = Query(None, description="Filter by case node ID"),
+        entity_id: Optional[str] = Query(None, description="Filter by entity node ID"),
+        limit: int = Query(50, ge=1, le=200),
+        principal: Principal = Depends(get_principal),
+        evidence_svc: EvidenceService = Depends(get_evidence_service),
+        request_id: str = Depends(get_request_id),
+    ) -> list[EvidenceItemResponse]:
+        """List evidence items, optionally filtered by case_id or entity_id."""
+        return evidence_svc.list_all_evidence(
+            case_id=case_id,
+            entity_id=entity_id,
+            limit=limit,
+            actor_id=principal.user_id,
+            request_id=request_id,
+        )
+
+    @router.get(
+        "/entities/{source_id}/links/{target_id}/evidence",
+        response_model=list[EvidenceItemResponse],
+    )
+    def get_edge_evidence(
+        source_id: str,
+        target_id: str,
+        edge_type: Optional[str] = Query(None, description="Filter by relationship type"),
+        principal: Principal = Depends(get_principal),
+        evidence_svc: EvidenceService = Depends(get_evidence_service),
+        request_id: str = Depends(get_request_id),
+    ) -> list[EvidenceItemResponse]:
+        """Retrieve all evidence citations supporting a specific graph edge."""
+        return evidence_svc.get_evidence_for_edge(
+            source_id=source_id,
+            target_id=target_id,
+            edge_type=edge_type,
+            actor_id=principal.user_id,
+            request_id=request_id,
+        )
+
+    @router.post("/evidence/verify", response_model=EvidenceVerificationResponse)
+    def verify_evidence(
+        req: EvidenceVerifyRequest,
+        principal: Principal = Depends(get_principal),
+        evidence_svc: EvidenceService = Depends(get_evidence_service),
+        request_id: str = Depends(get_request_id),
+    ) -> EvidenceVerificationResponse:
+        """Compute SHA-256 hash chain for evidence items (Section 63 BSA 2023)."""
+        return evidence_svc.verify_evidence_chain(
+            evidence_ids=req.evidence_ids,
+            path_node_ids=req.path_node_ids,
+            actor_id=principal.user_id,
+            request_id=request_id,
+        )
+
+    # ── Entity Profile (Phase 2) ────────────────────────────────────────────
+
+    @router.get("/entities/{entity_id}", response_model=EntityProfileResponse)
+    def get_entity_profile(
+        entity_id: str,
+        principal: Principal = Depends(get_principal),
+        entity_svc: EntityService = Depends(get_entity_service),
+        request_id: str = Depends(get_request_id),
+    ) -> EntityProfileResponse:
+        """Retrieve the full profile of any graph entity by ID."""
+        profile = entity_svc.get_entity_profile(
+            entity_id=entity_id,
+            actor_id=principal.user_id,
+            request_id=request_id,
+        )
+        if profile is None:
+            raise HTTPException(status_code=404, detail=f"Entity '{entity_id}' not found")
+        return profile
+
+    @router.get("/entities/{entity_id}/network", response_model=NetworkGraphResponse)
+    def get_entity_network(
+        entity_id: str,
+        depth: int = Query(2, ge=1, le=4),
+        principal: Principal = Depends(get_principal),
+        entity_svc: EntityService = Depends(get_entity_service),
+        request_id: str = Depends(get_request_id),
+    ) -> NetworkGraphResponse:
+        """Expand the BFS subgraph centered on any entity node."""
+        return entity_svc.get_entity_network(
+            entity_id=entity_id,
+            depth=depth,
+            actor_id=principal.user_id,
+            request_id=request_id,
+        )
+
+    @router.get("/entities", response_model=list[EntityProfileResponse])
+    def search_entities(
+        query: str = Query(..., min_length=1, description="Search term"),
+        entity_type: Optional[str] = Query(None, description="Filter by entity type e.g. Person, Case"),
+        limit: int = Query(20, ge=1, le=100),
+        principal: Principal = Depends(get_principal),
+        entity_svc: EntityService = Depends(get_entity_service),
+    ) -> list[EntityProfileResponse]:
+        """Search graph entities by name, phone, vehicle number, or FIR number."""
+        return entity_svc.search_entities(
+            query=query,
+            entity_type=entity_type,
+            limit=limit,
+            actor_id=principal.user_id,
+        )
+
+    # ── File Ingestion Stub (Phase 6) ───────────────────────────────────────
+
+    @router.post("/ingest", response_model=IngestResponse)
+    def ingest_records(
+        req: IngestRequest,
+        principal: Principal = Depends(get_principal),
+        audit: AuditService = Depends(get_audit_service),
+        request_id: str = Depends(get_request_id),
+    ) -> IngestResponse:
+        """Ingest structured records from FIR, CDR, BANK_TXN, or INTEL_REPORT sources.
+
+        Stub: validates source_type and logs audit event.
+        Full implementation depends on Person 2 DATA-02 parsers.
+        """
+        allowed_types = {"CDR", "BANK_TXN", "FIR", "INTEL_REPORT"}
+        if req.source_type not in allowed_types:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid source_type '{req.source_type}'. Must be one of: {sorted(allowed_types)}",
+            )
+        if not principal.can_view_audit_log():  # reuse SUPERVISOR+ check as ADMIN gate
+            raise HTTPException(status_code=403, detail="Forbidden: ADMIN role required for ingestion.")
+        audit.record(
+            AuditEventType.INGESTION_STARTED,
+            actor_id=principal.user_id,
+            request_id=request_id,
+            details={"source_type": req.source_type, "file_name": req.file_name, "record_count": len(req.records)},
+        )
+        # Stub response until Person 2 DATA-02 is complete
+        return IngestResponse(
+            ingested_count=0,
+            skipped_count=0,
+            error_count=0,
+            audit_event_id=request_id or "",
+        )
+
+    # ── Dossier Export (Phase 5 / BE-05) ────────────────────────────────────
+
+    @router.post("/export/dossier", response_model=DossierExportResponse)
+    def export_dossier(
+        req: DossierExportRequest,
+        principal: Principal = Depends(get_principal),
+        export_svc: ExportService = Depends(get_export_service),
+        request_id: str = Depends(get_request_id),
+    ) -> DossierExportResponse:
+        """Generate court-admissible electronic record dossier per Section 63 BSA 2023."""
+        _, meta = export_svc.generate_dossier_pdf(
+            request=req,
+            actor_id=principal.user_id,
+            request_id=request_id,
+        )
+        return meta
+
+    @router.post("/export/dossier/download")
+    def download_dossier(
+        req: DossierExportRequest,
+        principal: Principal = Depends(get_principal),
+        export_svc: ExportService = Depends(get_export_service),
+        request_id: str = Depends(get_request_id),
+    ) -> Response:
+        """Download raw PDF bytes for BSA Section 63 electronic record certificate."""
+        pdf_bytes, meta = export_svc.generate_dossier_pdf(
+            request=req,
+            actor_id=principal.user_id,
+            request_id=request_id,
+        )
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="NEXUS_Section63_Dossier_{req.case_id}.pdf"',
+                "X-Dossier-SHA256": meta.sha256_hash,
+            },
+        )
+
     # ── Audit Trail ───────────────────────────────────────────────────────────
 
     @router.get("/audit", response_model=list[AuditLogEntry])
     def get_audit_trail(
         case_id: Optional[str] = Query(None),
+        event_type: Optional[str] = Query(None, description="Filter by audit event type"),
+        actor_id: Optional[str] = Query(None, description="Filter by actor user ID"),
         limit: int = Query(50, ge=1, le=200),
         principal: Principal = Depends(get_principal),
         audit_svc: AuditService = Depends(get_audit_service),
@@ -400,6 +622,11 @@ def create_core_router() -> APIRouter:
         if not principal.can_view_audit_log():
             raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges to view audit log.")
         raw_events = audit_svc.list_events(case_id=case_id, limit=limit)
+        # Apply optional filters not yet in AuditService.list_events
+        if event_type:
+            raw_events = [e for e in raw_events if e.get("event_type") == event_type]
+        if actor_id:
+            raw_events = [e for e in raw_events if e.get("actor_id") == actor_id]
         return [
             AuditLogEntry(
                 id=e["id"],

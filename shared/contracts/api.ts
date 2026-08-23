@@ -192,6 +192,9 @@ export interface CopilotQueryRequest {
   case_id?: string
   investigation_id?: string
   session_id?: string
+  /** Entity-centric query parameters (used by Copilot structured dispatch) */
+  entity_id?: string
+  max_hops?: number
 }
 
 export interface CopilotQueryResponse {
@@ -228,4 +231,68 @@ export interface AuthTokenResponse {
   user_id: string
   role: UserRole
   expires_in: number
+}
+
+// ── Entity Profile ─────────────────────────────────────────────────────────────
+
+/** Full profile of a graph entity, including evidence and centrality data. */
+export interface EntityProfileResponse {
+  entity_id: string
+  entity_type: string
+  label: string
+  properties: Record<string, any>
+  aliases: string[]
+  degree: number
+  community_id?: string
+  betweenness_score?: number
+  evidence_items: EvidenceItemResponse[]
+}
+
+// ── Evidence Verification (BE-04) ──────────────────────────────────────────
+
+/** SHA-256 hash chain verification result for Section 63 BSA 2023 compliance. */
+export interface EvidenceVerificationResponse {
+  evidence_hashes: Record<string, string>  // evidence_id -> sha256
+  chain_hash: string
+  verified_at: string
+  verification_status: 'VERIFIED' | 'INCOMPLETE'
+}
+
+export interface EvidenceVerifyRequest {
+  evidence_ids: string[]
+  path_node_ids: string[]
+}
+
+// ── BSA Dossier Export (BE-05) ───────────────────────────────────────────────
+
+/** Request body for POST /export/dossier (Section 63 BSA 2023). */
+export interface DossierExportRequest {
+  case_id: string
+  include_network: boolean
+  include_evidence: boolean
+  include_hash_chain: boolean
+}
+
+export interface DossierExportResponse {
+  case_id: string
+  sha256_hash: string
+  generated_at: string
+  page_count: number
+  file_size_bytes: number
+}
+
+// ── File Ingestion ─────────────────────────────────────────────────────────────
+
+/** Multi-source ingestion request body for POST /ingest. */
+export interface IngestRequest {
+  source_type: 'CDR' | 'BANK_TXN' | 'FIR' | 'INTEL_REPORT'
+  file_name: string
+  records: Record<string, any>[]
+}
+
+export interface IngestResponse {
+  ingested_count: number
+  skipped_count: number
+  error_count: number
+  audit_event_id: string
 }

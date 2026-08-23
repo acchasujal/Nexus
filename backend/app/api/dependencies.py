@@ -15,6 +15,9 @@ from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.services.audit_service import AuditService
 from backend.app.services.case_service import InvestigationService
 from backend.app.services.copilot_service import CopilotService
+from backend.app.services.evidence_service import EvidenceService
+from backend.app.services.entity_service import EntityService
+from backend.app.services.export_service import ExportService
 
 
 def get_settings_dep(request: Request) -> Settings:
@@ -56,3 +59,26 @@ def get_copilot_service(
     audit_svc: AuditService = Depends(get_audit_service),
 ) -> CopilotService:
     return CopilotService(repo, audit_svc)
+
+
+def get_evidence_service(
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> EvidenceService:
+    return EvidenceService(repo, audit_svc)
+
+
+def get_entity_service(
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> EntityService:
+    evidence_svc = EvidenceService(repo, audit_svc)
+    return EntityService(repo, audit_svc, evidence_svc)
+
+
+def get_export_service(
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> ExportService:
+    evidence_svc = EvidenceService(repo, audit_svc)
+    return ExportService(repo, audit_svc, evidence_svc)
