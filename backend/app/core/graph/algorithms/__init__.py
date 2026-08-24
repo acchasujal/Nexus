@@ -7,6 +7,10 @@ from backend.app.core.graph.algorithms.entity_resolution import (
     normalize_text,
     jaccard_similarity,
 )
+from backend.app.core.graph.algorithms.projection import (
+    project_person_graph,
+    project_person_nodes_and_edges,
+)
 
 __all__ = [
     "ResolutionMatch",
@@ -14,4 +18,7 @@ __all__ = [
     "phonetic_normalize",
     "normalize_text",
     "jaccard_similarity",
+    "project_person_graph",
+    "project_person_nodes_and_edges",
 ]
+
