@@ -141,12 +141,13 @@ def build_graph_store(nodes: Iterable[Any], edges: Iterable[Any]) -> GraphStore:
         src = safe_str(raw.source_id)
         tgt = safe_str(raw.target_id)
 
-        key = (etype, src, tgt)
+        props = dict(raw.properties) if hasattr(raw, "properties") else {}
+        edge_id = props.get("id") or getattr(raw, "id", None)
+        key = (edge_id,) if edge_id else (etype, src, tgt)
         if key in seen_edges:
             continue
         seen_edges.add(key)
 
-        props = dict(raw.properties) if hasattr(raw, "properties") else {}
         edge = AdjEdge(edge_type=etype, source_id=src, target_id=tgt, properties=props)
 
         # Ensure adjacency lists exist even for dangling references

@@ -40,6 +40,15 @@ from backend.app.core.graph.algorithms.pattern_rules import (
 from backend.app.core.graph.algorithms.cross_case import (
     detect_cross_case_bridges,
 )
+from backend.app.core.graph.algorithms.snapshot_diff import (
+    DiffSummaryMetrics,
+    GraphSnapshotDiff,
+    NodeDiffRecord,
+    NodeFieldChange,
+    RelationshipDiffRecord,
+    RelationshipFieldChange,
+    diff_graph_snapshots,
+)
 
 __all__ = [
     "ResolutionMatch",
@@ -67,6 +76,13 @@ __all__ = [
     "detect_circular_repeated_financial_flow",
     "detect_all_suspicious_patterns",
     "detect_cross_case_bridges",
+    "DiffSummaryMetrics",
+    "GraphSnapshotDiff",
+    "NodeDiffRecord",
+    "NodeFieldChange",
+    "RelationshipDiffRecord",
+    "RelationshipFieldChange",
+    "diff_graph_snapshots",
 ]
 
 
