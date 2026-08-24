@@ -57,7 +57,7 @@ class PatternFinding:
     ----------
     rule_id : str
         Unique rule identifier ('shared_phone_device', 'communication_burst_near_event',
-        'circular_repeated_financial_flow').
+        'circular_repeated_financial_flow', 'cross_case_bridge').
     explanation : str
         Deterministic natural language structural explanation (no LLM, no guilt bias).
     entity_ids : list[str]
@@ -66,6 +66,8 @@ class PatternFinding:
         IDs of edges/relationships involved in the pattern.
     evidence_ids : list[str]
         Source record / evidence IDs backing the underlying graph relationships.
+    case_ids : list[str]
+        IDs of cases connected by the pattern (for cross-case bridges).
     derivation_class : str
         Always "DERIVED" for rule-based findings.
     severity : str
@@ -77,6 +79,7 @@ class PatternFinding:
     entity_ids: list[str]
     edge_ids: list[str]
     evidence_ids: list[str]
+    case_ids: list[str] = field(default_factory=list)
     derivation_class: str = "DERIVED"
     severity: str = "MEDIUM"
 

@@ -37,6 +37,10 @@ from backend.app.core.graph.algorithms.pattern_rules import (
     detect_all_suspicious_patterns,
 )
 
+from backend.app.core.graph.algorithms.cross_case import (
+    detect_cross_case_bridges,
+)
+
 __all__ = [
     "ResolutionMatch",
     "resolve_person",
@@ -62,6 +66,7 @@ __all__ = [
     "detect_communication_burst_near_event",
     "detect_circular_repeated_financial_flow",
     "detect_all_suspicious_patterns",
+    "detect_cross_case_bridges",
 ]
 
 
