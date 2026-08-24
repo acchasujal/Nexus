@@ -29,6 +29,13 @@ from backend.app.core.graph.algorithms.communities import (
     generate_stable_community_id,
     detect_louvain_communities,
 )
+from backend.app.core.graph.algorithms.pattern_rules import (
+    PatternFinding,
+    detect_shared_phone_device,
+    detect_communication_burst_near_event,
+    detect_circular_repeated_financial_flow,
+    detect_all_suspicious_patterns,
+)
 
 __all__ = [
     "ResolutionMatch",
@@ -50,7 +57,13 @@ __all__ = [
     "NetworkCommunitiesSummary",
     "generate_stable_community_id",
     "detect_louvain_communities",
+    "PatternFinding",
+    "detect_shared_phone_device",
+    "detect_communication_burst_near_event",
+    "detect_circular_repeated_financial_flow",
+    "detect_all_suspicious_patterns",
 ]
+
 
 
 
