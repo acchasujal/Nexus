@@ -1,6 +1,7 @@
 """backend/app/core/graph/enums.py
 
 Graph entity and relationship types for the NEXUS Criminal Network Intelligence Platform.
+Schema V2 contract definition.
 """
 
 from __future__ import annotations
@@ -21,11 +22,28 @@ class GraphEntityType(str, Enum):
     EVENT = "Event"
     INTELLIGENCE_REPORT = "IntelligenceReport"
     EVIDENCE = "Evidence"
+    SOURCE_RECORD = "SourceRecord"
     
     # Supporting entities
     OFFICER = "Officer"
     UNIT = "Unit"
     COURT = "Court"
+    ACT = "Act"
+    SECTION = "Section"
+    CRIME_HEAD = "CrimeHead"
+    CRIME_SUB_HEAD = "CrimeSubHead"
+
+
+class DerivationClass(str, Enum):
+    """
+    Explicit provenance classification for graph links and assertions.
+    FACT: Directly present in an imported source record.
+    DERIVED: Computed from source-backed facts by a named deterministic algorithm/rule.
+    HYPOTHESIS: Human-review lead / investigative hypothesis.
+    """
+    FACT = "FACT"
+    DERIVED = "DERIVED"
+    HYPOTHESIS = "HYPOTHESIS"
 
 
 class GraphRelationshipType(str, Enum):
@@ -44,6 +62,11 @@ class GraphRelationshipType(str, Enum):
     CONNECTED_TO = "CONNECTED_TO"
     OWNS_ACCOUNT = "OWNS_ACCOUNT"
     TRANSFERRED_TO = "TRANSFERRED_TO"
+    TRANSFERRED_FUNDS = "TRANSFERRED_FUNDS"
+    COMMUNICATED_WITH = "COMMUNICATED_WITH"
+    SHARED_PHONE = "SHARED_PHONE"
+    OWNS_VEHICLE = "OWNS_VEHICLE"
+    PRESENT_AT = "PRESENT_AT"
     OCCURRED_AT = "OCCURRED_AT"
     OCCURRED_IN = "OCCURRED_IN"
     MENTIONED_IN = "MENTIONED_IN"
@@ -54,6 +77,8 @@ class GraphRelationshipType(str, Enum):
     BELONGS_TO_UNIT = "BELONGS_TO_UNIT"
     CO_ACCUSED_WITH = "CO_ACCUSED_WITH"
     LINKED_TO = "LINKED_TO"
+    CITES_SOURCE = "CITES_SOURCE"
+    PARTICIPATED_IN = "PARTICIPATED_IN"
 
 
 class EdgeStorageMode(str, Enum):
@@ -76,4 +101,4 @@ class InvestigationRole(str, Enum):
     # Legacy role mappings for backwards compatibility during migration
     IO = "IO"
     SHO = "SHO"
-    SP = "SP"
+    SP = "SP"
