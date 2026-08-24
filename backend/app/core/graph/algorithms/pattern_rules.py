@@ -193,10 +193,9 @@ def detect_shared_phone_device(
         "Person",
     }
 
-    # Canonical V2 relationship types for phone/device associations
+    # Canonical V2 relationship types for phone/device associations (strictly excluding vehicles)
     valid_rel_types = {
         GraphRelationshipType.USED_PHONE.value,
-        GraphRelationshipType.USED_VEHICLE.value,
         GraphRelationshipType.SHARED_PHONE.value,
     }
 
@@ -579,7 +578,7 @@ def detect_circular_repeated_financial_flow(
             sorted_evidence_ids = sorted(rep_evidence_ids)
 
             explanation = (
-                f"Observed {len(edges)} repeated financial transfers between '{src}' and '{tgt}'."
+                f"Observed {len(edges)} repeated financial transfers between account '{src}' and account '{tgt}'."
             )
 
             findings.append(

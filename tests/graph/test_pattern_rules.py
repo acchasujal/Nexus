@@ -115,6 +115,23 @@ def test_shared_phone_negative_unrelated_and_missing_provenance():
     assert len(detect_shared_phone_device(store2)) == 0
 
 
+def test_shared_vehicle_does_not_trigger_shared_phone_device():
+    """Regression test: Two people sharing a Vehicle entity must NOT trigger shared_phone_device."""
+    nodes = [
+        NodeRecord("person_A", "Person"),
+        NodeRecord("person_B", "Person"),
+        NodeRecord("vehicle_X", "Vehicle"),
+    ]
+    edges = [
+        AdjEdge("USED_VEHICLE", "person_A", "vehicle_X", properties={"source_record_id": "src_v1"}),
+        AdjEdge("USED_VEHICLE", "person_B", "vehicle_X", properties={"source_record_id": "src_v2"}),
+    ]
+    store = build_graph_store(nodes, edges)
+    findings = detect_shared_phone_device(store)
+
+    assert len(findings) == 0, "Sharing a vehicle must NOT produce a shared_phone_device finding"
+
+
 # ── Rule 2 Tests: Communication Burst Near Event ───────────────────────────────
 
 def test_communication_burst_positive_case():
@@ -239,17 +256,21 @@ def test_financial_repeated_flow_neutral_language():
         NodeRecord("acc_A", "Account"),
         NodeRecord("acc_B", "Account"),
     ]
-    # Repeated transfers between acc_A and acc_B
+    # 2 transfers between acc_A and acc_B -> Tested with min_repeated_transfers=2
     edges = [
         AdjEdge("TRANSFERRED_FUNDS", "acc_A", "acc_B", properties={"id": "t1", "source_record_id": "src_1"}),
         AdjEdge("TRANSFERRED_TO", "acc_A", "acc_B", properties={"id": "t2", "source_record_id": "src_2"}),
     ]
     store = build_graph_store(nodes, edges)
-    findings = detect_circular_repeated_financial_flow(store, min_repeated_transfers=2)
 
+    # Below threshold (min=3) -> 0 findings
+    assert len(detect_circular_repeated_financial_flow(store, min_repeated_transfers=3)) == 0
+
+    # At threshold (min=2) -> 1 finding
+    findings = detect_circular_repeated_financial_flow(store, min_repeated_transfers=2)
     assert len(findings) == 1
     f = findings[0]
-    assert "2 repeated financial transfers between 'acc_A' and 'acc_B'" in f.explanation
+    assert "Observed 2 repeated financial transfers between account 'acc_A' and account 'acc_B'." in f.explanation
     # Verify strict neutral language (no guilt, fraud, or criminal inferencing)
     forbidden = ["fraud", "criminal", "laundering", "illegal", "guilt"]
     for term in forbidden:
