@@ -87,31 +87,31 @@ def largest_connected_component(store: GraphStore) -> set[str]:
 
 
 def degree_centrality(store: GraphStore) -> dict[str, float]:
-    """Compute degree centrality for all nodes."""
-    _require_nx()
-    G = _to_networkx(store)
-    return nx.degree_centrality(G)
+    """Compute degree centrality for all Person nodes using Person-Only Projection."""
+    from backend.app.core.graph.algorithms.centrality import compute_person_degree_centrality
+    results = compute_person_degree_centrality(store)
+    return {r.person_id: r.degree_centrality for r in results}
 
 
 def in_degree_centrality(store: GraphStore) -> dict[str, float]:
-    """Compute in-degree centrality."""
-    _require_nx()
-    G = _to_networkx(store)
-    return nx.in_degree_centrality(G)
+    """Compute in-degree centrality for all Person nodes."""
+    from backend.app.core.graph.algorithms.centrality import compute_person_degree_centrality
+    results = compute_person_degree_centrality(store)
+    return {r.person_id: r.in_degree_centrality for r in results}
 
 
 def out_degree_centrality(store: GraphStore) -> dict[str, float]:
-    """Compute out-degree centrality."""
-    _require_nx()
-    G = _to_networkx(store)
-    return nx.out_degree_centrality(G)
+    """Compute out-degree centrality for all Person nodes."""
+    from backend.app.core.graph.algorithms.centrality import compute_person_degree_centrality
+    results = compute_person_degree_centrality(store)
+    return {r.person_id: r.out_degree_centrality for r in results}
 
 
 def betweenness_centrality(store: GraphStore, k: int | None = None) -> dict[str, float]:
-    """Compute betweenness centrality."""
-    _require_nx()
-    G = _to_networkx(store)
-    return nx.betweenness_centrality(G, k=k)
+    """Compute betweenness centrality for all Person nodes using Person-Only Projection."""
+    from backend.app.core.graph.algorithms.centrality import compute_person_betweenness_centrality
+    results = compute_person_betweenness_centrality(store, k=k)
+    return {r.person_id: r.betweenness_centrality for r in results}
 
 
 def detect_communities(store: GraphStore) -> list[CommunityResult]:
@@ -162,36 +162,24 @@ def detect_communities(store: GraphStore) -> list[CommunityResult]:
 
 
 def find_bridge_nodes(store: GraphStore) -> list[BridgeNodeResult]:
-    """Find articulation points / bridge brokers that connect disjoint criminal modules."""
-    _require_nx()
-    G = _to_networkx(store).to_undirected()
-    if len(G.nodes) == 0:
-        return []
-
-    betweenness = nx.betweenness_centrality(G)
-    articulation_points = set(nx.articulation_points(G)) if nx.is_connected(G) or len(G.nodes) > 2 else set()
+    """Find articulation points / bridge brokers that connect disjoint network modules."""
+    from backend.app.core.graph.algorithms.bridges import compute_person_bridge_intelligence
+    intel_results = compute_person_bridge_intelligence(store)
 
     bridge_results: list[BridgeNodeResult] = []
-    for nid in articulation_points:
-        node = store.nodes.get(nid)
-        if not node:
-            continue
-        props = node.properties or {}
-        label = props.get("full_name") or props.get("name") or props.get("registration_number") or props.get("phone_number") or nid
-
-        score = betweenness.get(nid, 0.0)
-        bridge_results.append(
-            BridgeNodeResult(
-                node_id=nid,
-                entity_type=node.entity_type,
-                label=label,
-                connected_components_count=2,
-                betweenness_score=round(score, 4),
-                reason=f"Critical bridge entity (articulation point) connecting multiple sub-networks (betweenness: {score:.3f})",
+    for b in intel_results:
+        if b.articulation_point or b.betweenness_centrality > 0.0:
+            bridge_results.append(
+                BridgeNodeResult(
+                    node_id=b.person_id,
+                    entity_type="Person",
+                    label=b.canonical_label,
+                    connected_components_count=b.affected_components_count,
+                    betweenness_score=b.betweenness_centrality,
+                    reason=b.explanation,
+                )
             )
-        )
 
-    bridge_results.sort(key=lambda b: b.betweenness_score, reverse=True)
     return bridge_results
 
 

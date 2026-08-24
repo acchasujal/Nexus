@@ -11,6 +11,18 @@ from backend.app.core.graph.algorithms.projection import (
     project_person_graph,
     project_person_nodes_and_edges,
 )
+from backend.app.core.graph.algorithms.centrality import (
+    PersonDegreeResult,
+    PersonBetweennessResult,
+    compute_person_degree_centrality,
+    compute_person_betweenness_centrality,
+)
+from backend.app.core.graph.algorithms.bridges import (
+    BridgeCandidateResult,
+    compute_person_bridge_intelligence,
+    top_bridge_entities,
+    get_network_centrality_summary,
+)
 
 __all__ = [
     "ResolutionMatch",
@@ -20,5 +32,14 @@ __all__ = [
     "jaccard_similarity",
     "project_person_graph",
     "project_person_nodes_and_edges",
+    "PersonDegreeResult",
+    "PersonBetweennessResult",
+    "compute_person_degree_centrality",
+    "compute_person_betweenness_centrality",
+    "BridgeCandidateResult",
+    "compute_person_bridge_intelligence",
+    "top_bridge_entities",
+    "get_network_centrality_summary",
 ]
+
 
