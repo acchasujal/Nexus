@@ -1,0 +1,825 @@
+[
+  {
+    "id": "9582fb14-fb3d-5eb5-99dc-6d8d166e13c7",
+    "entity_type": "Case",
+    "canonical_label": "FIR SYN-FIR-001",
+    "aliases": [],
+    "attributes": {
+      "fir_number": "SYN-FIR-001",
+      "title": "FIR SYN-FIR-001",
+      "station_name": "Central Station",
+      "district": "Bengaluru",
+      "state": "",
+      "offence_category": "theft",
+      "incident_date": "2026-08-24T14:00:00Z",
+      "status": "OPEN",
+      "summary": "",
+      "sections": [
+        "303"
+      ],
+      "accused_ids": [],
+      "victim_ids": []
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T14:00:00Z",
+    "updated_at": "2026-08-24T14:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "fir_number": "SYN-FIR-001",
+      "title": "FIR SYN-FIR-001",
+      "station_name": "Central Station",
+      "district": "Bengaluru",
+      "state": "",
+      "offence_category": "theft",
+      "incident_date": "2026-08-24T14:00:00Z",
+      "status": "OPEN",
+      "summary": "",
+      "sections": [
+        "303"
+      ],
+      "accused_ids": [],
+      "victim_ids": []
+    },
+    "fir_number": "SYN-FIR-001",
+    "title": "FIR SYN-FIR-001",
+    "station_name": "Central Station",
+    "district": "Bengaluru",
+    "state": "",
+    "offence_category": "theft",
+    "incident_date": "2026-08-24T14:00:00Z",
+    "status": "OPEN",
+    "summary": "",
+    "sections": [
+      "303"
+    ],
+    "accused_ids": [],
+    "victim_ids": []
+  },
+  {
+    "id": "25accfbc-e671-5575-89af-3bdca68d7069",
+    "entity_type": "Person",
+    "canonical_label": "Vikram Sharma",
+    "aliases": [],
+    "attributes": {
+      "full_name": "Vikram Sharma",
+      "phone_numbers": [
+        "9845012345"
+      ],
+      "vehicles": [],
+      "addresses": [
+        "Synthetic Road"
+      ],
+      "national_id": "SYN-NID-001",
+      "role_in_case": "ACCUSED",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "fir_001",
+          "name": "Vikram Sharma",
+          "source_record_id": "cf3ba915-86b6-5c9a-8453-2dd3c2b2e363"
+        }
+      ]
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T14:00:00Z",
+    "updated_at": "2026-08-24T14:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "full_name": "Vikram Sharma",
+      "phone_numbers": [
+        "9845012345"
+      ],
+      "vehicles": [],
+      "addresses": [
+        "Synthetic Road"
+      ],
+      "national_id": "SYN-NID-001",
+      "role_in_case": "ACCUSED",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "fir_001",
+          "name": "Vikram Sharma",
+          "source_record_id": "cf3ba915-86b6-5c9a-8453-2dd3c2b2e363"
+        }
+      ]
+    },
+    "full_name": "Vikram Sharma",
+    "phone_numbers": [
+      "9845012345"
+    ],
+    "vehicles": [],
+    "addresses": [
+      "Synthetic Road"
+    ],
+    "national_id": "SYN-NID-001",
+    "role_in_case": "ACCUSED",
+    "case_ids": []
+  },
+  {
+    "id": "8e403cda-d777-56df-8abe-261f00004678",
+    "entity_type": "Phone",
+    "canonical_label": "9845012345",
+    "aliases": [],
+    "attributes": {
+      "phone_number": "9845012345"
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T14:00:00Z",
+    "updated_at": "2026-08-24T14:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "phone_number": "9845012345"
+    },
+    "phone_number": "9845012345",
+    "imei": null,
+    "imsi": null,
+    "carrier": null,
+    "registered_owner": null
+  },
+  {
+    "id": "3755f9c8-2a5f-5ed2-ae2b-23dbfaad8e4a",
+    "entity_type": "Vehicle",
+    "canonical_label": "KA01AB1234",
+    "aliases": [],
+    "attributes": {
+      "registration_number": "KA01AB1234",
+      "vehicle_type": ""
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T14:00:00Z",
+    "updated_at": "2026-08-24T14:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "registration_number": "KA01AB1234",
+      "vehicle_type": ""
+    },
+    "registration_number": "KA01AB1234",
+    "vehicle_type": "",
+    "make": null,
+    "model": null,
+    "color": null,
+    "engine_number": null,
+    "chassis_number": null,
+    "owner_name": null
+  },
+  {
+    "id": "c7a85177-1053-59bb-99f6-5f6a5f8fbfbf",
+    "entity_type": "Person",
+    "canonical_label": "Vikram Sharma",
+    "aliases": [],
+    "attributes": {
+      "full_name": "Vikram Sharma",
+      "phone_numbers": [
+        "9999911111"
+      ],
+      "vehicles": [],
+      "addresses": [
+        "Other Road"
+      ],
+      "national_id": "SYN-NID-999",
+      "role_in_case": "VICTIM",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "fir_002",
+          "name": "Vikram Sharma",
+          "source_record_id": "7aa492cd-48e0-5ba9-9e10-08fa48273a87"
+        }
+      ]
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T14:00:00Z",
+    "updated_at": "2026-08-24T14:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "full_name": "Vikram Sharma",
+      "phone_numbers": [
+        "9999911111"
+      ],
+      "vehicles": [],
+      "addresses": [
+        "Other Road"
+      ],
+      "national_id": "SYN-NID-999",
+      "role_in_case": "VICTIM",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "fir_002",
+          "name": "Vikram Sharma",
+          "source_record_id": "7aa492cd-48e0-5ba9-9e10-08fa48273a87"
+        }
+      ]
+    },
+    "full_name": "Vikram Sharma",
+    "phone_numbers": [
+      "9999911111"
+    ],
+    "vehicles": [],
+    "addresses": [
+      "Other Road"
+    ],
+    "national_id": "SYN-NID-999",
+    "role_in_case": "VICTIM",
+    "case_ids": []
+  },
+  {
+    "id": "4b52b596-04fa-59f5-b23f-ae1fa6c7c6e6",
+    "entity_type": "Phone",
+    "canonical_label": "9999911111",
+    "aliases": [],
+    "attributes": {
+      "phone_number": "9999911111"
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T14:00:00Z",
+    "updated_at": "2026-08-24T14:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "phone_number": "9999911111"
+    },
+    "phone_number": "9999911111",
+    "imei": null,
+    "imsi": null,
+    "carrier": null,
+    "registered_owner": null
+  },
+  {
+    "id": "dffc2337-275f-5e2f-a589-7af3175f9fe0",
+    "entity_type": "Person",
+    "canonical_label": "Ravi Kumar",
+    "aliases": [],
+    "attributes": {
+      "full_name": "Ravi Kumar",
+      "phone_numbers": [
+        "9876543210"
+      ],
+      "vehicles": [],
+      "addresses": [],
+      "national_id": "SYN-NID-002",
+      "role_in_case": "WITNESS",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "fir_003",
+          "name": "Ravi Kumar",
+          "source_record_id": "483d598f-1e65-5af1-81c2-8cdc57c46871"
+        }
+      ]
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T14:00:00Z",
+    "updated_at": "2026-08-24T14:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "full_name": "Ravi Kumar",
+      "phone_numbers": [
+        "9876543210"
+      ],
+      "vehicles": [],
+      "addresses": [],
+      "national_id": "SYN-NID-002",
+      "role_in_case": "WITNESS",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "fir_003",
+          "name": "Ravi Kumar",
+          "source_record_id": "483d598f-1e65-5af1-81c2-8cdc57c46871"
+        }
+      ]
+    },
+    "full_name": "Ravi Kumar",
+    "phone_numbers": [
+      "9876543210"
+    ],
+    "vehicles": [],
+    "addresses": [],
+    "national_id": "SYN-NID-002",
+    "role_in_case": "WITNESS",
+    "case_ids": []
+  },
+  {
+    "id": "2932e882-0ce1-5009-adab-6a4d4deca4ba",
+    "entity_type": "Phone",
+    "canonical_label": "9876543210",
+    "aliases": [],
+    "attributes": {
+      "phone_number": "9876543210"
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T14:00:00Z",
+    "updated_at": "2026-08-24T14:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "phone_number": "9876543210"
+    },
+    "phone_number": "9876543210",
+    "imei": null,
+    "imsi": null,
+    "carrier": null,
+    "registered_owner": null
+  },
+  {
+    "id": "7ae03cb9-56cd-5adb-9694-993b9b7cb1d1",
+    "entity_type": "Case",
+    "canonical_label": "FIR SYN-FIR-002",
+    "aliases": [],
+    "attributes": {
+      "fir_number": "SYN-FIR-002",
+      "title": "FIR SYN-FIR-002",
+      "station_name": "North Station",
+      "district": "Bengaluru",
+      "state": "",
+      "offence_category": "fraud",
+      "incident_date": "2026-08-25T10:00:00Z",
+      "status": "OPEN",
+      "summary": "",
+      "sections": [
+        "420"
+      ],
+      "accused_ids": [],
+      "victim_ids": []
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-25T10:00:00Z",
+    "updated_at": "2026-08-25T10:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "fir_number": "SYN-FIR-002",
+      "title": "FIR SYN-FIR-002",
+      "station_name": "North Station",
+      "district": "Bengaluru",
+      "state": "",
+      "offence_category": "fraud",
+      "incident_date": "2026-08-25T10:00:00Z",
+      "status": "OPEN",
+      "summary": "",
+      "sections": [
+        "420"
+      ],
+      "accused_ids": [],
+      "victim_ids": []
+    },
+    "fir_number": "SYN-FIR-002",
+    "title": "FIR SYN-FIR-002",
+    "station_name": "North Station",
+    "district": "Bengaluru",
+    "state": "",
+    "offence_category": "fraud",
+    "incident_date": "2026-08-25T10:00:00Z",
+    "status": "OPEN",
+    "summary": "",
+    "sections": [
+      "420"
+    ],
+    "accused_ids": [],
+    "victim_ids": []
+  },
+  {
+    "id": "478e0ef3-379a-59db-9fde-cfb04f68d49b",
+    "entity_type": "Person",
+    "canonical_label": "Vikram Sharma",
+    "aliases": [],
+    "attributes": {
+      "full_name": "Vikram Sharma",
+      "phone_numbers": [],
+      "vehicles": [],
+      "addresses": [],
+      "role_in_case": "COMPLAINANT",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "fir_004",
+          "name": "Vikram Sharma",
+          "source_record_id": "f918ed59-fa97-5d7b-99c8-9c34171e7064"
+        }
+      ]
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-25T10:00:00Z",
+    "updated_at": "2026-08-25T10:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "full_name": "Vikram Sharma",
+      "phone_numbers": [],
+      "vehicles": [],
+      "addresses": [],
+      "role_in_case": "COMPLAINANT",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "fir_004",
+          "name": "Vikram Sharma",
+          "source_record_id": "f918ed59-fa97-5d7b-99c8-9c34171e7064"
+        }
+      ]
+    },
+    "full_name": "Vikram Sharma",
+    "phone_numbers": [],
+    "vehicles": [],
+    "addresses": [],
+    "national_id": null,
+    "role_in_case": "COMPLAINANT",
+    "case_ids": []
+  },
+  {
+    "id": "ca8c4503-5394-5df7-8899-69831e445163",
+    "entity_type": "Person",
+    "canonical_label": "Missing Cat",
+    "aliases": [],
+    "attributes": {
+      "full_name": "Missing Cat",
+      "phone_numbers": [],
+      "vehicles": [],
+      "addresses": [],
+      "role_in_case": "WITNESS",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "fir_006",
+          "name": "Missing Cat",
+          "source_record_id": "e92f09f3-af59-5c34-b579-717b5bb89190"
+        }
+      ]
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-25T10:00:00Z",
+    "updated_at": "2026-08-25T10:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "full_name": "Missing Cat",
+      "phone_numbers": [],
+      "vehicles": [],
+      "addresses": [],
+      "role_in_case": "WITNESS",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "fir_006",
+          "name": "Missing Cat",
+          "source_record_id": "e92f09f3-af59-5c34-b579-717b5bb89190"
+        }
+      ]
+    },
+    "full_name": "Missing Cat",
+    "phone_numbers": [],
+    "vehicles": [],
+    "addresses": [],
+    "national_id": null,
+    "role_in_case": "WITNESS",
+    "case_ids": []
+  },
+  {
+    "id": "d3c8aff8-aa6f-529c-b734-50f4d3647d85",
+    "entity_type": "Account",
+    "canonical_label": "SYNACC001",
+    "aliases": [],
+    "attributes": {
+      "account_number": "SYNACC001",
+      "bank_name": "Synthetic Bank",
+      "ifsc_code": "SBIN0001234"
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T10:00:00Z",
+    "updated_at": "2026-08-24T10:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "account_number": "SYNACC001",
+      "bank_name": "Synthetic Bank",
+      "ifsc_code": "SBIN0001234"
+    },
+    "account_number": "SYNACC001",
+    "bank_name": "Synthetic Bank",
+    "branch": null,
+    "ifsc_code": "SBIN0001234",
+    "account_holder": null
+  },
+  {
+    "id": "b5fd7c79-d4ec-5b84-b669-e0aadd6d42f4",
+    "entity_type": "Account",
+    "canonical_label": "SYNACC002",
+    "aliases": [],
+    "attributes": {
+      "account_number": "SYNACC002",
+      "bank_name": "Synthetic Trust",
+      "ifsc_code": "HDFC0002345"
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T10:00:00Z",
+    "updated_at": "2026-08-24T10:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "account_number": "SYNACC002",
+      "bank_name": "Synthetic Trust",
+      "ifsc_code": "HDFC0002345"
+    },
+    "account_number": "SYNACC002",
+    "bank_name": "Synthetic Trust",
+    "branch": null,
+    "ifsc_code": "HDFC0002345",
+    "account_holder": null
+  },
+  {
+    "id": "ad320081-8c8a-58a3-b4ca-03ad370c698f",
+    "entity_type": "IntelligenceReport",
+    "canonical_label": "Intelligence report RPT-SYN-001",
+    "aliases": [],
+    "attributes": {
+      "report_id": "RPT-SYN-001",
+      "title": "Intelligence report RPT-SYN-001",
+      "source_agency": "Synthetic Intelligence Unit",
+      "classification_level": "RESTRICTED",
+      "published_date": "2026-08-24T10:00:00Z",
+      "summary": "Neutral synthetic observation of subject activity",
+      "mentioned_person_ids": [
+        "0df8851c-2a1e-5e75-8410-69b495bdb1b3",
+        "3557cdfa-edbd-517a-9054-cdea6bd4c2de"
+      ],
+      "mentioned_org_ids": []
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T10:00:00Z",
+    "updated_at": "2026-08-24T10:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "report_id": "RPT-SYN-001",
+      "title": "Intelligence report RPT-SYN-001",
+      "source_agency": "Synthetic Intelligence Unit",
+      "classification_level": "RESTRICTED",
+      "published_date": "2026-08-24T10:00:00Z",
+      "summary": "Neutral synthetic observation of subject activity",
+      "mentioned_person_ids": [
+        "0df8851c-2a1e-5e75-8410-69b495bdb1b3",
+        "3557cdfa-edbd-517a-9054-cdea6bd4c2de"
+      ],
+      "mentioned_org_ids": []
+    },
+    "report_id": "RPT-SYN-001",
+    "title": "Intelligence report RPT-SYN-001",
+    "source_agency": "Synthetic Intelligence Unit",
+    "classification_level": "RESTRICTED",
+    "published_date": "2026-08-24T10:00:00Z",
+    "summary": "Neutral synthetic observation of subject activity",
+    "mentioned_person_ids": [
+      "0df8851c-2a1e-5e75-8410-69b495bdb1b3",
+      "3557cdfa-edbd-517a-9054-cdea6bd4c2de"
+    ],
+    "mentioned_org_ids": []
+  },
+  {
+    "id": "0df8851c-2a1e-5e75-8410-69b495bdb1b3",
+    "entity_type": "Person",
+    "canonical_label": "Vikram Sharma",
+    "aliases": [
+      "Vicky"
+    ],
+    "attributes": {
+      "full_name": "Vikram Sharma",
+      "phone_numbers": [
+        "9845012345"
+      ],
+      "vehicles": [],
+      "addresses": [],
+      "national_id": "SYN-ID-001",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "intel_001",
+          "name": "Vikram Sharma",
+          "normalized_name": "vikram sharma",
+          "source_record_id": "50db22cb-131c-5731-89fc-2ae3c4504f96",
+          "alias": "vicky",
+          "phone_number": "9845012345",
+          "national_id": "SYN-ID-001"
+        }
+      ]
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T10:00:00Z",
+    "updated_at": "2026-08-24T10:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "full_name": "Vikram Sharma",
+      "phone_numbers": [
+        "9845012345"
+      ],
+      "vehicles": [],
+      "addresses": [],
+      "national_id": "SYN-ID-001",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "intel_001",
+          "name": "Vikram Sharma",
+          "normalized_name": "vikram sharma",
+          "source_record_id": "50db22cb-131c-5731-89fc-2ae3c4504f96",
+          "alias": "vicky",
+          "phone_number": "9845012345",
+          "national_id": "SYN-ID-001"
+        }
+      ]
+    },
+    "full_name": "Vikram Sharma",
+    "phone_numbers": [
+      "9845012345"
+    ],
+    "vehicles": [],
+    "addresses": [],
+    "national_id": "SYN-ID-001",
+    "role_in_case": null,
+    "case_ids": []
+  },
+  {
+    "id": "647a6cd6-2668-50a4-b38c-e8710bd14b55",
+    "entity_type": "Organization",
+    "canonical_label": "Synthetic Org",
+    "aliases": [],
+    "attributes": {
+      "name": "Synthetic Org",
+      "org_type": ""
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T10:00:00Z",
+    "updated_at": "2026-08-24T10:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "name": "Synthetic Org",
+      "org_type": ""
+    },
+    "name": "Synthetic Org",
+    "org_type": "",
+    "jurisdiction": null,
+    "registration_number": null
+  },
+  {
+    "id": "3557cdfa-edbd-517a-9054-cdea6bd4c2de",
+    "entity_type": "Person",
+    "canonical_label": "Ravi Kumar",
+    "aliases": [],
+    "attributes": {
+      "full_name": "Ravi Kumar",
+      "phone_numbers": [
+        "9876543210"
+      ],
+      "vehicles": [],
+      "addresses": [],
+      "national_id": "SYN-ID-004",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "intel_002",
+          "name": "Ravi Kumar",
+          "normalized_name": "ravi kumar",
+          "source_record_id": "eeef41f0-e552-5058-9112-204fe77d8c55",
+          "phone_number": "9876543210",
+          "national_id": "SYN-ID-004"
+        }
+      ]
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T10:00:00Z",
+    "updated_at": "2026-08-24T10:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "full_name": "Ravi Kumar",
+      "phone_numbers": [
+        "9876543210"
+      ],
+      "vehicles": [],
+      "addresses": [],
+      "national_id": "SYN-ID-004",
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "intel_002",
+          "name": "Ravi Kumar",
+          "normalized_name": "ravi kumar",
+          "source_record_id": "eeef41f0-e552-5058-9112-204fe77d8c55",
+          "phone_number": "9876543210",
+          "national_id": "SYN-ID-004"
+        }
+      ]
+    },
+    "full_name": "Ravi Kumar",
+    "phone_numbers": [
+      "9876543210"
+    ],
+    "vehicles": [],
+    "addresses": [],
+    "national_id": "SYN-ID-004",
+    "role_in_case": null,
+    "case_ids": []
+  },
+  {
+    "id": "d9d70488-cb5a-5d70-83c2-81e29e3e8ace",
+    "entity_type": "IntelligenceReport",
+    "canonical_label": "Intelligence report RPT-SYN-002",
+    "aliases": [],
+    "attributes": {
+      "report_id": "RPT-SYN-002",
+      "title": "Intelligence report RPT-SYN-002",
+      "source_agency": "Synthetic Analysis Bureau",
+      "classification_level": "CONFIDENTIAL",
+      "published_date": "2026-08-24T12:00:00Z",
+      "summary": "Neutral synthetic observation of potential alias",
+      "mentioned_person_ids": [
+        "6cd3b2db-f8fc-52a0-afe3-c9d62b140dec"
+      ],
+      "mentioned_org_ids": []
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T12:00:00Z",
+    "updated_at": "2026-08-24T12:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "report_id": "RPT-SYN-002",
+      "title": "Intelligence report RPT-SYN-002",
+      "source_agency": "Synthetic Analysis Bureau",
+      "classification_level": "CONFIDENTIAL",
+      "published_date": "2026-08-24T12:00:00Z",
+      "summary": "Neutral synthetic observation of potential alias",
+      "mentioned_person_ids": [
+        "6cd3b2db-f8fc-52a0-afe3-c9d62b140dec"
+      ],
+      "mentioned_org_ids": []
+    },
+    "report_id": "RPT-SYN-002",
+    "title": "Intelligence report RPT-SYN-002",
+    "source_agency": "Synthetic Analysis Bureau",
+    "classification_level": "CONFIDENTIAL",
+    "published_date": "2026-08-24T12:00:00Z",
+    "summary": "Neutral synthetic observation of potential alias",
+    "mentioned_person_ids": [
+      "6cd3b2db-f8fc-52a0-afe3-c9d62b140dec"
+    ],
+    "mentioned_org_ids": []
+  },
+  {
+    "id": "6cd3b2db-f8fc-52a0-afe3-c9d62b140dec",
+    "entity_type": "Person",
+    "canonical_label": "Bikram Sarma",
+    "aliases": [],
+    "attributes": {
+      "full_name": "Bikram Sarma",
+      "phone_numbers": [],
+      "vehicles": [],
+      "addresses": [],
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "intel_003",
+          "name": "Bikram Sarma",
+          "normalized_name": "bikram sarma",
+          "source_record_id": "f285c36c-f802-522f-aebe-844d1df2bd49"
+        }
+      ]
+    },
+    "confidence": 1.0,
+    "created_at": "2026-08-24T12:00:00Z",
+    "updated_at": "2026-08-24T12:00:00Z",
+    "source_id": null,
+    "source_type": null,
+    "properties": {
+      "full_name": "Bikram Sarma",
+      "phone_numbers": [],
+      "vehicles": [],
+      "addresses": [],
+      "case_ids": [],
+      "identity_claims": [
+        {
+          "record_id": "intel_003",
+          "name": "Bikram Sarma",
+          "normalized_name": "bikram sarma",
+          "source_record_id": "f285c36c-f802-522f-aebe-844d1df2bd49"
+        }
+      ]
+    },
+    "full_name": "Bikram Sarma",
+    "phone_numbers": [],
+    "vehicles": [],
+    "addresses": [],
+    "national_id": null,
+    "role_in_case": null,
+    "case_ids": []
+  }
+]
