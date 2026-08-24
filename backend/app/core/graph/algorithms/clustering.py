@@ -115,49 +115,23 @@ def betweenness_centrality(store: GraphStore, k: int | None = None) -> dict[str,
 
 
 def detect_communities(store: GraphStore) -> list[CommunityResult]:
-    """Detect discrete communities/gangs/cells using graph modularity / connected components."""
-    _require_nx()
-    G = _to_networkx(store).to_undirected()
-    
-    if len(G.nodes) == 0:
-        return []
-
-    # Community detection using greedy modularity or connected components fallback
-    try:
-        raw_communities = list(nx.community.greedy_modularity_communities(G))
-    except (nx.NetworkXError, ValueError, ZeroDivisionError):
-        raw_communities = list(nx.connected_components(G))
+    """Detect discrete communities/cells using Person-Only Louvain community detection."""
+    from backend.app.core.graph.algorithms.communities import detect_louvain_communities
+    summary = detect_louvain_communities(store)
 
     results: list[CommunityResult] = []
-    for idx, member_set in enumerate(raw_communities, start=1):
-        member_ids = list(member_set)
-        if len(member_ids) < 2:
-            continue
-
-        type_counts: dict[str, int] = {}
-        for nid in member_ids:
-            node = store.nodes.get(nid)
-            if node:
-                type_counts[node.entity_type] = type_counts.get(node.entity_type, 0) + 1
-
-        dominant_type = max(type_counts.items(), key=lambda x: x[1])[0] if type_counts else "Unknown"
-
-        # Find top influencer by degree within community
-        sub = G.subgraph(member_ids)
-        top_node = max(sub.nodes, key=lambda n: sub.degree(n)) if len(sub.nodes) > 0 else member_ids[0]
-
+    for c in summary.communities:
         results.append(
             CommunityResult(
-                community_id=f"COMM-{idx:03d}",
-                size=len(member_ids),
-                member_ids=member_ids,
-                dominant_entity_type=dominant_type,
-                top_influencer_id=top_node,
-                reason=f"Cohesive network module of {len(member_ids)} entities centered around {top_node}",
+                community_id=c.community_id,
+                size=c.size,
+                member_ids=c.member_ids,
+                dominant_entity_type=c.dominant_entity_type,
+                top_influencer_id=c.top_influencer_id,
+                reason=c.reason,
             )
         )
 
-    results.sort(key=lambda c: c.size, reverse=True)
     return results
 
 

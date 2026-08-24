@@ -23,6 +23,12 @@ from backend.app.core.graph.algorithms.bridges import (
     top_bridge_entities,
     get_network_centrality_summary,
 )
+from backend.app.core.graph.algorithms.communities import (
+    PersonCommunityResult,
+    NetworkCommunitiesSummary,
+    generate_stable_community_id,
+    detect_louvain_communities,
+)
 
 __all__ = [
     "ResolutionMatch",
@@ -40,6 +46,11 @@ __all__ = [
     "compute_person_bridge_intelligence",
     "top_bridge_entities",
     "get_network_centrality_summary",
+    "PersonCommunityResult",
+    "NetworkCommunitiesSummary",
+    "generate_stable_community_id",
+    "detect_louvain_communities",
 ]
+
 
 
