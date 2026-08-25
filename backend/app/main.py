@@ -88,11 +88,10 @@ def create_app(
         prefix="/api/v1",
     )
 
-    # System routes
-    app.include_router(
-        create_system_router(),
-        prefix="/api/v1",
-    )
+    # System routes (both root /health and /api/v1/health)
+    system_router = create_system_router()
+    app.include_router(system_router)
+    app.include_router(system_router, prefix="/api/v1")
 
     # Chat / Copilot routes
     app.include_router(chat.router, prefix="/api")
