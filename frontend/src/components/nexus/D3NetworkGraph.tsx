@@ -838,7 +838,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
 
       {/* Floating Node Details Card on Canvas */}
       {activeSelectedNode && (
-        <div className="absolute top-3 right-3 z-30 w-72 max-w-[calc(100%-24px)] bg-white/95 backdrop-blur-md p-4 rounded-xl border border-neutral-200 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute top-14 sm:top-16 right-2 sm:right-3 z-30 w-72 max-w-[calc(100%-16px)] max-h-[calc(100%-68px)] overflow-y-auto max-sm:top-auto max-sm:bottom-3 max-sm:left-3 max-sm:right-3 max-sm:w-auto max-sm:max-h-[45vh] bg-white/95 backdrop-blur-md p-4 rounded-xl border border-neutral-200 shadow-xl animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-start justify-between border-b border-neutral-100 pb-2.5">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-sm shadow-xs">
@@ -899,7 +899,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
 
       {/* Floating Relationship Details Card when line is clicked */}
       {activeSelectedEdge && !activeSelectedNode && (
-        <div className="absolute top-3 right-3 z-30 w-72 max-w-[calc(100%-24px)] bg-white/95 backdrop-blur-md p-4 rounded-xl border border-neutral-200 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute top-14 sm:top-16 right-2 sm:right-3 z-30 w-72 max-w-[calc(100%-16px)] max-h-[calc(100%-68px)] overflow-y-auto max-sm:top-auto max-sm:bottom-3 max-sm:left-3 max-sm:right-3 max-sm:w-auto max-sm:max-h-[45vh] bg-white/95 backdrop-blur-md p-4 rounded-xl border border-neutral-200 shadow-xl animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-start justify-between border-b border-neutral-100 pb-2.5">
             <div>
               <span className="text-[9px] font-extrabold uppercase tracking-wider text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
