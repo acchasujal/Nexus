@@ -4,7 +4,7 @@
  * Entity Fusion Workbench: side-by-side candidate records, match score,
  * reasons, conflicts, source links, and Confirm/Reject/Defer actions.
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   GitMerge, CheckCircle2, XCircle, Clock, FileText, AlertTriangle,
@@ -58,11 +58,12 @@ function RecordPanel({ title, record, accent }: { title: string; record: Resolut
 export default function EntityFusion() {
   const { data: candidates, isLoading, error, refetch } = useResolutionCandidates()
   const decide = useDecideCandidate()
-  const [selectedCandidateId, setSelectedCandidateId] = useState<string>('RC-1')
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const [decisionError, setDecisionError] = useState<string | null>(null)
 
-  const candidate = candidates?.find((c) => c.id === selectedCandidateId) || candidates?.[0]
+  const effectiveSelectedId = selectedCandidateId ?? candidates?.[0]?.id
+  const candidate = candidates?.find((c) => c.id === effectiveSelectedId) ?? candidates?.[0]
   const decided = candidate && candidate.status !== 'PENDING'
 
   const submit = async (decision: 'CONFIRM' | 'REJECT' | 'DEFER') => {
@@ -73,6 +74,15 @@ export default function EntityFusion() {
       setDecisionError(e instanceof Error ? e.message : 'Decision failed')
     }
   }
+
+  // Auto-select first pending candidate when candidates load
+  useEffect(() => {
+    if (candidates && candidates.length > 0 && !selectedCandidateId) {
+      const firstPending = candidates.find((c) => c.status === 'PENDING')
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedCandidateId((firstPending ?? candidates[0]).id)
+    }
+  }, [candidates, selectedCandidateId])
 
   if (isLoading) return <LoadingSkeleton layout="detail" />
   if (error) return <ErrorState message="Failed to load resolution candidates." onRetry={() => void refetch()} />
@@ -104,7 +114,7 @@ export default function EntityFusion() {
       </div>
 
       {/* Candidate Selector Tabs */}
-      {candidates && candidates.length > 1 && (
+      {candidates && candidates.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 p-2 bg-neutral-100/80 rounded-xl border border-neutral-200" role="tablist" aria-label="Resolution candidates">
           <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider px-2">Candidates ({candidates.length}):</span>
           {candidates.map((c) => {
@@ -128,7 +138,10 @@ export default function EntityFusion() {
                     : 'text-neutral-600 hover:text-neutral-950 hover:bg-white/60'
                 }`}
               >
-                <span>{c.left.label} ↔ {c.right.label}</span>
+                <span className="flex flex-col items-start text-left">
+                  <span className="font-bold">#{candidates.indexOf(c) + 1} {c.left.label} ↔ {c.right.label}</span>
+                  <span className="text-[9px] text-neutral-500 font-normal">{c.left.case_ids[0]} · {c.right.case_ids[0]}</span>
+                </span>
                 <span className="rounded bg-emerald-100 text-emerald-800 px-1.5 py-0.5 text-[10px] font-mono font-bold">
                   {(c.score * 100).toFixed(0)}%
                 </span>
