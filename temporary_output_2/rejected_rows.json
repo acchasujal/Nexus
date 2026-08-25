@@ -1,0 +1,42 @@
+[
+  {
+    "source_type": "FIR",
+    "file_name": "fir_records.csv",
+    "row_number": 6,
+    "record_id": "fir_005",
+    "field_name": "incident_time",
+    "code": "INVALID_FIR_ROW",
+    "message": "timestamp must be valid ISO-8601",
+    "severity": "ERROR"
+  },
+  {
+    "source_type": "FIR",
+    "file_name": "fir_records.csv",
+    "row_number": 8,
+    "record_id": "fir_001",
+    "field_name": "row",
+    "code": "INVALID_FIR_ROW",
+    "message": "phone must be a valid ten-digit Indian number",
+    "severity": "ERROR"
+  },
+  {
+    "source_type": "CDR",
+    "file_name": "cdr_records.csv",
+    "row_number": 5,
+    "record_id": "row-5",
+    "field_name": "",
+    "code": "COLUMN_COUNT_MISMATCH",
+    "message": "CSV row does not match the header",
+    "severity": "ERROR"
+  },
+  {
+    "source_type": "BANK_TXN",
+    "file_name": "bank_transactions.csv",
+    "row_number": 5,
+    "record_id": "bank_004",
+    "field_name": "row",
+    "code": "INVALID_BANK_ROW",
+    "message": "amount must be finite and non-negative",
+    "severity": "ERROR"
+  }
+]

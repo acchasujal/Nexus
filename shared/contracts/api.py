@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from pydantic import BaseModel, Field
 
 
@@ -69,7 +69,7 @@ class EvidenceItemResponse(BaseModel):
     evidence_type: str
     description: str
     collected_at: datetime
-    storage_location: Optional[str] = None
+    storage_location: str | None = None
     provenance: EvidenceProvenanceContract = Field(default_factory=EvidenceProvenanceContract)
 
 
@@ -104,11 +104,11 @@ class NetworkGraphResponse(BaseModel):
 # ── Entity Resolution ─────────────────────────────────────────────────────────
 
 class EntityResolutionQuery(BaseModel):
-    full_name: Optional[str] = None
-    phone_number: Optional[str] = None
-    vehicle_number: Optional[str] = None
-    address_text: Optional[str] = None
-    national_id: Optional[str] = None
+    full_name: str | None = None
+    phone_number: str | None = None
+    vehicle_number: str | None = None
+    address_text: str | None = None
+    national_id: str | None = None
     aliases: list[str] = Field(default_factory=list)
     confidence_threshold: float = 0.50
     candidate_limit: int = 10
@@ -183,8 +183,8 @@ class TimelineEventResponse(BaseModel):
     timestamp: datetime
     description: str
     participant_ids: list[str] = Field(default_factory=list)
-    location_id: Optional[str] = None
-    case_id: Optional[str] = None
+    location_id: str | None = None
+    case_id: str | None = None
 
 
 # ── Case / Investigation ──────────────────────────────────────────────────────
@@ -210,7 +210,7 @@ class InvestigationDetailResponse(BaseModel):
     station_name: str
     district: str
     offence_category: str
-    incident_date: Optional[datetime] = None
+    incident_date: datetime | None = None
     status: str
     summary: str
     sections: list[str] = Field(default_factory=list)
@@ -231,11 +231,11 @@ class GroundedCitation(BaseModel):
 
 class CopilotQueryRequest(BaseModel):
     query: str
-    case_id: Optional[str] = None
-    investigation_id: Optional[str] = None
-    session_id: Optional[str] = None
+    case_id: str | None = None
+    investigation_id: str | None = None
+    session_id: str | None = None
     # Entity-centric query parameters (used by Copilot structured dispatch)
-    entity_id: Optional[str] = None
+    entity_id: str | None = None
     max_hops: int = 2
 
 
@@ -244,10 +244,10 @@ class CopilotQueryResponse(BaseModel):
     intent: str
     answer: str
     is_refusal: bool = False
-    refusal_reason: Optional[str] = None
+    refusal_reason: str | None = None
     grounded_citations: list[GroundedCitation] = Field(default_factory=list)
     suggested_actions: list[str] = Field(default_factory=list)
-    graph_context: Optional[NetworkGraphResponse] = None
+    graph_context: NetworkGraphResponse | None = None
 
 
 # ── Audit & Auth ──────────────────────────────────────────────────────────────
@@ -257,16 +257,16 @@ class AuditLogEntry(BaseModel):
     user_id: str
     user_role: str
     action: str
-    entity_type: Optional[str] = None
-    entity_id: Optional[str] = None
+    entity_type: str | None = None
+    entity_id: str | None = None
     details: dict[str, Any] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=_utcnow)
 
 
 class AuthLoginRequest(BaseModel):
     username: str
-    password: Optional[str] = None
-    role: Optional[UserRole] = UserRole.INVESTIGATOR
+    password: str | None = None
+    role: UserRole | None = UserRole.INVESTIGATOR
 
 
 class AuthTokenResponse(BaseModel):
@@ -287,8 +287,8 @@ class EntityProfileResponse(BaseModel):
     properties: dict[str, Any] = Field(default_factory=dict)
     aliases: list[str] = Field(default_factory=list)
     degree: int = 0
-    community_id: Optional[str] = None
-    betweenness_score: Optional[float] = None
+    community_id: str | None = None
+    betweenness_score: float | None = None
     evidence_items: list[EvidenceItemResponse] = Field(default_factory=list)
 
 

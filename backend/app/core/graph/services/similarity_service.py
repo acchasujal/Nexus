@@ -17,7 +17,8 @@ Design rules
 
 from __future__ import annotations
 
-from typing import Any, Sequence
+from typing import Any
+from collections.abc import Sequence
 
 from backend.app.core.graph.algorithms.similarity import (
     batch_similarity_matrix,

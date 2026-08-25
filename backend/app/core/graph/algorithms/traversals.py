@@ -21,7 +21,7 @@ inside this pure-algorithm module.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Sequence
+from collections.abc import Sequence
 
 from backend.app.core.graph.algorithms.utils import (
     AdjEdge,

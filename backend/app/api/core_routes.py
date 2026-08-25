@@ -15,7 +15,7 @@ Wires together all core endpoints:
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
@@ -120,9 +120,9 @@ def create_core_router() -> APIRouter:
 
     @router.get("/investigations", response_model=list[InvestigationSummaryResponse])
     def list_investigations(
-        district: Optional[str] = Query(None),
-        category: Optional[str] = Query(None),
-        status: Optional[str] = Query(None),
+        district: str | None = Query(None),
+        category: str | None = Query(None),
+        status: str | None = Query(None),
         principal: Principal = Depends(get_principal),
         service: InvestigationService = Depends(get_case_service),
         request_id: str = Depends(get_request_id),
@@ -347,7 +347,7 @@ def create_core_router() -> APIRouter:
 
     @router.get("/patterns/shared-clusters", response_model=list[SharedClusterResponse])
     def get_shared_clusters(
-        cluster_type: Optional[str] = Query(None),
+        cluster_type: str | None = Query(None),
         repo: Any = Depends(get_repository),
     ) -> list[SharedClusterResponse]:
         store = repo.to_graph_store()
@@ -367,7 +367,7 @@ def create_core_router() -> APIRouter:
 
     @router.get("/timeline", response_model=list[TimelineEventResponse])
     def get_timeline_events(
-        case_id: Optional[str] = Query(None),
+        case_id: str | None = Query(None),
         repo: Any = Depends(get_repository),
         audit: AuditService = Depends(get_audit_service),
         principal: Principal = Depends(get_principal),
@@ -430,8 +430,8 @@ def create_core_router() -> APIRouter:
 
     @router.get("/evidence", response_model=list[EvidenceItemResponse])
     def list_evidence(
-        case_id: Optional[str] = Query(None, description="Filter by case node ID"),
-        entity_id: Optional[str] = Query(None, description="Filter by entity node ID"),
+        case_id: str | None = Query(None, description="Filter by case node ID"),
+        entity_id: str | None = Query(None, description="Filter by entity node ID"),
         limit: int = Query(50, ge=1, le=200),
         principal: Principal = Depends(get_principal),
         evidence_svc: EvidenceService = Depends(get_evidence_service),
@@ -453,7 +453,7 @@ def create_core_router() -> APIRouter:
     def get_edge_evidence(
         source_id: str,
         target_id: str,
-        edge_type: Optional[str] = Query(None, description="Filter by relationship type"),
+        edge_type: str | None = Query(None, description="Filter by relationship type"),
         principal: Principal = Depends(get_principal),
         evidence_svc: EvidenceService = Depends(get_evidence_service),
         request_id: str = Depends(get_request_id),
@@ -520,7 +520,7 @@ def create_core_router() -> APIRouter:
     @router.get("/entities", response_model=list[EntityProfileResponse])
     def search_entities(
         query: str = Query(..., min_length=1, description="Search term"),
-        entity_type: Optional[str] = Query(None, description="Filter by entity type e.g. Person, Case"),
+        entity_type: str | None = Query(None, description="Filter by entity type e.g. Person, Case"),
         limit: int = Query(20, ge=1, le=100),
         principal: Principal = Depends(get_principal),
         entity_svc: EntityService = Depends(get_entity_service),
@@ -612,9 +612,9 @@ def create_core_router() -> APIRouter:
 
     @router.get("/audit", response_model=list[AuditLogEntry])
     def get_audit_trail(
-        case_id: Optional[str] = Query(None),
-        event_type: Optional[str] = Query(None, description="Filter by audit event type"),
-        actor_id: Optional[str] = Query(None, description="Filter by actor user ID"),
+        case_id: str | None = Query(None),
+        event_type: str | None = Query(None, description="Filter by audit event type"),
+        actor_id: str | None = Query(None, description="Filter by actor user ID"),
         limit: int = Query(50, ge=1, le=200),
         principal: Principal = Depends(get_principal),
         audit_svc: AuditService = Depends(get_audit_service),

@@ -87,111 +87,73 @@ def largest_connected_component(store: GraphStore) -> set[str]:
 
 
 def degree_centrality(store: GraphStore) -> dict[str, float]:
-    """Compute degree centrality for all nodes."""
-    _require_nx()
-    G = _to_networkx(store)
-    return nx.degree_centrality(G)
+    """Compute degree centrality for all Person nodes using Person-Only Projection."""
+    from backend.app.core.graph.algorithms.centrality import compute_person_degree_centrality
+    results = compute_person_degree_centrality(store)
+    return {r.person_id: r.degree_centrality for r in results}
 
 
 def in_degree_centrality(store: GraphStore) -> dict[str, float]:
-    """Compute in-degree centrality."""
-    _require_nx()
-    G = _to_networkx(store)
-    return nx.in_degree_centrality(G)
+    """Compute in-degree centrality for all Person nodes."""
+    from backend.app.core.graph.algorithms.centrality import compute_person_degree_centrality
+    results = compute_person_degree_centrality(store)
+    return {r.person_id: r.in_degree_centrality for r in results}
 
 
 def out_degree_centrality(store: GraphStore) -> dict[str, float]:
-    """Compute out-degree centrality."""
-    _require_nx()
-    G = _to_networkx(store)
-    return nx.out_degree_centrality(G)
+    """Compute out-degree centrality for all Person nodes."""
+    from backend.app.core.graph.algorithms.centrality import compute_person_degree_centrality
+    results = compute_person_degree_centrality(store)
+    return {r.person_id: r.out_degree_centrality for r in results}
 
 
 def betweenness_centrality(store: GraphStore, k: int | None = None) -> dict[str, float]:
-    """Compute betweenness centrality."""
-    _require_nx()
-    G = _to_networkx(store)
-    return nx.betweenness_centrality(G, k=k)
+    """Compute betweenness centrality for all Person nodes using Person-Only Projection."""
+    from backend.app.core.graph.algorithms.centrality import compute_person_betweenness_centrality
+    results = compute_person_betweenness_centrality(store, k=k)
+    return {r.person_id: r.betweenness_centrality for r in results}
 
 
 def detect_communities(store: GraphStore) -> list[CommunityResult]:
-    """Detect discrete communities/gangs/cells using graph modularity / connected components."""
-    _require_nx()
-    G = _to_networkx(store).to_undirected()
-    
-    if len(G.nodes) == 0:
-        return []
-
-    # Community detection using greedy modularity or connected components fallback
-    try:
-        raw_communities = list(nx.community.greedy_modularity_communities(G))
-    except (nx.NetworkXError, ValueError, ZeroDivisionError):
-        raw_communities = list(nx.connected_components(G))
+    """Detect discrete communities/cells using Person-Only Louvain community detection."""
+    from backend.app.core.graph.algorithms.communities import detect_louvain_communities
+    summary = detect_louvain_communities(store)
 
     results: list[CommunityResult] = []
-    for idx, member_set in enumerate(raw_communities, start=1):
-        member_ids = list(member_set)
-        if len(member_ids) < 2:
-            continue
-
-        type_counts: dict[str, int] = {}
-        for nid in member_ids:
-            node = store.nodes.get(nid)
-            if node:
-                type_counts[node.entity_type] = type_counts.get(node.entity_type, 0) + 1
-
-        dominant_type = max(type_counts.items(), key=lambda x: x[1])[0] if type_counts else "Unknown"
-
-        # Find top influencer by degree within community
-        sub = G.subgraph(member_ids)
-        top_node = max(sub.nodes, key=lambda n: sub.degree(n)) if len(sub.nodes) > 0 else member_ids[0]
-
+    for c in summary.communities:
         results.append(
             CommunityResult(
-                community_id=f"COMM-{idx:03d}",
-                size=len(member_ids),
-                member_ids=member_ids,
-                dominant_entity_type=dominant_type,
-                top_influencer_id=top_node,
-                reason=f"Cohesive network module of {len(member_ids)} entities centered around {top_node}",
+                community_id=c.community_id,
+                size=c.size,
+                member_ids=c.member_ids,
+                dominant_entity_type=c.dominant_entity_type,
+                top_influencer_id=c.top_influencer_id,
+                reason=c.reason,
             )
         )
 
-    results.sort(key=lambda c: c.size, reverse=True)
     return results
 
 
 def find_bridge_nodes(store: GraphStore) -> list[BridgeNodeResult]:
-    """Find articulation points / bridge brokers that connect disjoint criminal modules."""
-    _require_nx()
-    G = _to_networkx(store).to_undirected()
-    if len(G.nodes) == 0:
-        return []
-
-    betweenness = nx.betweenness_centrality(G)
-    articulation_points = set(nx.articulation_points(G)) if nx.is_connected(G) or len(G.nodes) > 2 else set()
+    """Find articulation points / bridge brokers that connect disjoint network modules."""
+    from backend.app.core.graph.algorithms.bridges import compute_person_bridge_intelligence
+    intel_results = compute_person_bridge_intelligence(store)
 
     bridge_results: list[BridgeNodeResult] = []
-    for nid in articulation_points:
-        node = store.nodes.get(nid)
-        if not node:
-            continue
-        props = node.properties or {}
-        label = props.get("full_name") or props.get("name") or props.get("registration_number") or props.get("phone_number") or nid
-
-        score = betweenness.get(nid, 0.0)
-        bridge_results.append(
-            BridgeNodeResult(
-                node_id=nid,
-                entity_type=node.entity_type,
-                label=label,
-                connected_components_count=2,
-                betweenness_score=round(score, 4),
-                reason=f"Critical bridge entity (articulation point) connecting multiple sub-networks (betweenness: {score:.3f})",
+    for b in intel_results:
+        if b.articulation_point or b.betweenness_centrality > 0.0:
+            bridge_results.append(
+                BridgeNodeResult(
+                    node_id=b.person_id,
+                    entity_type="Person",
+                    label=b.canonical_label,
+                    connected_components_count=b.affected_components_count,
+                    betweenness_score=b.betweenness_centrality,
+                    reason=b.explanation,
+                )
             )
-        )
 
-    bridge_results.sort(key=lambda b: b.betweenness_score, reverse=True)
     return bridge_results
 
 
