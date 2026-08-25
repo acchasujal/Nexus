@@ -1,5 +1,5 @@
 import { Link, useSearchParams, useParams } from 'react-router-dom'
-import { ArrowLeft, Network, Layers, MessageSquareCode, Calendar, FileText, Users, Building, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Network, Layers, MessageSquareCode, Calendar, FileText, Users } from 'lucide-react'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
@@ -129,7 +129,7 @@ export default function CaseDetail() {
                   <p className="text-xs text-neutral-500">No named accused attached yet.</p>
                 ) : (
                   <div className="space-y-2">
-                    {caseDetail.accused.map((acc: any, idx: number) => (
+                    {caseDetail.accused.map((acc: { id?: string; name?: string; full_name?: string; phone_number?: string; vehicle_number?: string }, idx: number) => (
                       <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-neutral-50 border border-neutral-200">
                         <div>
                           <div className="text-sm font-bold text-neutral-900">{acc.full_name || acc.name || acc.id}</div>
@@ -160,7 +160,7 @@ export default function CaseDetail() {
                 <p className="text-xs text-neutral-500">No evidence items registered.</p>
               ) : (
                 <div className="space-y-2.5">
-                  {caseDetail.evidence.map((ev: any, idx: number) => (
+                  {caseDetail.evidence.map((ev: { evidence_type?: string; description?: string; provenance?: { source_type?: string; source_id?: string } }, idx: number) => (
                     <div key={idx} className="p-3 rounded-lg bg-neutral-50 border border-neutral-200 space-y-1">
                       <div className="text-xs font-bold text-emerald-800">{ev.evidence_type}</div>
                       <div className="text-xs text-neutral-700">{ev.description}</div>

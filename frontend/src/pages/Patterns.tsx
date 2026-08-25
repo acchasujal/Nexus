@@ -2,11 +2,42 @@ import { useState, useEffect } from 'react'
 import { Layers, Network, Users, Share2, AlertTriangle } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 
+interface CommunityItem {
+  community_id?: string
+  size?: number
+  reason?: string
+  top_influencer_id?: string
+}
+
+interface BridgeItem {
+  node_id?: string
+  label?: string
+  betweenness_score?: number
+  criticality?: string
+  connected_communities?: string[]
+}
+
+interface RepeatOffenderItem {
+  suspect_id?: string
+  name?: string
+  case_count?: number
+  case_ids?: string[]
+  severity?: string
+}
+
+interface SharedClusterItem {
+  cluster_id?: string
+  attribute_type?: string
+  shared_value?: string
+  entity_count?: number
+  entity_names?: string[]
+}
+
 export default function Patterns() {
-  const [communities, setCommunities] = useState<any[]>([])
-  const [bridges, setBridges] = useState<any[]>([])
-  const [repeatOffenders, setRepeatOffenders] = useState<any[]>([])
-  const [sharedClusters, setSharedClusters] = useState<any[]>([])
+  const [communities, setCommunities] = useState<CommunityItem[]>([])
+  const [bridges, setBridges] = useState<BridgeItem[]>([])
+  const [repeatOffenders, setRepeatOffenders] = useState<RepeatOffenderItem[]>([])
+  const [sharedClusters, setSharedClusters] = useState<SharedClusterItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -16,10 +47,10 @@ export default function Patterns() {
       apiClient.getRepeatOffenders().catch(() => []),
       apiClient.getSharedClusters().catch(() => []),
     ]).then(([commData, bridgeData, repeatData, clusterData]) => {
-      setCommunities(Array.isArray(commData) ? commData : [])
-      setBridges(Array.isArray(bridgeData) ? bridgeData : [])
-      setRepeatOffenders(Array.isArray(repeatData) ? repeatData : [])
-      setSharedClusters(Array.isArray(clusterData) ? clusterData : [])
+      setCommunities(Array.isArray(commData) ? (commData as CommunityItem[]) : [])
+      setBridges(Array.isArray(bridgeData) ? (bridgeData as BridgeItem[]) : [])
+      setRepeatOffenders(Array.isArray(repeatData) ? (repeatData as RepeatOffenderItem[]) : [])
+      setSharedClusters(Array.isArray(clusterData) ? (clusterData as SharedClusterItem[]) : [])
     }).finally(() => {
       setIsLoading(false)
     })

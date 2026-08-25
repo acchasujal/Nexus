@@ -20,12 +20,28 @@ import {
   RotateCcw,
   CheckCircle2,
   Loader2,
-  Sparkles
 } from 'lucide-react'
+
+interface InvestigationItem {
+  id: string
+  fir_number?: string
+  title?: string
+  status?: string
+  priority?: string
+  station?: string
+  district?: string
+  offence_category?: string
+  total_entities?: number
+  total_relationships?: number
+  created_at?: string
+  updated_at?: string
+  days_open?: number
+  io_name?: string
+}
 
 export default function Worklist() {
   const navigate = useNavigate()
-  const [investigations, setInvestigations] = useState<any[]>([])
+  const [investigations, setInvestigations] = useState<InvestigationItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -118,7 +134,7 @@ export default function Worklist() {
     return Array.from(new Set(investigations.map((i) => i.offence_category).filter(Boolean)))
   }, [investigations])
 
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<InvestigationItem>[] = [
     {
       header: 'FIR / Case ID',
       accessorKey: 'fir_number',

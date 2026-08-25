@@ -93,7 +93,7 @@ export default function Copilot() {
       }
 
       setMessages((prev) => [...prev, assistantMessage])
-    } catch (_err) {
+    } catch {
       const errorTimeIso = new Date().toISOString()
       setMessages((prev) => [
         ...prev,

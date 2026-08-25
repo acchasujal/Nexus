@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
-import { FileText, ShieldCheck, Calendar, Copy, Check, MapPin, Phone, Landmark, Download, FileSearch } from 'lucide-react'
-import { apiClient } from '@/lib/apiClient'
+import { useState, useMemo } from 'react'
+import { FileText, Calendar, Copy, Check, Phone, Landmark, FileSearch, ShieldCheck } from 'lucide-react'
 import { allSourceRecords } from '@/lib/mocks/nexusFixture'
 import type { NexusSourceRecord } from '@shared/contracts/api'
 
@@ -20,16 +19,8 @@ const TYPE_CONFIG: Record<string, { badge: string; icon: typeof FileText }> = {
 }
 
 export default function Evidence() {
-  const [sources, setSources] = useState<NexusSourceRecord[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const sources = useMemo<NexusSourceRecord[]>(() => Object.values(allSourceRecords), [])
   const [copiedId, setCopiedId] = useState<string | null>(null)
-
-  useEffect(() => {
-    // Collect all source records
-    const all = Object.values(allSourceRecords)
-    setSources(all)
-    setIsLoading(false)
-  }, [])
 
   const copyId = async (id: string) => {
     try {
@@ -60,10 +51,7 @@ export default function Evidence() {
         <span>All source records carry exact page/row locators and raw excerpts. Click any edge in the Network Explorer to trace its derivation chain via the Evidence Drawer.</span>
       </div>
 
-      {isLoading ? (
-        <div className="text-center py-12 text-neutral-500">Loading evidence registry...</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {sources.map((item) => {
             const cfg = TYPE_CONFIG[item.source_type] || TYPE_CONFIG.FIR
             const Icon = cfg.icon
@@ -118,7 +106,6 @@ export default function Evidence() {
             )
           })}
         </div>
-      )}
     </div>
   )
 }

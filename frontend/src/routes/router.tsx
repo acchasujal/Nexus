@@ -25,15 +25,6 @@ const Settings = lazy(() => import('@/pages/Settings'))
 const allRoles: UserRole[] = ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
 const supervisorRoles: UserRole[] = ['SUPERVISOR', 'ADMIN', 'SHO', 'SP']
 
-function PageFallback() {
-  return (
-    <div className="space-y-6">
-      <div className="h-8 w-48 rounded-lg bg-neutral-800 animate-pulse" />
-      <LoadingSkeleton layout="table" />
-    </div>
-  )
-}
-
 export const router = createBrowserRouter([
   // Public Route
   {
@@ -54,7 +45,7 @@ export const router = createBrowserRouter([
         path: 'worklist',
         element: (
           <RoleGuard allowedRoles={allRoles}>
-            <Suspense fallback={<PageFallback />}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
               <Worklist />
             </Suspense>
           </RoleGuard>
@@ -64,7 +55,7 @@ export const router = createBrowserRouter([
         path: 'network',
         element: (
           <RoleGuard allowedRoles={allRoles}>
-            <Suspense fallback={<PageFallback />}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
               <NetworkExplorer />
             </Suspense>
           </RoleGuard>
@@ -74,7 +65,7 @@ export const router = createBrowserRouter([
         path: 'fusion',
         element: (
           <RoleGuard allowedRoles={allRoles}>
-            <Suspense fallback={<PageFallback />}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
               <EntityFusion />
             </Suspense>
           </RoleGuard>
@@ -84,7 +75,7 @@ export const router = createBrowserRouter([
         path: 'leads',
         element: (
           <RoleGuard allowedRoles={allRoles}>
-            <Suspense fallback={<PageFallback />}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
               <LeadInbox />
             </Suspense>
           </RoleGuard>
@@ -94,7 +85,7 @@ export const router = createBrowserRouter([
         path: 'entities',
         element: (
           <RoleGuard allowedRoles={allRoles}>
-            <Suspense fallback={<PageFallback />}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
               <Entities />
             </Suspense>
           </RoleGuard>
@@ -104,7 +95,7 @@ export const router = createBrowserRouter([
         path: 'patterns',
         element: (
           <RoleGuard allowedRoles={allRoles}>
-            <Suspense fallback={<PageFallback />}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
               <Patterns />
             </Suspense>
           </RoleGuard>
@@ -114,7 +105,7 @@ export const router = createBrowserRouter([
         path: 'timeline',
         element: (
           <RoleGuard allowedRoles={allRoles}>
-            <Suspense fallback={<PageFallback />}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
               <Timeline />
             </Suspense>
           </RoleGuard>
@@ -124,7 +115,7 @@ export const router = createBrowserRouter([
         path: 'evidence',
         element: (
           <RoleGuard allowedRoles={allRoles}>
-            <Suspense fallback={<PageFallback />}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
               <Evidence />
             </Suspense>
           </RoleGuard>
@@ -134,7 +125,7 @@ export const router = createBrowserRouter([
         path: 'copilot',
         element: (
           <RoleGuard allowedRoles={allRoles}>
-            <Suspense fallback={<PageFallback />}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
               <Copilot />
             </Suspense>
           </RoleGuard>
@@ -144,7 +135,7 @@ export const router = createBrowserRouter([
         path: 'audit',
         element: (
           <RoleGuard allowedRoles={supervisorRoles}>
-            <Suspense fallback={<PageFallback />}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
               <Audit />
             </Suspense>
           </RoleGuard>
@@ -154,7 +145,7 @@ export const router = createBrowserRouter([
         path: 'cases/:caseId',
         element: (
           <RoleGuard allowedRoles={allRoles}>
-            <Suspense fallback={<PageFallback />}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
               <CaseDetail />
             </Suspense>
           </RoleGuard>
@@ -164,7 +155,7 @@ export const router = createBrowserRouter([
         path: 'settings',
         element: (
           <RoleGuard allowedRoles={allRoles}>
-            <Suspense fallback={<PageFallback />}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
               <Settings />
             </Suspense>
           </RoleGuard>
