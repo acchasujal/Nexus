@@ -20,16 +20,17 @@ const tabs = [
 type TabId = (typeof tabs)[number]['id']
 
 export default function CaseDetail() {
-  const { id } = useParams<{ id: string }>()
+  const { id, caseId } = useParams<{ id?: string; caseId?: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
+  const effectiveId = caseId || id
   
   const activeTab = (tabs.some((tab) => tab.id === searchParams.get('tab'))
     ? searchParams.get('tab')
     : 'overview') as TabId
 
-  const caseQuery = useCaseDetail(id)
+  const caseQuery = useCaseDetail(effectiveId)
 
-  if (!id) return <ErrorState message="A case identifier is required to open this record." />
+  if (!effectiveId) return <ErrorState message="A case identifier is required to open this record." />
   if (caseQuery.isLoading) return <LoadingSkeleton layout="detail" />
   if (caseQuery.isError) return <ErrorState message={caseQuery.error.message} onRetry={() => void caseQuery.refetch()} />
   if (!caseQuery.data) return <EmptyState message="This case record is not available." />
@@ -184,11 +185,11 @@ export default function CaseDetail() {
         )}
 
         {activeTab === 'timeline' && (
-          <InvestigationTimeline caseId={caseDetail.id} />
+          <InvestigationTimeline caseDetail={caseDetail} selectedEntityId={null} onEntitySelect={() => {}} />
         )}
 
         {activeTab === 'similarity' && (
-          <SimilarityPanel caseId={caseDetail.id} />
+          <SimilarityPanel caseId={caseDetail.id} firNumber={caseDetail.fir_number} />
         )}
 
         {activeTab === 'copilot' && (
