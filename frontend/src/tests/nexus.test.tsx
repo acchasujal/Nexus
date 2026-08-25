@@ -94,7 +94,7 @@ describe('NEXUS Frontend Prototype Suite', () => {
   })
 
   describe('EntityFusion Workbench', () => {
-    it('renders candidate comparison with match score, reasons, and conflicts', async () => {
+    it('renders candidate comparison with match score, reasons, conflicts, and cross-case banner', async () => {
       render(<EntityFusion />, { wrapper: createWrapper() })
 
       await waitFor(() => {
@@ -102,11 +102,28 @@ describe('NEXUS Frontend Prototype Suite', () => {
         expect(screen.getByTestId('match-score')).toHaveTextContent('86%')
         expect(screen.getAllByText('Rafiq Khan').length).toBeGreaterThan(0)
         expect(screen.getAllByText('Rafiq Ahmed').length).toBeGreaterThan(0)
+        expect(screen.getAllByText(/Cross-Case Match/i).length).toBeGreaterThan(0)
       })
 
       expect(screen.getByTestId('confirm-fusion')).toBeInTheDocument()
       expect(screen.getByTestId('reject-fusion')).toBeInTheDocument()
       expect(screen.getByTestId('defer-fusion')).toBeInTheDocument()
+    })
+
+    it('switches between candidate tabs correctly', async () => {
+      render(<EntityFusion />, { wrapper: createWrapper() })
+
+      await waitFor(() => {
+        expect(screen.getByText(/#2 Vikram Sharma/i)).toBeInTheDocument()
+      })
+
+      fireEvent.click(screen.getByText(/#2 Vikram Sharma/i))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('match-score')).toHaveTextContent('92%')
+        expect(screen.getAllByText('Vikram Sharma').length).toBeGreaterThan(0)
+        expect(screen.getAllByText('Bikram Sarma').length).toBeGreaterThan(0)
+      })
     })
 
     it('updates to post-decision state when Confirm Fusion is clicked', async () => {

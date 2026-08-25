@@ -25,7 +25,13 @@ function RecordPanel({ title, record, accent }: { title: string; record: Resolut
         <code className="font-mono text-[10px] text-neutral-500 font-semibold">{record.node_id}</code>
       </div>
       <h3 className="mt-2 text-lg font-bold text-neutral-900">{record.label}</h3>
-      <p className="mt-0.5 text-xs text-neutral-500 font-medium">{record.case_ids.join(', ')}</p>
+      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+        {record.case_ids.map((cid) => (
+          <span key={cid} className="inline-flex items-center gap-1 rounded bg-neutral-100 border border-neutral-300 px-2 py-0.5 font-mono text-[11px] font-bold text-neutral-800">
+            Case: {cid}
+          </span>
+        ))}
+      </div>
       <dl className="mt-3 space-y-1.5 text-sm">
         {Object.entries(record.properties).map(([k, v]) => (
           <div key={k} className="flex justify-between gap-3">
@@ -122,6 +128,7 @@ export default function EntityFusion() {
             const isConfirmed = c.status === 'CONFIRMED'
             const isRejected = c.status === 'REJECTED'
             const isPending = c.status === 'PENDING'
+            const isCrossCase = c.left.case_ids[0] !== c.right.case_ids[0]
             return (
               <button
                 key={c.id}
@@ -140,7 +147,10 @@ export default function EntityFusion() {
               >
                 <span className="flex flex-col items-start text-left">
                   <span className="font-bold">#{candidates.indexOf(c) + 1} {c.left.label} ↔ {c.right.label}</span>
-                  <span className="text-[9px] text-neutral-500 font-normal">{c.left.case_ids[0]} · {c.right.case_ids[0]}</span>
+                  <span className="text-[9px] text-neutral-500 font-normal flex items-center gap-1">
+                    <span>{c.left.case_ids[0]} · {c.right.case_ids[0]}</span>
+                    {isCrossCase && <span className="font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-1 rounded text-[8px]">Cross-Case</span>}
+                  </span>
                 </span>
                 <span className="rounded bg-emerald-100 text-emerald-800 px-1.5 py-0.5 text-[10px] font-mono font-bold">
                   {(c.score * 100).toFixed(0)}%
@@ -151,6 +161,14 @@ export default function EntityFusion() {
               </button>
             )
           })}
+        </div>
+      )}
+
+      {/* Cross-case context alert */}
+      {candidate.left.case_ids[0] !== candidate.right.case_ids[0] && (
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-50 border border-blue-200 text-blue-900 text-xs font-semibold">
+          <span className="rounded bg-blue-600 text-white text-[10px] font-bold uppercase px-1.5 py-0.5 tracking-wider">Cross-Case Match</span>
+          <span>Comparing record from <strong>{candidate.left.case_ids.join(', ')}</strong> with independent record from <strong>{candidate.right.case_ids.join(', ')}</strong>.</span>
         </div>
       )}
 
