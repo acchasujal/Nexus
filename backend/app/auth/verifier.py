@@ -4,11 +4,14 @@ JWT token verification and role-based authentication for NEXUS.
 Supports:
   - Local JWT bearer tokens (using standard secret key)
   - Development / Demo verifier via X-Role or Authorization headers
+  - Base64 session tokens for rapid role switching in demo mode
   - Local-first architecture with zero external cloud dependencies
 """
 
 from __future__ import annotations
 
+import base64
+import json
 import logging
 from abc import ABC, abstractmethod
 
@@ -48,9 +51,15 @@ class DevelopmentVerifier(TokenVerifier):
         "sp": UserRole.SP,
     }
 
-    def __init__(self, is_production: bool = False, secret_key: str = "nexus-dev-secret-key-2026") -> None:
+    def __init__(
+        self,
+        is_production: bool = False,
+        secret_key: str = "nexus-dev-secret-key-2026",
+        auth_mode: str = "demo",
+    ) -> None:
         self._is_production = is_production
         self._secret_key = secret_key
+        self._auth_mode = auth_mode
 
     async def verify(self, request: Request) -> Principal:
         # 1. Check Authorization header for Bearer token
@@ -68,10 +77,8 @@ class DevelopmentVerifier(TokenVerifier):
             except (jwt.PyJWTError, ValueError):
                 pass
 
-            # 2. Try base64 demo session token (from client demo auth)
+            # 2. In demo mode or fallback, try base64 session token
             try:
-                import base64
-                import json
                 raw_json = base64.b64decode(token).decode("utf-8")
                 payload = json.loads(raw_json)
                 if isinstance(payload, dict) and ("sub" in payload or "role" in payload):
@@ -83,11 +90,11 @@ class DevelopmentVerifier(TokenVerifier):
             except Exception:
                 pass
 
-            # Token decode failed; if in production, raise forbidden
-            if self._is_production:
+            # Token decode failed; if in production and not demo mode, raise forbidden
+            if self._is_production and self._auth_mode != "demo":
                 raise ForbiddenError("Invalid or expired authentication token.")
 
-        # 2. Check X-Role or X-Dev-Role headers
+        # 2. Check X-Role or X-Dev-Role headers or query params (in demo/dev mode)
         raw_role = request.headers.get("X-Role") or request.headers.get("X-Dev-Role")
         if not raw_role:
             try:
@@ -114,4 +121,5 @@ def make_verifier(settings: Settings) -> TokenVerifier:
     return DevelopmentVerifier(
         is_production=settings.is_production,
         secret_key=settings.jwt_secret_key,
+        auth_mode=settings.auth_mode,
     )

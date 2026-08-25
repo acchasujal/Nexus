@@ -61,8 +61,22 @@ def test_dev_verifier_valid_jwt() -> None:
 
 
 def test_dev_verifier_invalid_jwt_in_production() -> None:
-    verifier = DevelopmentVerifier(is_production=True, secret_key="test-secret-key-123")
+    verifier = DevelopmentVerifier(is_production=True, secret_key="test-secret-key-123", auth_mode="production_jwt")
     req = _make_request({"Authorization": "Bearer invalid.malformed.jwt.token"})
     with pytest.raises(ForbiddenError):
         asyncio.run(verifier.verify(req))
+
+
+def test_dev_verifier_base64_session_token_in_demo_mode() -> None:
+    import base64
+    import json
+    token_data = json.dumps({"sub": "officer_io", "role": "IO", "email": "officer_io@nexus.gov.in"})
+    b64_token = base64.b64encode(token_data.encode("utf-8")).decode("utf-8")
+    verifier = DevelopmentVerifier(is_production=True, secret_key="prod-secret", auth_mode="demo")
+    req = _make_request({"Authorization": f"Bearer {b64_token}"})
+    principal = asyncio.run(verifier.verify(req))
+    assert principal.user_id == "officer_io"
+    assert principal.role == UserRole.IO
+    assert principal.is_anonymous is False
+
 
