@@ -152,6 +152,16 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'investigations/:caseId',
+        element: (
+          <RoleGuard allowedRoles={allRoles}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
+              <CaseDetail />
+            </Suspense>
+          </RoleGuard>
+        ),
+      },
+      {
         path: 'settings',
         element: (
           <RoleGuard allowedRoles={allRoles}>

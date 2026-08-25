@@ -58,10 +58,11 @@ function RecordPanel({ title, record, accent }: { title: string; record: Resolut
 export default function EntityFusion() {
   const { data: candidates, isLoading, error, refetch } = useResolutionCandidates()
   const decide = useDecideCandidate()
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string>('RC-1')
   const [note, setNote] = useState('')
   const [decisionError, setDecisionError] = useState<string | null>(null)
 
-  const candidate = candidates?.[0]
+  const candidate = candidates?.find((c) => c.id === selectedCandidateId) || candidates?.[0]
   const decided = candidate && candidate.status !== 'PENDING'
 
   const submit = async (decision: 'CONFIRM' | 'REJECT' | 'DEFER') => {
@@ -101,6 +102,44 @@ export default function EntityFusion() {
           </div>
         </div>
       </div>
+
+      {/* Candidate Selector Tabs */}
+      {candidates && candidates.length > 1 && (
+        <div className="flex flex-wrap items-center gap-2 p-2 bg-neutral-100/80 rounded-xl border border-neutral-200" role="tablist" aria-label="Resolution candidates">
+          <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider px-2">Candidates ({candidates.length}):</span>
+          {candidates.map((c) => {
+            const isSelected = c.id === candidate.id
+            const isConfirmed = c.status === 'CONFIRMED'
+            const isRejected = c.status === 'REJECTED'
+            const isPending = c.status === 'PENDING'
+            return (
+              <button
+                key={c.id}
+                role="tab"
+                aria-selected={isSelected}
+                onClick={() => {
+                  setSelectedCandidateId(c.id)
+                  setNote('')
+                  setDecisionError(null)
+                }}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  isSelected
+                    ? 'bg-white text-neutral-950 shadow-sm border border-neutral-300 ring-1 ring-neutral-300 font-bold'
+                    : 'text-neutral-600 hover:text-neutral-950 hover:bg-white/60'
+                }`}
+              >
+                <span>{c.left.label} ↔ {c.right.label}</span>
+                <span className="rounded bg-emerald-100 text-emerald-800 px-1.5 py-0.5 text-[10px] font-mono font-bold">
+                  {(c.score * 100).toFixed(0)}%
+                </span>
+                {isConfirmed && <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Merged</span>}
+                {isRejected && <span className="text-[10px] bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded font-bold">Rejected</span>}
+                {isPending && <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">Pending</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <RecordPanel title="Record A" record={candidate.left} accent="sky" />

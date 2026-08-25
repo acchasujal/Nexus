@@ -8,7 +8,7 @@
 import { useMemo, useState } from 'react'
 import {
   ReactFlow, Background, Controls, Handle, Position, ReactFlowProvider,
-  type Node, type Edge, MarkerType, EdgeLabelRenderer, BaseEdge, getStraightPath, type EdgeProps,
+  type Node, type Edge, MarkerType, EdgeLabelRenderer, BaseEdge, getSmoothStepPath, type EdgeProps,
 } from '@xyflow/react'
 import {
   User, Briefcase, Phone, Landmark, Link2, BadgeCheck, Users,
@@ -20,6 +20,7 @@ interface GlobalNetworkCanvasProps {
   graph: NexusNetworkResponse
   diff?: SnapshotDiffResponse | null
   highlightDelta?: boolean
+  initialCaseFilter?: string | null
   onEdgeSelect: (edgeId: string) => void
   onNodeSelect?: (nodeId: string) => void
 }
@@ -127,11 +128,12 @@ function NexusStraightEdge({
   markerEnd,
   data,
 }: EdgeProps) {
-  const [edgePath, labelX, labelY] = getStraightPath({
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
     targetX,
     targetY,
+    borderRadius: 14,
   })
 
   const label = String(data?.label ?? '')
@@ -279,9 +281,9 @@ function getOptimalHandles(
   }
 }
 
-function CanvasInner({ graph, diff, highlightDelta, onEdgeSelect, onNodeSelect }: GlobalNetworkCanvasProps) {
+function CanvasInner({ graph, diff, highlightDelta, initialCaseFilter, onEdgeSelect, onNodeSelect }: GlobalNetworkCanvasProps) {
   const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set())
-  const [caseFilter, setCaseFilter] = useState<string>('ALL')
+  const [caseFilter, setCaseFilter] = useState<string>(initialCaseFilter || 'ALL')
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
 
   const positions = useMemo(() => layout(graph), [graph])
@@ -473,7 +475,7 @@ function CanvasInner({ graph, diff, highlightDelta, onEdgeSelect, onNodeSelect }
 export function GlobalNetworkCanvas(props: GlobalNetworkCanvasProps) {
   return (
     <ReactFlowProvider>
-      <CanvasInner {...props} />
+      <CanvasInner key={props.initialCaseFilter ?? 'all'} {...props} />
     </ReactFlowProvider>
   )
 }
