@@ -15,3 +15,7 @@ NEXUS adopts a **hybrid polyglot persistence architecture**:
 ## Consequences
 - **Positive:** Sub-second latency SLAs for all interactive graph explorer features; zero database network overhead for real-time BFS expansions.
 - **Trade-off:** Graph must be serialized and indexed in memory upon application startup (measured at 6.05 ms for 445 nodes / 530 edges).
+
+## Entity Resolution & Cross-Case Identity Semantics
+Entity resolution operates across all ingested source records globally. Case identifiers serve exclusively as contextual provenance metadata rather than canonical identity boundaries. An entity can appear legitimately across multiple distinct cases (e.g. accused in CASE-141 and CASE-207), and candidate generation compares records across case boundaries without case-scoped restriction.
+

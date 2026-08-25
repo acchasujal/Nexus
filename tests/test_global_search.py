@@ -51,7 +51,7 @@ def test_person_text_search(client: TestClient) -> None:
     data = resp.json()
     assert len(data["entities"]) > 0
     labels = [e["label"] for e in data["entities"]]
-    assert any("Rafiq" in l for l in labels)
+    assert any("Rafiq" in lbl for lbl in labels)
 
 
 def test_phone_number_formatting_normalization(client: TestClient) -> None:
@@ -102,7 +102,7 @@ def test_before_after_resolution_search(client: TestClient) -> None:
     assert resp_before.status_code == 200
     entities_before = resp_before.json()["entities"]
     labels_before = [e["label"] for e in entities_before]
-    assert any("Rafiq Khan" in l for l in labels_before)
+    assert any("Rafiq Khan" in lbl for lbl in labels_before)
 
     # Post resolution decision
     req = {
@@ -116,7 +116,7 @@ def test_before_after_resolution_search(client: TestClient) -> None:
     assert resp_after.status_code == 200
     entities_after = resp_after.json()["entities"]
     labels_after = [e["label"] for e in entities_after]
-    assert any("Rafiq Khan / Rafiq Ahmed" in l for l in labels_after)
+    assert any("Rafiq Khan / Rafiq Ahmed" in lbl for lbl in labels_after)
 
 
 def test_repository_backed_entities_search(client: TestClient) -> None:
@@ -154,4 +154,33 @@ def test_search_deduplication(client: TestClient) -> None:
     # Assert no duplicate IDs exist in returned lists
     assert len(all_case_ids) == len(set(all_case_ids))
     assert len(all_entity_ids) == len(set(all_entity_ids))
+
+
+def test_cross_case_resolution_candidates_endpoint(client: TestClient) -> None:
+    resp = client.get("/api/v1/nexus/resolution/candidates")
+    assert resp.status_code == 200
+    candidates = resp.json()
+    assert len(candidates) >= 3
+
+    # Candidate 1: Cross-case Rafiq (CASE-141 vs CASE-207)
+    c1 = candidates[0]
+    assert c1["id"] == "RC-1"
+    assert c1["left"]["case_ids"] == ["CASE-141"]
+    assert c1["right"]["case_ids"] == ["CASE-207"]
+    assert c1["left"]["case_ids"] != c1["right"]["case_ids"]
+
+    # Candidate 2: Cross-case Vikram/Bikram (CASE-305 vs CASE-412)
+    c2 = candidates[1]
+    assert c2["id"] == "RC-2"
+    assert c2["left"]["case_ids"] == ["CASE-305"]
+    assert c2["right"]["case_ids"] == ["CASE-412"]
+
+    # Test decision for RC-2
+    dec_resp = client.post(
+        "/api/v1/nexus/resolution/RC-2/decision",
+        json={"decision": "CONFIRM", "decided_by": "IO Test", "note": "Aadhaar verified"},
+    )
+    assert dec_resp.status_code == 200
+    assert dec_resp.json()["status"] == "CONFIRMED"
+
 
