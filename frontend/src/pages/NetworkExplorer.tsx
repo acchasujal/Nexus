@@ -1,84 +1,132 @@
-import { useState, useEffect } from 'react'
-import { Network } from 'lucide-react'
-import { NetworkAnalysisPanel } from '@/components/NetworkAnalysisPanel'
-import { apiClient } from '@/lib/apiClient'
+/**
+ * frontend/src/pages/NetworkExplorer.tsx
+ *
+ * Global Network Explorer with two-state Before/After replay:
+ * - renders all cases/entities from the snapshot contract
+ * - layer toggles, case focus, legend, bridge/community badges
+ * - two-position control: Before resolution / After resolution
+ * - highlights only the snapshot delta (added nodes/edges) in After mode
+ * - click-any-link opens the Evidence Drawer
+ */
+import { useState } from 'react'
+import { Network, RotateCcw, Route, ShieldQuestion, ArrowRightLeft } from 'lucide-react'
+import { useNexusNetwork, useSnapshotDiff, useNexusPath } from '@/hooks/useNexus'
+import { GlobalNetworkCanvas } from '@/components/nexus/GlobalNetworkCanvas'
+import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
+import { DerivationBadge } from '@/components/nexus/DerivationBadge'
+import { LoadingSkeleton } from '@/components/LoadingSkeleton'
+import { ErrorState } from '@/components/ErrorState'
+import { Link } from 'react-router-dom'
+
+type ReplayState = 'before' | 'after'
 
 export default function NetworkExplorer() {
-  const [selectedCaseId, setSelectedCaseId] = useState<string>('case-0001')
-  const [cases, setCases] = useState<any[]>([])
-  const [depth, setDepth] = useState<number>(2)
+  const [replay, setReplay] = useState<ReplayState>('before')
+  const [edgeId, setEdgeId] = useState<string | null>(null)
 
-  useEffect(() => {
-    // Fetch available investigations
-    apiClient.getInvestigations().then((data: any) => {
-      if (Array.isArray(data) && data.length > 0) {
-        setCases(data)
-        setSelectedCaseId((prev) => prev || data[0].id)
-      }
-    }).catch(() => {
-      // Fallback
-      setCases([
-        { id: 'case-0001', fir_number: 'FIR-2026-101', title: 'Narcotics Syndicate Investigation' },
-        { id: 'case-0002', fir_number: 'FIR-2026-102', title: 'Cyber Phishing Network' },
-      ])
-    })
-  }, [])
+  const before = useNexusNetwork('before')
+  const after = useNexusNetwork('after')
+  const diff = useSnapshotDiff(after.data?.state === 'after')
+
+  const network = replay === 'before' ? before : after
+  const graph = network.data
+
+  const pathQuery = useNexusPath('CASE-141', 'CASE-207')
+  const [showPath, setShowPath] = useState(false)
+
+  const afterUnavailable = replay === 'after' && after.error
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-800 pb-5">
+    <div className="space-y-5">
+      <div className="flex flex-col justify-between gap-4 border-b border-neutral-200 pb-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-100 flex items-center gap-2.5">
-            <Network className="h-6 w-6 text-blue-500" />
-            Unified Intelligence Graph Explorer
+          <h1 className="flex items-center gap-2.5 text-2xl font-bold text-neutral-900">
+            <Network className="h-6 w-6 text-blue-600" /> Global Network Explorer
           </h1>
-          <p className="text-sm text-neutral-400 mt-1">
-            Multi-hop entity graph visualization, co-accused discovery, and cross-source link analysis.
+          <p className="mt-1 text-sm text-neutral-600">Every case and entity in the current snapshot. Click any link for its full evidence chain.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setShowPath((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50 hover:text-neutral-900 shadow-sm"
+            aria-expanded={showPath}>
+            <Route className="h-4 w-4 text-blue-600" /> {showPath ? 'Hide' : 'Find'} case connection
+          </button>
+          <div role="group" aria-label="Network snapshot replay" className="flex items-center rounded-lg border border-neutral-300 bg-neutral-100 p-1 text-sm font-semibold shadow-inner">
+            <button onClick={() => setReplay('before')} aria-pressed={replay === 'before'}
+              className={`rounded-md px-3 py-1.5 transition-colors ${replay === 'before' ? 'bg-white text-neutral-900 shadow-sm font-bold' : 'text-neutral-600 hover:text-neutral-900'}`}>
+              Before resolution
+            </button>
+            <button onClick={() => setReplay('after')} aria-pressed={replay === 'after'}
+              disabled={after.isLoading && !after.data}
+              className={`rounded-md px-3 py-1.5 transition-colors disabled:opacity-40 ${replay === 'after' ? 'bg-emerald-600 text-white shadow-sm font-bold' : 'text-neutral-600 hover:text-neutral-900'}`}>
+              After resolution
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {showPath && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 text-sm shadow-sm">
+          <div className="flex items-center gap-2 font-semibold text-neutral-900">
+            <ArrowRightLeft className="h-4 w-4 text-blue-600" /> FIR 141/2026 ↔ FIR 207/2026
+          </div>
+          {pathQuery.isLoading && <p className="mt-2 text-neutral-600">Searching for an explainable connection…</p>}
+          {pathQuery.data && (
+            pathQuery.data.found ? (
+              <div className="mt-2 space-y-2">
+                <p className="text-neutral-800">{pathQuery.data.explanation}</p>
+                <p className="font-mono text-xs text-neutral-600 font-medium">path: {pathQuery.data.node_ids.join(' → ')} ({pathQuery.data.hops} hops)</p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs text-neutral-600 font-semibold">Evidence:</span>
+                  {pathQuery.data.evidence_ids.map((id) => (
+                    <code key={id} className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-mono text-amber-900 border border-amber-200">{id}</code>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="mt-2 flex items-center gap-2 text-neutral-700">
+                <ShieldQuestion className="h-4 w-4 text-amber-600" /> {pathQuery.data.explanation}
+              </p>
+            )
+          )}
+        </div>
+      )}
+
+      {network.isLoading && <LoadingSkeleton layout="detail" />}
+      {network.isError && !afterUnavailable && <ErrorState message="Failed to load the investigation network." onRetry={() => void network.refetch()} />}
+
+      {afterUnavailable && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900 shadow-sm">
+          <p className="font-semibold">The "After resolution" snapshot does not exist yet.</p>
+          <p className="mt-1 text-amber-800">
+            Confirm the pending entity match first — the merged network is generated from that decision.{' '}
+            <Link to="/fusion" className="font-bold underline hover:text-amber-950 text-blue-700">Open Entity Fusion</Link>
           </p>
         </div>
+      )}
 
-        {/* Controls */}
-        <div className="flex items-center gap-3">
-          <select
-            value={selectedCaseId}
-            onChange={(e) => setSelectedCaseId(e.target.value)}
-            className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-200 focus:border-blue-500 focus:outline-none"
-          >
-            {cases.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.fir_number} - {c.title || c.offence_category}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={depth}
-            onChange={(e) => setDepth(Number(e.target.value))}
-            className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-200 focus:border-blue-500 focus:outline-none"
-          >
-            <option value={1}>1 Hop (Direct)</option>
-            <option value={2}>2 Hops (Expanded)</option>
-            <option value={3}>3 Hops (Syndicate)</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Network Graph Container */}
-      <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4 shadow-lg">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-4 text-xs text-neutral-400">
-            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-blue-500" /> Person / Suspect</span>
-            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-emerald-500" /> Case / FIR</span>
-            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-amber-500" /> Monitored Phone</span>
-            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-purple-500" /> Bank Account</span>
-            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-cyan-500" /> Intelligence Report</span>
+      {graph && !afterUnavailable && (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-neutral-600 font-medium">
+            <span data-testid="snapshot-label">
+              Snapshot <code className="text-neutral-900 font-semibold">{graph.snapshot_id}</code> · {graph.total_nodes} nodes · {graph.total_edges} links
+            </span>
+            {replay === 'after' && diff.data && (
+              <span className="flex items-center gap-2">
+                <DerivationBadge klass="DERIVED" size="xs" /> Only the delta from resolution is highlighted
+              </span>
+            )}
+            {replay === 'before' && (
+              <span className="flex items-center gap-1.5 text-neutral-600">
+                <RotateCcw className="h-3 w-3" /> Two separate case components — no bridge visible
+              </span>
+            )}
           </div>
-          <span className="text-xs text-neutral-500">Interactive: Drag, Zoom, Click to inspect provenance</span>
-        </div>
+          <GlobalNetworkCanvas graph={graph} diff={replay === 'after' ? diff.data ?? null : null} highlightDelta={replay === 'after'} onEdgeSelect={setEdgeId} />
+        </>
+      )}
 
-        <NetworkAnalysisPanel caseId={selectedCaseId} />
-      </div>
+      <EvidenceDrawer relationshipId={edgeId} onClose={() => setEdgeId(null)} />
     </div>
   )
 }

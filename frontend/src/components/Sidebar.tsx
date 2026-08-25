@@ -11,7 +11,9 @@ import {
   ShieldCheck, 
   Settings, 
   LogOut,
-  LayoutDashboard
+  LayoutDashboard,
+  GitMerge,
+  Inbox
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -24,27 +26,33 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const navItems = [
     {
-      name: 'Overview',
-      to: '/worklist',
-      icon: LayoutDashboard,
-      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
-    },
-    {
       name: 'Network Explorer',
       to: '/network',
       icon: Network,
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
-      name: 'Entity Resolution',
-      to: '/entities',
-      icon: Users,
+      name: 'Entity Fusion',
+      to: '/fusion',
+      icon: GitMerge,
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
-      name: 'Patterns & Communities',
-      to: '/patterns',
-      icon: Layers,
+      name: 'Lead Inbox',
+      to: '/leads',
+      icon: Inbox,
+      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+    },
+    {
+      name: 'Overview',
+      to: '/worklist',
+      icon: LayoutDashboard,
+      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+    },
+    {
+      name: 'Entity Resolution',
+      to: '/entities',
+      icon: Users,
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
@@ -70,6 +78,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       to: '/audit',
       icon: ShieldCheck,
       roles: ['SUPERVISOR', 'ADMIN', 'SHO', 'SP']
+    },
+    {
+      name: 'Patterns & Communities',
+      to: '/patterns',
+      icon: Layers,
+      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     }
   ]
 
@@ -86,30 +100,30 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-sidebar flex-col border-r border-neutral-800 bg-neutral-950 text-neutral-100 transition-transform duration-normal lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-sidebar flex-col border-r border-neutral-200 bg-white text-neutral-900 shadow-xs transition-transform duration-normal lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Brand Wordmark */}
-        <div className="flex h-16 items-center border-b border-neutral-800 px-6 gap-3">
+        <div className="flex h-16 items-center border-b border-neutral-200 px-6 gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 shadow-md">
             <Network className="h-5 w-5 text-white" />
           </div>
           <div>
-            <span className="text-lg font-bold tracking-tight text-white">NEXUS</span>
-            <div className="text-[10px] font-medium text-blue-400 uppercase tracking-wider">Network Intelligence</div>
+            <span className="text-lg font-extrabold tracking-tight text-neutral-900">NEXUS</span>
+            <div className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Network Intelligence</div>
           </div>
         </div>
 
         {/* User Role Badge */}
-        <div className="px-6 py-4 border-b border-neutral-800/80 bg-neutral-900/40">
+        <div className="px-6 py-3.5 border-b border-neutral-200 bg-neutral-50">
           <div className="flex items-center space-x-3">
-            <div className="h-8 w-8 rounded-full bg-blue-900/50 border border-blue-500/30 flex items-center justify-center font-bold text-blue-300 text-xs">
+            <div className="h-8 w-8 rounded-full bg-blue-100 border border-blue-300 flex items-center justify-center font-bold text-blue-900 text-xs">
               {role ? role.substring(0, 2) : 'NV'}
             </div>
             <div>
-              <div className="text-xs font-semibold text-neutral-200">{role || 'Investigator'}</div>
-              <div className="text-[11px] text-neutral-400">
+              <div className="text-xs font-bold text-neutral-900">{role || 'Investigator'}</div>
+              <div className="text-[11px] text-neutral-500 font-medium">
                 {role === 'SP' || role === 'SUPERVISOR' ? 'Supervisor / SP' : role === 'ANALYST' ? 'Intelligence Analyst' : 'Investigating Officer'}
               </div>
             </div>
@@ -128,12 +142,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 className={({ isActive }) => `
                   flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all
                   ${isActive 
-                    ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold' 
-                    : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200'
+                    ? 'bg-blue-600 text-white font-bold shadow-sm' 
+                    : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
                   }
                 `}
               >
-                <Icon className="mr-3 h-4 w-4" />
+                <Icon className="mr-3 h-4 w-4 shrink-0" />
                 {item.name}
               </NavLink>
             )
@@ -141,13 +155,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* Secondary Navigation & Logout */}
-        <div className="border-t border-neutral-800 p-4 space-y-1">
+        <div className="border-t border-neutral-200 p-4 space-y-1">
           <NavLink
             to="/settings"
             onClick={onClose}
             className={({ isActive }) => `
-              flex items-center px-3 py-2 rounded-md text-xs font-medium transition-all
-              ${isActive ? 'bg-neutral-800 text-neutral-200' : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200'}
+              flex items-center px-3 py-2 rounded-lg text-xs font-medium transition-all
+              ${isActive ? 'bg-neutral-100 text-neutral-900 font-bold' : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'}
             `}
           >
             <Settings className="mr-3 h-4 w-4" />
@@ -158,7 +172,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               logout()
               onClose()
             }}
-            className="flex w-full items-center px-3 py-2 rounded-md text-xs font-medium text-red-400 hover:bg-neutral-900 hover:text-red-300 transition-all"
+            className="flex w-full items-center px-3 py-2 rounded-lg text-xs font-semibold text-red-700 hover:bg-red-50 hover:text-red-800 transition-all"
           >
             <LogOut className="mr-3 h-4 w-4" />
             Sign Out

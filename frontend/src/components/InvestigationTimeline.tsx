@@ -7,7 +7,8 @@ import {
   TrendingUp, 
   Printer, 
   Calendar,
-  Sparkles
+  Sparkles,
+  ChevronRight
 } from 'lucide-react'
 
 interface TimelineEvent {

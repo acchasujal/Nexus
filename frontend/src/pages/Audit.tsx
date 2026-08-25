@@ -22,19 +22,19 @@ export default function Audit() {
 
   return (
     <div className="space-y-6">
-      <div className="border-b border-neutral-800 pb-5">
-        <h1 className="text-2xl font-bold text-neutral-100 flex items-center gap-2.5">
-          <ShieldCheck className="h-6 w-6 text-blue-500" />
+      <div className="border-b border-neutral-200 pb-5">
+        <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2.5">
+          <ShieldCheck className="h-6 w-6 text-blue-600" />
           Immutable Audit Trail & Compliance Log
         </h1>
-        <p className="text-sm text-neutral-400 mt-1">
+        <p className="text-sm text-neutral-600 mt-1">
           Cryptographically recorded actions, search queries, copilot responses, and evidence accesses by investigator principals.
         </p>
       </div>
 
-      <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 overflow-hidden shadow-lg">
-        <table className="w-full text-left text-sm text-neutral-300">
-          <thead className="bg-neutral-950/80 text-xs uppercase tracking-wider text-neutral-400 border-b border-neutral-800">
+      <div className="rounded-xl border border-neutral-200 bg-white overflow-hidden shadow-sm">
+        <table className="w-full text-left text-sm text-neutral-800">
+          <thead className="bg-neutral-50 text-xs font-bold uppercase tracking-wider text-neutral-700 border-b border-neutral-200">
             <tr>
               <th className="px-4 py-3">Timestamp</th>
               <th className="px-4 py-3">Actor / Role</th>
@@ -43,7 +43,7 @@ export default function Audit() {
               <th className="px-4 py-3">Context Details</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-800/60">
+          <tbody className="divide-y divide-neutral-200">
             {isLoading ? (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-neutral-500">Loading audit records...</td>
@@ -54,25 +54,25 @@ export default function Audit() {
               </tr>
             ) : (
               logs.map((log, idx) => (
-                <tr key={log.id || idx} className="hover:bg-neutral-800/30 transition-colors">
-                  <td className="px-4 py-3 text-xs text-neutral-400 whitespace-nowrap">
+                <tr key={log.id || idx} className="hover:bg-neutral-50/80 transition-colors">
+                  <td className="px-4 py-3 text-xs text-neutral-600 whitespace-nowrap font-medium">
                     {new Date(log.timestamp).toLocaleString()}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="font-semibold text-white">{log.user_id}</span>
-                    <span className="ml-2 text-[10px] bg-neutral-800 px-1.5 py-0.5 rounded text-neutral-400 border border-neutral-700">
+                    <span className="font-bold text-neutral-900">{log.user_id}</span>
+                    <span className="ml-2 text-[10px] font-bold bg-neutral-100 px-1.5 py-0.5 rounded text-neutral-800 border border-neutral-200">
                       {log.user_role}
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <code className="text-xs font-mono text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-800/30">
+                    <code className="text-xs font-mono font-bold text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                       {log.action}
                     </code>
                   </td>
-                  <td className="px-4 py-3 text-xs text-neutral-300">
+                  <td className="px-4 py-3 text-xs font-semibold text-neutral-900">
                     {log.entity_id || log.case_id || 'System / Batch'}
                   </td>
-                  <td className="px-4 py-3 text-xs text-neutral-400 font-mono">
+                  <td className="px-4 py-3 text-xs text-neutral-600 font-mono">
                     {JSON.stringify(log.details || {})}
                   </td>
                 </tr>

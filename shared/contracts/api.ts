@@ -296,3 +296,159 @@ export interface IngestResponse {
   error_count: number
   audit_event_id: string
 }
+
+// ── NEXUS Prototype Contract Types ──────────────────────────────────────────
+
+export interface NexusSourceRecord {
+  id: string
+  batch_id: string
+  source_type: string
+  locator: string
+  raw_excerpt: string
+  occurred_at: string
+}
+
+export interface NexusGraphNode {
+  id: string
+  entity_type: string
+  label: string
+  case_ids: string[]
+  badges?: string[]
+  properties: Record<string, any>
+}
+
+export interface NexusGraphEdge {
+  id: string
+  source_id: string
+  target_id: string
+  edge_type: string
+  weight: number
+  confidence: number
+  derivation_class: 'FACT' | 'DERIVED' | 'HYPOTHESIS'
+  recorded_at: string
+  case_ids: string[]
+  properties: Record<string, any>
+}
+
+export interface NexusNetworkResponse {
+  snapshot_id: string
+  state: 'before' | 'after'
+  nodes: NexusGraphNode[]
+  edges: NexusGraphEdge[]
+  total_nodes: number
+  total_edges: number
+}
+
+export interface SnapshotDiffResponse {
+  before_snapshot_id: string
+  after_snapshot_id: string
+  added_node_ids: string[]
+  removed_node_ids: string[]
+  changed_node_ids: string[]
+  added_edge_ids: string[]
+  removed_edge_ids: string[]
+  changed_edge_ids: string[]
+}
+
+export interface ResolutionCandidateRecord {
+  node_id: string
+  entity_type: string
+  label: string
+  case_ids: string[]
+  properties: Record<string, any>
+  source_records: NexusSourceRecord[]
+}
+
+export interface ResolutionCandidate {
+  id: string
+  score: number
+  status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'DEFERRED'
+  left: ResolutionCandidateRecord
+  right: ResolutionCandidateRecord
+  reasons: { field: string; detail: string; weight: number }[]
+  conflicts: { field: string; left_value: string; right_value: string }[]
+  decided_at?: string
+  decided_by?: string
+}
+
+export interface ResolutionDecisionRequest {
+  decision: 'CONFIRM' | 'REJECT' | 'DEFER'
+  decided_by: string
+  note?: string
+}
+
+export interface ResolutionDecisionResponse {
+  candidate_id: string
+  status: string
+  affected_node_ids: string[]
+  new_snapshot_id?: string
+}
+
+export interface NexusEdgeEvidenceResponse {
+  relationship_id: string
+  edge_type: string
+  source_label: string
+  target_label: string
+  derivation_class: 'FACT' | 'DERIVED' | 'HYPOTHESIS'
+  confidence: number
+  recorded_at: string
+  source_records: NexusSourceRecord[]
+  derivation_chain: { step: number; rule: string; inputs: string[] }[]
+}
+
+export interface NexusPathResponse {
+  found: boolean
+  source_id: string
+  target_id: string
+  node_ids: string[]
+  edge_ids: string[]
+  hops: number
+  explanation: string
+  evidence_ids: string[]
+}
+
+export interface NexusLead {
+  id: string
+  title: string
+  rule_id: string
+  explanation: string
+  severity: string
+  derivation_class: 'FACT' | 'DERIVED' | 'HYPOTHESIS'
+  case_ids: string[]
+  status: 'NEW' | 'ACCEPTED' | 'REJECTED'
+  path: { node_ids: string[]; edge_ids: string[] }
+  evidence_ids: string[]
+  created_at: string
+  decided_at?: string
+  decided_by?: string
+  decision_note?: string
+}
+
+export interface NexusLeadDecisionRequest {
+  decision: 'ACCEPT' | 'REJECT'
+  decided_by: string
+  note?: string
+}
+
+export interface NexusCopilotResponse {
+  query: string
+  answer: string
+  is_refusal: boolean
+  refusal_reason?: string
+  evidence_ids: string[]
+  reasoning_path: string[]
+}
+
+export interface NexusSearchResponse {
+  query: string
+  cases: { id: string; fir_number: string; title: string; score: number }[]
+  entities: { id: string; label: string; entity_type: string; case_ids: string[]; score: number }[]
+}
+
+export interface NexusIngestResponse {
+  batch_id: string
+  source_type: string
+  ingested_count: number
+  extraction_summary: { persons: number; phones: number; accounts: number; events: number; relationships: number }
+  snapshot_id: string
+}

@@ -43,28 +43,28 @@ export function DataTable<T extends { id: string }>({
   const rowHeightClass = tableDensity === 'dense' ? 'h-10 py-1' : 'h-14 py-3'
 
   return (
-    <div className="w-full overflow-x-auto rounded-radius-md border border-neutral-200 bg-neutral-50">
+    <div className="w-full overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-sm">
       <table
-        className="w-full border-collapse text-left text-body text-neutral-800"
+        className="w-full border-collapse text-left text-body text-neutral-900"
         role="grid"
         aria-label={ariaLabel}
         aria-rowcount={data.length}
       >
-        <thead className="border-b border-neutral-200 bg-neutral-100 text-small font-semibold text-neutral-600">
+        <thead className="border-b border-neutral-200 bg-neutral-50 text-xs font-bold text-neutral-600 uppercase tracking-wider">
           <tr role="row">
             {columns.map((column, index) => (
               <th
                 key={index}
                 scope="col"
                 role="columnheader"
-                className="px-4 py-3 font-semibold uppercase tracking-wider"
+                className="px-4 py-3.5 font-bold uppercase tracking-wider text-[11px]"
               >
                 {column.header}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-neutral-200" role="rowgroup">
+        <tbody className="divide-y divide-neutral-200 bg-white" role="rowgroup">
           {data.map((row, rowIndex) => (
             <tr
               key={row.id}

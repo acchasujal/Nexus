@@ -1,0 +1,878 @@
+"""backend/app/api/nexus_routes.py
+
+FastAPI routes for the frozen NEXUS prototype contract (/api/v1/nexus/*).
+Implements:
+  - Ingest & Demo Reset (/nexus/ingest, /nexus/demo/reset)
+  - Entity Fusion Candidates & Decisions (/nexus/resolution/*)
+  - Global Network Explorer & Diff (/nexus/network, /nexus/network/diff)
+  - Edge Evidence Inspection (/nexus/relationships/{id}/evidence)
+  - Cross-Case Pathfinder (/nexus/path)
+  - Lead Inbox & Decisions (/nexus/leads/*)
+  - Grounded Copilot with Refusal Gate (/nexus/copilot/query)
+  - Global Search (/nexus/search)
+  - Source Record Registry (/nexus/sources/{id})
+"""
+
+from __future__ import annotations
+
+import copy
+import re
+from datetime import datetime, timezone
+from typing import Any, Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+
+from backend.app.api.dependencies import get_audit_service, get_principal
+from backend.app.auth.principal import Principal
+from backend.app.services.audit_service import AuditEventType, AuditService
+
+# ── Pydantic Models ────────────────────────────────────────────────────────────
+
+class NexusSourceRecord(BaseModel):
+    id: str
+    batch_id: str
+    source_type: str
+    locator: str
+    raw_excerpt: str
+    occurred_at: str
+
+
+class NexusGraphNode(BaseModel):
+    id: str
+    entity_type: str
+    label: str
+    case_ids: list[str]
+    badges: list[str] = Field(default_factory=list)
+    properties: dict[str, Any] = Field(default_factory=dict)
+
+
+class NexusGraphEdge(BaseModel):
+    id: str
+    source_id: str
+    target_id: str
+    edge_type: str
+    weight: float = 1.0
+    confidence: float = 1.0
+    derivation_class: Literal["FACT", "DERIVED", "HYPOTHESIS"] = "FACT"
+    recorded_at: str
+    case_ids: list[str]
+    properties: dict[str, Any] = Field(default_factory=dict)
+
+
+class NexusNetworkResponse(BaseModel):
+    snapshot_id: str
+    state: Literal["before", "after"]
+    nodes: list[NexusGraphNode]
+    edges: list[NexusGraphEdge]
+    total_nodes: int
+    total_edges: int
+
+
+class SnapshotDiffResponse(BaseModel):
+    before_snapshot_id: str
+    after_snapshot_id: str
+    added_node_ids: list[str]
+    removed_node_ids: list[str]
+    changed_node_ids: list[str]
+    added_edge_ids: list[str]
+    removed_edge_ids: list[str]
+    changed_edge_ids: list[str]
+
+
+class ResolutionCandidateRecord(BaseModel):
+    node_id: str
+    entity_type: str
+    label: str
+    case_ids: list[str]
+    properties: dict[str, Any]
+    source_records: list[NexusSourceRecord]
+
+
+class CandidateReason(BaseModel):
+    field: str
+    detail: str
+    weight: float
+
+
+class CandidateConflict(BaseModel):
+    field: str
+    left_value: str
+    right_value: str
+
+
+class ResolutionCandidate(BaseModel):
+    id: str
+    score: float
+    status: Literal["PENDING", "CONFIRMED", "REJECTED", "DEFERRED"]
+    left: ResolutionCandidateRecord
+    right: ResolutionCandidateRecord
+    reasons: list[CandidateReason]
+    conflicts: list[CandidateConflict]
+    decided_at: str | None = None
+    decided_by: str | None = None
+
+
+class ResolutionDecisionRequest(BaseModel):
+    decision: Literal["CONFIRM", "REJECT", "DEFER"]
+    decided_by: str = "Investigating Officer"
+    note: str | None = None
+
+
+class ResolutionDecisionResponse(BaseModel):
+    candidate_id: str
+    status: str
+    affected_node_ids: list[str]
+    new_snapshot_id: str | None = None
+
+
+class DerivationStep(BaseModel):
+    step: int
+    rule: str
+    inputs: list[str]
+
+
+class NexusEdgeEvidenceResponse(BaseModel):
+    relationship_id: str
+    edge_type: str
+    source_label: str
+    target_label: str
+    derivation_class: Literal["FACT", "DERIVED", "HYPOTHESIS"]
+    confidence: float
+    recorded_at: str
+    source_records: list[NexusSourceRecord]
+    derivation_chain: list[DerivationStep]
+
+
+class NexusPathResponse(BaseModel):
+    found: bool
+    source_id: str
+    target_id: str
+    node_ids: list[str]
+    edge_ids: list[str]
+    hops: int
+    explanation: str
+    evidence_ids: list[str]
+
+
+class NexusLeadPath(BaseModel):
+    node_ids: list[str]
+    edge_ids: list[str]
+
+
+class NexusLead(BaseModel):
+    id: str
+    title: str
+    rule_id: str
+    explanation: str
+    severity: str
+    derivation_class: Literal["FACT", "DERIVED", "HYPOTHESIS"]
+    case_ids: list[str]
+    status: Literal["NEW", "ACCEPTED", "REJECTED"]
+    path: NexusLeadPath
+    evidence_ids: list[str]
+    created_at: str
+    decided_at: str | None = None
+    decided_by: str | None = None
+    decision_note: str | None = None
+
+
+class NexusLeadDecisionRequest(BaseModel):
+    decision: Literal["ACCEPT", "REJECT"]
+    decided_by: str = "Investigating Officer"
+    note: str | None = None
+
+
+class NexusCopilotResponse(BaseModel):
+    query: str
+    answer: str
+    is_refusal: bool
+    refusal_reason: str | None = None
+    evidence_ids: list[str]
+    reasoning_path: list[str]
+
+
+class SearchCaseItem(BaseModel):
+    id: str
+    fir_number: str
+    title: str
+    score: float = 1.0
+
+
+class SearchEntityItem(BaseModel):
+    id: str
+    label: str
+    entity_type: str
+    case_ids: list[str]
+    score: float = 1.0
+
+
+class NexusSearchResponse(BaseModel):
+    query: str
+    cases: list[SearchCaseItem]
+    entities: list[SearchEntityItem]
+
+
+class ExtractionSummary(BaseModel):
+    persons: int
+    phones: int
+    accounts: int
+    events: int
+    relationships: int
+
+
+class IngestFileItem(BaseModel):
+    source_type: str
+    file_name: str
+
+
+class NexusIngestRequest(BaseModel):
+    files: list[IngestFileItem]
+
+
+class NexusIngestResponse(BaseModel):
+    batch_id: str
+    source_type: str
+    ingested_count: int = 3
+    extraction_summary: ExtractionSummary
+    snapshot_id: str
+
+
+# ── Golden Demo Fixture ────────────────────────────────────────────────────────
+
+RAW_SOURCES: dict[str, NexusSourceRecord] = {
+    "SRC-FIR-141": NexusSourceRecord(
+        id="SRC-FIR-141",
+        batch_id="BATCH-2026-08-24",
+        source_type="FIR",
+        locator="fir_141_2026.pdf — page 2, row 4 (accused list)",
+        raw_excerpt="Accused: Rafiq Khan, s/o Iqbal Khan, age 35, res. Hootagalli, Mysuru. Mobile disclosed: +91 98450 11223.",
+        occurred_at="2026-02-11T09:30:00Z",
+    ),
+    "SRC-FIR-207": NexusSourceRecord(
+        id="SRC-FIR-207",
+        batch_id="BATCH-2026-08-24",
+        source_type="FIR",
+        locator="fir_207_2026.pdf — page 1, row 7 (accused list)",
+        raw_excerpt="Accused: Rafiq Ahmed, s/o Iqbal Khan, age 35, res. Hootagalli Colony, Mysuru. Mobile: +91 98450 11223.",
+        occurred_at="2026-03-02T14:15:00Z",
+    ),
+    "SRC-CDR-A12": NexusSourceRecord(
+        id="SRC-CDR-A12",
+        batch_id="BATCH-2026-08-24",
+        source_type="CDR",
+        locator="cdr_mysuru_feb.csv — row 1287 (A-party +91 98450 11223)",
+        raw_excerpt="2026-02-14T22:41:05Z, +91 98450 11223 → +91 99801 55210, duration 412s, cell 4701-Hootagalli.",
+        occurred_at="2026-02-14T22:41:05Z",
+    ),
+    "SRC-CDR-B31": NexusSourceRecord(
+        id="SRC-CDR-B31",
+        batch_id="BATCH-2026-08-24",
+        source_type="CDR",
+        locator="cdr_bengaluru_mar.csv — row 4402 (A-party +91 98450 11223)",
+        raw_excerpt="2026-03-05T02:12:44Z, +91 98450 11223 → +91 98450 77310, duration 96s, cell 6112-Whitefield.",
+        occurred_at="2026-03-05T02:12:44Z",
+    ),
+    "SRC-TXN-55": NexusSourceRecord(
+        id="SRC-TXN-55",
+        batch_id="BATCH-2026-08-24",
+        source_type="BANK_TXN",
+        locator="txns_axis_9914.csv — row 55",
+        raw_excerpt="2026-03-09T11:03:00Z, ACC-9914 → ACC-7731, ₹4,80,000, ref NIFT/20260309/5521.",
+        occurred_at="2026-03-09T11:03:00Z",
+    ),
+    "SRC-TXN-71": NexusSourceRecord(
+        id="SRC-TXN-71",
+        batch_id="BATCH-2026-08-24",
+        source_type="BANK_TXN",
+        locator="txns_axis_9914.csv — row 71",
+        raw_excerpt="2026-03-11T16:47:00Z, ACC-9914 → ACC-7731, ₹2,15,000, ref NIFT/20260311/8830.",
+        occurred_at="2026-03-11T16:47:00Z",
+    ),
+}
+
+INITIAL_CANDIDATE = ResolutionCandidate(
+    id="RC-1",
+    score=0.86,
+    status="PENDING",
+    left=ResolutionCandidateRecord(
+        node_id="P-RAFIQ-K",
+        entity_type="Person",
+        label="Rafiq Khan",
+        case_ids=["CASE-141"],
+        properties={
+            "full_name": "Rafiq Khan",
+            "father_name": "Iqbal Khan",
+            "age": 35,
+            "dob": "1991-03-14",
+            "address": "Hootagalli, Mysuru",
+            "phone": "+91 98450 11223",
+            "role": "Accused (FIR 141/2026)",
+        },
+        source_records=[RAW_SOURCES["SRC-FIR-141"], RAW_SOURCES["SRC-CDR-A12"]],
+    ),
+    right=ResolutionCandidateRecord(
+        node_id="P-RAFIQ-A",
+        entity_type="Person",
+        label="Rafiq Ahmed",
+        case_ids=["CASE-207"],
+        properties={
+            "full_name": "Rafiq Ahmed",
+            "father_name": "Iqbal Khan",
+            "age": 35,
+            "dob": "1991-04-13",
+            "address": "Hootagalli Colony, Mysuru",
+            "phone": "+91 98450 11223",
+            "role": "Accused (FIR 207/2026)",
+        },
+        source_records=[RAW_SOURCES["SRC-FIR-207"], RAW_SOURCES["SRC-CDR-B31"]],
+    ),
+    reasons=[
+        CandidateReason(field="phone", detail="Identical primary mobile +91 98450 11223 appears in both CDR pulls", weight=0.40),
+        CandidateReason(field="father_name", detail="Father's name 'Iqbal Khan' matches exactly in both FIRs", weight=0.25),
+        CandidateReason(field="address", detail="Address locality 'Hootagalli, Mysuru' matches with granularity difference", weight=0.21),
+    ],
+    conflicts=[
+        CandidateConflict(field="name", left_value="Rafiq Khan", right_value="Rafiq Ahmed"),
+        CandidateConflict(field="dob", left_value="1991-03-14", right_value="1991-04-13 (day/month transposition)"),
+        CandidateConflict(field="age", left_value="35", right_value="35 (consistent)"),
+    ],
+)
+
+CASE_141 = NexusGraphNode(
+    id="CASE-141",
+    entity_type="Case",
+    label="FIR 141/2026 — Trafficking",
+    case_ids=["CASE-141"],
+    properties={"fir_number": "141/2026", "station": "Mysuru South WS PS", "district": "Mysuru", "offence": "Human Trafficking (BNS 143)"},
+)
+CASE_207 = NexusGraphNode(
+    id="CASE-207",
+    entity_type="Case",
+    label="FIR 207/2026 — Fraud",
+    case_ids=["CASE-207"],
+    properties={"fir_number": "207/2026", "station": "Bengaluru CEN PS", "district": "Bengaluru", "offence": "Financial Fraud (BNS 318)"},
+)
+P_MEENA = NexusGraphNode(
+    id="P-MEENA",
+    entity_type="Person",
+    label="Meena Devi (Victim)",
+    case_ids=["CASE-141"],
+    properties={"role": "Victim", "statement": "dated 2026-02-13"},
+)
+P_DEEPAK = NexusGraphNode(
+    id="P-DEEPAK",
+    entity_type="Person",
+    label="Deepak Rao (Associate)",
+    case_ids=["CASE-207"],
+    properties={"role": "Co-accused", "phone": "+91 99801 55210"},
+)
+ACC_7731 = NexusGraphNode(
+    id="ACC-7731",
+    entity_type="Account",
+    label="ACC-7731 (Axis)",
+    case_ids=["CASE-141"],
+    properties={"bank": "Axis Bank", "holder": "Rafiq Khan"},
+)
+ACC_9914 = NexusGraphNode(
+    id="ACC-9914",
+    entity_type="Account",
+    label="ACC-9914 (Axis)",
+    case_ids=["CASE-207"],
+    properties={"bank": "Axis Bank", "holder": "Deepak Rao"},
+)
+PH_A = NexusGraphNode(
+    id="PH-A",
+    entity_type="Phone",
+    label="+91 98450 11223 (CDR: Mysuru)",
+    case_ids=["CASE-141"],
+    properties={"number": "+91 98450 11223", "seen_in": "cdr_mysuru_feb.csv"},
+)
+PH_B = NexusGraphNode(
+    id="PH-B",
+    entity_type="Phone",
+    label="+91 98450 11223 (CDR: Bengaluru)",
+    case_ids=["CASE-207"],
+    properties={"number": "+91 98450 11223", "seen_in": "cdr_bengaluru_mar.csv"},
+)
+
+BEFORE_NODES = [
+    CASE_141, CASE_207, P_MEENA, P_DEEPAK, ACC_7731, ACC_9914, PH_A, PH_B,
+    NexusGraphNode(id="P-RAFIQ-K", entity_type="Person", label="Rafiq Khan (Accused)", case_ids=["CASE-141"], properties={"role": "Accused", "phone": "+91 98450 11223"}),
+    NexusGraphNode(id="P-RAFIQ-A", entity_type="Person", label="Rafiq Ahmed (Accused)", case_ids=["CASE-207"], properties={"role": "Accused", "phone": "+91 98450 11223"}),
+]
+
+def make_edge(
+    edge_id: str, src: str, tgt: str, edge_type: str, deriv: Literal["FACT", "DERIVED", "HYPOTHESIS"],
+    conf: float, rec_at: str, case_ids: list[str], ev_ids: list[str],
+) -> NexusGraphEdge:
+    return NexusGraphEdge(
+        id=edge_id, source_id=src, target_id=tgt, edge_type=edge_type, weight=1.0, confidence=conf,
+        derivation_class=deriv, recorded_at=rec_at, case_ids=case_ids, properties={"evidence_ids": ev_ids},
+    )
+
+BEFORE_EDGES = [
+    make_edge("E-ACCUSE-141", "P-RAFIQ-K", "CASE-141", "ACCUSED_IN", "FACT", 1.0, "2026-02-11T09:30:00Z", ["CASE-141"], ["SRC-FIR-141"]),
+    make_edge("E-VICTIM-141", "P-MEENA", "CASE-141", "VICTIM_IN", "FACT", 1.0, "2026-02-11T09:30:00Z", ["CASE-141"], ["SRC-FIR-141"]),
+    make_edge("E-USEPH-A", "P-RAFIQ-K", "PH-A", "USES_PHONE", "FACT", 0.98, "2026-02-14T22:41:05Z", ["CASE-141"], ["SRC-CDR-A12"]),
+    make_edge("E-OWN-7731", "P-RAFIQ-K", "ACC-7731", "OWNS_ACCOUNT", "FACT", 0.95, "2026-02-12T10:00:00Z", ["CASE-141"], ["SRC-FIR-141"]),
+    make_edge("E-ACCUSE-207", "P-RAFIQ-A", "CASE-207", "ACCUSED_IN", "FACT", 1.0, "2026-03-02T14:15:00Z", ["CASE-207"], ["SRC-FIR-207"]),
+    make_edge("E-COACC-207", "P-DEEPAK", "CASE-207", "CO_ACCUSED_IN", "FACT", 1.0, "2026-03-02T14:15:00Z", ["CASE-207"], ["SRC-FIR-207"]),
+    make_edge("E-USEPH-B", "P-RAFIQ-A", "PH-B", "USES_PHONE", "FACT", 0.98, "2026-03-05T02:12:44Z", ["CASE-207"], ["SRC-CDR-B31"]),
+    make_edge("E-OWN-9914", "P-DEEPAK", "ACC-9914", "OWNS_ACCOUNT", "FACT", 0.95, "2026-03-02T14:15:00Z", ["CASE-207"], ["SRC-FIR-207"]),
+    make_edge("E-TXN-55", "ACC-9914", "ACC-7731", "TRANSFERRED_TO", "FACT", 1.0, "2026-03-09T11:03:00Z", ["CASE-207", "CASE-141"], ["SRC-TXN-55"]),
+    make_edge("E-TXN-71", "ACC-9914", "ACC-7731", "TRANSFERRED_TO", "FACT", 1.0, "2026-03-11T16:47:00Z", ["CASE-207", "CASE-141"], ["SRC-TXN-71"]),
+]
+
+AFTER_NODES = [
+    CASE_141, CASE_207, P_MEENA, P_DEEPAK, ACC_7731, ACC_9914,
+    NexusGraphNode(
+        id="P-RAFIQ",
+        entity_type="Person",
+        label="Rafiq Khan / Rafiq Ahmed",
+        case_ids=["CASE-141", "CASE-207"],
+        badges=["CROSS_CASE_BRIDGE", "COMMUNITY-C1"],
+        properties={"role": "Accused in both FIRs", "phone": "+91 98450 11223", "aliases": ["Rafiq Khan", "Rafiq Ahmed"]},
+    ),
+    NexusGraphNode(
+        id="PH-UNIFIED",
+        entity_type="Phone",
+        label="+91 98450 11223 (shared)",
+        case_ids=["CASE-141", "CASE-207"],
+        properties={"number": "+91 98450 11223", "seen_in": "cdr_mysuru_feb.csv, cdr_bengaluru_mar.csv"},
+    ),
+]
+
+AFTER_EDGES = [
+    make_edge("E-ACCUSE-141", "P-RAFIQ", "CASE-141", "ACCUSED_IN", "FACT", 1.0, "2026-02-11T09:30:00Z", ["CASE-141"], ["SRC-FIR-141"]),
+    make_edge("E-VICTIM-141", "P-MEENA", "CASE-141", "VICTIM_IN", "FACT", 1.0, "2026-02-11T09:30:00Z", ["CASE-141"], ["SRC-FIR-141"]),
+    make_edge("E-USEPH-1", "P-RAFIQ", "PH-UNIFIED", "USES_PHONE", "FACT", 0.98, "2026-02-14T22:41:05Z", ["CASE-141"], ["SRC-CDR-A12"]),
+    make_edge("E-USEPH-2", "P-RAFIQ", "PH-UNIFIED", "USES_PHONE", "FACT", 0.98, "2026-03-05T02:12:44Z", ["CASE-207"], ["SRC-CDR-B31"]),
+    make_edge("E-OWN-7731", "P-RAFIQ", "ACC-7731", "OWNS_ACCOUNT", "FACT", 0.95, "2026-02-12T10:00:00Z", ["CASE-141"], ["SRC-FIR-141"]),
+    make_edge("E-ACCUSE-207", "P-RAFIQ", "CASE-207", "ACCUSED_IN", "FACT", 1.0, "2026-03-02T14:15:00Z", ["CASE-207"], ["SRC-FIR-207"]),
+    make_edge("E-COACC-207", "P-DEEPAK", "CASE-207", "CO_ACCUSED_IN", "FACT", 1.0, "2026-03-02T14:15:00Z", ["CASE-207"], ["SRC-FIR-207"]),
+    make_edge("E-OWN-9914", "P-DEEPAK", "ACC-9914", "OWNS_ACCOUNT", "FACT", 0.95, "2026-03-02T14:15:00Z", ["CASE-207"], ["SRC-FIR-207"]),
+    make_edge("E-COMM-DK", "P-RAFIQ", "P-DEEPAK", "COMMUNICATED_WITH", "DERIVED", 0.91, "2026-03-05T02:12:44Z", ["CASE-141", "CASE-207"], ["SRC-CDR-B31"]),
+    make_edge("E-TXN-55", "ACC-9914", "ACC-7731", "TRANSFERRED_TO", "FACT", 1.0, "2026-03-09T11:03:00Z", ["CASE-207", "CASE-141"], ["SRC-TXN-55"]),
+    make_edge("E-TXN-71", "ACC-9914", "ACC-7731", "TRANSFERRED_TO", "FACT", 1.0, "2026-03-11T16:47:00Z", ["CASE-207", "CASE-141"], ["SRC-TXN-71"]),
+    make_edge("E-BRIDGE", "CASE-141", "CASE-207", "CONNECTS_CASES", "DERIVED", 0.86, "2026-08-24T18:00:00Z", ["CASE-141", "CASE-207"], ["SRC-FIR-141", "SRC-FIR-207", "SRC-CDR-A12", "SRC-CDR-B31"]),
+]
+
+SNAPSHOT_DIFF = SnapshotDiffResponse(
+    before_snapshot_id="SNAP-BEFORE-001",
+    after_snapshot_id="SNAP-AFTER-001",
+    added_node_ids=["P-RAFIQ", "PH-UNIFIED"],
+    removed_node_ids=["P-RAFIQ-K", "P-RAFIQ-A", "PH-A", "PH-B"],
+    changed_node_ids=[],
+    added_edge_ids=["E-USEPH-1", "E-USEPH-2", "E-COMM-DK", "E-BRIDGE"],
+    removed_edge_ids=["E-ACCUSE-141", "E-USEPH-A", "E-ACCUSE-207", "E-USEPH-B"],
+    changed_edge_ids=[],
+)
+
+BRIDGE_LEAD = NexusLead(
+    id="LEAD-1",
+    title="Cross-case bridge: Rafiq connects FIR 141/2026 with FIR 207/2026",
+    rule_id="CROSS_CASE_BRIDGE",
+    explanation=(
+        "After the confirmed alias (RC-1), one person ('Rafiq Khan / Rafiq Ahmed') is accused in both cases, "
+        "uses the same phone +91 98450 11223 in both CDR pulls, and receives repeated transfers from ACC-9914 "
+        "(co-accused Deepak Rao) into ACC-7731. This is an investigative lead, not a determination of guilt."
+    ),
+    severity="HIGH",
+    derivation_class="HYPOTHESIS",
+    case_ids=["CASE-141", "CASE-207"],
+    status="NEW",
+    path=NexusLeadPath(
+        node_ids=["CASE-141", "P-RAFIQ", "PH-UNIFIED", "P-DEEPAK", "CASE-207"],
+        edge_ids=["E-ACCUSE-141", "E-USEPH-1", "E-USEPH-2", "E-COMM-DK", "E-COACC-207"],
+    ),
+    evidence_ids=["SRC-FIR-141", "SRC-FIR-207", "SRC-CDR-A12", "SRC-CDR-B31", "SRC-TXN-55"],
+    created_at="2026-08-24T18:00:05Z",
+)
+
+# ── Mutable State Store ────────────────────────────────────────────────────────
+
+class DemoState:
+    def __init__(self) -> None:
+        self.candidate = copy.deepcopy(INITIAL_CANDIDATE)
+        self.lead = copy.deepcopy(BRIDGE_LEAD)
+        self.decision_count = 0
+
+    def reset(self) -> None:
+        self.candidate = copy.deepcopy(INITIAL_CANDIDATE)
+        self.lead = copy.deepcopy(BRIDGE_LEAD)
+        self.decision_count = 0
+
+    @property
+    def is_resolved(self) -> bool:
+        return self.candidate.status == "CONFIRMED"
+
+_demo_state = DemoState()
+
+# ── Router Definition ──────────────────────────────────────────────────────────
+
+def create_nexus_router() -> APIRouter:
+    router = APIRouter(tags=["nexus"])
+
+    @router.post("/nexus/ingest", response_model=NexusIngestResponse)
+    def ingest_demo_files(
+        req: NexusIngestRequest | None = None,
+        principal: Principal = Depends(get_principal),
+        audit: AuditService = Depends(get_audit_service),
+    ) -> NexusIngestResponse:
+        _demo_state.reset()
+        audit.record(
+            event_type=AuditEventType.INGESTION_COMPLETED,
+            actor_id=principal.user_id,
+            entity_type="Batch",
+            entity_id="BATCH-2026-08-24",
+            details={"files_count": len(req.files) if req else 3},
+        )
+        return NexusIngestResponse(
+            batch_id="BATCH-2026-08-24",
+            source_type="GOLDEN_FUSION",
+            ingested_count=3,
+            extraction_summary=ExtractionSummary(
+                persons=6, phones=3, accounts=2, events=1, relationships=10
+            ),
+            snapshot_id=SNAPSHOT_DIFF.before_snapshot_id,
+        )
+
+    @router.post("/nexus/demo/reset")
+    def reset_demo_state(
+        principal: Principal = Depends(get_principal),
+        audit: AuditService = Depends(get_audit_service),
+    ) -> dict[str, str]:
+        _demo_state.reset()
+        audit.record(
+            event_type=AuditEventType.SEED_COMPLETED,
+            actor_id=principal.user_id,
+            details={"status": "reset"},
+        )
+        return {"status": "reset"}
+
+    @router.get("/nexus/resolution/candidates", response_model=list[ResolutionCandidate])
+    def get_resolution_candidates(
+        principal: Principal = Depends(get_principal),
+    ) -> list[ResolutionCandidate]:
+        return [_demo_state.candidate]
+
+    @router.post("/nexus/resolution/{candidate_id}/decision", response_model=ResolutionDecisionResponse)
+    def decide_resolution_candidate(
+        candidate_id: str,
+        body: ResolutionDecisionRequest,
+        principal: Principal = Depends(get_principal),
+        audit: AuditService = Depends(get_audit_service),
+    ) -> ResolutionDecisionResponse:
+        if candidate_id != _demo_state.candidate.id:
+            raise HTTPException(status_code=404, detail="Candidate not found")
+
+        status_map = {"CONFIRM": "CONFIRMED", "REJECT": "REJECTED", "DEFER": "DEFERRED"}
+        _demo_state.candidate.status = status_map[body.decision]
+        _demo_state.candidate.decided_at = datetime.now(timezone.utc).isoformat()
+        _demo_state.candidate.decided_by = body.decided_by or principal.user_id
+        _demo_state.decision_count += 1
+
+        audit.record(
+            event_type=AuditEventType.ENTITY_RESOLUTION_EXECUTED,
+            actor_id=principal.user_id,
+            entity_type="ResolutionCandidate",
+            entity_id=candidate_id,
+            details={"decision": body.decision, "note": body.note},
+        )
+
+        return ResolutionDecisionResponse(
+            candidate_id=_demo_state.candidate.id,
+            status=_demo_state.candidate.status,
+            affected_node_ids=SNAPSHOT_DIFF.added_node_ids if body.decision == "CONFIRM" else [],
+            new_snapshot_id=SNAPSHOT_DIFF.after_snapshot_id if body.decision == "CONFIRM" else None,
+        )
+
+    @router.get("/nexus/network", response_model=NexusNetworkResponse)
+    def get_nexus_network(
+        snapshot: Literal["before", "after"] = Query("before"),
+        principal: Principal = Depends(get_principal),
+        audit: AuditService = Depends(get_audit_service),
+    ) -> NexusNetworkResponse:
+        use_after = snapshot == "after" and _demo_state.is_resolved
+        if snapshot == "after" and not _demo_state.is_resolved:
+            raise HTTPException(
+                status_code=409,
+                detail='The "after" snapshot only exists after a resolution is confirmed.',
+            )
+
+        nodes = AFTER_NODES if use_after else BEFORE_NODES
+        edges = AFTER_EDGES if use_after else BEFORE_EDGES
+        snapshot_id = SNAPSHOT_DIFF.after_snapshot_id if use_after else SNAPSHOT_DIFF.before_snapshot_id
+
+        audit.record(
+            event_type=AuditEventType.NETWORK_EXPLORED,
+            actor_id=principal.user_id,
+            details={"snapshot": snapshot, "total_nodes": len(nodes), "total_edges": len(edges)},
+        )
+
+        return NexusNetworkResponse(
+            snapshot_id=snapshot_id,
+            state="after" if use_after else "before",
+            nodes=nodes,
+            edges=edges,
+            total_nodes=len(nodes),
+            total_edges=len(edges),
+        )
+
+    @router.get("/nexus/network/diff", response_model=SnapshotDiffResponse)
+    def get_snapshot_diff(
+        principal: Principal = Depends(get_principal),
+    ) -> SnapshotDiffResponse:
+        if not _demo_state.is_resolved:
+            raise HTTPException(
+                status_code=409,
+                detail="No diff available yet — confirm a resolution candidate first.",
+            )
+        return SNAPSHOT_DIFF
+
+    @router.get("/nexus/relationships/{rel_id}/evidence", response_model=NexusEdgeEvidenceResponse)
+    def get_relationship_evidence(
+        rel_id: str,
+        principal: Principal = Depends(get_principal),
+        audit: AuditService = Depends(get_audit_service),
+    ) -> NexusEdgeEvidenceResponse:
+        edge_map = {e.id: e for e in AFTER_EDGES + BEFORE_EDGES}
+        edge = edge_map.get(rel_id)
+        if not edge:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Evidence chain for relationship {rel_id} is unavailable in this snapshot.",
+            )
+
+        rec_ids = edge.properties.get("evidence_ids", [])
+        records = [RAW_SOURCES[rid] for rid in rec_ids if rid in RAW_SOURCES]
+
+        node_labels = {n.id: n.label for n in BEFORE_NODES + AFTER_NODES}
+
+        derivation_chain: list[DerivationStep] = (
+            [DerivationStep(step=1, rule="direct_import", inputs=rec_ids)]
+            if edge.derivation_class == "FACT"
+            else [
+                DerivationStep(step=1, rule="entity_resolution.confirm", inputs=["RC-1"]),
+                DerivationStep(step=2, rule="projection.link_entities", inputs=rec_ids),
+            ]
+        )
+
+        audit.record(
+            event_type=AuditEventType.EVIDENCE_VIEWED,
+            actor_id=principal.user_id,
+            entity_type="Relationship",
+            entity_id=rel_id,
+            details={"derivation_class": edge.derivation_class, "records_count": len(records)},
+        )
+
+        return NexusEdgeEvidenceResponse(
+            relationship_id=edge.id,
+            edge_type=edge.edge_type,
+            source_label=node_labels.get(edge.source_id, edge.source_id),
+            target_label=node_labels.get(edge.target_id, edge.target_id),
+            derivation_class=edge.derivation_class,
+            confidence=edge.confidence,
+            recorded_at=edge.recorded_at,
+            source_records=records,
+            derivation_chain=derivation_chain,
+        )
+
+    @router.get("/nexus/path", response_model=NexusPathResponse)
+    def find_nexus_path(
+        source: str = Query(""),
+        target: str = Query(""),
+        principal: Principal = Depends(get_principal),
+    ) -> NexusPathResponse:
+        if _demo_state.is_resolved and (
+            (source == "CASE-141" and target == "CASE-207")
+            or (source == "CASE-207" and target == "CASE-141")
+        ):
+            return NexusPathResponse(
+                found=True,
+                source_id=source,
+                target_id=target,
+                node_ids=["CASE-141", "P-RAFIQ", "CASE-207"],
+                edge_ids=["E-ACCUSE-141", "E-ACCUSE-207"],
+                hops=2,
+                explanation=(
+                    "FIR 141/2026 and FIR 207/2026 are connected through the confirmed entity "
+                    "'Rafiq Khan / Rafiq Ahmed' (candidate RC-1), accused in both cases and reachable "
+                    "on phone +91 98450 11223 in both CDR pulls."
+                ),
+                evidence_ids=["SRC-FIR-141", "SRC-FIR-207", "SRC-CDR-A12", "SRC-CDR-B31"],
+            )
+
+        return NexusPathResponse(
+            found=False,
+            source_id=source,
+            target_id=target,
+            node_ids=[],
+            edge_ids=[],
+            hops=0,
+            explanation=(
+                f"No explainable connection between {source} and {target} in the current snapshot."
+                if _demo_state.is_resolved
+                else "No connection exists in the current snapshot. Confirm pending entity resolutions to reveal hidden links."
+            ),
+            evidence_ids=[],
+        )
+
+    @router.get("/nexus/leads", response_model=list[NexusLead])
+    def get_leads(
+        principal: Principal = Depends(get_principal),
+    ) -> list[NexusLead]:
+        return [_demo_state.lead] if _demo_state.is_resolved else []
+
+    @router.post("/nexus/leads/{lead_id}/decision", response_model=NexusLead)
+    def decide_lead(
+        lead_id: str,
+        body: NexusLeadDecisionRequest,
+        principal: Principal = Depends(get_principal),
+        audit: AuditService = Depends(get_audit_service),
+    ) -> NexusLead:
+        if lead_id != _demo_state.lead.id:
+            raise HTTPException(status_code=404, detail="Lead not found")
+
+        _demo_state.lead.status = "ACCEPTED" if body.decision == "ACCEPT" else "REJECTED"
+        _demo_state.lead.decided_at = datetime.now(timezone.utc).isoformat()
+        _demo_state.lead.decided_by = body.decided_by or principal.user_id
+        _demo_state.lead.decision_note = body.note
+
+        audit.record(
+            event_type=AuditEventType.ENTITY_RESOLUTION_EXECUTED,
+            actor_id=principal.user_id,
+            entity_type="Lead",
+            entity_id=lead_id,
+            details={"decision": body.decision, "note": body.note},
+        )
+
+        return _demo_state.lead
+
+    @router.post("/nexus/copilot/query", response_model=NexusCopilotResponse)
+    def query_copilot(
+        body: dict[str, Any],
+        principal: Principal = Depends(get_principal),
+        audit: AuditService = Depends(get_audit_service),
+    ) -> NexusCopilotResponse:
+        q = (body.get("query") or "").lower()
+
+        # Refusal Gate Check
+        if re.search(r"(guilt|guilty|criminal|mastermind|convict|punish)", q):
+            audit.record(
+                event_type=AuditEventType.COPILOT_REFUSED,
+                actor_id=principal.user_id,
+                details={"query": body.get("query"), "reason": "Guilt prediction prohibited"},
+            )
+            return NexusCopilotResponse(
+                query=body.get("query", ""),
+                answer="I cannot infer guilt, innocence, or risk of reoffending. These are matters of judicial determination.",
+                is_refusal=True,
+                refusal_reason="Deterministic refusal gate: predictive guilt scoring is prohibited.",
+                evidence_ids=[],
+                reasoning_path=[],
+            )
+
+        # Connection Explanation Intent
+        if re.search(r"(connect|link|bridge|relat)", q):
+            if _demo_state.is_resolved:
+                ans = (
+                    "FIR 141/2026 and FIR 207/2026 connect through the confirmed alias 'Rafiq Khan / Rafiq Ahmed': "
+                    "same phone +91 98450 11223 in both CDR pulls, same father's name in both FIRs, and repeated transfers "
+                    "from ACC-9914 (Deepak Rao) into ACC-7731 held by Rafiq."
+                )
+                ev_ids = ["SRC-FIR-141", "SRC-FIR-207", "SRC-CDR-A12", "SRC-CDR-B31", "SRC-TXN-55"]
+                rpath = [
+                    "Entity resolution RC-1 CONFIRMED → person unified (P-RAFIQ)",
+                    "P-RAFIQ —ACCUSED_IN→ CASE-141 and CASE-207",
+                    "ACC-9914 —TRANSFERRED_TO→ ACC-7731 (2 transactions)",
+                ]
+            else:
+                ans = "No connection is currently visible. There is one pending entity-resolution candidate (RC-1) that, if confirmed, may link the two cases."
+                ev_ids = ["SRC-FIR-141", "SRC-FIR-207"]
+                rpath = ["Resolution candidate RC-1 status: PENDING"]
+
+            audit.record(
+                event_type=AuditEventType.COPILOT_ANSWERED,
+                actor_id=principal.user_id,
+                details={"query": body.get("query"), "resolved": _demo_state.is_resolved},
+            )
+            return NexusCopilotResponse(
+                query=body.get("query", ""),
+                answer=ans,
+                is_refusal=False,
+                evidence_ids=ev_ids,
+                reasoning_path=rpath,
+            )
+
+        # General Intent
+        audit.record(
+            event_type=AuditEventType.COPILOT_ANSWERED,
+            actor_id=principal.user_id,
+            details={"query": body.get("query")},
+        )
+        return NexusCopilotResponse(
+            query=body.get("query", ""),
+            answer="This query was parsed against the investigation graph. Ask 'How are the two cases connected?' for the grounded connection explanation.",
+            is_refusal=False,
+            evidence_ids=[],
+            reasoning_path=["Intent: general_info — no specific graph claim to ground"],
+        )
+
+    @router.get("/nexus/search", response_model=NexusSearchResponse)
+    def nexus_search(
+        q: str = Query(""),
+        principal: Principal = Depends(get_principal),
+    ) -> NexusSearchResponse:
+        query_str = q.lower().strip()
+        if not query_str:
+            return NexusSearchResponse(query="", cases=[], entities=[])
+
+        nodes = AFTER_NODES if _demo_state.is_resolved else BEFORE_NODES
+
+        cases = [
+            SearchCaseItem(
+                id=n.id,
+                fir_number=str(n.properties.get("fir_number", "")),
+                title=n.label,
+                score=1.0,
+            )
+            for n in nodes
+            if n.entity_type == "Case"
+            and (
+                query_str in n.label.lower()
+                or query_str in str(n.properties.get("fir_number", "")).lower()
+                or query_str in str(n.properties.get("station", "")).lower()
+            )
+        ]
+
+        entities = [
+            SearchEntityItem(
+                id=n.id,
+                label=n.label,
+                entity_type=n.entity_type,
+                case_ids=n.case_ids,
+                score=1.0,
+            )
+            for n in nodes
+            if n.entity_type != "Case"
+            and (
+                query_str in n.label.lower()
+                or any(query_str in str(v).lower() for v in n.properties.values())
+            )
+        ]
+
+        return NexusSearchResponse(query=q, cases=cases, entities=entities)
+
+    @router.get("/nexus/sources/{source_id}", response_model=NexusSourceRecord)
+    def get_source_record(
+        source_id: str,
+        principal: Principal = Depends(get_principal),
+    ) -> NexusSourceRecord:
+        record = RAW_SOURCES.get(source_id)
+        if not record:
+            raise HTTPException(status_code=404, detail="Source record not found")
+        return record
+
+    return router

@@ -19,6 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.app.api.core_routes import create_core_router
 from backend.app.api.errors import install_error_handlers
 from backend.app.api.graph_routes import create_graph_router
+from backend.app.api.nexus_routes import create_nexus_router
 from backend.app.api.routes import chat
 from backend.app.api.system_routes import create_system_router
 from backend.app.config import Settings, get_settings
@@ -74,6 +75,11 @@ def create_app(
     core_router = create_core_router()
     app.include_router(core_router)
     app.include_router(core_router, prefix="/api/v1")
+
+    # NEXUS Prototype Golden-Path routes (both root and /api/v1 prefixes)
+    nexus_router = create_nexus_router()
+    app.include_router(nexus_router)
+    app.include_router(nexus_router, prefix="/api/v1")
 
     # Graph intelligence routes
     graph_repo = GraphRepository(repository.to_graph_store())

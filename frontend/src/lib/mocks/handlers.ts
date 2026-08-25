@@ -155,17 +155,17 @@ const generate5000Worklist = (): CaseSummaryResponse[] => {
 }
 
 export const handlers = [
-  // 1. GET /worklist
-  http.get('*/worklist', async () => {
+  // 1. GET /worklist & /api/v1/investigations
+  http.get(/\/worklist|\/api\/v1\/investigations/, async () => {
     await delay(300) // Realistic latency simulation
     const allSummaries = generate5000Worklist()
     return HttpResponse.json(allSummaries)
   }),
 
   // 2. GET /cases/:id
-  http.get('*/cases/:id', async ({ params }) => {
+  http.get(/\/cases\/([^/]+)/, async ({ params }) => {
     await delay(200)
-    const { id } = params
+    const id = params[0] as string
     const matchedCase = mockCases.find(c => c.id === id)
     
     if (!matchedCase) {
@@ -176,7 +176,7 @@ export const handlers = [
   }),
 
   // 3. GET /cases/:id/network
-  http.get('*/cases/:id/network', async () => {
+  http.get(/\/cases\/([^/]+)\/network/, async () => {
     await delay(250)
     // Return structured React Flow compatible graph nodes and edges
     return HttpResponse.json({
@@ -195,7 +195,7 @@ export const handlers = [
   }),
 
   // 4. GET /rollup/:district
-  http.get('*/rollup/:district', async () => {
+  http.get(/\/rollup\/([^/]+)/, async () => {
     await delay(200)
     return HttpResponse.json({
       total_cases: 1205,
@@ -212,14 +212,14 @@ export const handlers = [
   }),
 
   // 5. GET /escalations
-  http.get('*/escalations', async () => {
+  http.get(/\/escalations/, async () => {
     return HttpResponse.json(mockEscalations)
   }),
 
   // 6. PATCH /deps/:id
-  http.patch('*/deps/:id', async ({ params, request }) => {
+  http.patch(/\/deps\/([^/]+)/, async ({ params, request }) => {
     await delay(200)
-    const { id } = params
+    const id = params[0] as string
     const body = (await request.json()) as { status: string }
     
     // Find dependency in memory
@@ -261,7 +261,7 @@ export const handlers = [
   }),
 
   // 7. POST /copilot/query
-  http.post('*/copilot/query', async ({ request }) => {
+  http.post(/\/copilot\/query/, async ({ request }) => {
     await delay(600)
     const body = (await request.json()) as { query: string, case_id?: string }
     const queryLower = body.query.toLowerCase()
@@ -298,7 +298,7 @@ export const handlers = [
   }),
 
   // 8. POST /api/chat
-  http.post('*/api/chat', async ({ request }) => {
+  http.post(/\/api\/chat/, async ({ request }) => {
     await delay(400)
     const body = (await request.json()) as { message?: string; query?: string; case_id?: string; conversation_id?: string }
     const msg = (body.message || body.query || '').toLowerCase()

@@ -12,6 +12,18 @@ import type {
   InvestigationDetailResponse,
   InvestigationSummaryResponse,
   NetworkGraphResponse,
+  NexusCopilotResponse,
+  NexusEdgeEvidenceResponse,
+  NexusIngestResponse,
+  NexusLead,
+  NexusLeadDecisionRequest,
+  NexusNetworkResponse,
+  NexusPathResponse,
+  NexusSearchResponse,
+  ResolutionCandidate,
+  ResolutionDecisionRequest,
+  ResolutionDecisionResponse,
+  SnapshotDiffResponse,
 } from '@shared/contracts/api'
 
 export class ApiError extends Error {
@@ -30,13 +42,25 @@ export async function apiFetch<T>(
   path: string,
   options?: RequestInit,
 ): Promise<T> {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
-  const savedRole = localStorage.getItem('nexus_role') || 'INVESTIGATOR'
-  const token = localStorage.getItem('nexus_token')
+  const origin = typeof window !== 'undefined' && window.location?.origin && window.location.origin !== 'null'
+    ? window.location.origin
+    : 'http://localhost'
+  const baseUrl = import.meta.env.VITE_API_BASE_URL ?? origin
+  let savedRole = 'INVESTIGATOR'
+  let token: string | null = null
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      savedRole = window.localStorage.getItem('nexus_role') || 'INVESTIGATOR'
+      token = window.localStorage.getItem('nexus_token')
+    }
+  } catch {
+    // ignore in node test environment
+  }
 
   const method = (options?.method || 'GET').toUpperCase()
   const isMutating = method !== 'GET' && method !== 'HEAD'
 
+  let fullUrl = `${baseUrl}${path}`
   if (!isMutating && !fullUrl.includes('role=')) {
     const separator = fullUrl.includes('?') ? '&' : '?'
     fullUrl = `${fullUrl}${separator}role=${encodeURIComponent(savedRole)}`
@@ -118,4 +142,57 @@ export const apiClient = {
 
   // Audit
   getAuditLogs: (limit = 50) => apiFetch<any[]>(`/api/v1/audit?limit=${limit}`),
+
+  // ── NEXUS prototype endpoints (frozen M4 contract) ──────────────────────
+  nexusIngest: (files: { source_type: string; file_name: string }[]) => {
+    return apiFetch<NexusIngestResponse>('/api/v1/nexus/ingest', {
+      method: 'POST',
+      body: JSON.stringify({ files }),
+    })
+  },
+  getResolutionCandidates: () => {
+    return apiFetch<ResolutionCandidate[]>('/api/v1/nexus/resolution/candidates')
+  },
+  decideResolutionCandidate: (id: string, req: ResolutionDecisionRequest) => {
+    return apiFetch<ResolutionDecisionResponse>(`/api/v1/nexus/resolution/${id}/decision`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+  getNexusNetwork: (params?: {
+    snapshot?: 'before' | 'after'
+    entity_types?: string[]
+    case_ids?: string[]
+  }) => {
+    const query = new URLSearchParams()
+    if (params?.snapshot) query.set('snapshot', params.snapshot)
+    if (params?.entity_types?.length) query.set('entity_types', params.entity_types.join(','))
+    if (params?.case_ids?.length) query.set('case_ids', params.case_ids.join(','))
+    const qs = query.toString()
+    return apiFetch<NexusNetworkResponse>(`/api/v1/nexus/network${qs ? `?${qs}` : ''}`)
+  },
+  getSnapshotDiff: () => apiFetch<SnapshotDiffResponse>('/api/v1/nexus/network/diff'),
+  getEdgeEvidence: (relationshipId: string) => {
+    return apiFetch<NexusEdgeEvidenceResponse>(`/api/v1/nexus/relationships/${relationshipId}/evidence`)
+  },
+  findNexusPath: (sourceId: string, targetId: string) => {
+    return apiFetch<NexusPathResponse>(`/api/v1/nexus/path?source=${sourceId}&target=${targetId}`)
+  },
+  getLeads: () => apiFetch<NexusLead[]>('/api/v1/nexus/leads'),
+  decideLead: (id: string, req: NexusLeadDecisionRequest) => {
+    return apiFetch<NexusLead>(`/api/v1/nexus/leads/${id}/decision`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+  queryNexusCopilot: (query: string, entityId?: string) => {
+    return apiFetch<NexusCopilotResponse>('/api/v1/nexus/copilot/query', {
+      method: 'POST',
+      body: JSON.stringify({ query, entity_id: entityId }),
+    })
+  },
+  nexusSearch: (q: string) => {
+    return apiFetch<NexusSearchResponse>(`/api/v1/nexus/search?q=${encodeURIComponent(q)}`)
+  },
+  resetDemo: () => apiFetch<{ status: string }>('/api/v1/nexus/demo/reset', { method: 'POST' }),
 }

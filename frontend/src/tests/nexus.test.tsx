@@ -1,0 +1,147 @@
+/**
+ * frontend/src/tests/nexus.test.tsx
+ *
+ * Comprehensive integration tests for NEXUS prototype UI:
+ * - DerivationBadge (Fact / Derived / Hypothesis)
+ * - EvidenceDrawer (provenance locators, derivation chain, fail-closed)
+ * - EntityFusion (match score, reasons, conflicts, Confirm / Reject / Defer)
+ * - NetworkExplorer (Before/After snapshot replay, pathfinder)
+ * - LeadInbox (evidence-backed connection path, grounded copilot answer)
+ */
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
+import { setupServer } from 'msw/node'
+import { nexusHandlers, nexusState } from '@/lib/mocks/nexusHandlers'
+import { DerivationBadge } from '@/components/nexus/DerivationBadge'
+import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
+import EntityFusion from '@/pages/EntityFusion'
+import NetworkExplorer from '@/pages/NetworkExplorer'
+import LeadInbox from '@/pages/LeadInbox'
+
+const server = setupServer(...nexusHandlers)
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
+afterEach(() => {
+  server.resetHandlers()
+  nexusState.current.candidate.status = 'PENDING'
+  nexusState.current.lead.status = 'NEW'
+})
+afterAll(() => server.close())
+
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+    },
+  })
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>{children}</MemoryRouter>
+    </QueryClientProvider>
+  )
+}
+
+describe('NEXUS Frontend Prototype Suite', () => {
+  describe('DerivationBadge', () => {
+    it('renders Fact badge correctly', () => {
+      render(<DerivationBadge klass="FACT" />)
+      expect(screen.getByText('Fact')).toBeInTheDocument()
+    })
+
+    it('renders Derived badge correctly', () => {
+      render(<DerivationBadge klass="DERIVED" />)
+      expect(screen.getByText('Derived')).toBeInTheDocument()
+    })
+
+    it('renders Hypothesis badge correctly', () => {
+      render(<DerivationBadge klass="HYPOTHESIS" />)
+      expect(screen.getByText('Hypothesis')).toBeInTheDocument()
+    })
+  })
+
+  describe('EvidenceDrawer', () => {
+    it('returns null when relationshipId is null', () => {
+      const { container } = render(<EvidenceDrawer relationshipId={null} onClose={() => {}} />, {
+        wrapper: createWrapper(),
+      })
+      expect(container.firstChild).toBeNull()
+    })
+
+    it('renders source records and locators when relationshipId is provided', async () => {
+      render(<EvidenceDrawer relationshipId="E-USEPH-A" onClose={() => {}} />, {
+        wrapper: createWrapper(),
+      })
+
+      await waitFor(() => {
+        expect(screen.getByText('E-USEPH-A')).toBeInTheDocument()
+        expect(screen.getByText(/Source records/i)).toBeInTheDocument()
+      })
+    })
+
+    it('shows fail-closed error state for non-existent relationship', async () => {
+      render(<EvidenceDrawer relationshipId="E-INVALID-ID" onClose={() => {}} />, {
+        wrapper: createWrapper(),
+      })
+
+      await waitFor(() => {
+        expect(screen.getByText(/Evidence chain unavailable/i)).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('EntityFusion Workbench', () => {
+    it('renders candidate comparison with match score, reasons, and conflicts', async () => {
+      render(<EntityFusion />, { wrapper: createWrapper() })
+
+      await waitFor(() => {
+        expect(screen.getByText(/Entity Fusion Workbench/i)).toBeInTheDocument()
+        expect(screen.getByTestId('match-score')).toHaveTextContent('86%')
+        expect(screen.getAllByText('Rafiq Khan').length).toBeGreaterThan(0)
+        expect(screen.getAllByText('Rafiq Ahmed').length).toBeGreaterThan(0)
+      })
+
+      expect(screen.getByTestId('confirm-fusion')).toBeInTheDocument()
+      expect(screen.getByTestId('reject-fusion')).toBeInTheDocument()
+      expect(screen.getByTestId('defer-fusion')).toBeInTheDocument()
+    })
+
+    it('updates to post-decision state when Confirm Fusion is clicked', async () => {
+      render(<EntityFusion />, { wrapper: createWrapper() })
+
+      await waitFor(() => {
+        expect(screen.getByTestId('confirm-fusion')).toBeInTheDocument()
+      })
+
+      fireEvent.click(screen.getByTestId('confirm-fusion'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('post-decision')).toBeInTheDocument()
+        expect(screen.getByText(/confirmed — entities fused/i)).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('NetworkExplorer', () => {
+    it('renders snapshot replay controls and Before resolution graph', async () => {
+      render(<NetworkExplorer />, { wrapper: createWrapper() })
+
+      await waitFor(() => {
+        expect(screen.getByText('Global Network Explorer')).toBeInTheDocument()
+        expect(screen.getByText('Before resolution')).toBeInTheDocument()
+        expect(screen.getByText('After resolution')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('LeadInbox', () => {
+    it('renders without error and shows lead inbox header', async () => {
+      render(<LeadInbox />, { wrapper: createWrapper() })
+
+      await waitFor(() => {
+        expect(screen.getByText('Lead Inbox')).toBeInTheDocument()
+      })
+    })
+  })
+})

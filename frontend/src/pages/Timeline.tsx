@@ -1,70 +1,252 @@
-import { useState, useEffect } from 'react'
-import { Clock, Calendar, Users } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Clock, Calendar, FileText, Phone, Landmark, ShieldCheck, MapPin, Briefcase, Filter } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
+import { allSourceRecords } from '@/lib/mocks/nexusFixture'
+
+interface TimelineEvent {
+  id: string
+  event_type: string
+  timestamp: string
+  description: string
+  locator?: string
+  batch_id?: string
+  source_type?: string
+  participant_ids?: string[]
+}
+
+const TYPE_CONFIG: Record<string, { badge: string; dot: string; icon: typeof FileText; label: string }> = {
+  CASE: {
+    badge: 'text-blue-900 bg-blue-50 border-blue-200 font-bold',
+    dot: 'bg-blue-600',
+    icon: Briefcase,
+    label: 'Case File',
+  },
+  FIR: {
+    badge: 'text-sky-900 bg-sky-50 border-sky-200 font-bold',
+    dot: 'bg-sky-600',
+    icon: FileText,
+    label: 'FIR Record',
+  },
+  CDR: {
+    badge: 'text-amber-900 bg-amber-50 border-amber-200 font-bold',
+    dot: 'bg-amber-600',
+    icon: Phone,
+    label: 'CDR Call Log',
+  },
+  CALL: {
+    badge: 'text-amber-900 bg-amber-50 border-amber-200 font-bold',
+    dot: 'bg-amber-600',
+    icon: Phone,
+    label: 'CDR Call Log',
+  },
+  BANK_TXN: {
+    badge: 'text-purple-900 bg-purple-50 border-purple-200 font-bold',
+    dot: 'bg-purple-600',
+    icon: Landmark,
+    label: 'Bank Wire',
+  },
+  TRANSACTION: {
+    badge: 'text-purple-900 bg-purple-50 border-purple-200 font-bold',
+    dot: 'bg-purple-600',
+    icon: Landmark,
+    label: 'Bank Wire',
+  },
+}
 
 export default function Timeline() {
-  const [events, setEvents] = useState<any[]>([])
+  const [events, setEvents] = useState<TimelineEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [activeFilter, setActiveFilter] = useState<'ALL' | 'CASE' | 'CDR' | 'BANK_TXN'>('ALL')
 
   useEffect(() => {
-    apiClient.getTimeline().then((data) => {
-      setEvents(Array.isArray(data) ? data : [])
-    }).catch(() => {
-      setEvents([
-        { id: 'ev-1', event_type: 'MEETING', timestamp: '2026-01-14T18:30:00Z', description: 'Suspects met at Koramangala Cafe', participant_ids: ['person-0001', 'person-0002'] },
-        { id: 'ev-2', event_type: 'COMMUNICATION_BURST', timestamp: '2026-01-13T22:15:00Z', description: 'Burst of 18 encrypted calls logged before incident', participant_ids: ['person-0001', 'person-0050'] },
-        { id: 'ev-3', event_type: 'INCIDENT', timestamp: '2026-01-12T14:00:00Z', description: 'FIR registered regarding cyber phishing ring', participant_ids: ['person-0001'] },
-      ])
-    }).finally(() => {
-      setIsLoading(false)
-    })
+    apiClient.getTimeline()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setEvents(data)
+        } else {
+          // Fall back to converting golden fixture source records into chronological events
+          const sourceEvents: TimelineEvent[] = Object.values(allSourceRecords).map((src) => ({
+            id: src.id,
+            event_type: src.source_type,
+            timestamp: src.occurred_at,
+            description: src.raw_excerpt,
+            locator: src.locator,
+            batch_id: src.batch_id,
+            source_type: src.source_type,
+          }))
+          sourceEvents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+          setEvents(sourceEvents)
+        }
+      })
+      .catch(() => {
+        const sourceEvents: TimelineEvent[] = Object.values(allSourceRecords).map((src) => ({
+          id: src.id,
+          event_type: src.source_type,
+          timestamp: src.occurred_at,
+          description: src.raw_excerpt,
+          locator: src.locator,
+          batch_id: src.batch_id,
+          source_type: src.source_type,
+        }))
+        sourceEvents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        setEvents(sourceEvents)
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
   }, [])
 
+  const filteredEvents = useMemo(() => {
+    if (activeFilter === 'ALL') return events
+    return events.filter((ev) => {
+      const type = (ev.event_type || '').toUpperCase()
+      if (activeFilter === 'CASE') return type === 'CASE' || type === 'FIR'
+      if (activeFilter === 'CDR') return type === 'CDR' || type === 'CALL'
+      if (activeFilter === 'BANK_TXN') return type === 'BANK_TXN' || type === 'TRANSACTION'
+      return true
+    })
+  }, [events, activeFilter])
+
   return (
-    <div className="space-y-6">
-      <div className="border-b border-neutral-800 pb-5">
-        <h1 className="text-2xl font-bold text-neutral-100 flex items-center gap-2.5">
-          <Clock className="h-6 w-6 text-blue-500" />
-          Investigative Chronology & Temporal Intelligence
+    <div className="max-w-5xl mx-auto space-y-6 pb-12">
+      {/* Header */}
+      <div className="border-b border-neutral-200 pb-5">
+        <h1 className="text-2xl font-extrabold text-neutral-900 flex items-center gap-2.5">
+          <Clock className="h-6 w-6 text-blue-600" />
+          Investigative Chronology &amp; Temporal Intelligence
         </h1>
-        <p className="text-sm text-neutral-400 mt-1">
-          Chronological sequence of suspect sightings, communication bursts, money transfers, and case milestones.
+        <p className="text-sm text-neutral-600 mt-1">
+          Evidence-grounded sequence of FIR registrations, CDR communication logs, and bank wire transfers.
         </p>
       </div>
 
+      {/* Provenance note */}
+      <div className="flex items-center gap-2 text-xs text-neutral-700 bg-neutral-50 p-3.5 rounded-xl border border-neutral-200 shadow-2xs">
+        <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+        <span>All chronological events are derived directly from underlying source record timestamps with forensic Section 63 BSA locators.</span>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div className="flex items-center gap-2 bg-neutral-100 p-1 rounded-xl border border-neutral-200">
+          <button
+            onClick={() => setActiveFilter('ALL')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeFilter === 'ALL'
+                ? 'bg-white text-neutral-900 shadow-xs'
+                : 'text-neutral-600 hover:text-neutral-900'
+            }`}
+          >
+            All Events ({events.length})
+          </button>
+          <button
+            onClick={() => setActiveFilter('CASE')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeFilter === 'CASE'
+                ? 'bg-white text-blue-900 shadow-xs'
+                : 'text-neutral-600 hover:text-neutral-900'
+            }`}
+          >
+            Cases &amp; FIRs
+          </button>
+          <button
+            onClick={() => setActiveFilter('CDR')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeFilter === 'CDR'
+                ? 'bg-white text-amber-900 shadow-xs'
+                : 'text-neutral-600 hover:text-neutral-900'
+            }`}
+          >
+            CDR Call Records
+          </button>
+          <button
+            onClick={() => setActiveFilter('BANK_TXN')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeFilter === 'BANK_TXN'
+                ? 'bg-white text-purple-900 shadow-xs'
+                : 'text-neutral-600 hover:text-neutral-900'
+            }`}
+          >
+            Bank Transactions
+          </button>
+        </div>
+
+        <div className="text-xs text-neutral-500 font-medium">
+          Showing <strong>{filteredEvents.length}</strong> events in sequence
+        </div>
+      </div>
+
       {isLoading ? (
-        <div className="text-center py-12 text-neutral-500">Loading temporal intelligence events...</div>
-      ) : events.length === 0 ? (
-        <div className="text-center py-12 text-neutral-500">No chronological events logged.</div>
+        <div className="text-center py-16 text-neutral-500 font-medium">Loading temporal intelligence events...</div>
+      ) : filteredEvents.length === 0 ? (
+        <div className="text-center py-16 text-neutral-500 bg-white border border-dashed border-neutral-300 rounded-2xl">
+          No chronological events matched the selected filter.
+        </div>
       ) : (
-        <div className="relative border-l-2 border-neutral-800 ml-4 pl-6 space-y-6">
-          {events.map((ev, idx) => (
-            <div key={ev.id || idx} className="relative group">
-              {/* Dot */}
-              <div className="absolute -left-[31px] top-1.5 h-4 w-4 rounded-full bg-blue-600 border-4 border-neutral-950 group-hover:scale-125 transition-transform" />
+        <div className="relative border-l-2 border-neutral-300 ml-5 sm:ml-7 pl-6 sm:pl-9 space-y-7 pt-2">
+          {filteredEvents.map((ev, idx) => {
+            const rawType = (ev.event_type || 'FIR').toUpperCase()
+            const cfg = TYPE_CONFIG[rawType] || TYPE_CONFIG.FIR
+            const Icon = cfg.icon
+            return (
+              <div key={ev.id || idx} className="relative group">
+                {/* Dot */}
+                <div className={`absolute -left-[35px] sm:-left-[47px] top-5 h-5 w-5 rounded-full ${cfg.dot} border-4 border-white shadow-sm group-hover:scale-125 transition-transform`} />
 
-              <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4.5 space-y-2 hover:border-neutral-700 transition-colors">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-blue-400 bg-blue-950/60 px-2.5 py-0.5 rounded border border-blue-800/40">
-                    {ev.event_type}
-                  </span>
-                  <span className="text-xs text-neutral-400 flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5" />
-                    {new Date(ev.timestamp).toLocaleString()}
-                  </span>
-                </div>
-
-                <p className="text-sm text-neutral-200 font-medium">{ev.description}</p>
-
-                {ev.participant_ids && ev.participant_ids.length > 0 && (
-                  <div className="pt-2 flex items-center gap-2 text-xs text-neutral-400 border-t border-neutral-800/60">
-                    <Users className="h-3.5 w-3.5 text-neutral-500" />
-                    <span>Involved: {ev.participant_ids.join(', ')}</span>
+                {/* Event Card with spacious padding and clear hierarchy */}
+                <div className="rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 space-y-3.5 hover:border-neutral-300 shadow-sm hover:shadow-md transition-all">
+                  {/* Top Bar */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 pb-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${cfg.badge}`}>
+                        <Icon className="h-3.5 w-3.5" />
+                        {cfg.label}
+                      </span>
+                      <code className="font-mono text-xs text-neutral-800 bg-neutral-100 px-2 py-0.5 rounded-md border border-neutral-200 font-semibold">
+                        {ev.id}
+                      </code>
+                    </div>
+                    <span className="text-xs text-neutral-600 flex items-center gap-1.5 font-semibold bg-neutral-50 px-2.5 py-1 rounded-lg border border-neutral-200">
+                      <Calendar className="h-3.5 w-3.5 text-neutral-500" />
+                      {new Date(ev.timestamp).toLocaleString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                      })}
+                    </span>
                   </div>
-                )}
+
+                  {/* Main Excerpt / Description */}
+                  <div className="pt-0.5">
+                    <p className="text-sm sm:text-base text-neutral-900 font-medium leading-relaxed">
+                      {ev.description.startsWith('"') ? ev.description : `"${ev.description}"`}
+                    </p>
+                  </div>
+
+                  {/* Bottom Locator & Meta Footer */}
+                  {(ev.locator || ev.batch_id) && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-100">
+                      {ev.locator ? (
+                        <div className="flex items-center gap-1.5 text-xs font-mono text-amber-900 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 font-medium">
+                          <MapPin className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                          <span>Locator: {ev.locator}</span>
+                        </div>
+                      ) : <div />}
+
+                      {ev.batch_id && (
+                        <div className="text-[11px] text-neutral-500 font-mono">
+                          Batch: <span className="font-semibold text-neutral-700">{ev.batch_id}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

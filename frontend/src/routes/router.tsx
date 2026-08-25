@@ -11,6 +11,8 @@ import Login from '@/pages/Login'
 // Lazy-loaded routes
 const Worklist = lazy(() => import('@/pages/Worklist'))
 const NetworkExplorer = lazy(() => import('@/pages/NetworkExplorer'))
+const EntityFusion = lazy(() => import('@/pages/EntityFusion'))
+const LeadInbox = lazy(() => import('@/pages/LeadInbox'))
 const Entities = lazy(() => import('@/pages/Entities'))
 const Patterns = lazy(() => import('@/pages/Patterns'))
 const Timeline = lazy(() => import('@/pages/Timeline'))
@@ -64,6 +66,26 @@ export const router = createBrowserRouter([
           <RoleGuard allowedRoles={allRoles}>
             <Suspense fallback={<PageFallback />}>
               <NetworkExplorer />
+            </Suspense>
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'fusion',
+        element: (
+          <RoleGuard allowedRoles={allRoles}>
+            <Suspense fallback={<PageFallback />}>
+              <EntityFusion />
+            </Suspense>
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'leads',
+        element: (
+          <RoleGuard allowedRoles={allRoles}>
+            <Suspense fallback={<PageFallback />}>
+              <LeadInbox />
             </Suspense>
           </RoleGuard>
         ),

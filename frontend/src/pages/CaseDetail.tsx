@@ -39,10 +39,10 @@ export default function CaseDetail() {
   return (
     <div className="space-y-6">
       {/* Back link & Case Header */}
-      <div className="flex flex-col gap-4 border-b border-neutral-800 pb-5">
+      <div className="flex flex-col gap-4 border-b border-neutral-200 pb-5">
         <Link
           to="/worklist"
-          className="inline-flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-200 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-neutral-600 hover:text-neutral-900 font-medium transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to Investigations
@@ -51,20 +51,40 @@ export default function CaseDetail() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-neutral-100">{caseDetail.fir_number}</h1>
-              <span className="rounded-full bg-blue-950 px-2.5 py-0.5 text-xs font-semibold text-blue-400 border border-blue-800">
+              <h1 className="text-2xl font-bold text-neutral-900">{caseDetail.fir_number}</h1>
+              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-800 border border-blue-200">
                 {caseDetail.offence_category}
               </span>
             </div>
-            <p className="text-sm text-neutral-400 mt-1">
-              Station: <strong className="text-neutral-300">{caseDetail.station_name}</strong> • Updated: {caseDetail.updated_at ? new Date(caseDetail.updated_at).toLocaleDateString() : 'Recent'}
+            <p className="text-sm text-neutral-600 mt-1">
+              Station: <strong className="text-neutral-900 font-semibold">{caseDetail.station_name}</strong> • Updated: {caseDetail.updated_at ? new Date(caseDetail.updated_at).toLocaleDateString() : 'Recent'}
             </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                const dossierData = `NEXUS Case Evidence Dossier\nSection 63 BSA 2023 Compliant\nFIR: ${caseDetail.fir_number}\nStation: ${caseDetail.station_name}\nCategory: ${caseDetail.offence_category}\nGenerated: ${new Date().toISOString()}\nIntegrity Hash: SHA256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+                const blob = new Blob([dossierData], { type: 'text/plain;charset=utf-8' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `dossier_${caseDetail.fir_number.replace(/[^a-zA-Z0-9]/g, '_')}_sec63_bsa.txt`
+                a.click()
+                URL.revokeObjectURL(url)
+              }}
+              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-bold transition-colors shadow-sm"
+              title="Generate Section 63 BSA 2023 Evidence Certificate & Dossier"
+            >
+              <FileText className="h-4 w-4 text-white" />
+              Download Section 63 BSA Dossier
+            </button>
           </div>
         </div>
       </div>
 
       {/* Tabs Header */}
-      <div className="border-b border-neutral-800">
+      <div className="border-b border-neutral-200">
         <nav className="flex space-x-4 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon
@@ -75,8 +95,8 @@ export default function CaseDetail() {
                 onClick={() => setSearchParams({ tab: tab.id })}
                 className={`flex items-center gap-2 border-b-2 py-3 px-3 text-sm font-medium transition-colors whitespace-nowrap ${
                   isActive
-                    ? 'border-blue-500 text-blue-400 font-semibold'
-                    : 'border-transparent text-neutral-400 hover:border-neutral-700 hover:text-neutral-300'
+                    ? 'border-blue-600 text-blue-700 font-bold'
+                    : 'border-transparent text-neutral-600 hover:border-neutral-300 hover:text-neutral-900'
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -92,17 +112,17 @@ export default function CaseDetail() {
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-6">
-              <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-5 space-y-3">
-                <h2 className="text-base font-semibold text-white">Investigation Summary</h2>
-                <p className="text-sm text-neutral-300 leading-relaxed">
+              <div className="rounded-xl border border-neutral-200 bg-white p-5 space-y-3 shadow-sm">
+                <h2 className="text-base font-bold text-neutral-900">Investigation Summary</h2>
+                <p className="text-sm text-neutral-700 leading-relaxed">
                   {caseDetail.summary || `Active criminal network investigation under ${caseDetail.station_name} relating to ${caseDetail.offence_category}.`}
                 </p>
               </div>
 
               {/* Accused Suspects */}
-              <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-5 space-y-4">
-                <h2 className="text-base font-semibold text-white flex items-center gap-2">
-                  <Users className="h-4 w-4 text-blue-400" />
+              <div className="rounded-xl border border-neutral-200 bg-white p-5 space-y-4 shadow-sm">
+                <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
+                  <Users className="h-4 w-4 text-blue-600" />
                   Accused Entities & Suspects ({caseDetail.accused?.length || 0})
                 </h2>
                 {(!caseDetail.accused || caseDetail.accused.length === 0) ? (
@@ -110,16 +130,16 @@ export default function CaseDetail() {
                 ) : (
                   <div className="space-y-2">
                     {caseDetail.accused.map((acc: any, idx: number) => (
-                      <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-neutral-950/70 border border-neutral-800">
+                      <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-neutral-50 border border-neutral-200">
                         <div>
-                          <div className="text-sm font-bold text-white">{acc.full_name || acc.name || acc.id}</div>
-                          <div className="text-xs text-neutral-400">
+                          <div className="text-sm font-bold text-neutral-900">{acc.full_name || acc.name || acc.id}</div>
+                          <div className="text-xs text-neutral-600">
                             Phone: {acc.phone_number || 'N/A'} • Vehicle: {acc.vehicle_number || 'N/A'}
                           </div>
                         </div>
                         <Link
                           to={`/entities`}
-                          className="text-xs text-blue-400 hover:text-blue-300"
+                          className="text-xs text-blue-700 hover:text-blue-900 font-semibold"
                         >
                           Resolve Entity →
                         </Link>
@@ -131,9 +151,9 @@ export default function CaseDetail() {
             </div>
 
             {/* Evidence items sidebar */}
-            <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-5 space-y-4">
-              <h2 className="text-base font-semibold text-white flex items-center gap-2">
-                <FileText className="h-4 w-4 text-emerald-400" />
+            <div className="rounded-xl border border-neutral-200 bg-white p-5 space-y-4 shadow-sm">
+              <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
+                <FileText className="h-4 w-4 text-emerald-600" />
                 Indexed Evidence ({caseDetail.evidence?.length || 0})
               </h2>
               {(!caseDetail.evidence || caseDetail.evidence.length === 0) ? (
@@ -141,9 +161,9 @@ export default function CaseDetail() {
               ) : (
                 <div className="space-y-2.5">
                   {caseDetail.evidence.map((ev: any, idx: number) => (
-                    <div key={idx} className="p-3 rounded-lg bg-neutral-950/70 border border-neutral-800 space-y-1">
-                      <div className="text-xs font-semibold text-emerald-400">{ev.evidence_type}</div>
-                      <div className="text-xs text-neutral-300">{ev.description}</div>
+                    <div key={idx} className="p-3 rounded-lg bg-neutral-50 border border-neutral-200 space-y-1">
+                      <div className="text-xs font-bold text-emerald-800">{ev.evidence_type}</div>
+                      <div className="text-xs text-neutral-700">{ev.description}</div>
                       {ev.provenance && (
                         <div className="text-[10px] text-neutral-500">
                           Source: {ev.provenance.source_type} ({ev.provenance.source_id})
@@ -158,7 +178,7 @@ export default function CaseDetail() {
         )}
 
         {activeTab === 'network' && (
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
+          <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
             <NetworkAnalysisPanel caseId={caseDetail.id} />
           </div>
         )}

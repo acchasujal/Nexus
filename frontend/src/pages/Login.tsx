@@ -17,18 +17,18 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 bg-neutral-900/90 p-8 rounded-2xl border border-neutral-800 shadow-2xl text-center">
+    <div className="flex min-h-screen items-center justify-center bg-neutral-100 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-2xl border border-neutral-200 shadow-xl text-center">
         {/* Title area */}
         <div className="space-y-3">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-500/20 text-white">
             <Network className="h-8 w-8" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">NEXUS</h1>
-          <p className="text-xs text-blue-400 font-semibold uppercase tracking-wider">
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-900">NEXUS</h1>
+          <p className="text-xs text-blue-700 font-bold uppercase tracking-wider">
             Criminal Network Intelligence Platform
           </p>
-          <p className="text-xs text-neutral-400">
+          <p className="text-xs text-neutral-600">
             Select an investigator role to enter the intelligence graph workspace
           </p>
         </div>
@@ -37,40 +37,40 @@ export default function Login() {
         <div className="mt-8 space-y-3">
           <button
             onClick={() => handleRoleSelection('IO')}
-            className="flex w-full items-center justify-between rounded-xl border border-neutral-800 bg-neutral-950/80 px-5 py-3.5 text-left text-neutral-200 hover:bg-neutral-800 hover:border-blue-500/50 hover:text-white transition-all shadow-sm group"
+            className="flex w-full items-center justify-between rounded-xl border border-neutral-200 bg-neutral-50 px-5 py-3.5 text-left text-neutral-900 hover:bg-blue-50/60 hover:border-blue-300 transition-all shadow-xs group"
           >
             <div>
-              <div className="text-sm font-bold group-hover:text-blue-400 transition-colors">Investigating Officer (IO)</div>
-              <div className="text-xs text-neutral-400">Case exploration, entity resolution & copilot</div>
+              <div className="text-sm font-bold text-neutral-900 group-hover:text-blue-700 transition-colors">Investigating Officer (IO)</div>
+              <div className="text-xs text-neutral-600">Case exploration, entity resolution & copilot</div>
             </div>
-            <ShieldCheck className="h-5 w-5 text-emerald-400" />
+            <ShieldCheck className="h-5 w-5 text-emerald-600" />
           </button>
 
           <button
             onClick={() => handleRoleSelection('SHO')}
-            className="flex w-full items-center justify-between rounded-xl border border-neutral-800 bg-neutral-950/80 px-5 py-3.5 text-left text-neutral-200 hover:bg-neutral-800 hover:border-blue-500/50 hover:text-white transition-all shadow-sm group"
+            className="flex w-full items-center justify-between rounded-xl border border-neutral-200 bg-neutral-50 px-5 py-3.5 text-left text-neutral-900 hover:bg-blue-50/60 hover:border-blue-300 transition-all shadow-xs group"
           >
             <div>
-              <div className="text-sm font-bold group-hover:text-blue-400 transition-colors">Intelligence Analyst / SHO</div>
-              <div className="text-xs text-neutral-400">Syndicate modularity & bridge broker discovery</div>
+              <div className="text-sm font-bold text-neutral-900 group-hover:text-blue-700 transition-colors">Intelligence Analyst / SHO</div>
+              <div className="text-xs text-neutral-600">Syndicate modularity & bridge broker discovery</div>
             </div>
-            <ShieldAlert className="h-5 w-5 text-amber-400" />
+            <ShieldAlert className="h-5 w-5 text-amber-600" />
           </button>
 
           <button
             onClick={() => handleRoleSelection('SP')}
-            className="flex w-full items-center justify-between rounded-xl border border-neutral-800 bg-neutral-950/80 px-5 py-3.5 text-left text-neutral-200 hover:bg-neutral-800 hover:border-blue-500/50 hover:text-white transition-all shadow-sm group"
+            className="flex w-full items-center justify-between rounded-xl border border-neutral-200 bg-neutral-50 px-5 py-3.5 text-left text-neutral-900 hover:bg-blue-50/60 hover:border-blue-300 transition-all shadow-xs group"
           >
             <div>
-              <div className="text-sm font-bold group-hover:text-blue-400 transition-colors">Superintendent / Supervisor (SP)</div>
-              <div className="text-xs text-neutral-400">District intelligence rollup & immutable audit trail</div>
+              <div className="text-sm font-bold text-neutral-900 group-hover:text-blue-700 transition-colors">Superintendent / Supervisor (SP)</div>
+              <div className="text-xs text-neutral-600">District intelligence rollup & immutable audit trail</div>
             </div>
-            <ShieldCheck className="h-5 w-5 text-blue-400" />
+            <ShieldCheck className="h-5 w-5 text-blue-600" />
           </button>
         </div>
 
         {/* Footer */}
-        <div className="text-[11px] text-neutral-500 pt-2 border-t border-neutral-800/60">
+        <div className="text-[11px] text-neutral-500 pt-3 border-t border-neutral-200">
           SIH 2026 PS 26189. Evidence-Grounded Criminal Intelligence Platform.
         </div>
       </div>

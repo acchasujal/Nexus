@@ -19,6 +19,8 @@ interface Message {
   isRefusal?: boolean
   refusalReason?: string
   citations?: GroundedCitation[]
+  evidenceIds?: string[]
+  reasoningPath?: string[]
   suggestedActions?: string[]
   timestamp: string
 }
@@ -31,7 +33,7 @@ const INITIAL_WELCOME_MESSAGE: Message = {
 }
 
 const SUGGESTED_PROMPTS = [
-  { text: 'Summarize the network links and phone clusters for FIR-2026-101', type: 'network' },
+  { text: 'How are the two cases connected?', type: 'connection' },
   { text: 'Is the accused guilty of committing cyber financial fraud?', type: 'safety' },
   { text: 'Show multi-hop bank transaction layering chains across flagged accounts', type: 'financial' },
   { text: 'Find all bridge entities connecting narcotics and hawala syndicates', type: 'bridges' },
@@ -75,9 +77,8 @@ export default function Copilot() {
     setIsLoading(true)
 
     try {
-      const response = await apiClient.queryCopilot({
-        query: textToSend,
-      })
+      // Use NEXUS copilot endpoint
+      const response = await apiClient.queryNexusCopilot(textToSend)
 
       const responseTimeIso = new Date().toISOString()
       const assistantMessage: Message = {
@@ -86,8 +87,8 @@ export default function Copilot() {
         text: response.answer,
         isRefusal: response.is_refusal,
         refusalReason: response.refusal_reason || undefined,
-        citations: response.grounded_citations,
-        suggestedActions: response.suggested_actions,
+        evidenceIds: response.evidence_ids,
+        reasoningPath: response.reasoning_path,
         timestamp: responseTimeIso,
       }
 
@@ -111,19 +112,19 @@ export default function Copilot() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
       {/* Header */}
-      <div className="border-b border-neutral-800 pb-4 flex items-center justify-between shrink-0">
+      <div className="border-b border-neutral-200 pb-4 flex items-center justify-between shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-100 flex items-center gap-2.5">
-            <Sparkles className="h-6 w-6 text-blue-500" />
+          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2.5">
+            <Sparkles className="h-6 w-6 text-blue-600" />
             NEXUS Investigator Copilot
           </h1>
-          <p className="text-xs text-neutral-400 mt-0.5">
+          <p className="text-xs text-neutral-600 mt-0.5">
             Evidence-grounded assistant • Strict refusal gate against autonomous guilt / predictive inference
           </p>
         </div>
         <button
           onClick={() => setMessages([INITIAL_WELCOME_MESSAGE])}
-          className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-200 border border-neutral-800 bg-neutral-900 px-3 py-1.5 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 text-xs text-neutral-700 hover:text-neutral-900 border border-neutral-300 bg-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-neutral-50 transition-colors"
         >
           <RotateCcw className="h-3.5 w-3.5" />
           Reset Chat
@@ -144,18 +145,18 @@ export default function Copilot() {
             )}
 
             <div
-              className={`max-w-2xl rounded-2xl p-4 space-y-3 ${
+              className={`max-w-2xl rounded-2xl p-4 space-y-3 shadow-sm ${
                 m.role === 'user'
                   ? 'bg-blue-600 text-white ml-12'
                   : m.isRefusal
-                  ? 'bg-red-950/40 border border-red-800/60 text-neutral-200'
-                  : 'bg-neutral-900/80 border border-neutral-800 text-neutral-200'
+                  ? 'bg-red-50 border border-red-200 text-red-950'
+                  : 'bg-white border border-neutral-200 text-neutral-900'
               }`}
             >
               {/* Refusal Notice Header if Guardrail triggered */}
               {m.isRefusal && (
-                <div className="flex items-center gap-2 text-xs font-semibold text-red-400 bg-red-950/80 px-2.5 py-1 rounded-lg border border-red-800/80">
-                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                <div className="flex items-center gap-2 text-xs font-bold text-red-900 bg-red-100 px-2.5 py-1 rounded-lg border border-red-300">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-red-600" />
                   Ethical &amp; Legal Guardrail Enforced
                 </div>
               )}
@@ -164,29 +165,62 @@ export default function Copilot() {
 
               {/* Grounded Evidence Citations */}
               {m.citations && m.citations.length > 0 && (
-                <div className="rounded-xl bg-neutral-950/90 p-3 text-xs border border-neutral-800/80 space-y-2">
-                  <div className="font-semibold text-neutral-300 flex items-center gap-1.5">
-                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                <div className="rounded-xl bg-neutral-50 p-3 text-xs border border-neutral-200 space-y-2">
+                  <div className="font-bold text-neutral-800 flex items-center gap-1.5">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
                     Grounded Graph Citations &amp; Provenance:
                   </div>
                   {m.citations.map((cite, cIdx) => (
-                    <div key={cIdx} className="text-neutral-400 flex items-start gap-2 bg-neutral-900/80 p-2 rounded border border-neutral-800">
-                      <FileText className="h-3.5 w-3.5 text-blue-400 shrink-0 mt-0.5" />
+                    <div key={cIdx} className="text-neutral-700 flex items-start gap-2 bg-white p-2 rounded border border-neutral-200">
+                      <FileText className="h-3.5 w-3.5 text-blue-600 shrink-0 mt-0.5" />
                       <div>
-                        <strong className="text-neutral-200">[{cite.source_type} {cite.source_id}]</strong>: {cite.fact} (confidence: {Math.round(cite.confidence * 100)}%)
+                        <strong className="text-neutral-900">[{cite.source_type} {cite.source_id}]</strong>: {cite.fact} (confidence: {Math.round(cite.confidence * 100)}%)
                       </div>
                     </div>
                   ))}
                 </div>
               )}
 
+              {/* NEXUS Grounded Evidence Chips */}
+              {m.evidenceIds && m.evidenceIds.length > 0 && (
+                <div className="rounded-xl bg-neutral-50 p-3 text-xs border border-neutral-200 space-y-2">
+                  <div className="font-bold text-neutral-800 flex items-center gap-1.5">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                    Grounded Evidence Records:
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {m.evidenceIds.map((id) => (
+                      <code key={id} className="rounded bg-amber-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-amber-900 border border-amber-200">
+                        {id}
+                      </code>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* NEXUS Reasoning Path */}
+              {m.reasoningPath && m.reasoningPath.length > 0 && (
+                <div className="rounded-xl bg-neutral-50 p-3 text-xs border border-neutral-200 space-y-1.5">
+                  <div className="font-bold text-neutral-700 text-[11px] uppercase tracking-wider">
+                    Evidence Lineage &amp; Reasoning Path:
+                  </div>
+                  <ol className="space-y-1 pl-4 list-decimal text-neutral-700 text-[11px] font-medium">
+                    {m.reasoningPath.map((step, sIdx) => (
+                      <li key={sIdx} className="leading-relaxed">
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
               {/* Suggested Actions */}
               {m.suggestedActions && m.suggestedActions.length > 0 && (
-                <div className="pt-2 border-t border-neutral-800/50 space-y-1.5">
-                  <span className="text-[11px] font-semibold text-neutral-400">Suggested Next Steps:</span>
+                <div className="pt-2 border-t border-neutral-200 space-y-1.5">
+                  <span className="text-[11px] font-semibold text-neutral-600">Suggested Next Steps:</span>
                   <div className="flex flex-wrap gap-1.5">
                     {m.suggestedActions.map((act, aIdx) => (
-                      <span key={aIdx} className="text-xs bg-neutral-800 text-neutral-300 px-2.5 py-1 rounded-lg border border-neutral-700">
+                      <span key={aIdx} className="text-xs bg-neutral-100 text-neutral-800 px-2.5 py-1 rounded-lg border border-neutral-200">
                         {act}
                       </span>
                     ))}
@@ -194,13 +228,13 @@ export default function Copilot() {
                 </div>
               )}
 
-              <span className="block text-[10px] text-neutral-500 text-right">
+              <span className="block text-[10px] text-neutral-400 text-right">
                 {m.timestamp.startsWith('2026-08-23T00:00:00') ? 'Today' : new Date(m.timestamp).toLocaleTimeString()}
               </span>
             </div>
 
             {m.role === 'user' && (
-              <div className="h-8 w-8 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-300 shrink-0 mt-1">
+              <div className="h-8 w-8 rounded-full bg-blue-100 border border-blue-300 flex items-center justify-center text-blue-800 shrink-0 mt-1">
                 <User className="h-4 w-4" />
               </div>
             )}
@@ -217,10 +251,10 @@ export default function Copilot() {
             <button
               key={idx}
               onClick={() => handleSend(p.text)}
-              className={`shrink-0 rounded-lg px-2.5 py-1 text-xs transition-colors ${
+              className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium shadow-xs transition-colors ${
                 p.type === 'safety'
-                  ? 'bg-red-950/40 text-red-300 border border-red-800/40 hover:bg-red-900/50'
-                  : 'bg-neutral-900 text-neutral-300 border border-neutral-800 hover:bg-neutral-800 hover:text-white'
+                  ? 'bg-red-50 text-red-800 border border-red-200 hover:bg-red-100'
+                  : 'bg-white text-neutral-800 border border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900'
               }`}
             >
               {p.text}
@@ -234,19 +268,19 @@ export default function Copilot() {
             e.preventDefault()
             handleSend()
           }}
-          className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 rounded-xl p-2 focus-within:border-blue-500 shadow-xl"
+          className="flex items-center gap-2 bg-white border border-neutral-300 rounded-xl p-2 focus-within:border-blue-600 shadow-md"
         >
           <input
             type="text"
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
             placeholder="Ask NEXUS Copilot (e.g. Find suspect phone links, verify bank layering, explain co-accused)..."
-            className="flex-1 bg-transparent px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none"
+            className="flex-1 bg-transparent px-3 py-2 text-sm text-neutral-900 placeholder-neutral-500 focus:outline-none"
           />
           <button
             type="submit"
             disabled={!inputQuery.trim() || isLoading}
-            className="rounded-lg bg-blue-600 p-2.5 text-white hover:bg-blue-500 transition-colors disabled:opacity-40"
+            className="rounded-lg bg-blue-600 p-2.5 text-white hover:bg-blue-700 transition-colors disabled:opacity-40 shadow-sm"
           >
             <Send className="h-4 w-4" />
           </button>

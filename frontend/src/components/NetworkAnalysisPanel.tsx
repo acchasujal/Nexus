@@ -283,18 +283,31 @@ function NetworkAnalysisPanelContent({ caseId, selectedEntityId, onEntitySelect 
       const isHovered = hoveredEdgeId === edge.id
       const showLabel = isSelected || isHovered
 
+      // Color coding for different edge types
+      let baseColor = '#64748b'
+      if (edge.label.includes('ACCUSED') || edge.label.includes('CO_ACCUSED')) baseColor = '#e11d48'
+      else if (edge.label.includes('VICTIM')) baseColor = '#0284c7'
+      else if (edge.label.includes('PHONE') || edge.label.includes('COMMUNICAT')) baseColor = '#d97706'
+      else if (edge.label.includes('ACCOUNT') || edge.label.includes('OWNS')) baseColor = '#7c3aed'
+      else if (edge.label.includes('TRANSFER') || edge.label.includes('TXN')) baseColor = '#059669'
+      else if (edge.label.includes('DEPENDENCY')) baseColor = '#ea580c'
+
       return {
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        label: showLabel ? edge.label : undefined,
-        labelStyle: { fill: '#333333', fontSize: 9, fontWeight: 700 },
+        type: 'straight',
+        label: showLabel ? edge.label.replaceAll('_', ' ') : undefined,
+        labelStyle: { fill: '#1e293b', fontSize: 9, fontWeight: 700 },
+        labelBgStyle: { fill: '#ffffff', stroke: baseColor, strokeWidth: 1, strokeOpacity: 0.5 },
+        labelBgPadding: [4, 2] as [number, number],
+        labelBgBorderRadius: 4,
         style: { 
-          stroke: isSelected ? '#E11D48' : (isConnected ? '#4b5563' : '#e5e5e5'), 
-          strokeWidth: isSelected ? 2.5 : (isConnected ? 1.5 : 1),
+          stroke: isSelected ? '#e11d48' : (isConnected ? baseColor : '#cbd5e1'), 
+          strokeWidth: isSelected ? 2.5 : (isConnected ? 1.75 : 1),
           strokeDasharray: isDashed ? '4,4' : undefined 
         },
-        animated: isConnected && edge.label === 'CASE_HAS_DEPENDENCY',
+        animated: isConnected && (edge.label === 'CASE_HAS_DEPENDENCY' || edge.label.includes('TRANSFER')),
       }
     })
   }, [graphData, selectedEntityId, selectedEdgeId, hoveredEdgeId])

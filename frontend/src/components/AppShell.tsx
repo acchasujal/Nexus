@@ -20,12 +20,17 @@ export function AppShell() {
     if (announceRef.current) {
       // Map pathnames to human-readable page names
       const pageNames: Record<string, string> = {
-        '/worklist': 'Risk-Ranked Worklist',
-        '/escalations': 'Escalation Queue',
-        '/rollup': 'District Rollup',
-        '/patterns': 'Patterns and Analytics',
-        '/copilot': 'Copilot',
+        '/network': 'Global Network Explorer',
+        '/fusion': 'Entity Fusion Workbench',
+        '/leads': 'Lead Inbox',
+        '/worklist': 'Investigation Overview',
+        '/entities': 'Entity Resolution',
+        '/timeline': 'Investigative Timeline',
+        '/evidence': 'Evidence & Provenance',
+        '/copilot': 'Investigator Copilot',
+        '/audit': 'Audit Trail',
         '/settings': 'Settings',
+        '/patterns': 'Patterns & Communities',
       }
 
       const pathKey = Object.keys(pageNames).find(k => location.pathname.startsWith(k))
