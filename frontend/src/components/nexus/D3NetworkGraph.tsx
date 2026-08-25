@@ -1,0 +1,1009 @@
+/**
+ * frontend/src/components/nexus/D3NetworkGraph.tsx
+ *
+ * High-performance, physics-grounded D3.js Force-Directed Graph Engine.
+ *
+ * Features:
+ * - Dynamic D3 Force Simulation (forceManyBody, forceLink, forceCollide, forceX/Y, forceCenter)
+ * - Sleek circular nodes with semantic icons and clean pill labels
+ * - Hidden edge labels by default — clicking any line reveals its label and relationship reason
+ * - On-canvas interactive Node & Relationship Details Cards on selection
+ * - Interactive Drag-and-Pin (d.fx, d.fy) to preserve investigator mental map
+ * - Seamless Pan & Zoom with programmatic controls (Zoom In/Out, 100%, Fit View, Auto-Arrange)
+ * - Semantic Entity Styling: Case (rose), Person (sky), Phone/CDR (amber), Account (violet), Evidence (teal), Law (indigo)
+ * - Louvain Community Rings & Before/After Snapshot Delta Highlights
+ * - Focus & Neighborhood Highlighting (dims unrelated entities)
+ * - Temporal Timeline Scrubber (filters/animates entities & relationships across time)
+ */
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
+import * as d3 from 'd3'
+import {
+  ZoomIn, ZoomOut, Maximize2, RefreshCw,
+  Sliders, Play, Pause, RotateCcw, X, Link as LinkIcon, Layers, FileText,
+} from 'lucide-react'
+
+export interface D3GraphNode extends d3.SimulationNodeDatum {
+  id: string
+  label?: string
+  name?: string
+  entity_type?: string
+  type?: string
+  case_ids?: string[]
+  badges?: string[]
+  properties?: Record<string, unknown>
+  isDelta?: boolean
+  timestamp?: string
+  start?: string
+  end?: string
+  [key: string]: unknown
+}
+
+export interface D3GraphEdge extends d3.SimulationLinkDatum<D3GraphNode> {
+  id: string
+  source: string | D3GraphNode
+  target: string | D3GraphNode
+  edge_type?: string
+  label?: string
+  reason?: string
+  derivation_class?: 'FACT' | 'DERIVED' | 'HYPOTHESIS'
+  confidence?: number
+  properties?: Record<string, unknown>
+  provenance?: Record<string, unknown>
+  timestamp?: string
+  start?: string
+  end?: string
+  [key: string]: unknown
+}
+
+export interface D3NetworkGraphProps {
+  nodes: D3GraphNode[]
+  edges: D3GraphEdge[]
+  selectedNodeId?: string | null
+  selectedEdgeId?: string | null
+  onNodeSelect?: (nodeId: string | null) => void
+  onEdgeSelect?: (edgeId: string | null) => void
+  onNodeDoubleClick?: (nodeId: string) => void
+  highlightDelta?: boolean
+  enableTemporalScrubber?: boolean
+  height?: number | string
+  className?: string
+  densityMode?: 'compact' | 'normal' | 'spacious' | 'extra-spacious'
+}
+
+// ── Color Schemes & Styling ────────────────────────────────────────────────
+const ENTITY_CONFIG: Record<string, { bg: string; stroke: string; text: string; chipBg: string; chipText: string; icon: string }> = {
+  Case: { bg: '#fff1f2', stroke: '#e11d48', text: '#9f1239', chipBg: '#ffe4e6', chipText: '#be123c', icon: '📁' },
+  case: { bg: '#fff1f2', stroke: '#e11d48', text: '#9f1239', chipBg: '#ffe4e6', chipText: '#be123c', icon: '📁' },
+  Person: { bg: '#f0f9ff', stroke: '#0284c7', text: '#0369a1', chipBg: '#e0f2fe', chipText: '#0284c7', icon: '👤' },
+  person: { bg: '#f0f9ff', stroke: '#0284c7', text: '#0369a1', chipBg: '#e0f2fe', chipText: '#0284c7', icon: '👤' },
+  Phone: { bg: '#fffbeb', stroke: '#d97706', text: '#b45309', chipBg: '#fef3c7', chipText: '#d97706', icon: '📞' },
+  phone: { bg: '#fffbeb', stroke: '#d97706', text: '#b45309', chipBg: '#fef3c7', chipText: '#d97706', icon: '📞' },
+  Account: { bg: '#f5f3ff', stroke: '#7c3aed', text: '#6d28d9', chipBg: '#ede9fe', chipText: '#7c3aed', icon: '💳' },
+  account: { bg: '#f5f3ff', stroke: '#7c3aed', text: '#6d28d9', chipBg: '#ede9fe', chipText: '#7c3aed', icon: '💳' },
+  Evidence: { bg: '#f0fdfa', stroke: '#0d9488', text: '#115e59', chipBg: '#ccfbf1', chipText: '#0f766e', icon: '🔍' },
+  evidence: { bg: '#f0fdfa', stroke: '#0d9488', text: '#115e59', chipBg: '#ccfbf1', chipText: '#0f766e', icon: '🔍' },
+  Law: { bg: '#eef2ff', stroke: '#4f46e5', text: '#3730a3', chipBg: '#e0e7ff', chipText: '#4338ca', icon: '⚖️' },
+  law: { bg: '#eef2ff', stroke: '#4f46e5', text: '#3730a3', chipBg: '#e0e7ff', chipText: '#4338ca', icon: '⚖️' },
+  Section: { bg: '#eef2ff', stroke: '#4f46e5', text: '#3730a3', chipBg: '#e0e7ff', chipText: '#4338ca', icon: '⚖️' },
+  section: { bg: '#eef2ff', stroke: '#4f46e5', text: '#3730a3', chipBg: '#e0e7ff', chipText: '#4338ca', icon: '⚖️' },
+  Dependency: { bg: '#fff7ed', stroke: '#ea580c', text: '#c2410c', chipBg: '#ffedd5', chipText: '#ea580c', icon: '⏱️' },
+  Officer: { bg: '#f8fafc', stroke: '#475569', text: '#1e293b', chipBg: '#f1f5f9', chipText: '#334155', icon: '🛡️' },
+}
+
+const COMMUNITY_STROKES: Record<string, string> = {
+  'COMMUNITY-C1': '#8b5cf6',
+  'COMMUNITY-C2': '#10b981',
+  'COMMUNITY-C3': '#f59e0b',
+  'COMMUNITY-C4': '#ec4899',
+}
+
+const EDGE_STROKES: Record<string, string> = {
+  ACCUSED_IN: '#e11d48',
+  CO_ACCUSED_IN: '#f43f5e',
+  VICTIM_IN: '#0284c7',
+  USES_PHONE: '#d97706',
+  OWNS_ACCOUNT: '#7c3aed',
+  TRANSFERRED_TO: '#059669',
+  COMMUNICATED_WITH: '#ea580c',
+  CONNECTS_CASES: '#2563eb',
+  CDR_CALLS: '#d97706',
+  BANK_TXN: '#059669',
+  VIOLATED: '#4f46e5',
+  GOVERNED: '#4f46e5',
+}
+
+export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
+  nodes: rawNodes,
+  edges: rawEdges,
+  selectedNodeId,
+  selectedEdgeId,
+  onNodeSelect,
+  onEdgeSelect,
+  onNodeDoubleClick,
+  highlightDelta = false,
+  enableTemporalScrubber = false,
+  height = '100%',
+  className = '',
+  densityMode = 'normal',
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
+  const simulationRef = useRef<d3.Simulation<D3GraphNode, D3GraphEdge> | null>(null)
+  const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
+  const gRef = useRef<SVGGElement | null>(null)
+
+  // Internal selection state for immediate reactivity (controlled or uncontrolled)
+  const [internalNodeId, setInternalNodeId] = useState<string | null>(null)
+  const [internalEdgeId, setInternalEdgeId] = useState<string | null>(null)
+
+  const activeNodeId = selectedNodeId !== undefined ? selectedNodeId : internalNodeId
+  const activeEdgeId = selectedEdgeId !== undefined ? selectedEdgeId : internalEdgeId
+
+  const handleSelectNode = useCallback((nodeId: string | null) => {
+    setInternalNodeId(nodeId)
+    setInternalEdgeId(null)
+    onNodeSelect?.(nodeId)
+    onEdgeSelect?.(null)
+  }, [onNodeSelect, onEdgeSelect])
+
+  const handleSelectEdge = useCallback((edgeId: string | null) => {
+    setInternalEdgeId(edgeId)
+    setInternalNodeId(null)
+    onEdgeSelect?.(edgeId)
+    onNodeSelect?.(null)
+  }, [onEdgeSelect, onNodeSelect])
+
+  // Temporal Scrubber State
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [timeIndex, setTimeIndex] = useState<number>(100)
+  const [showScrubber, setShowScrubber] = useState(false)
+
+  // Active Density Multiplier
+  const densityScale = useMemo(() => {
+    switch (densityMode) {
+      case 'compact': return 0.8
+      case 'spacious': return 1.25
+      case 'extra-spacious': return 1.55
+      default: return 1.0
+    }
+  }, [densityMode])
+
+  // Filtered nodes/edges if temporal scrubber is enabled
+  const { filteredNodes, filteredEdges } = useMemo(() => {
+    if (!enableTemporalScrubber || timeIndex >= 100) {
+      return { filteredNodes: rawNodes, filteredEdges: rawEdges }
+    }
+
+    const allTimestamps: number[] = []
+    rawNodes.forEach((n) => {
+      const ts = n.timestamp || n.start || (n.properties?.occurred_at as string)
+      if (ts) {
+        const time = new Date(ts).getTime()
+        if (!isNaN(time)) allTimestamps.push(time)
+      }
+    })
+    rawEdges.forEach((e) => {
+      const ts = e.timestamp || e.start || (e.properties?.recorded_at as string)
+      if (ts) {
+        const time = new Date(ts).getTime()
+        if (!isNaN(time)) allTimestamps.push(time)
+      }
+    })
+
+    if (allTimestamps.length === 0) {
+      return { filteredNodes: rawNodes, filteredEdges: rawEdges }
+    }
+
+    const minTime = Math.min(...allTimestamps)
+    const maxTime = Math.max(...allTimestamps)
+    const cutoffTime = minTime + (maxTime - minTime) * (timeIndex / 100)
+
+    const activeNodeIds = new Set<string>()
+    const activeNodes = rawNodes.filter((n) => {
+      const ts = n.timestamp || n.start || (n.properties?.occurred_at as string)
+      if (!ts) {
+        activeNodeIds.add(n.id)
+        return true
+      }
+      const time = new Date(ts).getTime()
+      const isActive = isNaN(time) || time <= cutoffTime
+      if (isActive) activeNodeIds.add(n.id)
+      return isActive
+    })
+
+    const activeEdges = rawEdges.filter((e) => {
+      const srcId = typeof e.source === 'object' ? (e.source as D3GraphNode).id : e.source
+      const tgtId = typeof e.target === 'object' ? (e.target as D3GraphNode).id : e.target
+      if (!activeNodeIds.has(srcId) || !activeNodeIds.has(tgtId)) return false
+
+      const ts = e.timestamp || e.start || (e.properties?.recorded_at as string)
+      if (!ts) return true
+      const time = new Date(ts).getTime()
+      return isNaN(time) || time <= cutoffTime
+    })
+
+    return { filteredNodes: activeNodes, filteredEdges: activeEdges }
+  }, [rawNodes, rawEdges, timeIndex, enableTemporalScrubber])
+
+  // Compute parallel edge groups for curved rendering
+  const parallelEdgeMeta = useMemo(() => {
+    const pairGroups = new Map<string, D3GraphEdge[]>()
+
+    filteredEdges.forEach((edge) => {
+      const src = typeof edge.source === 'object' ? (edge.source as D3GraphNode).id : edge.source
+      const tgt = typeof edge.target === 'object' ? (edge.target as D3GraphNode).id : edge.target
+      const key = [src, tgt].sort().join(':::')
+      const list = pairGroups.get(key) || []
+      list.push(edge)
+      pairGroups.set(key, list)
+    })
+
+    const meta = new Map<string, { curvatureOffset: number; staggerT: number; totalParallel: number; index: number }>()
+
+    pairGroups.forEach((group) => {
+      const total = group.length
+      group.forEach((edge, idx) => {
+        const curvatureOffset = total > 1 ? (idx - (total - 1) / 2) * 36 : 0
+        let staggerT = 0.5
+        if (total === 2) staggerT = idx === 0 ? 0.38 : 0.62
+        else if (total > 2) staggerT = 0.3 + (idx / (total - 1)) * 0.4
+
+        meta.set(edge.id, { curvatureOffset, staggerT, totalParallel: total, index: idx })
+      })
+    })
+
+    return meta
+  }, [filteredEdges])
+
+  // Neighborhood map for dimming
+  const neighborhood = useMemo(() => {
+    if (!activeNodeId) return null
+    const set = new Set<string>([activeNodeId])
+    filteredEdges.forEach((e) => {
+      const s = typeof e.source === 'object' ? (e.source as D3GraphNode).id : e.source
+      const t = typeof e.target === 'object' ? (e.target as D3GraphNode).id : e.target
+      if (s === activeNodeId) set.add(t)
+      if (t === activeNodeId) set.add(s)
+    })
+    return set
+  }, [activeNodeId, filteredEdges])
+
+  // Active selected node details
+  const activeSelectedNode = useMemo(() => {
+    if (!activeNodeId) return null
+    return filteredNodes.find((n) => n.id === activeNodeId) ?? null
+  }, [activeNodeId, filteredNodes])
+
+  // Active selected edge details
+  const activeSelectedEdge = useMemo(() => {
+    if (!activeEdgeId) return null
+    return filteredEdges.find((e) => e.id === activeEdgeId) ?? null
+  }, [activeEdgeId, filteredEdges])
+
+  const edgeSourceNode = useMemo(() => {
+    if (!activeSelectedEdge) return null
+    const srcId = typeof activeSelectedEdge.source === 'object' ? (activeSelectedEdge.source as D3GraphNode).id : activeSelectedEdge.source
+    return filteredNodes.find((n) => n.id === srcId) ?? null
+  }, [activeSelectedEdge, filteredNodes])
+
+  const edgeTargetNode = useMemo(() => {
+    if (!activeSelectedEdge) return null
+    const tgtId = typeof activeSelectedEdge.target === 'object' ? (activeSelectedEdge.target as D3GraphNode).id : activeSelectedEdge.target
+    return filteredNodes.find((n) => n.id === tgtId) ?? null
+  }, [activeSelectedEdge, filteredNodes])
+
+  // Active node connections count
+  const activeNodeConnections = useMemo(() => {
+    if (!activeNodeId) return []
+    return filteredEdges.filter((e) => {
+      const s = typeof e.source === 'object' ? (e.source as D3GraphNode).id : e.source
+      const t = typeof e.target === 'object' ? (e.target as D3GraphNode).id : e.target
+      return s === activeNodeId || t === activeNodeId
+    })
+  }, [activeNodeId, filteredEdges])
+
+  // Zoom & Viewport Action Helpers
+  const zoomIn = useCallback(() => {
+    if (svgRef.current && zoomBehaviorRef.current) {
+      d3.select(svgRef.current).transition().duration(250).call(zoomBehaviorRef.current.scaleBy, 1.25)
+    }
+  }, [])
+
+  const zoomOut = useCallback(() => {
+    if (svgRef.current && zoomBehaviorRef.current) {
+      d3.select(svgRef.current).transition().duration(250).call(zoomBehaviorRef.current.scaleBy, 0.8)
+    }
+  }, [])
+
+  const zoom100 = useCallback(() => {
+    if (svgRef.current && zoomBehaviorRef.current) {
+      d3.select(svgRef.current).transition().duration(250).call(zoomBehaviorRef.current.scaleTo, 1)
+    }
+  }, [])
+
+  const fitView = useCallback(() => {
+    if (!svgRef.current || !gRef.current || !zoomBehaviorRef.current || !containerRef.current) return
+    const svg = d3.select(svgRef.current)
+    const g = d3.select(gRef.current)
+
+    const bounds = (g.node() as SVGGElement).getBBox()
+    const fullWidth = containerRef.current.clientWidth || 900
+    const fullHeight = containerRef.current.clientHeight || 580
+
+    if (bounds.width === 0 || bounds.height === 0) return
+
+    const midX = bounds.x + bounds.width / 2
+    const midY = bounds.y + bounds.height / 2
+
+    const scale = Math.min(
+      Math.max(0.85 / Math.max(bounds.width / fullWidth, bounds.height / fullHeight), 0.25),
+      1.4,
+    )
+
+    const translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY]
+
+    svg.transition().duration(450).call(
+      zoomBehaviorRef.current.transform,
+      d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale),
+    )
+  }, [])
+
+  const reheatSimulation = useCallback(() => {
+    if (simulationRef.current) {
+      simulationRef.current.alpha(0.8).restart()
+      setTimeout(fitView, 400)
+    }
+  }, [fitView])
+
+  // Playback timer for temporal scrubber
+  useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (isPlaying) {
+      timer = setInterval(() => {
+        setTimeIndex((prev) => {
+          if (prev >= 100) {
+            setIsPlaying(false)
+            return 100
+          }
+          return prev + 2
+        })
+      }, 250)
+    }
+    return () => clearInterval(timer)
+  }, [isPlaying])
+
+  // Initialize and update D3 Force Simulation
+  useEffect(() => {
+    if (!svgRef.current || !containerRef.current) return
+
+    const width = containerRef.current.clientWidth || 900
+    const heightPx = containerRef.current.clientHeight || 580
+
+    const svg = d3.select(svgRef.current)
+    svg.selectAll('*').remove() // Clean canvas
+
+    // Setup zoom container
+    const g = svg.append('g').attr('class', 'nexus-d3-canvas')
+    gRef.current = g.node()
+
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.15, 3.5])
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform)
+      })
+
+    zoomBehaviorRef.current = zoom
+    svg.call(zoom).on('dblclick.zoom', null)
+
+    // Markers for edge arrows
+    const defs = svg.append('defs')
+    const markerTypes = ['default', 'ACCUSED_IN', 'CO_ACCUSED_IN', 'VICTIM_IN', 'USES_PHONE', 'OWNS_ACCOUNT', 'TRANSFERRED_TO', 'COMMUNICATED_WITH', 'CONNECTS_CASES']
+    
+    markerTypes.forEach((type) => {
+      const stroke = EDGE_STROKES[type] ?? '#94a3b8'
+      defs.append('marker')
+        .attr('id', `arrow-${type}`)
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 30) // Position arrow cleanly at circle node boundary
+        .attr('refY', 0)
+        .attr('markerWidth', 6.5)
+        .attr('markerHeight', 6.5)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('d', 'M0,-5L10,0L0,5')
+        .attr('fill', stroke)
+    })
+
+    // Clone data to preserve simulation state across updates
+    const simNodes: D3GraphNode[] = filteredNodes.map((d) => ({ ...d }))
+    const nodeMap = new Map(simNodes.map((d) => [d.id, d]))
+
+    const simEdges: D3GraphEdge[] = filteredEdges
+      .map((d) => {
+        const s = typeof d.source === 'object' ? (d.source as D3GraphNode).id : d.source
+        const t = typeof d.target === 'object' ? (d.target as D3GraphNode).id : d.target
+        return {
+          ...d,
+          source: nodeMap.get(s) ?? s,
+          target: nodeMap.get(t) ?? t,
+        }
+      })
+      .filter((d) => typeof d.source === 'object' && typeof d.target === 'object')
+
+    // Create D3 Force Simulation
+    const simulation = d3.forceSimulation<D3GraphNode>(simNodes)
+      .force(
+        'link',
+        d3.forceLink<D3GraphNode, D3GraphEdge>(simEdges)
+          .id((d) => d.id)
+          .distance((d) => {
+            const edgeType = String(d.edge_type || d.label || '')
+            if (edgeType.includes('ACCUSED') || edgeType.includes('VICTIM')) return 145 * densityScale
+            if (edgeType.includes('PHONE') || edgeType.includes('ACCOUNT')) return 120 * densityScale
+            return 130 * densityScale
+          })
+          .strength(0.7),
+      )
+      .force(
+        'charge',
+        d3.forceManyBody().strength((d) => {
+          const typeStr = String((d as D3GraphNode).entity_type || (d as D3GraphNode).type || '').toLowerCase()
+          if (typeStr.includes('case')) return -650 * densityScale
+          return -320 * densityScale
+        }),
+      )
+      .force('collide', d3.forceCollide().radius(50 * densityScale).iterations(3))
+      .force('x', d3.forceX(width / 2).strength(0.06))
+      .force('y', d3.forceY(heightPx / 2).strength(0.06))
+      .force('center', d3.forceCenter(width / 2, heightPx / 2))
+
+    simulationRef.current = simulation
+
+    // Link Layer (Curved paths)
+    const linkGroup = g.append('g').attr('class', 'links')
+    const linkPaths = linkGroup.selectAll<SVGPathElement, D3GraphEdge>('path.edge-line')
+      .data(simEdges, (d) => d.id)
+      .join('path')
+      .attr('class', 'edge-line cursor-pointer')
+      .attr('fill', 'none')
+      .attr('stroke', (d) => {
+        if (activeEdgeId === d.id) return '#e11d48'
+        const type = String(d.edge_type || d.label || '')
+        return EDGE_STROKES[type] ?? '#94a3b8'
+      })
+      .attr('stroke-width', (d) => (activeEdgeId === d.id ? 3.5 : 2))
+      .attr('stroke-dasharray', (d) => (d.derivation_class === 'DERIVED' || String(d.label).includes('DEPENDENCY') ? '5,4' : null))
+      .attr('opacity', (d) => {
+        if (!activeNodeId) return 0.85
+        const src = (d.source as D3GraphNode).id
+        const tgt = (d.target as D3GraphNode).id
+        return (src === activeNodeId || tgt === activeNodeId) ? 1.0 : 0.15
+      })
+      .attr('marker-end', (d) => {
+        const type = String(d.edge_type || d.label || '')
+        return `url(#arrow-${type in EDGE_STROKES ? type : 'default'})`
+      })
+      .on('mouseenter', function(event, d) {
+        if (d.id !== activeEdgeId) {
+          d3.select(this).attr('stroke-width', 3).attr('stroke-opacity', 1)
+        }
+      })
+      .on('mouseleave', function(event, d) {
+        if (d.id !== activeEdgeId) {
+          d3.select(this).attr('stroke-width', 2).attr('stroke-opacity', 0.85)
+        }
+      })
+      .on('click', (event, d) => {
+        event.stopPropagation()
+        handleSelectEdge(d.id)
+      })
+
+    // Edge Label Group (HIDDEN BY DEFAULT — ONLY SHOWN ON CLICKED LINE)
+    const edgeLabelGroup = g.append('g').attr('class', 'edge-labels')
+    const edgeLabels = edgeLabelGroup.selectAll<SVGGElement, D3GraphEdge>('g.edge-badge')
+      .data(simEdges, (d) => d.id)
+      .join('g')
+      .attr('class', 'edge-badge cursor-pointer select-none')
+      .style('display', (d) => (d.id === activeEdgeId ? 'block' : 'none'))
+      .attr('opacity', (d) => (d.id === activeEdgeId ? 1.0 : 0.0))
+      .on('click', (event, d) => {
+        event.stopPropagation()
+        handleSelectEdge(d.id)
+      })
+
+    // Edge Badge Background Capsule
+    edgeLabels.append('rect')
+      .attr('rx', 10)
+      .attr('ry', 10)
+      .attr('fill', '#ffffff')
+      .attr('stroke', (d) => (activeEdgeId === d.id ? '#e11d48' : EDGE_STROKES[String(d.edge_type || d.label)] ?? '#cbd5e1'))
+      .attr('stroke-width', (d) => (activeEdgeId === d.id ? 2.5 : 1))
+      .attr('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))')
+
+    // Edge Badge Text
+    edgeLabels.append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'middle')
+      .attr('font-size', '8.5px')
+      .attr('font-weight', '800')
+      .attr('fill', '#0f172a')
+      .text((d) => String(d.label || d.edge_type || '').replaceAll('_', ' '))
+
+    // Measure and resize badge rects
+    edgeLabels.each(function() {
+      const textElem = d3.select(this).select('text').node() as SVGTextElement
+      if (textElem) {
+        const bbox = textElem.getBBox()
+        const paddingX = 14
+        const paddingY = 7
+        d3.select(this).select('rect')
+          .attr('x', bbox.x - paddingX / 2)
+          .attr('y', bbox.y - paddingY / 2)
+          .attr('width', Math.max(bbox.width + paddingX, 38))
+          .attr('height', bbox.height + paddingY)
+      }
+    })
+
+    // Drag behavior with Pinning
+    const dragBehavior = d3.drag<SVGGElement, D3GraphNode>()
+      .on('start', (event, d) => {
+        if (!event.active) simulation.alphaTarget(0.3).restart()
+        d.fx = d.x
+        d.fy = d.y
+      })
+      .on('drag', (event, d) => {
+        d.fx = event.x
+        d.fy = event.y
+      })
+      .on('end', (event) => {
+        if (!event.active) simulation.alphaTarget(0)
+      })
+
+    // Node Group (Circle Nodes)
+    const nodeGroup = g.append('g').attr('class', 'nodes')
+    const nodeContainers = nodeGroup.selectAll<SVGGElement, D3GraphNode>('g.node-card')
+      .data(simNodes, (d) => d.id)
+      .join('g')
+      .attr('class', 'node-card cursor-pointer select-none')
+      .call(dragBehavior)
+      .on('click', (event, d) => {
+        event.stopPropagation()
+        handleSelectNode(d.id)
+      })
+      .on('dblclick', (event, d) => {
+        event.stopPropagation()
+        onNodeDoubleClick?.(d.id)
+        // Reset pin on double click
+        d.fx = null
+        d.fy = null
+        simulation.alpha(0.3).restart()
+      })
+
+    // 1. Outer Focus & Louvain Community Ring
+    nodeContainers.append('circle')
+      .attr('class', 'focus-ring')
+      .attr('r', (d) => {
+        const isCase = String(d.entity_type || d.type || '').toLowerCase().includes('case')
+        return isCase ? 31 : 27
+      })
+      .attr('fill', 'none')
+      .attr('stroke', (d) => {
+        if (activeNodeId === d.id) return '#0284c7'
+        if (highlightDelta && d.isDelta) return '#10b981'
+        const communityBadge = (d.badges || []).find((b) => b.startsWith('COMMUNITY-'))
+        if (communityBadge && COMMUNITY_STROKES[communityBadge]) return COMMUNITY_STROKES[communityBadge]
+        return 'none'
+      })
+      .attr('stroke-width', (d) => (activeNodeId === d.id || (highlightDelta && d.isDelta) ? 3.5 : 2.5))
+      .attr('stroke-dasharray', (d) => (highlightDelta && d.isDelta ? '4,3' : null))
+      .attr('opacity', (d) => {
+        if (!activeNodeId) return 1.0
+        return neighborhood?.has(d.id) ? 1.0 : 0.2
+      })
+
+    // 2. Inner Circle Body
+    nodeContainers.append('circle')
+      .attr('class', 'node-circle')
+      .attr('r', (d) => {
+        const isCase = String(d.entity_type || d.type || '').toLowerCase().includes('case')
+        return isCase ? 25 : 21
+      })
+      .attr('fill', (d) => {
+        const rawType = String(d.entity_type || d.type || 'Person')
+        const cfg = ENTITY_CONFIG[rawType] ?? ENTITY_CONFIG.Person
+        return cfg.bg
+      })
+      .attr('stroke', (d) => {
+        const rawType = String(d.entity_type || d.type || 'Person')
+        const cfg = ENTITY_CONFIG[rawType] ?? ENTITY_CONFIG.Person
+        return cfg.stroke
+      })
+      .attr('stroke-width', (d) => (activeNodeId === d.id ? 3 : 2))
+      .attr('filter', 'drop-shadow(0 2px 5px rgba(0,0,0,0.12))')
+      .attr('opacity', (d) => {
+        if (!activeNodeId) return 1.0
+        return neighborhood?.has(d.id) ? 1.0 : 0.22
+      })
+
+    // 3. Center Icon
+    nodeContainers.append('text')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'central')
+      .attr('font-size', (d) => {
+        const isCase = String(d.entity_type || d.type || '').toLowerCase().includes('case')
+        return isCase ? '15px' : '13px'
+      })
+      .attr('opacity', (d) => (!activeNodeId || neighborhood?.has(d.id) ? 1.0 : 0.25))
+      .text((d) => {
+        const rawType = String(d.entity_type || d.type || 'Person')
+        return (ENTITY_CONFIG[rawType] ?? ENTITY_CONFIG.Person).icon
+      })
+
+    // 4. Badge Dot (Top-Right of Circle)
+    nodeContainers.filter((d) => Boolean((highlightDelta && d.isDelta) || (d.badges && d.badges.length > 0)))
+      .append('circle')
+      .attr('cx', 16)
+      .attr('cy', -16)
+      .attr('r', 6)
+      .attr('fill', (d) => (highlightDelta && d.isDelta ? '#10b981' : '#3b82f6'))
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 1.5)
+
+    // 5. Node Label (Positioned cleanly below circle)
+    const labelGroup = nodeContainers.append('g')
+      .attr('class', 'node-label-group')
+      .attr('opacity', (d) => (!activeNodeId || neighborhood?.has(d.id) ? 1.0 : 0.25))
+
+    // Background pill for text
+    labelGroup.append('rect')
+      .attr('class', 'node-label-bg')
+      .attr('rx', 6)
+      .attr('ry', 6)
+      .attr('fill', '#ffffff')
+      .attr('stroke', '#e2e8f0')
+      .attr('stroke-width', 1)
+      .attr('filter', 'drop-shadow(0 1px 2px rgba(0,0,0,0.06))')
+
+    // Label Text
+    labelGroup.append('text')
+      .attr('class', 'node-label-text')
+      .attr('x', 0)
+      .attr('y', 33)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '9px')
+      .attr('font-weight', '700')
+      .attr('fill', '#0f172a')
+      .text((d) => {
+        const fullLabel = String(d.label || d.name || d.id)
+        return fullLabel.length > 18 ? `${fullLabel.slice(0, 17)}…` : fullLabel
+      })
+
+    // Resize label pill rect to fit text
+    labelGroup.each(function() {
+      const textNode = d3.select(this).select('text').node() as SVGTextElement
+      if (textNode) {
+        const bbox = textNode.getBBox()
+        const paddingX = 10
+        const paddingY = 5
+        d3.select(this).select('rect')
+          .attr('x', bbox.x - paddingX / 2)
+          .attr('y', bbox.y - paddingY / 2)
+          .attr('width', Math.max(bbox.width + paddingX, 30))
+          .attr('height', bbox.height + paddingY)
+      }
+    })
+
+    // Simulation Tick Update (Physics Step)
+    simulation.on('tick', () => {
+      // 1. Update curved link paths
+      linkPaths.attr('d', (d) => {
+        const source = d.source as D3GraphNode
+        const target = d.target as D3GraphNode
+        if (source.x === undefined || source.y === undefined || target.x === undefined || target.y === undefined) return ''
+
+        const meta = parallelEdgeMeta.get(d.id)
+        const offset = meta?.curvatureOffset ?? 0
+
+        if (offset === 0) {
+          return `M ${source.x} ${source.y} L ${target.x} ${target.y}`
+        }
+
+        const dx = target.x - source.x
+        const dy = target.y - source.y
+        const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1)
+        const nx = -dy / dist
+        const ny = dx / dist
+
+        const midX = (source.x + target.x) / 2 + nx * offset
+        const midY = (source.y + target.y) / 2 + ny * offset
+
+        return `M ${source.x} ${source.y} Q ${midX} ${midY} ${target.x} ${target.y}`
+      })
+
+      // 2. Update edge label badges (ONLY VISIBLE ON CLICKED / SELECTED LINE)
+      edgeLabels
+        .style('display', (d) => (d.id === activeEdgeId ? 'block' : 'none'))
+        .attr('opacity', (d) => (d.id === activeEdgeId ? 1.0 : 0.0))
+        .attr('transform', (d) => {
+          const source = d.source as D3GraphNode
+          const target = d.target as D3GraphNode
+          if (source.x === undefined || source.y === undefined || target.x === undefined || target.y === undefined) return ''
+
+          const meta = parallelEdgeMeta.get(d.id)
+          const offset = meta?.curvatureOffset ?? 0
+          const t = meta?.staggerT ?? 0.5
+
+          if (offset === 0) {
+            const lx = source.x + (target.x - source.x) * t
+            const ly = source.y + (target.y - source.y) * t
+            return `translate(${lx}, ${ly})`
+          }
+
+          const dx = target.x - source.x
+          const dy = target.y - source.y
+          const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1)
+          const nx = -dy / dist
+          const ny = dx / dist
+
+          const midX = (source.x + target.x) / 2 + nx * offset
+          const midY = (source.y + target.y) / 2 + ny * offset
+
+          // Point along quadratic bezier at t
+          const u = 1 - t
+          const qx = u * u * source.x + 2 * u * t * midX + t * t * target.x
+          const qy = u * u * source.y + 2 * u * t * midY + t * t * target.y
+
+          return `translate(${qx}, ${qy})`
+        })
+
+      // 3. Update node positions
+      nodeContainers.attr('transform', (d) => `translate(${d.x ?? 0}, ${d.y ?? 0})`)
+    })
+
+    // Auto-fit view after initial stabilization
+    const timer = setTimeout(() => {
+      if (simNodes.length > 0 && svgRef.current && zoomBehaviorRef.current) {
+        fitView()
+      }
+    }, 450)
+
+    return () => {
+      clearTimeout(timer)
+      simulation.stop()
+    }
+  }, [filteredNodes, filteredEdges, activeNodeId, activeEdgeId, highlightDelta, parallelEdgeMeta, neighborhood, densityScale, fitView, handleSelectEdge, handleSelectNode, onNodeDoubleClick])
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative w-full h-full min-h-[450px] overflow-hidden bg-slate-50 border border-neutral-200 rounded-radius-md ${className}`}
+      style={{ height }}
+    >
+      {/* Interactive Controls Overlay */}
+      <div className="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-1 bg-white/95 backdrop-blur-sm p-1 rounded-radius-md border border-neutral-200 shadow-sm">
+        <button
+          onClick={zoomIn}
+          className="p-1.5 hover:bg-neutral-100 rounded-radius-sm text-neutral-600 focus:outline-none transition-colors"
+          title="Zoom In"
+        >
+          <ZoomIn className="h-4 w-4" />
+        </button>
+        <button
+          onClick={zoomOut}
+          className="p-1.5 hover:bg-neutral-100 rounded-radius-sm text-neutral-600 focus:outline-none transition-colors"
+          title="Zoom Out"
+        >
+          <ZoomOut className="h-4 w-4" />
+        </button>
+        <button
+          onClick={zoom100}
+          className="p-1.5 hover:bg-neutral-100 rounded-radius-sm text-neutral-600 font-mono text-[11px] font-bold focus:outline-none transition-colors"
+          title="100% Zoom"
+        >
+          100%
+        </button>
+        <button
+          onClick={fitView}
+          className="p-1.5 hover:bg-neutral-100 rounded-radius-sm text-neutral-600 focus:outline-none transition-colors"
+          title="Fit Canvas"
+        >
+          <Maximize2 className="h-4 w-4" />
+        </button>
+        <button
+          onClick={reheatSimulation}
+          className="p-1.5 hover:bg-neutral-100 rounded-radius-sm text-neutral-600 focus:outline-none transition-colors"
+          title="Re-balance / Auto-Organize Layout"
+        >
+          <RefreshCw className="h-4 w-4" />
+        </button>
+
+        {enableTemporalScrubber && (
+          <>
+            <div className="w-px bg-neutral-200 mx-1 h-4" />
+            <button
+              onClick={() => setShowScrubber((prev) => !prev)}
+              className={`p-1.5 hover:bg-neutral-100 rounded-radius-sm text-neutral-600 focus:outline-none flex items-center gap-1 text-[11px] font-semibold transition-colors ${
+                showScrubber ? 'text-blue-700 bg-blue-50/90 font-bold' : ''
+              }`}
+              title="Toggle Investigative Timeline Scrubber"
+            >
+              <Sliders className="h-3.5 w-3.5" />
+              <span>Timeline Scrubber</span>
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Floating Node Details Card on Canvas */}
+      {activeSelectedNode && (
+        <div className="absolute top-3 right-3 z-30 w-72 max-w-[calc(100%-24px)] bg-white/95 backdrop-blur-md p-4 rounded-xl border border-neutral-200 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="flex items-start justify-between border-b border-neutral-100 pb-2.5">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-sm shadow-xs">
+                {(ENTITY_CONFIG[String(activeSelectedNode.entity_type || activeSelectedNode.type || 'Person')] ?? ENTITY_CONFIG.Person).icon}
+              </div>
+              <div>
+                <span className="text-[9px] font-extrabold uppercase tracking-wider text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                  {String(activeSelectedNode.entity_type || activeSelectedNode.type || 'Entity')}
+                </span>
+                <h4 className="text-sm font-bold text-neutral-900 leading-snug mt-0.5" title={activeSelectedNode.label || activeSelectedNode.id}>
+                  {activeSelectedNode.label || activeSelectedNode.id}
+                </h4>
+              </div>
+            </div>
+            <button
+              onClick={() => handleSelectNode(null)}
+              className="text-neutral-400 hover:text-neutral-700 p-1 rounded-md hover:bg-neutral-100 transition-colors"
+              title="Close Detail Card"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="mt-3 space-y-2.5 text-xs text-neutral-700">
+            <div className="flex justify-between items-center bg-neutral-50 px-2.5 py-1.5 rounded-lg border border-neutral-100">
+              <span className="text-neutral-500 font-medium">Identifier</span>
+              <code className="font-mono text-[10px] text-neutral-800 font-bold">{activeSelectedNode.id}</code>
+            </div>
+
+            <div className="flex justify-between items-center bg-neutral-50 px-2.5 py-1.5 rounded-lg border border-neutral-100">
+              <span className="text-neutral-500 font-medium flex items-center gap-1">
+                <LinkIcon className="h-3 w-3 text-blue-600" /> Connections
+              </span>
+              <span className="font-bold text-blue-800">{activeNodeConnections.length} Relationships</span>
+            </div>
+
+            {/* Dynamic Attributes */}
+            {activeSelectedNode.properties && Object.keys(activeSelectedNode.properties).length > 0 && (
+              <div className="space-y-1 pt-1">
+                <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1">
+                  <Layers className="h-3 w-3" /> Attributes
+                </div>
+                <div className="bg-neutral-50 p-2 rounded-lg border border-neutral-100 max-h-36 overflow-y-auto space-y-1 text-[11px]">
+                  {Object.entries(activeSelectedNode.properties)
+                    .filter(([k]) => !['evidence_ids', 'isDimmed', 'isDelta'].includes(k))
+                    .map(([key, val]) => (
+                      <div key={key} className="flex justify-between gap-2 border-b border-neutral-100/60 pb-0.5 last:border-none">
+                        <span className="text-neutral-500 capitalize">{key.replaceAll('_', ' ')}:</span>
+                        <span className="font-semibold text-neutral-900 truncate max-w-[140px]" title={String(val)}>{String(val)}</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Floating Relationship Details Card when line is clicked */}
+      {activeSelectedEdge && !activeSelectedNode && (
+        <div className="absolute top-3 right-3 z-30 w-72 max-w-[calc(100%-24px)] bg-white/95 backdrop-blur-md p-4 rounded-xl border border-neutral-200 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="flex items-start justify-between border-b border-neutral-100 pb-2.5">
+            <div>
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
+                Relationship
+              </span>
+              <h4 className="text-sm font-bold text-neutral-900 leading-snug mt-0.5">
+                {String(activeSelectedEdge.label || activeSelectedEdge.edge_type || '').replaceAll('_', ' ')}
+              </h4>
+            </div>
+            <button
+              onClick={() => handleSelectEdge(null)}
+              className="text-neutral-400 hover:text-neutral-700 p-1 rounded-md hover:bg-neutral-100 transition-colors"
+              title="Close Relationship Card"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="mt-3 space-y-2.5 text-xs text-neutral-700">
+            {/* Endpoints */}
+            <div className="p-2 bg-neutral-50 rounded-lg border border-neutral-100 space-y-1 text-[11px]">
+              <div className="flex justify-between">
+                <span className="text-neutral-500 font-medium">From:</span>
+                <span className="font-bold text-neutral-900 truncate max-w-[170px]">
+                  {edgeSourceNode?.label || (typeof activeSelectedEdge.source === 'object' ? activeSelectedEdge.source.id : activeSelectedEdge.source)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500 font-medium">To:</span>
+                <span className="font-bold text-neutral-900 truncate max-w-[170px]">
+                  {edgeTargetNode?.label || (typeof activeSelectedEdge.target === 'object' ? activeSelectedEdge.target.id : activeSelectedEdge.target)}
+                </span>
+              </div>
+            </div>
+
+            {/* Reason */}
+            {activeSelectedEdge.reason && (
+              <div>
+                <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1 mb-1">
+                  <FileText className="h-3 w-3 text-blue-600" /> Reason
+                </div>
+                <div className="p-2 bg-blue-50/80 border border-blue-100 rounded-lg text-blue-950 font-semibold text-[11px] leading-relaxed">
+                  {activeSelectedEdge.reason}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Temporal Timeline Scrubber Toolbar */}
+      {enableTemporalScrubber && showScrubber && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 w-[92%] max-w-lg bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-xl border border-neutral-300 shadow-lg flex items-center gap-3">
+          <button
+            onClick={() => setIsPlaying((prev) => !prev)}
+            className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors focus:outline-none"
+            title={isPlaying ? 'Pause Timeline' : 'Play Timeline Evolution'}
+          >
+            {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+          </button>
+          <button
+            onClick={() => {
+              setTimeIndex(0)
+              setIsPlaying(false)
+            }}
+            className="p-1.5 hover:bg-neutral-100 rounded-lg text-neutral-600 transition-colors focus:outline-none"
+            title="Reset Timeline to Start"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+          </button>
+
+          <div className="flex-1 flex flex-col gap-0.5">
+            <div className="flex justify-between text-[9.5px] font-bold text-neutral-600">
+              <span>Investigation Start</span>
+              <span className="text-blue-700 font-mono">
+                {timeIndex < 100 ? `${timeIndex}% Sequence Point` : 'All Grounded Evidence (100%)'}
+              </span>
+              <span>Latest Trace</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={timeIndex}
+              onChange={(e) => {
+                setTimeIndex(Number(e.target.value))
+                setIsPlaying(false)
+              }}
+              className="w-full h-1.5 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* SVG Canvas for D3 Rendering */}
+      <svg
+        ref={svgRef}
+        className="w-full h-full cursor-default"
+        onClick={() => {
+          handleSelectNode(null)
+          handleSelectEdge(null)
+        }}
+      />
+    </div>
+  )
+}
+export default D3NetworkGraph

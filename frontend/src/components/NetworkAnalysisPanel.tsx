@@ -1,34 +1,33 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
-import { ReactFlow, Background, Controls, Handle, Position, ReactFlowProvider, useReactFlow, type Node, type Edge } from '@xyflow/react'
+/**
+ * frontend/src/components/NetworkAnalysisPanel.tsx
+ *
+ * Case Network Analysis Panel powered by D3.js Force-Directed Graph Engine.
+ * Features:
+ * - Dynamic D3 physics simulation with automatic multi-port spacing
+ * - Comprehensive Inspector for Node Attributes & Relationship Evidence
+ * - High-contrast entity cards with entity icons & case badges
+ * - Table / Graph view toggle, Fullscreen view, and Print/Dossier export
+ */
+import { useState, useMemo, useRef } from 'react'
 import { useCaseNetwork, type NetworkNode } from '@/hooks/useCaseNetwork'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
+import { D3NetworkGraph, type D3GraphNode, type D3GraphEdge } from '@/components/nexus/D3NetworkGraph'
 import { 
   Network, 
   Link as LinkIcon, 
-  User, 
   Layers, 
   Table2, 
   Share2, 
-  Briefcase, 
-  ShieldAlert, 
   Minimize2,
-  RefreshCw, 
-  ZoomIn, 
-  ZoomOut, 
   Maximize, 
   Eye, 
   EyeOff, 
   Printer, 
   BookOpen,
-  Phone,
-  Landmark,
   FileText,
   Move
 } from 'lucide-react'
-
-// Import React Flow styles inline to scope them cleanly
-import '@xyflow/react/dist/style.css'
 
 interface NetworkAnalysisPanelProps {
   caseId: string
@@ -51,208 +50,29 @@ function getNodeLabel(node?: NetworkNode | null): string {
   return node?.data?.label || node?.label || node?.id || ''
 }
 
-// 4-Directional handles for clean cable management
-function NodeHandles() {
-  return (
-    <>
-      <Handle type="target" position={Position.Top} id="top" className="!w-2 !h-2 !bg-slate-400 !opacity-0" />
-      <Handle type="source" position={Position.Bottom} id="bottom" className="!w-2 !h-2 !bg-slate-400 !opacity-0" />
-      <Handle type="target" position={Position.Left} id="left" className="!w-2 !h-2 !bg-slate-400 !opacity-0" />
-      <Handle type="source" position={Position.Right} id="right" className="!w-2 !h-2 !bg-slate-400 !opacity-0" />
-    </>
-  )
-}
-
-// Custom node components with high contrast and legible typography
-function CustomCaseNode({ data, id }: { data: { label: string; isDimmed: boolean }; id: string }) {
-  return (
-    <div className={`px-4 py-2.5 rounded-xl border-2 shadow-md text-center transition-all duration-200 min-w-[170px] max-w-[230px] bg-rose-50 border-rose-500 text-rose-950 font-semibold ${data.isDimmed ? 'opacity-25' : 'hover:shadow-lg'}`}>
-      <NodeHandles />
-      <div className="flex items-center justify-center gap-1.5 mb-1 text-[9px] uppercase tracking-wider text-rose-700 font-bold">
-        <Briefcase className="h-3 w-3" /> Case Record
-      </div>
-      <div className="text-neutral-950 font-extrabold text-xs leading-snug break-words px-1">{data.label}</div>
-      <div className="text-[9px] text-rose-700/75 font-mono mt-0.5">Ref: {shortenId(id)}</div>
-    </div>
-  )
-}
-
-function CustomPersonNode({ data, id }: { data: { label: string; isDimmed: boolean }; id: string }) {
-  return (
-    <div className={`px-3 py-2 rounded-xl border-2 shadow-sm text-center transition-all duration-200 min-w-[145px] max-w-[210px] bg-sky-50 border-sky-400 text-sky-950 font-medium ${data.isDimmed ? 'opacity-25' : 'hover:shadow-md'}`}>
-      <NodeHandles />
-      <div className="flex items-center justify-center gap-1 mb-0.5 text-[9px] uppercase tracking-wider text-sky-700 font-bold">
-        <User className="h-3 w-3" /> Person
-      </div>
-      <div className="text-neutral-900 font-bold text-xs leading-snug break-words px-1">{data.label}</div>
-      <div className="text-[8px] text-sky-700/70 font-mono">Ref: {shortenId(id)}</div>
-    </div>
-  )
-}
-
-function CustomDependencyNode({ data, id }: { data: { label: string; isDimmed: boolean }; id: string }) {
-  return (
-    <div className={`px-3 py-2 rounded-xl border-2 shadow-sm text-center transition-all duration-200 min-w-[155px] max-w-[220px] bg-amber-50 border-amber-500 text-amber-950 ${data.isDimmed ? 'opacity-25' : 'hover:shadow-md'}`}>
-      <NodeHandles />
-      <div className="flex items-center justify-center gap-1 mb-0.5 text-[9px] uppercase tracking-wider text-amber-800 font-bold">
-        <ShieldAlert className="h-3 w-3" /> Blocker / Clock
-      </div>
-      <div className="text-neutral-950 font-bold text-xs leading-snug break-words px-1">{data.label}</div>
-      <div className="text-[8px] text-amber-800/75 font-mono mt-0.5">Ref: {shortenId(id)}</div>
-    </div>
-  )
-}
-
-function CustomLawNode({ data, id }: { data: { label: string; isDimmed: boolean }; id: string }) {
-  return (
-    <div className={`px-3.5 py-2.5 rounded-xl border-2 shadow-sm text-center transition-all duration-200 min-w-[165px] max-w-[230px] bg-indigo-50 border-indigo-400 text-indigo-950 font-semibold ${data.isDimmed ? 'opacity-25' : 'hover:shadow-md'}`}>
-      <NodeHandles />
-      <div className="flex items-center justify-center gap-1 mb-0.5 text-[9px] uppercase tracking-wider text-indigo-700 font-bold">
-        <BookOpen className="h-3.5 w-3.5" /> Law / Section
-      </div>
-      <div className="text-neutral-950 font-extrabold text-xs leading-snug break-words px-1">{data.label}</div>
-      <div className="text-[8px] text-indigo-700/75 font-mono mt-0.5">Ref: {shortenId(id)}</div>
-    </div>
-  )
-}
-
-function CustomEvidenceNode({ data, id }: { data: { label: string; isDimmed: boolean }; id: string }) {
-  return (
-    <div className={`px-3.5 py-2.5 rounded-xl border-2 shadow-sm text-center transition-all duration-200 min-w-[155px] max-w-[220px] bg-emerald-50 border-emerald-400 text-emerald-950 font-medium ${data.isDimmed ? 'opacity-25' : 'hover:shadow-md'}`}>
-      <NodeHandles />
-      <div className="flex items-center justify-center gap-1 mb-0.5 text-[9px] uppercase tracking-wider text-emerald-700 font-bold">
-        <FileText className="h-3.5 w-3.5" /> Evidence / Report
-      </div>
-      <div className="text-neutral-900 font-bold text-xs leading-snug break-words px-1">{data.label}</div>
-      <div className="text-[8px] text-emerald-700/75 font-mono mt-0.5">Ref: {shortenId(id)}</div>
-    </div>
-  )
-}
-
-function CustomPhoneNode({ data, id }: { data: { label: string; isDimmed: boolean }; id: string }) {
-  return (
-    <div className={`px-3 py-2 rounded-xl border-2 shadow-sm text-center transition-all duration-200 min-w-[145px] max-w-[210px] bg-amber-50 border-amber-500 text-amber-950 font-medium ${data.isDimmed ? 'opacity-25' : 'hover:shadow-md'}`}>
-      <NodeHandles />
-      <div className="flex items-center justify-center gap-1 mb-0.5 text-[9px] uppercase tracking-wider text-amber-800 font-bold">
-        <Phone className="h-3 w-3" /> Phone / CDR
-      </div>
-      <div className="text-neutral-900 font-bold text-xs leading-snug break-words px-1">{data.label}</div>
-      <div className="text-[8px] text-amber-800/75 font-mono mt-0.5">Ref: {shortenId(id)}</div>
-    </div>
-  )
-}
-
-function CustomAccountNode({ data, id }: { data: { label: string; isDimmed: boolean }; id: string }) {
-  return (
-    <div className={`px-3 py-2 rounded-xl border-2 shadow-sm text-center transition-all duration-200 min-w-[145px] max-w-[210px] bg-purple-50 border-purple-400 text-purple-950 font-medium ${data.isDimmed ? 'opacity-25' : 'hover:shadow-md'}`}>
-      <NodeHandles />
-      <div className="flex items-center justify-center gap-1 mb-0.5 text-[9px] uppercase tracking-wider text-purple-700 font-bold">
-        <Landmark className="h-3 w-3" /> Account / TXN
-      </div>
-      <div className="text-neutral-900 font-bold text-xs leading-snug break-words px-1">{data.label}</div>
-      <div className="text-[8px] text-purple-700/75 font-mono mt-0.5">Ref: {shortenId(id)}</div>
-    </div>
-  )
-}
-
-function CustomNeutralNode({ data, id }: { data: { label: string; isDimmed: boolean }; id: string }) {
-  return (
-    <div className={`px-3 py-2 rounded-xl border-2 border-slate-300 bg-slate-50 shadow-sm text-center transition-all duration-200 min-w-[135px] max-w-[200px] text-slate-800 ${data.isDimmed ? 'opacity-25' : 'hover:shadow-md'}`}>
-      <NodeHandles />
-      <div className="text-neutral-900 font-bold text-xs leading-snug break-words px-1">{data.label}</div>
-      <div className="text-[8px] text-slate-500 font-mono">Ref: {shortenId(id)}</div>
-    </div>
-  )
-}
-
-const nodeTypes = {
-  case: CustomCaseNode,
-  person: CustomPersonNode,
-  officer: CustomPersonNode,
-  dependency: CustomDependencyNode,
-  clock: CustomDependencyNode,
-  evidence: CustomEvidenceNode,
-  intelligencereport: CustomEvidenceNode,
-  intelligence_report: CustomEvidenceNode,
-  'intelligence-report': CustomEvidenceNode,
-  intel: CustomEvidenceNode,
-  report: CustomEvidenceNode,
-  phone: CustomPhoneNode,
-  account: CustomAccountNode,
-  unit: CustomNeutralNode,
-  act: CustomLawNode,
-  section: CustomLawNode,
-  court: CustomLawNode,
-  location: CustomNeutralNode,
-  crimehead: CustomLawNode,
-  crimesubhead: CustomLawNode,
-  'crime-head': CustomLawNode,
-  crime_sub_head: CustomLawNode,
-  default: CustomNeutralNode,
-}
-
-// Wrapper to provide ReactFlow context
-export function NetworkAnalysisPanel(props: NetworkAnalysisPanelProps) {
-  return (
-    <ReactFlowProvider>
-      <NetworkAnalysisPanelContent {...props} />
-    </ReactFlowProvider>
-  )
-}
-
-function NetworkAnalysisPanelContent({ caseId, selectedEntityId, onEntitySelect }: NetworkAnalysisPanelProps) {
+export function NetworkAnalysisPanel({
+  caseId,
+  selectedEntityId,
+  onEntitySelect,
+}: NetworkAnalysisPanelProps) {
   const { data: graphData, isLoading, error, refetch } = useCaseNetwork(caseId)
-  const { fitView, zoomIn, zoomOut, zoomTo, setCenter } = useReactFlow()
-
-  // Fullscreen, view toggles & layout states
   const [viewMode, setViewMode] = useState<ViewMode>('graph')
-  const [layoutDensity, setLayoutDensity] = useState<'normal' | 'spacious' | 'extra-spacious'>('spacious')
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const [showLegend, setShowLegend] = useState(true)
   const [showInspector, setShowInspector] = useState(true)
+  const [showLegend, setShowLegend] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [isPrinting, setIsPrinting] = useState(false)
-
+  const [layoutDensity, setLayoutDensity] = useState<'compact' | 'normal' | 'spacious' | 'extra-spacious'>('normal')
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Sync fullscreen state with ESC exits & trigger canvas re-fit
-  useEffect(() => {
-    const handleFsChange = () => {
-      const fs = !!document.fullscreenElement
-      setIsFullscreen(fs)
-      setTimeout(() => {
-        fitView({ duration: 300 })
-      }, 150)
-    }
-    document.addEventListener('fullscreenchange', handleFsChange)
-    return () => document.removeEventListener('fullscreenchange', handleFsChange)
-  }, [fitView])
-
-  // Re-fit canvas when user changes layout density
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fitView({ duration: 350 })
-    }, 100)
-    return () => clearTimeout(timer)
-  }, [layoutDensity, fitView])
-
   const toggleFullscreen = () => {
+    if (!containerRef.current) return
     if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen().then(() => {
-        setIsFullscreen(true)
-        setTimeout(() => fitView({ duration: 300 }), 150)
-      }).catch(() => {
-        setIsFullscreen((prev) => !prev)
-        setTimeout(() => fitView({ duration: 300 }), 150)
-      })
+      containerRef.current.requestFullscreen().catch(() => setIsFullscreen(true))
+      setIsFullscreen(true)
     } else {
-      document.exitFullscreen().then(() => {
-        setIsFullscreen(false)
-        setTimeout(() => fitView({ duration: 300 }), 150)
-      }).catch(() => {
-        setIsFullscreen(false)
-        setTimeout(() => fitView({ duration: 300 }), 150)
-      })
+      document.exitFullscreen().catch(() => setIsFullscreen(false))
+      setIsFullscreen(false)
     }
   }
 
@@ -261,182 +81,45 @@ function NetworkAnalysisPanelContent({ caseId, selectedEntityId, onEntitySelect 
     setTimeout(() => {
       window.print()
       setIsPrinting(false)
-    }, 300)
+    }, 100)
   }
 
-  // Grouping nodes by relation to Case with adaptive complexity scaling
-  const flowNodes = useMemo<Node[]>(() => {
+  // Transform nodes for D3
+  const d3Nodes = useMemo<D3GraphNode[]>(() => {
     if (!graphData) return []
+    return graphData.nodes.map((n) => ({
+      id: n.id,
+      label: getNodeLabel(n),
+      name: getNodeLabel(n),
+      entity_type: n.type,
+      type: n.type,
+      properties: n.properties,
+    }))
+  }, [graphData])
 
-    const caseNode = graphData.nodes.find(n => n.type === 'case')
-    const primaryCaseId = caseNode ? caseNode.id : ''
-
-    const victimIds = new Set<string>()
-    const accusedIds = new Set<string>()
-    const dependencyIds = new Set<string>()
-    const evidenceIds = new Set<string>()
-    const officerIds = new Set<string>()
-    const lawIds = new Set<string>()
-
-    graphData.edges.forEach(edge => {
-      if (edge.source === primaryCaseId || edge.target === primaryCaseId) {
-        const otherId = edge.source === primaryCaseId ? edge.target : edge.source
-        if (edge.label === 'VICTIM_IN') victimIds.add(otherId)
-        else if (edge.label === 'ACCUSED_IN') accusedIds.add(otherId)
-        else if (edge.label === 'CASE_HAS_DEPENDENCY') dependencyIds.add(otherId)
-        else if (edge.label.includes('EVIDENCE') || edge.label.includes('PRODUCED')) evidenceIds.add(otherId)
-        else if (edge.label.includes('ASSIGNED') || edge.label.includes('INVESTIGATED')) officerIds.add(otherId)
-        else if (edge.label.includes('SECTION') || edge.label.includes('VIOLATED') || edge.label.includes('GOVERNED')) lawIds.add(otherId)
-      }
-    })
-
-    const isLawType = (n: NetworkNode) => ['act', 'section', 'court', 'crimehead', 'crimesubhead'].includes(n.type) || lawIds.has(n.id)
-    const isEvidenceType = (n: NetworkNode) => ['evidence', 'intelligencereport', 'intelligence_report', 'intel', 'report'].includes(n.type) || evidenceIds.has(n.id)
-    const isDependencyType = (n: NetworkNode) => ['dependency', 'clock', 'blocker'].includes(n.type) || dependencyIds.has(n.id)
-    const isOfficerType = (n: NetworkNode) => ['officer', 'unit'].includes(n.type) || officerIds.has(n.id)
-    const isPhoneOrAccount = (n: NetworkNode) => ['phone', 'account', 'bank', 'cdr', 'mobile'].includes(n.type)
-
-    const victimsList = graphData.nodes.filter(n => victimIds.has(n.id))
-    const accusedList = graphData.nodes.filter(n => accusedIds.has(n.id))
-    const lawsList = graphData.nodes.filter(n => isLawType(n) && !accusedIds.has(n.id) && !victimIds.has(n.id))
-    const evidenceList = graphData.nodes.filter(n => isEvidenceType(n) && !isLawType(n))
-    const dependenciesList = graphData.nodes.filter(n => (isDependencyType(n) || isPhoneOrAccount(n)) && !accusedIds.has(n.id) && !victimIds.has(n.id))
-    const officersList = graphData.nodes.filter(n => isOfficerType(n))
-    const remainingList = graphData.nodes.filter(n => n.id !== primaryCaseId && !victimIds.has(n.id) && !accusedIds.has(n.id) && !isLawType(n) && !isEvidenceType(n) && !isDependencyType(n) && !isPhoneOrAccount(n) && !isOfficerType(n))
-
-    const connectedIds = new Set<string>()
-    const activeId = selectedEntityId
-    if (activeId) {
-      connectedIds.add(activeId)
-      graphData.edges.forEach((edge) => {
-        if (edge.source === activeId) connectedIds.add(edge.target)
-        if (edge.target === activeId) connectedIds.add(edge.source)
-      })
-    }
-
-    // Dynamic complexity scaling: expand distances automatically when graphs have more entities
-    const totalNodes = graphData.nodes.length
-    const autoScale = totalNodes > 14 ? 1.35 : totalNodes > 8 ? 1.15 : 1.0
-    const userScale = layoutDensity === 'extra-spacious' ? 1.5 : layoutDensity === 'spacious' ? 1.25 : 0.95
-    const scale = autoScale * userScale
-
-    const colGap = Math.round(260 * scale)
-    const rowGap = Math.round(145 * scale)
-    const centerX = Math.round(620 * scale)
-    const centerY = Math.round(320 * scale)
-
-    return graphData.nodes.map((node) => {
-      const isDimmed = activeId ? !connectedIds.has(node.id) : false
-      
-      // Compute logical, generous non-overlapping 2D coordinates
-      let x: number
-      let y: number
-
-      if (node.id === primaryCaseId) {
-        x = centerX
-        y = centerY
-      } else if (victimIds.has(node.id)) {
-        const idx = victimsList.findIndex(n => n.id === node.id)
-        x = centerX - Math.round((victimsList.length - 1) * 130) + idx * Math.round(260 * scale)
-        y = Math.round(30 * scale)
-      } else if (accusedIds.has(node.id)) {
-        const idx = accusedList.findIndex(n => n.id === node.id)
-        const col = idx % 2
-        const row = Math.floor(idx / 2)
-        x = centerX + Math.round(300 * scale) + col * colGap
-        y = Math.round(30 * scale) + row * Math.round(rowGap * 0.9)
-      } else if (isLawType(node)) {
-        const idx = lawsList.findIndex(n => n.id === node.id)
-        const col = idx % 2
-        const row = Math.floor(idx / 2)
-        x = 30 + col * colGap
-        y = 30 + row * Math.round(rowGap * 0.85)
-      } else if (isEvidenceType(node)) {
-        const idx = evidenceList.findIndex(n => n.id === node.id)
-        const col = idx % 2
-        const row = Math.floor(idx / 2)
-        x = 30 + col * colGap
-        y = centerY + Math.round(40 * scale) + row * Math.round(rowGap * 0.85)
-      } else if (isDependencyType(node) || isPhoneOrAccount(node)) {
-        const idx = dependenciesList.findIndex(n => n.id === node.id)
-        const col = idx % 2
-        const row = Math.floor(idx / 2)
-        x = centerX + Math.round(300 * scale) + col * colGap
-        y = centerY + Math.round(180 * scale) + row * Math.round(rowGap * 0.9)
-      } else if (isOfficerType(node)) {
-        const idx = officersList.findIndex(n => n.id === node.id)
-        const col = idx % 2
-        const row = Math.floor(idx / 2)
-        x = centerX - Math.round(140 * scale) + col * Math.round(colGap * 0.95)
-        y = centerY + Math.round(260 * scale) + row * Math.round(rowGap * 0.85)
-      } else {
-        const idx = remainingList.findIndex(n => n.id === node.id)
-        const col = idx % 2
-        const row = Math.floor(idx / 2)
-        x = centerX + Math.round(60 * scale) + col * colGap
-        y = centerY + Math.round(260 * scale) + row * Math.round(rowGap * 0.85)
-      }
-
-      return {
-        id: node.id,
-        type: node.type,
-        position: { x, y },
-        data: { label: getNodeLabel(node), isDimmed },
-        draggable: true,
-      }
-    })
-  }, [graphData, selectedEntityId, layoutDensity])
-
-  // Center canvas on selected node dynamically
-  useEffect(() => {
-    if (selectedEntityId) {
-      const matchedNode = flowNodes.find(n => n.id === selectedEntityId)
-      if (matchedNode) {
-        setCenter(matchedNode.position.x + 80, matchedNode.position.y + 40, { zoom: 1.35, duration: 450 })
-      }
-    }
-  }, [selectedEntityId, flowNodes, setCenter])
-
-  // Map backend edge structure to React Flow Edge objects with smooth bending & always visible labels
-  const flowEdges = useMemo<Edge[]>(() => {
+  // Transform edges for D3
+  const d3Edges = useMemo<D3GraphEdge[]>(() => {
     if (!graphData) return []
+    return graphData.edges.map((e) => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      edge_type: e.edge_type,
+      label: e.label,
+      reason: e.reason,
+      derivation_class: e.derivation_class,
+      confidence: e.confidence,
+      provenance: e.provenance,
+      properties: e.properties,
+      call_count: (e as Record<string, unknown>).call_count,
+      channel: (e as Record<string, unknown>).channel,
+    }))
+  }, [graphData])
 
-    return graphData.edges.map((edge) => {
-      const isDashed = edge.label === 'CASE_HAS_DEPENDENCY' || edge.label.startsWith('INFERRED_')
-      const isConnected = selectedEntityId ? (edge.source === selectedEntityId || edge.target === selectedEntityId) : true
-      const isSelected = selectedEdgeId === edge.id || (selectedEntityId && (edge.source === selectedEntityId || edge.target === selectedEntityId))
+  const [internalEntityId, setInternalEntityId] = useState<string | null>(null)
+  const activeEntityId = selectedEntityId !== undefined && selectedEntityId !== null ? selectedEntityId : internalEntityId
 
-      // Color coding for different edge types
-      let baseColor = '#64748b'
-      if (edge.label.includes('ACCUSED') || edge.label.includes('CO_ACCUSED')) baseColor = '#e11d48'
-      else if (edge.label.includes('VICTIM')) baseColor = '#0284c7'
-      else if (edge.label.includes('PHONE') || edge.label.includes('COMMUNICAT')) baseColor = '#d97706'
-      else if (edge.label.includes('ACCOUNT') || edge.label.includes('OWNS')) baseColor = '#7c3aed'
-      else if (edge.label.includes('TRANSFER') || edge.label.includes('TXN')) baseColor = '#059669'
-      else if (edge.label.includes('DEPENDENCY')) baseColor = '#ea580c'
-      else if (edge.label.includes('SECTION') || edge.label.includes('VIOLATED') || edge.label.includes('GOVERNED')) baseColor = '#4f46e5'
-
-      return {
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        type: 'smoothstep',
-        label: edge.label ? edge.label.replaceAll('_', ' ') : undefined,
-        labelStyle: { fill: '#0f172a', fontSize: 9.5, fontWeight: 700 },
-        labelBgStyle: { fill: '#ffffff', stroke: baseColor, strokeWidth: 1.5, strokeOpacity: 0.95 },
-        labelBgPadding: [6, 3] as [number, number],
-        labelBgBorderRadius: 4,
-        style: { 
-          stroke: isSelected ? '#e11d48' : (isConnected ? baseColor : '#94a3b8'), 
-          strokeWidth: isSelected ? 2.5 : (isConnected ? 2 : 1),
-          strokeDasharray: isDashed ? '4,4' : undefined 
-        },
-        animated: isConnected && (edge.label === 'CASE_HAS_DEPENDENCY' || edge.label.includes('TRANSFER')),
-      }
-    })
-  }, [graphData, selectedEntityId, selectedEdgeId])
-
-  // Get active inspector selection
+  // Active Inspector selection
   const defaultCaseNode = useMemo<NetworkNode | null>(() => {
     if (!graphData) return null
     return graphData.nodes.find(n => n.type === 'case') || graphData.nodes[0]
@@ -444,15 +127,30 @@ function NetworkAnalysisPanelContent({ caseId, selectedEntityId, onEntitySelect 
 
   const inspectTarget = useMemo<NetworkNode | null>(() => {
     if (!graphData) return null
-    if (selectedEntityId) {
-      return graphData.nodes.find(n => n.id === selectedEntityId) ?? null
+    if (activeEntityId) {
+      return graphData.nodes.find(n => n.id === activeEntityId) ?? null
     }
     return defaultCaseNode
-  }, [graphData, selectedEntityId, defaultCaseNode])
+  }, [graphData, activeEntityId, defaultCaseNode])
 
-  // Connections count for inspector
+  const selectedEdge = useMemo(() => {
+    if (!graphData || !selectedEdgeId) return null
+    return graphData.edges.find(e => e.id === selectedEdgeId) ?? null
+  }, [graphData, selectedEdgeId])
+
+  const edgeSourceNode = useMemo(() => {
+    if (!graphData || !selectedEdge) return null
+    return graphData.nodes.find(n => n.id === selectedEdge.source) ?? null
+  }, [graphData, selectedEdge])
+
+  const edgeTargetNode = useMemo(() => {
+    if (!graphData || !selectedEdge) return null
+    return graphData.nodes.find(n => n.id === selectedEdge.target) ?? null
+  }, [graphData, selectedEdge])
+
+  // Connections for inspector
   const connections = useMemo(() => {
-    const activeId = selectedEntityId || defaultCaseNode?.id
+    const activeId = activeEntityId || defaultCaseNode?.id
     if (!graphData || !activeId) return []
 
     const items: { node: NetworkNode; relation: string }[] = []
@@ -466,7 +164,7 @@ function NetworkAnalysisPanelContent({ caseId, selectedEntityId, onEntitySelect 
       }
     })
     return items
-  }, [graphData, selectedEntityId, defaultCaseNode])
+  }, [graphData, activeEntityId, defaultCaseNode])
 
   if (isLoading) return <LoadingSkeleton layout="detail" />
   if (error) return <ErrorState message="Failed to load case investigation graph." onRetry={refetch} />
@@ -483,7 +181,7 @@ function NetworkAnalysisPanelContent({ caseId, selectedEntityId, onEntitySelect 
 
   return (
     <div className={`relative w-full ${isFullscreen ? 'fixed inset-0 z-50 bg-white p-4 h-screen w-screen flex flex-col overflow-hidden' : 'space-y-4'}`} ref={containerRef}>
-      {/* Printable Paper Overlay (renders only when printing) */}
+      {/* Printable Paper Overlay */}
       {isPrinting && (
         <div className="hidden print:block absolute inset-0 bg-white text-black p-8 font-serif z-50">
           <div className="border-b-2 border-black pb-4 mb-6">
@@ -519,7 +217,7 @@ function NetworkAnalysisPanelContent({ caseId, selectedEntityId, onEntitySelect 
         </div>
       )}
 
-      {/* View Mode Toggle */}
+      {/* View Mode Toggle & Header */}
       <div className="flex items-center justify-between print:hidden">
         <p className="text-small text-neutral-600">{graphDescription}</p>
         <div
@@ -574,8 +272,12 @@ function NetworkAnalysisPanelContent({ caseId, selectedEntityId, onEntitySelect 
                   {graphData.nodes.map((node) => (
                     <tr 
                       key={node.id} 
-                      onClick={() => onEntitySelect?.(node.id)}
-                      className={`hover:bg-neutral-100/50 cursor-pointer ${selectedEntityId === node.id ? 'bg-rose-50/40 font-bold' : ''}`}
+                      onClick={() => {
+                        setInternalEntityId(node.id)
+                        onEntitySelect?.(node.id)
+                        setSelectedEdgeId(null)
+                      }}
+                      className={`hover:bg-neutral-100/50 cursor-pointer ${activeEntityId === node.id ? 'bg-rose-50/40 font-bold' : ''}`}
                     >
                       <td className="px-4 py-2 font-medium text-neutral-900">{getNodeLabel(node)}</td>
                       <td className="px-4 py-2 capitalize text-neutral-600">{node.type}</td>
@@ -591,50 +293,24 @@ function NetworkAnalysisPanelContent({ caseId, selectedEntityId, onEntitySelect 
 
       {/* Graph Canvas Workspace */}
       {viewMode === 'graph' && (
-        <div className={`grid grid-cols-1 gap-4 ${isFullscreen ? 'flex-1 min-h-0 h-[calc(100vh-100px)]' : 'h-[580px]'} transition-all ${showInspector ? 'lg:grid-cols-4' : 'lg:grid-cols-1'}`}>
-          {/* React Flow View (Left 75% or Full) */}
+        <div className={`grid grid-cols-1 gap-4 ${isFullscreen ? 'flex-1 min-h-0 h-[calc(100vh-100px)]' : 'h-[600px]'} transition-all ${showInspector ? 'lg:grid-cols-4' : 'lg:grid-cols-1'}`}>
+          {/* D3 Graph View (Left 75% or Full) */}
           <div className="lg:col-span-3 rounded-radius-md border border-neutral-200 bg-neutral-50 h-full relative flex flex-col min-w-0">
             
-            {/* Top Interactive Graph Toolbar */}
-            <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-1 bg-white/95 p-1 rounded-radius-md border border-neutral-200 shadow-sm">
-              <button onClick={() => zoomIn({ duration: 250 })} className="p-1.5 hover:bg-neutral-100 rounded-radius-sm text-neutral-600 focus:outline-none" title="Zoom In">
-                <ZoomIn className="h-4 w-4" />
-              </button>
-              <button onClick={() => zoomOut({ duration: 250 })} className="p-1.5 hover:bg-neutral-100 rounded-radius-sm text-neutral-600 focus:outline-none" title="Zoom Out">
-                <ZoomOut className="h-4 w-4" />
-              </button>
-              <button onClick={() => zoomTo(1, { duration: 250 })} className="p-1.5 hover:bg-neutral-100 rounded-radius-sm text-neutral-600 font-mono text-caption focus:outline-none" title="100% Zoom">
-                100%
-              </button>
-              <button onClick={() => fitView({ duration: 350 })} className="p-1.5 hover:bg-neutral-100 rounded-radius-sm text-neutral-600 focus:outline-none" title="Fit Canvas">
-                Fit
-              </button>
+            {/* Top Toolbar Controls */}
+            <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-white/95 backdrop-blur-sm p-1 rounded-radius-md border border-neutral-200 shadow-sm">
               <button 
                 onClick={() => {
-                  onEntitySelect?.(null);
-                  setSelectedEdgeId(null);
-                  fitView({ duration: 350 });
-                }} 
-                className="p-1.5 hover:bg-neutral-100 rounded-radius-sm text-neutral-600 focus:outline-none" 
-                title="Reset Layout"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </button>
-              
-              <div className="w-px bg-neutral-200 mx-1" />
-
-              <button 
-                onClick={() => {
-                  setLayoutDensity(prev => prev === 'spacious' ? 'extra-spacious' : prev === 'extra-spacious' ? 'normal' : 'spacious')
+                  setLayoutDensity(prev => prev === 'spacious' ? 'extra-spacious' : prev === 'extra-spacious' ? 'compact' : prev === 'compact' ? 'normal' : 'spacious')
                 }} 
                 className={`p-1.5 hover:bg-neutral-100 rounded-radius-sm text-neutral-600 focus:outline-none flex items-center gap-1 px-2 text-[11px] font-semibold transition-colors ${layoutDensity !== 'normal' ? 'text-blue-700 bg-blue-50/90 font-bold' : ''}`} 
-                title={`Spacing: ${layoutDensity} (Click to expand or tighten diagram)`}
+                title={`Spacing: ${layoutDensity} (Click to expand or compact physics forces)`}
               >
                 <Move className="h-3.5 w-3.5" />
-                <span>{layoutDensity === 'extra-spacious' ? 'Spacing: Extra Wide' : layoutDensity === 'spacious' ? 'Spacing: Expanded' : 'Spacing: Compact'}</span>
+                <span className="capitalize">{layoutDensity}</span>
               </button>
 
-              <div className="w-px bg-neutral-200 mx-1" />
+              <div className="w-px bg-neutral-200 mx-0.5 h-4" />
 
               <button onClick={toggleFullscreen} className="p-1.5 hover:bg-neutral-100 rounded-radius-sm text-neutral-600 focus:outline-none" title="Fullscreen toggle">
                 {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
@@ -650,45 +326,136 @@ function NetworkAnalysisPanelContent({ caseId, selectedEntityId, onEntitySelect 
               </button>
             </div>
 
-            <ReactFlow
-              nodes={flowNodes}
-              edges={flowEdges}
-              nodeTypes={nodeTypes}
-              onNodeClick={(_, node) => {
-                onEntitySelect?.(node.id)
+            {/* D3 Force Directed Graph Engine */}
+            <D3NetworkGraph
+              nodes={d3Nodes}
+              edges={d3Edges}
+              selectedNodeId={activeEntityId}
+              selectedEdgeId={selectedEdgeId}
+              onNodeSelect={(nodeId) => {
+                setInternalEntityId(nodeId)
+                onEntitySelect?.(nodeId)
                 setSelectedEdgeId(null)
               }}
-              onNodeDoubleClick={(_, node) => {
-                setCenter(node.position.x + 80, node.position.y + 40, { zoom: 1.45, duration: 400 })
-              }}
-              onEdgeClick={(_, edge) => {
-                setSelectedEdgeId(edge.id)
+              onEdgeSelect={(edgeId) => {
+                setSelectedEdgeId(edgeId)
+                setInternalEntityId(null)
                 onEntitySelect?.(null)
               }}
-              onPaneClick={() => {
-                onEntitySelect?.(null)
-                setSelectedEdgeId(null)
-              }}
-              fitView
-              aria-label={graphDescription}
+              densityMode={layoutDensity}
+              enableTemporalScrubber={true}
               className="flex-grow min-h-0"
-            >
-              <Background color="#ccc" gap={16} />
-              <Controls showInteractive={false} />
-            </ReactFlow>
+            />
 
-            {/* Dynamic Legend overlay */}
+            {/* Legend overlay */}
             {showLegend && (
-              <div className="absolute bottom-4 left-4 bg-white/90 px-3 py-1.5 rounded-radius-sm border border-neutral-200 text-caption text-neutral-500 shadow-sm z-10 space-y-1">
-                <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-rose-400 mr-1.5" aria-hidden="true" /> Case Record</div>
-                <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-sky-400 mr-1.5" aria-hidden="true" /> Person Entity</div>
-                <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-amber-400 mr-1.5" aria-hidden="true" /> Blocker / Clock</div>
-                <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-neutral-400 mr-1.5" aria-hidden="true" /> Reference / Law</div>
+              <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-2 rounded-radius-sm border border-neutral-200 text-caption text-neutral-600 shadow-md z-10 space-y-1.5">
+                <div className="font-bold text-neutral-900 uppercase tracking-wider text-[9px] mb-1">Entity Categories</div>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
+                  <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-rose-500 mr-1.5" /> Case Record</div>
+                  <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-sky-500 mr-1.5" /> Person Entity</div>
+                  <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-amber-500 mr-1.5" /> CDR / Mobile</div>
+                  <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-violet-500 mr-1.5" /> Bank Account</div>
+                  <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-teal-500 mr-1.5" /> Evidence Log</div>
+                  <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-indigo-500 mr-1.5" /> Penal Section</div>
+                </div>
               </div>
             )}
           </div>
 
           {/* Right Inspector Panel (25%) */}
+          {showInspector && selectedEdgeId && selectedEdge && (
+            <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-5 overflow-y-auto flex flex-col h-full shadow-xs">
+              <div className="border-b border-neutral-200 pb-3 flex items-start justify-between">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.5 rounded-radius-sm">
+                    Relationship Reason & Evidence
+                  </span>
+                  <h3 className="text-h2 font-bold text-neutral-900 mt-2">
+                    {selectedEdge.label?.replaceAll('_', ' ')}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedEdgeId(null)}
+                  className="text-neutral-400 hover:text-neutral-700 p-1 rounded-radius-sm hover:bg-neutral-200 text-xs font-bold"
+                  title="Close Inspector"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-4">
+                {/* Connected Endpoints */}
+                <div>
+                  <h4 className="text-caption font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <LinkIcon className="h-4 w-4" aria-hidden="true" /> Connected Entities
+                  </h4>
+                  <div className="mt-2 space-y-2">
+                    <div className="p-2.5 bg-white border border-neutral-200 rounded-radius-sm">
+                      <div className="text-[9px] font-bold text-neutral-400 uppercase">From (Source)</div>
+                      <div className="font-bold text-neutral-900 text-small">{getNodeLabel(edgeSourceNode)}</div>
+                      <div className="text-[8px] font-mono text-neutral-500">{selectedEdge.source}</div>
+                    </div>
+                    <div className="p-2.5 bg-white border border-neutral-200 rounded-radius-sm">
+                      <div className="text-[9px] font-bold text-neutral-400 uppercase">To (Target)</div>
+                      <div className="font-bold text-neutral-900 text-small">{getNodeLabel(edgeTargetNode)}</div>
+                      <div className="text-[8px] font-mono text-neutral-500">{selectedEdge.target}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reason why they are connected */}
+                <div>
+                  <h4 className="text-caption font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="h-4 w-4 text-status-info" aria-hidden="true" /> Reason for Connection
+                  </h4>
+                  <div className="mt-2 p-3 bg-blue-50/90 border border-blue-200 rounded-radius-sm text-neutral-900 text-small leading-relaxed font-semibold">
+                    {selectedEdge.reason || 'Direct investigative relationship between entities.'}
+                  </div>
+                </div>
+
+                {/* Provenance & Source Metadata */}
+                <div>
+                  <h4 className="text-caption font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <Layers className="h-4 w-4" aria-hidden="true" /> Evidentiary Provenance
+                  </h4>
+                  <dl className="mt-2 text-small space-y-1 text-neutral-700 bg-neutral-100 p-3 rounded-radius-sm">
+                    {selectedEdge.provenance?.source_type && (
+                      <div className="flex justify-between">
+                        <dt className="text-neutral-500">Source Type</dt>
+                        <dd className="font-bold text-blue-900">{String(selectedEdge.provenance.source_type)}</dd>
+                      </div>
+                    )}
+                    {selectedEdge.provenance?.source_id && (
+                      <div className="flex justify-between">
+                        <dt className="text-neutral-500">Source Record ID</dt>
+                        <dd className="font-mono text-[10px]">{String(selectedEdge.provenance.source_id)}</dd>
+                      </div>
+                    )}
+                    {selectedEdge.provenance?.derivation_method && (
+                      <div className="flex justify-between">
+                        <dt className="text-neutral-500">Derivation</dt>
+                        <dd className="font-semibold text-neutral-800">{String(selectedEdge.provenance.derivation_method)}</dd>
+                      </div>
+                    )}
+                    {(selectedEdge as Record<string, unknown>).call_count !== undefined && (
+                      <div className="flex justify-between">
+                        <dt className="text-neutral-500">Call Count</dt>
+                        <dd className="font-bold text-amber-800">{String((selectedEdge as Record<string, unknown>).call_count)} Calls</dd>
+                      </div>
+                    )}
+                    {(selectedEdge as Record<string, unknown>).channel && (
+                      <div className="flex justify-between">
+                        <dt className="text-neutral-500">Channel</dt>
+                        <dd className="capitalize">{String((selectedEdge as Record<string, unknown>).channel).replace('_', ' ')}</dd>
+                      </div>
+                    )}
+                  </dl>
+                </div>
+              </div>
+            </div>
+          )}
+
           {showInspector && inspectTarget && !selectedEdgeId && (
             <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-5 overflow-y-auto flex flex-col h-full shadow-xs">
               <div className="border-b border-neutral-200 pb-3">
@@ -747,3 +514,4 @@ function NetworkAnalysisPanelContent({ caseId, selectedEntityId, onEntitySelect 
     </div>
   )
 }
+export default NetworkAnalysisPanel
