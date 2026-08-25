@@ -1,140 +1,117 @@
-# NEXUS Production Deployment Guide (Render & Cloud Architecture)
+# NEXUS Public SIH Demo Deployment Guide (Vercel Frontend + Render Backend)
 
-> **Platform:** Render (Frontend Static Site + FastAPI Web Service + PostgreSQL + Neo4j AuraDB)  
-> **System:** NEXUS — Evidence-Grounded Criminal Network Intelligence Platform (SIH 2026 PS 26189)  
+> **Hackathon Target:** Smart India Hackathon 2026 (Problem Statement ID: 26189)  
+> **System:** NEXUS — Evidence-Grounded Criminal Network Intelligence Platform  
+> **Client:** Ministry of Home Affairs (MHA) / National Crime Records Bureau (NCRB)  
+> **Recommended Minimal Stack:** **Vercel** (React/Vite SPA) + **Render Free Web Service** (FastAPI)  
 
 ---
 
-## 1. Architecture Overview
+## 1. Minimal Public Deployment Architecture
 
 ```
-                          INVESTIGATOR (Browser)
-                                    │
-                  ┌─────────────────┴─────────────────┐
-                  │ HTTPS                             │ HTTPS (API)
-                  ▼                                   ▼
-      ┌─────────────────────────┐         ┌─────────────────────────┐
-      │   Render Static Site    │         │    Render Web Service   │
-      │   (React 19 / Vite SPA) │         │     (FastAPI Backend)   │
-      └─────────────────────────┘         └────────────┬────────────┘
-                                                       │
-                                     ┌─────────────────┴─────────────────┐
-                                     ▼                                   ▼
-                      ┌─────────────────────────────┐     ┌─────────────────────────────┐
-                      │    PostgreSQL Database      │     │      Neo4j AuraDB           │
-                      │  (Cases, Audit, Auth)       │     │ (Network Graph & Cypher)    │
-                      └─────────────────────────────┘     └─────────────────────────────┘
+                    INVESTIGATOR / JUDGE BROWSER
+                                 │
+                 ┌───────────────┴───────────────┐
+                 │ HTTPS (Static UI)             │ HTTPS (API Calls)
+                 ▼                               ▼
+     ┌───────────────────────┐       ┌───────────────────────┐
+     │        VERCEL         │       │        RENDER         │
+     │  React 19 / Vite SPA  │       │    FastAPI Backend    │
+     │  (Automatic Global    │       │ (Uvicorn on Free Tier │
+     │   CDN & SPA Rewrites) │       │   $PORT & 0.0.0.0)    │
+     └───────────────────────┘       └───────────┬───────────┘
+                                                 │
+                                 ┌───────────────┴───────────────┐
+                                 ▼                               ▼
+                 ┌───────────────────────────────┐ ┌───────────────────────────┐
+                 │  In-Memory GraphStore         │ │  BSA Section 63 Proofs    │
+                 │  445 Nodes, 530 Edges,        │ │  SHA-256 Provenance       │
+                 │  50 Cases, 120 Suspects       │ │  Cryptographic Evidence   │
+                 └───────────────────────────────┘ └───────────────────────────┘
 ```
 
----
-
-## 2. Prerequisites
-1. **GitHub Account** with access to [https://github.com/acchasujal/Nexus](https://github.com/acchasujal/Nexus).
-2. **Render Account** ([render.com](https://render.com)).
-3. *(Optional for Graph persistence)* **Neo4j AuraDB Account** ([neo4j.com/cloud/aura](https://neo4j.com/cloud/aura/)).
+> [!NOTE]
+> **Blueprint is not required.** PostgreSQL, Neo4j, Redis, and Docker are **not required** for the public SIH demo. The backend automatically boots from the self-contained synthetic ground-truth dataset in `<6ms`.
 
 ---
 
-## 3. Option A: Blueprint Deployment (One-Click with `render.yaml`)
+## 2. Step-by-Step Deployment Protocol
 
-1. Log into your Render dashboard.
-2. Click **New +** $\rightarrow$ **Blueprint**.
-3. Connect the `acchasujal/Nexus` repository.
-4. Render will read [`render.yaml`](file:///d:/Projects/CaseClock/render.yaml) and automatically configure:
-   - **`nexus-backend`** (Python Web Service with `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`)
-   - **`nexus-frontend`** (Static Site with SPA rewrite rules for `/network`, `/cases/:id`, etc.)
-5. Click **Apply**.
+### PART A: Deploy FastAPI Backend on Render (5 Minutes)
 
----
-
-## 4. Option B: Manual Service Setup on Render
-
-### Step 4.1: Deploy Backend Web Service
-1. In Render Dashboard, click **New +** $\rightarrow$ **Web Service**.
-2. Select `acchasujal/Nexus` repository.
-3. Configure settings:
-   - **Name:** `nexus-backend`
-   - **Region:** Singapore (or closest to India)
+1. Log into [Render Dashboard](https://dashboard.render.com).
+2. Click **New +** $\rightarrow$ **Web Service**.
+3. Connect the GitHub repository: `https://github.com/acchasujal/Nexus` (or your fork).
+4. Configure service parameters:
+   - **Name:** `nexus-backend` (or your preferred name)
+   - **Region:** Singapore / Frankfurt / Oregon (any available)
    - **Branch:** `main`
-   - **Root Directory:** (leave empty)
+   - **Root Directory:** *(leave blank — repository root)*
    - **Runtime:** `Python 3`
    - **Build Command:** `pip install -r backend/requirements.txt`
    - **Start Command:** `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`
+   - **Instance Type:** `Free`
    - **Health Check Path:** `/health`
-4. Add Environment Variables:
-   - `ENVIRONMENT` = `production`
-   - `CORS_ORIGINS` = `https://<your-frontend-subdomain>.onrender.com`
-   - `JWT_SECRET_KEY` = `generate-a-strong-32-char-random-key`
-   - `ARTIFACT_PATH` = `artifacts/nexus_graph/nexus_graph.json`
-   - `AUTH_MODE` = `demo`
-   - *(Optional)* `DATABASE_URL` = `postgresql://...`
-   - *(Optional)* `NEO4J_URI` = `neo4j+s://xxxx.databases.neo4j.io`
-   - *(Optional)* `NEO4J_USER` = `neo4j`
-   - *(Optional)* `NEO4J_PASSWORD` = `<your-aura-password>`
-5. Click **Create Web Service**. Note the deployed URL (e.g. `https://nexus-backend.onrender.com`).
+5. Configure Environment Variables under **Environment**:
+   | Variable | Value | Notes |
+   | :--- | :--- | :--- |
+   | `ENVIRONMENT` | `production` | Enables production mode |
+   | `AUTH_MODE` | `demo` | Enables role-based demo switching |
+   | `JWT_SECRET_KEY` | *(Click "Generate" or type a 32+ char string)* | Tokens signing secret |
+   | `CORS_ORIGINS` | `https://nexus.vercel.app,http://localhost:5173` | Replace `nexus.vercel.app` with your actual Vercel domain once deployed |
+   | `ARTIFACT_PATH` | `artifacts/nexus_graph/nexus_graph.json` | Default synthetic graph path |
+6. Click **Create Web Service**.
+7. Wait for the build to complete. Note your backend URL (e.g. `https://nexus-backend.onrender.com`).
 
 ---
 
-### Step 4.2: Deploy Frontend Static Site
-1. In Render Dashboard, click **New +** $\rightarrow$ **Static Site**.
-2. Select `acchasujal/Nexus` repository.
-3. Configure settings:
-   - **Name:** `nexus-frontend`
-   - **Branch:** `main`
-   - **Root Directory:** `frontend`
-   - **Build Command:** `npm ci && npm run build`
-   - **Publish Directory:** `dist`
-4. Add Environment Variable:
-   - `VITE_API_BASE_URL` = `https://nexus-backend.onrender.com` (use your actual backend URL)
-5. Configure Redirect/Rewrite rule under **Redirects/Rewrites**:
-   - **Type:** `Rewrite`
-   - **Source:** `/*`
-   - **Destination:** `/index.html`
-6. Click **Create Static Site**.
+### PART B: Deploy Frontend on Vercel (3 Minutes)
+
+1. Log into [Vercel Dashboard](https://vercel.com).
+2. Click **Add New...** $\rightarrow$ **Project**.
+3. Import the `Nexus` GitHub repository.
+4. Configure project settings:
+   - **Framework Preset:** `Vite`
+   - **Root Directory:** Click **Edit** $\rightarrow$ select `frontend` $\rightarrow$ click **Continue**.
+   - **Build Command:** `npm run build` (or default `vite build`)
+   - **Output Directory:** `dist`
+5. Under **Environment Variables**, add:
+   | Key | Value |
+   | :--- | :--- |
+   | `VITE_API_BASE_URL` | `https://nexus-backend.onrender.com` *(Use your actual Render backend URL from Part A)* |
+6. Click **Deploy**.
+7. Vercel will build the bundle and provide your public URL (e.g. `https://nexus-crime-intel.vercel.app`).
+8. *(Important)* Copy your Vercel URL, go back to Render $\rightarrow$ `nexus-backend` $\rightarrow$ **Environment**, and add your Vercel URL to `CORS_ORIGINS`.
 
 ---
 
-## 5. PostgreSQL & Neo4j AuraDB Setup
+## 3. Verification & Smoke Test Checklist
 
-### PostgreSQL on Render:
-1. Click **New +** $\rightarrow$ **PostgreSQL**.
-2. Set Database: `nexus_db`, User: `nexus`.
-3. Copy the **Internal Database URL** into the backend's `DATABASE_URL` environment variable.
+Once both services are deployed, test the live deployment in under 60 seconds:
 
-### Neo4j AuraDB:
-1. Create a Free/Professional AuraDB Instance at [console.neo4j.io](https://console.neo4j.io).
-2. Download credentials `.txt` file.
-3. Set in Render Backend Environment:
-   - `NEO4J_URI`: `neo4j+s://<dbid>.databases.neo4j.io`
-   - `NEO4J_USER`: `neo4j`
-   - `NEO4J_PASSWORD`: `<your-downloaded-password>`
-
----
-
-## 6. Health & Readiness Verification
-
-Once deployed, verify endpoints:
-```bash
-# 1. Process Liveness
-curl -I https://nexus-backend.onrender.com/health
-# Response: HTTP/2 200 {"status":"healthy","service":"nexus-backend",...}
-
-# 2. Storage & Graph Readiness
-curl https://nexus-backend.onrender.com/ready
-# Response: {"status":"ready","total_nodes":445,"total_edges":530,...}
-```
+1. **Liveness Check:**
+   ```bash
+   curl https://nexus-backend.onrender.com/health
+   # Response: {"status":"ok","service":"nexus-backend","version":"1.0.0","environment":"production"}
+   ```
+2. **Readiness & Graph Data Check:**
+   ```bash
+   curl https://nexus-backend.onrender.com/ready
+   # Response: {"status":"ready","service":"nexus-backend","storage":"in_memory","total_nodes":445,"total_edges":530}
+   ```
+3. **Open Vercel Frontend in Browser:**
+   - Open your Vercel URL (e.g. `https://nexus-crime-intel.vercel.app`).
+   - Click **Login as Investigator**.
+   - Search `9845011223` in Universal Search $\rightarrow$ confirms backend connectivity.
+   - Navigate to **Entity Fusion** $\rightarrow$ confirms cross-case candidate resolution.
+   - Navigate to **Network Explorer** $\rightarrow$ confirms D3 multi-hop graph canvas rendering.
+   - Refresh on nested route `/fusion` or `/network` $\rightarrow$ confirms Vercel SPA rewrites work.
 
 ---
 
-## 7. Demo Day Presentation Protocol (Judge Remote Access)
+## 4. Resetting Demo Fixtures During Live Evaluation
 
-1. Share the deployed Frontend URL: `https://nexus-frontend.onrender.com`
-2. The judge selects any role (`Investigator`, `Analyst`, `Supervisor`, `SP`) at login.
-3. Standard demonstration sequence runs out-of-the-box without requiring local servers:
-   - **Worklist:** Review live multi-jurisdictional FIRs.
-   - **Universal Search:** Search `9845011223` or `Rafiq`.
-   - **Entity Fusion:** Compare cross-case candidates (CASE-141 ↔ CASE-207) and confirm fusion.
-   - **Global Network Canvas:** Explore D3-rendered multi-hop syndicate topology with Louvain clusters.
-   - **Evidence & Chain of Custody:** Verify Section 63 BSA SHA-256 cryptographic hashes.
-   - **Ethical Copilot:** Demonstrate real-time refusal of predictive guilt scoring vs grounded answers.
-   - **Export:** Generate Section 63 BSA-compliant court dossier PDF.
+If you need to reset all suspect merges, graph links, and lead triages back to the initial state during a live presentation:
+- Navigate to **Settings** (`/settings`) in the UI.
+- Click **Reset Demo Fixture**.
