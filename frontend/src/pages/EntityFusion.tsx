@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   GitMerge, CheckCircle2, XCircle, Clock, FileText, AlertTriangle,
-  ThumbsUp, ThumbsDown, PauseCircle, ShieldCheck, Network,
+  ThumbsUp, PauseCircle, ShieldCheck, Network,
 } from 'lucide-react'
 import { useResolutionCandidates, useDecideCandidate } from '@/hooks/useNexus'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'

@@ -3,7 +3,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { 
   Network, 
   Users, 
-  Share2, 
   Layers, 
   Clock, 
   FileText, 

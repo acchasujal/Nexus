@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Clock, Calendar, FileText, Phone, Landmark, ShieldCheck, MapPin, Briefcase, Filter } from 'lucide-react'
+import { Clock, Calendar, FileText, Phone, Landmark, ShieldCheck, MapPin, Briefcase } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 import { allSourceRecords } from '@/lib/mocks/nexusFixture'
 

@@ -1,14 +1,25 @@
 import { useState, useEffect } from 'react'
-import { ShieldCheck, UserCheck, Calendar, Filter, Activity, Lock } from 'lucide-react'
+import { ShieldCheck } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 
+interface AuditLogEntry {
+  id: string
+  user_id: string
+  user_role: string
+  action: string
+  entity_id?: string
+  case_id?: string
+  timestamp: string
+  details?: Record<string, unknown>
+}
+
 export default function Audit() {
-  const [logs, setLogs] = useState<any[]>([])
+  const [logs, setLogs] = useState<AuditLogEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     apiClient.getAuditLogs().then((data) => {
-      setLogs(Array.isArray(data) ? data : [])
+      setLogs(Array.isArray(data) ? (data as AuditLogEntry[]) : [])
     }).catch(() => {
       setLogs([
         { id: 'aud-1', user_id: 'dev-io', user_role: 'INVESTIGATOR', action: 'network_explored', entity_id: 'case-0001', timestamp: '2026-01-15T12:00:00Z', details: { depth: 2 } },

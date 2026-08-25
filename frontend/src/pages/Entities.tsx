@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Users, CheckCircle2, HelpCircle, AlertTriangle, XCircle, ShieldCheck, Search } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
+import type { EntityResolutionMatchResponse } from '@shared/contracts/api'
 
 export default function Entities() {
   const [nameQuery, setNameQuery] = useState('Vikram Sharma')
   const [phoneQuery, setPhoneQuery] = useState('9845012345')
   const [vehicleQuery, setVehicleQuery] = useState('KA01AB1001')
   const [addressQuery, setAddressQuery] = useState('MG Road, Bengaluru')
-  const [matches, setMatches] = useState<any[]>([])
+  const [matches, setMatches] = useState<EntityResolutionMatchResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
 

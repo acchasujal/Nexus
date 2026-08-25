@@ -98,7 +98,7 @@ export async function apiFetch<T>(
 export const apiClient = {
   // Investigations
   getInvestigations: (params?: { district?: string; category?: string; status?: string }) => {
-    const query = new URLSearchParams(params as any).toString()
+    const query = new URLSearchParams(params as Record<string, string>).toString()
     return apiFetch<InvestigationSummaryResponse[]>(`/api/v1/investigations${query ? `?${query}` : ''}`)
   },
   getInvestigationDetail: (caseId: string) => {
@@ -119,17 +119,17 @@ export const apiClient = {
   },
 
   // Communities & Centrality
-  getCommunities: () => apiFetch<any[]>('/api/v1/communities'),
-  getBridges: () => apiFetch<any[]>('/api/v1/influence/bridges'),
-  getInfluenceRankings: () => apiFetch<any[]>('/api/v1/influence/rankings'),
+  getCommunities: () => apiFetch<Record<string, unknown>[]>('/api/v1/communities'),
+  getBridges: () => apiFetch<Record<string, unknown>[]>('/api/v1/influence/bridges'),
+  getInfluenceRankings: () => apiFetch<Record<string, unknown>[]>('/api/v1/influence/rankings'),
 
   // Patterns
-  getRepeatOffenders: () => apiFetch<any[]>('/api/v1/patterns/repeat-offenders'),
-  getSharedClusters: () => apiFetch<any[]>('/api/v1/patterns/shared-clusters'),
+  getRepeatOffenders: () => apiFetch<Record<string, unknown>[]>('/api/v1/patterns/repeat-offenders'),
+  getSharedClusters: () => apiFetch<Record<string, unknown>[]>('/api/v1/patterns/shared-clusters'),
 
   // Timeline & Evidence
   getTimeline: (caseId?: string) => {
-    return apiFetch<any[]>(`/api/v1/timeline${caseId ? `?case_id=${caseId}` : ''}`)
+    return apiFetch<Record<string, unknown>[]>(`/api/v1/timeline${caseId ? `?case_id=${caseId}` : ''}`)
   },
 
   // Copilot
@@ -141,7 +141,7 @@ export const apiClient = {
   },
 
   // Audit
-  getAuditLogs: (limit = 50) => apiFetch<any[]>(`/api/v1/audit?limit=${limit}`),
+  getAuditLogs: (limit = 50) => apiFetch<Record<string, unknown>[]>(`/api/v1/audit?limit=${limit}`),
 
   // ── NEXUS prototype endpoints (frozen M4 contract) ──────────────────────
   nexusIngest: (files: { source_type: string; file_name: string }[]) => {

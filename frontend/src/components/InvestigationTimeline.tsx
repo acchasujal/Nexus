@@ -22,8 +22,32 @@ interface TimelineEvent {
   entityId?: string
 }
 
+interface CaseDependency {
+  id: string
+  name: string
+  status: string
+  days_stale?: number
+}
+
+interface CaseClock {
+  id: string
+  clock_type: string
+  status: string
+  days_remaining?: number
+}
+
+interface CaseDetailModel {
+  fir_number?: string
+  created_at?: string
+  station?: string
+  offence_category?: string
+  accused?: { name?: string; id?: string }[]
+  dependencies?: CaseDependency[]
+  clocks?: CaseClock[]
+}
+
 interface InvestigationTimelineProps {
-  caseDetail: any
+  caseDetail?: CaseDetailModel | null
   selectedEntityId: string | null
   onEntitySelect: (id: string | null) => void
 }
@@ -61,13 +85,13 @@ export function InvestigationTimeline({ caseDetail, selectedEntityId, onEntitySe
     })
 
     // 3. Dependencies created/escalated
-    caseDetail.dependencies?.forEach((dep: any, index: number) => {
+    caseDetail.dependencies?.forEach((dep, index: number) => {
       list.push({
         id: `dep-created-${dep.id}`,
         type: 'dependency',
         timestamp: `${15 + index} Oct 2026`,
         title: `${dep.name} Pending`,
-        description: `Evidentiary dependency created. Status: ${dep.status}. Stale: ${dep.days_stale} days.`,
+        description: `Evidentiary dependency created. Status: ${dep.status}. Stale: ${dep.days_stale || 0} days.`,
         severity: dep.status === 'escalated' ? 'warning' : 'normal',
         milestone: false,
         entityId: dep.id
@@ -88,14 +112,14 @@ export function InvestigationTimeline({ caseDetail, selectedEntityId, onEntitySe
     })
 
     // 4. Investigation timeline warnings
-    caseDetail.clocks?.forEach((clk: any) => {
+    caseDetail.clocks?.forEach((clk) => {
       if (clk.status === 'red') {
         list.push({
           id: `clk-warn-${clk.id}`,
           type: 'clock',
           timestamp: '26 Oct 2026',
           title: 'Investigation Timeline Alert',
-          description: `Timeline milestone '${clk.clock_type}' is in critical window. Only ${clk.days_remaining} days remaining.`,
+          description: `Timeline milestone '${clk.clock_type}' is in critical window. Only ${clk.days_remaining || 0} days remaining.`,
           severity: 'warning',
           milestone: true,
           entityId: clk.id
@@ -125,8 +149,8 @@ export function InvestigationTimeline({ caseDetail, selectedEntityId, onEntitySe
 
   // Deterministic summary calculation
   const totalClocks = caseDetail?.clocks?.length || 0
-  const breachedClocks = caseDetail?.clocks?.filter((c: any) => c.status === 'overdue').length || 0
-  const pendingDeps = caseDetail?.dependencies?.filter((d: any) => d.status !== 'resolved').length || 0
+  const breachedClocks = caseDetail?.clocks?.filter((c) => c.status === 'overdue').length || 0
+  const pendingDeps = caseDetail?.dependencies?.filter((d) => d.status !== 'resolved').length || 0
 
   const summaryText = useMemo(() => {
     return `Investigation timeline is active. There are ${totalClocks} trackable milestones (${breachedClocks} overdue) and ${pendingDeps} pending evidentiary dependencies. Immediate review recommended.`

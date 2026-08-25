@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Sparkles, Send, ShieldCheck, AlertTriangle, FileText } from 'lucide-react'
+import { Sparkles, Send, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 import type { CopilotQueryResponse } from '@shared/contracts/api'
 

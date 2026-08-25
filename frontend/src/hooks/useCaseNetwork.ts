@@ -30,7 +30,7 @@ export interface NetworkResponse {
 export function useCaseNetwork(caseId?: string) {
   return useQuery<NetworkResponse>({
     queryKey: ['case-network', caseId],
-    queryFn: () => apiFetch<NetworkResponse>(`/cases/${caseId}/network`),
+    queryFn: () => apiFetch<NetworkResponse>(`/api/v1/network/cases/${caseId}`),
     enabled: Boolean(caseId),
     staleTime: 0,
   })

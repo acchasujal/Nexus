@@ -7,7 +7,7 @@ interface SimilarityPanelProps {
   firNumber: string
 }
 
-export function SimilarityPanel({ caseId, firNumber }: SimilarityPanelProps) {
+export function SimilarityPanel({ caseId, firNumber: _firNumber }: SimilarityPanelProps) {
   const { data, isLoading, error } = useSimilarCases(caseId)
 
   const matchParameters = [

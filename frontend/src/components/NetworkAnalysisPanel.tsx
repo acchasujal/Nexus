@@ -1,11 +1,9 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { ReactFlow, Background, Controls, Handle, Position, ReactFlowProvider, useReactFlow, type Node, type Edge } from '@xyflow/react'
-import { useCaseNetwork, type NetworkNode, type NetworkEdge } from '@/hooks/useCaseNetwork'
+import { useCaseNetwork, type NetworkNode } from '@/hooks/useCaseNetwork'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { 
-  Info, 
-  HelpCircle, 
   Network, 
   Link as LinkIcon, 
   User, 
@@ -14,7 +12,6 @@ import {
   Share2, 
   Briefcase, 
   ShieldAlert, 
-  Maximize2, 
   Minimize2,
   RefreshCw, 
   ZoomIn, 
@@ -23,7 +20,6 @@ import {
   Eye, 
   EyeOff, 
   Printer, 
-  Download,
   BookOpen
 } from 'lucide-react'
 
@@ -343,19 +339,6 @@ function NetworkAnalysisPanelContent({ caseId, selectedEntityId, onEntitySelect 
     })
     return items
   }, [graphData, selectedEntityId, defaultCaseNode])
-
-  const getRelationExplanation = (label: string) => {
-    switch (label) {
-      case 'ACCUSED_IN':
-        return 'Entity is identified as a primary accused party listed in the FIR.'
-      case 'VICTIM_IN':
-        return 'Entity is identified as the victim / complainant listed in the FIR.'
-      case 'CASE_HAS_DEPENDENCY':
-        return 'Case has an outstanding evidentiary requirement blocking chargesheet progression.'
-      default:
-        return 'Entity is linked to this case file.'
-    }
-  }
 
   if (isLoading) return <LoadingSkeleton layout="detail" />
   if (error) return <ErrorState message="Failed to load case investigation graph." onRetry={refetch} />

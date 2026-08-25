@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Monitor, Bell, ShieldCheck, ShieldAlert, RotateCcw, Loader2, CheckCircle2 } from 'lucide-react'
+import { Monitor, ShieldCheck, ShieldAlert, RotateCcw, Loader2, CheckCircle2 } from 'lucide-react'
 import { useResetDemo } from '@/hooks/useNexus'
 
 export default function Settings() {
