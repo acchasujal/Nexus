@@ -22,11 +22,12 @@ services:
     healthCheckPath: /health
 
   # ── REACT / VITE FRONTEND STATIC SITE ─────────────────────────────────────
-  - type: static
+  - type: web
     name: nexus-frontend
+    runtime: static
     rootDir: frontend
     buildCommand: "npm ci && npm run build"
-    publishDir: dist
+    staticPublishPath: dist
     routes:
       # SPA fallback rewrite: all deep routes resolve to index.html
       - type: rewrite
@@ -35,3 +36,4 @@ services:
     envVars:
       - key: VITE_API_BASE_URL
         value: "https://nexus-backend.onrender.com"
+
