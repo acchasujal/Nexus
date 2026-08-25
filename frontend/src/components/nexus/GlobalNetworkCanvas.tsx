@@ -43,7 +43,6 @@ export function GlobalNetworkCanvas({
   onNodeSelect,
 }: GlobalNetworkCanvasProps) {
   const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set())
-  const [caseFilter, setCaseFilter] = useState<string>(initialCaseFilter || 'ALL')
   const [selectedNode, setSelectedNode] = useState<string | null>(initialNodeId || null)
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null)
   const [showLegendMobile, setShowLegendMobile] = useState(false)
@@ -65,6 +64,35 @@ export function GlobalNetworkCanvas({
     graph.nodes.forEach((n) => n.case_ids.forEach((c) => ids.add(c)))
     return ['ALL', ...[...ids].sort()]
   }, [graph])
+
+  // If the initial case filter from URL doesn't match any known case, fall back to ALL
+  const resolvedInitialFilter = useMemo(() => {
+    if (!initialCaseFilter) return 'ALL'
+    // Direct match
+    if (caseOptions.includes(initialCaseFilter)) return initialCaseFilter
+    // Try case-insensitive match (e.g. 'case-0027' vs 'CASE-0027')
+    const upper = initialCaseFilter.toUpperCase()
+    const match = caseOptions.find((c) => c.toUpperCase() === upper)
+    if (match) return match
+    // Try partial/numeric match: extract digits from filter and match against case IDs
+    const filterDigits = initialCaseFilter.replace(/\D/g, '')
+    if (filterDigits) {
+      const partialMatch = caseOptions.find((c) => c !== 'ALL' && c.replace(/\D/g, '').endsWith(filterDigits))
+      if (partialMatch) return partialMatch
+    }
+    return 'ALL'
+  }, [initialCaseFilter, caseOptions])
+
+  const [caseFilter, setCaseFilter] = useState<string>(resolvedInitialFilter)
+
+  // Sync filter if resolved value changes (e.g. graph data loads after mount)
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (resolvedInitialFilter !== 'ALL' && caseFilter !== resolvedInitialFilter) {
+      setCaseFilter(resolvedInitialFilter)
+    }
+  }, [resolvedInitialFilter, caseFilter])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const toggleType = (t: string) =>
     setHiddenTypes((prev) => {
