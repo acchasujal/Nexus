@@ -24,7 +24,7 @@ class Principal:
     _ANONYMOUS_ROLE: ClassVar[UserRole] = UserRole.INVESTIGATOR
 
     @classmethod
-    def anonymous(cls) -> "Principal":
+    def anonymous(cls) -> Principal:
         return cls(
             user_id=cls._ANONYMOUS_ID,
             email=cls._ANONYMOUS_EMAIL,

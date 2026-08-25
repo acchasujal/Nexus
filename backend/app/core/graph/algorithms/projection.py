@@ -48,12 +48,13 @@ Developer Documentation:
 
 from __future__ import annotations
 
-from typing import Any, Iterable, Set
+from typing import Any
+from collections.abc import Iterable
 from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord, safe_str
 from backend.app.core.graph.enums import GraphEntityType, GraphRelationshipType
 
 # Valid Person-to-Person direct relationship types for network projection
-DEFAULT_PERSON_RELATIONSHIPS: Set[str] = {
+DEFAULT_PERSON_RELATIONSHIPS: set[str] = {
     GraphRelationshipType.COMMUNICATED_WITH.value,
     GraphRelationshipType.CONNECTED_TO.value,
     GraphRelationshipType.CO_ACCUSED_WITH.value,
@@ -61,7 +62,7 @@ DEFAULT_PERSON_RELATIONSHIPS: Set[str] = {
     GraphRelationshipType.LINKED_TO.value,
 }
 
-PERSON_ENTITY_TYPES: Set[str] = {
+PERSON_ENTITY_TYPES: set[str] = {
     GraphEntityType.PERSON.value,
     "Person",
     "PERSON",
@@ -71,7 +72,7 @@ PERSON_ENTITY_TYPES: Set[str] = {
 def project_person_graph(
     store: GraphStore,
     include_self_loops: bool = False,
-    allowed_relationships: Set[str] | None = None,
+    allowed_relationships: set[str] | None = None,
 ) -> GraphStore:
     """
     Project a full heterogeneous investigation graph into a deterministic Person-Only graph.
@@ -165,7 +166,7 @@ def project_person_nodes_and_edges(
     nodes: Iterable[Any],
     edges: Iterable[Any],
     include_self_loops: bool = False,
-    allowed_relationships: Set[str] | None = None,
+    allowed_relationships: set[str] | None = None,
 ) -> tuple[list[Any], list[Any]]:
     """
     Project raw node and edge collections into Person-only node and edge lists.

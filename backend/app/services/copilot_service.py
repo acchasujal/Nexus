@@ -18,16 +18,11 @@ from typing import Any
 
 from backend.app.auth.principal import Principal
 from backend.app.core.graph.algorithms.clustering import (
-    betweenness_centrality,
     detect_communities,
     find_bridge_nodes,
 )
-from backend.app.core.graph.algorithms.pattern_detection import (
-    find_repeat_accused,
-    find_shared_clusters,
-)
 from backend.app.services.audit_service import AuditEventType, AuditService
-from backend.app.services.evidence_service import EvidenceService, _get_prov
+from backend.app.services.evidence_service import EvidenceService
 from shared.contracts.api import (
     CopilotQueryRequest,
     CopilotQueryResponse,

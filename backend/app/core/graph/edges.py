@@ -7,9 +7,8 @@ and SourceRecord lineage tracking.
 
 from __future__ import annotations
 
-import uuid
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .enums import DerivationClass, EdgeStorageMode, GraphEntityType, GraphRelationshipType
@@ -23,7 +22,7 @@ class EvidenceProvenance(BaseModel):
     """Provenance tracking for edges, assertions, and derived relationships."""
     source_type: str = "DIRECT_RECORD"  # "FIR", "CDR", "BANK_TXN", "INTEL_REPORT", "INFERRED"
     source_id: str = ""
-    source_record_id: Optional[str] = None  # Pointer to canonical SourceRecord node ID
+    source_record_id: str | None = None  # Pointer to canonical SourceRecord node ID
     timestamp: datetime = Field(default_factory=_utcnow)
     extracted_fact: str = ""
     derivation_method: str = "DIRECT"  # "DIRECT", "CO_OCCURRENCE", "CALL_RECORD", "FINANCIAL_LEDGER", "ENTITY_RESOLUTION"
@@ -58,15 +57,15 @@ class GraphEdge(BaseModel):
       provenance       : EvidenceProvenance citation object
       properties       : Additional edge properties
     """
-    id: Optional[str] = None
+    id: str | None = None
     source_id: str
     target_id: str
     edge_type: GraphRelationshipType
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     derivation_class: DerivationClass = DerivationClass.FACT
-    source_record_id: Optional[str] = None
+    source_record_id: str | None = None
     storage_mode: EdgeStorageMode = EdgeStorageMode.STORED
     weight: float = 1.0
     created_at: datetime = Field(default_factory=_utcnow)

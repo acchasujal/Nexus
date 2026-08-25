@@ -7,7 +7,7 @@ Every node supports canonical_label, aliases, attributes, confidence, provenance
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -43,8 +43,8 @@ class GraphEntityBase(BaseModel):
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     created_at: datetime = Field(default_factory=_utcnow)
     updated_at: datetime = Field(default_factory=_utcnow)
-    source_id: Optional[str] = None
-    source_type: Optional[str] = None
+    source_id: str | None = None
+    source_type: str | None = None
     properties: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("id")
@@ -135,8 +135,8 @@ class Person(GraphEntityBase):
     phone_numbers: list[str] = Field(default_factory=list)
     vehicles: list[str] = Field(default_factory=list)
     addresses: list[str] = Field(default_factory=list)
-    national_id: Optional[str] = None
-    role_in_case: Optional[str] = None
+    national_id: str | None = None
+    role_in_case: str | None = None
     case_ids: list[str] = Field(default_factory=list)
 
 
@@ -148,7 +148,7 @@ class Case(GraphEntityBase):
     district: str = ""
     state: str = ""
     offence_category: str = ""
-    incident_date: Optional[datetime] = None
+    incident_date: datetime | None = None
     status: str = "OPEN"
     summary: str = ""
     sections: list[str] = Field(default_factory=list)
@@ -159,22 +159,22 @@ class Case(GraphEntityBase):
 class Phone(GraphEntityBase):
     entity_type: GraphEntityType = GraphEntityType.PHONE
     phone_number: str = ""
-    imei: Optional[str] = None
-    imsi: Optional[str] = None
-    carrier: Optional[str] = None
-    registered_owner: Optional[str] = None
+    imei: str | None = None
+    imsi: str | None = None
+    carrier: str | None = None
+    registered_owner: str | None = None
 
 
 class Vehicle(GraphEntityBase):
     entity_type: GraphEntityType = GraphEntityType.VEHICLE
     registration_number: str = ""
     vehicle_type: str = ""  # e.g., "Car", "Motorcycle", "Truck"
-    make: Optional[str] = None
-    model: Optional[str] = None
-    color: Optional[str] = None
-    engine_number: Optional[str] = None
-    chassis_number: Optional[str] = None
-    owner_name: Optional[str] = None
+    make: str | None = None
+    model: str | None = None
+    color: str | None = None
+    engine_number: str | None = None
+    chassis_number: str | None = None
+    owner_name: str | None = None
 
 
 class Location(GraphEntityBase):
@@ -184,34 +184,34 @@ class Location(GraphEntityBase):
     city: str = ""
     district: str = ""
     state: str = ""
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    location_type: Optional[str] = None  # e.g., "CrimeScene", "Residence", "MeetingPoint"
+    latitude: float | None = None
+    longitude: float | None = None
+    location_type: str | None = None  # e.g., "CrimeScene", "Residence", "MeetingPoint"
 
 
 class Organization(GraphEntityBase):
     entity_type: GraphEntityType = GraphEntityType.ORGANIZATION
     name: str = ""
     org_type: str = ""  # e.g., "Gang", "Shell Company", "Enterprise", "Club"
-    jurisdiction: Optional[str] = None
-    registration_number: Optional[str] = None
+    jurisdiction: str | None = None
+    registration_number: str | None = None
 
 
 class Device(GraphEntityBase):
     entity_type: GraphEntityType = GraphEntityType.DEVICE
     device_type: str = ""  # e.g., "Laptop", "Mobile", "HardDrive", "GPS Tracker"
-    mac_address: Optional[str] = None
-    serial_number: Optional[str] = None
-    owner_id: Optional[str] = None
+    mac_address: str | None = None
+    serial_number: str | None = None
+    owner_id: str | None = None
 
 
 class Account(GraphEntityBase):
     entity_type: GraphEntityType = GraphEntityType.ACCOUNT
     account_number: str = ""
     bank_name: str = ""
-    branch: Optional[str] = None
-    ifsc_code: Optional[str] = None
-    account_holder: Optional[str] = None
+    branch: str | None = None
+    ifsc_code: str | None = None
+    account_holder: str | None = None
 
 
 class Transaction(GraphEntityBase):
@@ -231,7 +231,7 @@ class Event(GraphEntityBase):
     event_type: str = ""  # "MEETING", "COMMUNICATION_BURST", "INCIDENT", "TRAVEL"
     description: str = ""
     timestamp: datetime = Field(default_factory=_utcnow)
-    location_id: Optional[str] = None
+    location_id: str | None = None
     participant_ids: list[str] = Field(default_factory=list)
 
 
@@ -252,8 +252,8 @@ class SourceRecord(GraphEntityBase):
     batch_id: str = ""
     source_type: str = "DIRECT_RECORD"
     locator: str = ""
-    raw_excerpt: Optional[str] = None
-    hash: Optional[str] = None
+    raw_excerpt: str | None = None
+    hash: str | None = None
     occurred_at: datetime = Field(default_factory=_utcnow)
 
 
@@ -275,10 +275,10 @@ class Evidence(GraphEntityBase):
     case_id: str = ""
     evidence_type: str = ""  # "CDR", "CCTV", "BALLISTICS", "DOCUMENT", "FINANCIAL"
     collected_at: datetime = Field(default_factory=_utcnow)
-    storage_location: Optional[str] = None
+    storage_location: str | None = None
     description: str = ""
-    file_path: Optional[str] = None
-    hash_sha256: Optional[str] = None
+    file_path: str | None = None
+    hash_sha256: str | None = None
 
 
 class Officer(GraphEntityBase):
@@ -286,7 +286,7 @@ class Officer(GraphEntityBase):
     badge_number: str = ""
     name: str = ""
     rank: str = ""
-    station_id: Optional[str] = None
+    station_id: str | None = None
 
 
 class Unit(GraphEntityBase):

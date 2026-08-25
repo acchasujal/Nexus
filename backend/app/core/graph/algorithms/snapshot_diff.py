@@ -21,9 +21,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any
 
-from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord, safe_str
+from backend.app.core.graph.algorithms.utils import GraphStore
 
 
 # ── Diff Result Data Models ───────────────────────────────────────────────────

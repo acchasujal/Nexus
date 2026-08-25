@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import Any, List, Set
+from typing import Any
 
 try:
     import networkx as nx  # type: ignore[import]

@@ -51,7 +51,7 @@ def _compute_checksum(file_path: Path) -> str:
 
 
 def _load_artifact(file_path: Path) -> dict[str, Any]:
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         return json.load(f)
 
 

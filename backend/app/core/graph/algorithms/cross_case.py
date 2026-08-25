@@ -18,14 +18,14 @@ Design Non-Negotiables:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any
 
 from backend.app.core.graph.algorithms.pattern_rules import (
     PatternFinding,
     _extract_edge_evidence_ids,
     _extract_node_evidence_ids,
 )
-from backend.app.core.graph.algorithms.utils import GraphStore, NodeRecord, safe_str
+from backend.app.core.graph.algorithms.utils import GraphStore
 from backend.app.core.graph.enums import GraphEntityType, GraphRelationshipType
 
 EXCLUDED_ENTITY_TYPES = {

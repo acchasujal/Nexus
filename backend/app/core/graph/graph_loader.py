@@ -7,7 +7,8 @@ Accepts and processes NodeRecord and AdjEdge objects directly.
 
 from __future__ import annotations
 
-from typing import Any, Iterable
+from typing import Any
+from collections.abc import Iterable
 
 from backend.app.core.graph.algorithms.utils import GraphStore, NodeRecord, AdjEdge
 
