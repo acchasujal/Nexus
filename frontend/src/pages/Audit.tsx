@@ -32,8 +32,8 @@ export default function Audit() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-neutral-200 bg-white overflow-hidden shadow-sm">
-        <table className="w-full text-left text-sm text-neutral-800">
+      <div className="rounded-xl border border-neutral-200 bg-white overflow-x-auto shadow-sm">
+        <table className="w-full text-left text-sm text-neutral-800 min-w-[600px]">
           <thead className="bg-neutral-50 text-xs font-bold uppercase tracking-wider text-neutral-700 border-b border-neutral-200">
             <tr>
               <th className="px-4 py-3">Timestamp</th>

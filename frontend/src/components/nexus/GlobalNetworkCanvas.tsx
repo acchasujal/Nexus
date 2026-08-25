@@ -375,19 +375,20 @@ function CanvasInner({ graph, diff, highlightDelta, onEdgeSelect, onNodeSelect }
     [graph.edges, visibleIds, highlightDelta, addedEdges, neighborhood, selectedNode, positions],
   )
 
+  const [showLegendMobile, setShowLegendMobile] = useState(false)
   const typeOptions = [...new Set(graph.nodes.map((n) => n.entity_type))]
 
   return (
-    <div className="relative h-[580px] w-full overflow-hidden rounded-xl border border-neutral-200 bg-slate-50 shadow-sm">
+    <div className="relative h-[480px] sm:h-[540px] md:h-[600px] w-full overflow-hidden rounded-xl border border-neutral-200 bg-slate-50 shadow-sm">
       {/* Top Filter Bar */}
-      <div className="absolute left-3 top-3 z-10 flex flex-wrap items-center gap-2 rounded-lg border border-neutral-200 bg-white/95 backdrop-blur px-3 py-2 text-xs shadow-md">
-        <span className="font-bold uppercase tracking-wider text-neutral-600">Layers</span>
+      <div className="absolute left-2 sm:left-3 top-2 sm:top-3 z-10 flex flex-wrap items-center gap-1.5 sm:gap-2 rounded-lg border border-neutral-200 bg-white/95 backdrop-blur px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs shadow-md max-w-[calc(100%-16px)] sm:max-w-none">
+        <span className="font-bold uppercase tracking-wider text-neutral-600 text-[10px] sm:text-xs">Layers</span>
         {typeOptions.map((t) => (
           <button
             key={t}
             onClick={() => toggleType(t)}
             aria-pressed={!hiddenTypes.has(t)}
-            className={`rounded-md border px-2.5 py-1 font-semibold transition-colors ${
+            className={`rounded-md border px-2 sm:px-2.5 py-0.5 sm:py-1 text-[11px] sm:text-xs font-semibold transition-colors ${
               hiddenTypes.has(t)
                 ? 'border-neutral-200 bg-neutral-100 text-neutral-400'
                 : `${NODE_STYLE[t]?.ring ?? 'border-neutral-300'} bg-white text-neutral-900 shadow-xs`
@@ -396,43 +397,52 @@ function CanvasInner({ graph, diff, highlightDelta, onEdgeSelect, onNodeSelect }
             {t}
           </button>
         ))}
-        <span className="mx-1 h-4 w-px bg-neutral-200" />
-        <label htmlFor="case-focus" className="font-bold uppercase tracking-wider text-neutral-600">Case focus</label>
+        <span className="mx-0.5 sm:mx-1 h-3 sm:h-4 w-px bg-neutral-200" />
+        <label htmlFor="case-focus" className="font-bold uppercase tracking-wider text-neutral-600 text-[10px] sm:text-xs">Focus</label>
         <select
           id="case-focus"
           value={caseFilter}
           onChange={(e) => setCaseFilter(e.target.value)}
-          className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-neutral-900 focus:border-blue-500 focus:outline-none shadow-xs"
+          className="rounded-md border border-neutral-300 bg-white px-2 py-0.5 sm:py-1 text-[11px] sm:text-xs text-neutral-900 focus:border-blue-500 focus:outline-none shadow-xs"
         >
           {caseOptions.map((c) => (
-            <option key={c} value={c}>{c === 'ALL' ? 'All cases' : c}</option>
+            <option key={c} value={c}>{c === 'ALL' ? 'All' : c}</option>
           ))}
         </select>
       </div>
 
-      {/* Edge & Node Legend */}
-      <div className="absolute bottom-3 left-3 z-10 space-y-1.5 rounded-lg border border-neutral-200 bg-white/95 backdrop-blur p-2.5 text-[10px] text-neutral-700 shadow-md">
-        <div className="font-bold text-neutral-800 uppercase tracking-wider text-[9px] mb-1">Entities</div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-          <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-sky-500" /> Person</div>
-          <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-rose-500" /> Case / FIR</div>
-          <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500" /> Phone</div>
-          <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-violet-500" /> Account</div>
-        </div>
-        <div className="border-t border-neutral-200 pt-1 mt-1 font-bold text-neutral-800 uppercase tracking-wider text-[9px]">Relationships</div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-          <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-rose-600" /> Accused / Case</div>
-          <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-emerald-600" /> Bank Wire</div>
-          <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-amber-600" /> CDR / Phone</div>
-          <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-violet-600" /> Account Owner</div>
-          <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-blue-600" /> Case Bridge</div>
-          <div className="flex items-center gap-1.5"><BadgeCheck className="h-2.5 w-2.5 text-blue-600" /> BRIDGE Node</div>
+      {/* Edge & Node Legend — Collapsible on mobile */}
+      <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 z-10">
+        <button
+          onClick={() => setShowLegendMobile(!showLegendMobile)}
+          className="sm:hidden flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white/95 backdrop-blur px-2.5 py-1 text-[10px] font-bold text-neutral-700 shadow-md"
+        >
+          {showLegendMobile ? 'Hide Legend' : 'Show Legend'}
+        </button>
+
+        <div className={`${showLegendMobile ? 'block mt-1.5' : 'hidden'} sm:block space-y-1.5 rounded-lg border border-neutral-200 bg-white/95 backdrop-blur p-2.5 text-[10px] text-neutral-700 shadow-md max-w-xs`}>
+          <div className="font-bold text-neutral-800 uppercase tracking-wider text-[9px] mb-1">Entities</div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+            <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-sky-500" /> Person</div>
+            <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-rose-500" /> Case / FIR</div>
+            <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500" /> Phone</div>
+            <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-violet-500" /> Account</div>
+          </div>
+          <div className="border-t border-neutral-200 pt-1 mt-1 font-bold text-neutral-800 uppercase tracking-wider text-[9px]">Relationships</div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+            <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-rose-600" /> Accused</div>
+            <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-emerald-600" /> Bank Wire</div>
+            <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-amber-600" /> CDR Phone</div>
+            <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-violet-600" /> Owner</div>
+            <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-blue-600" /> Bridge</div>
+            <div className="flex items-center gap-1.5"><BadgeCheck className="h-2.5 w-2.5 text-blue-600" /> BRIDGE</div>
+          </div>
         </div>
       </div>
 
       {highlightDelta && (
-        <div className="absolute right-3 top-3 z-10 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-900 shadow-md">
-          After resolution — {addedNodes.size} nodes / {addedEdges.size} links unified
+        <div className="absolute right-2 sm:right-3 top-2 sm:top-3 z-10 rounded-lg border border-emerald-200 bg-emerald-50 px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-bold text-emerald-900 shadow-md">
+          {addedNodes.size} nodes / {addedEdges.size} links unified
         </div>
       )}
 

@@ -107,7 +107,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         </button>
 
         {/* Global Live Search */}
-        <div ref={searchContainerRef} className="relative w-64 max-w-xs lg:w-96">
+        <div ref={searchContainerRef} className="relative flex-1 min-w-[130px] max-w-xs sm:max-w-sm lg:max-w-md mx-2 sm:mx-4">
           <label htmlFor="global-search" className="sr-only">Search cases, FIRs, suspects</label>
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <Search className="h-4 w-4 text-neutral-400" aria-hidden="true" />
@@ -121,8 +121,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
               setSearchOpen(true)
             }}
             onFocus={() => setSearchOpen(true)}
-            placeholder="Search cases, FIRs, suspects... (press /)"
-            className="w-full rounded-lg border border-neutral-300 bg-neutral-100 py-1.5 pl-10 pr-8 text-sm text-neutral-900 placeholder-neutral-500 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors shadow-inner"
+            placeholder="Search cases, FIRs, suspects... (/)"
+            className="w-full rounded-lg border border-neutral-300 bg-neutral-100 py-1.5 pl-9 sm:pl-10 pr-7 text-xs sm:text-sm text-neutral-900 placeholder-neutral-500 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors shadow-inner"
             aria-label="Search cases, FIRs, suspects"
             autoComplete="off"
           />
@@ -208,12 +208,12 @@ export function Header({ onMenuToggle }: HeaderProps) {
         </div>
 
         {/* Utility Actions */}
-        <div className="flex items-center space-x-2 lg:space-x-3">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 lg:space-x-3 shrink-0">
           {/* Reset Demo Button */}
           <button
             onClick={handleReset}
             disabled={resetMutation.isPending}
-            className="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 shadow-sm transition-colors"
+            className="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-2 sm:px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 shadow-sm transition-colors"
             title="Reset synthetic demo fixture to original state"
             aria-label="Reset Demo Fixture"
           >
@@ -231,7 +231,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
           {/* Table Density Selector */}
           <div
-            className="flex items-center rounded-lg bg-neutral-100 p-0.5 text-xs font-semibold border border-neutral-200"
+            className="hidden md:flex items-center rounded-lg bg-neutral-100 p-0.5 text-xs font-semibold border border-neutral-200"
             role="group"
             aria-label="Table density"
           >
@@ -262,7 +262,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
           {/* Keyboard Shortcuts Button */}
           <button
             onClick={() => setShortcutsOpen(true)}
-            className="min-h-9 min-w-9 inline-flex items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors border border-transparent hover:border-neutral-200"
+            className="hidden sm:inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors border border-transparent hover:border-neutral-200"
             aria-label="Open keyboard shortcuts (press ? anytime)"
             title="Keyboard shortcuts (?)"
           >

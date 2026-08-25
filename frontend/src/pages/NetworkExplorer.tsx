@@ -45,20 +45,20 @@ export default function NetworkExplorer() {
           </h1>
           <p className="mt-1 text-sm text-neutral-600">Every case and entity in the current snapshot. Click any link for its full evidence chain.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button onClick={() => setShowPath((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50 hover:text-neutral-900 shadow-sm"
+            className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-neutral-300 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50 hover:text-neutral-900 shadow-sm"
             aria-expanded={showPath}>
-            <Route className="h-4 w-4 text-blue-600" /> {showPath ? 'Hide' : 'Find'} case connection
+            <Route className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-600" /> {showPath ? 'Hide' : 'Find'} case connection
           </button>
-          <div role="group" aria-label="Network snapshot replay" className="flex items-center rounded-lg border border-neutral-300 bg-neutral-100 p-1 text-sm font-semibold shadow-inner">
+          <div role="group" aria-label="Network snapshot replay" className="flex items-center rounded-lg border border-neutral-300 bg-neutral-100 p-0.5 sm:p-1 text-xs sm:text-sm font-semibold shadow-inner">
             <button onClick={() => setReplay('before')} aria-pressed={replay === 'before'}
-              className={`rounded-md px-3 py-1.5 transition-colors ${replay === 'before' ? 'bg-white text-neutral-900 shadow-sm font-bold' : 'text-neutral-600 hover:text-neutral-900'}`}>
+              className={`rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm transition-colors ${replay === 'before' ? 'bg-white text-neutral-900 shadow-sm font-bold' : 'text-neutral-600 hover:text-neutral-900'}`}>
               Before resolution
             </button>
             <button onClick={() => setReplay('after')} aria-pressed={replay === 'after'}
               disabled={after.isLoading && !after.data}
-              className={`rounded-md px-3 py-1.5 transition-colors disabled:opacity-40 ${replay === 'after' ? 'bg-emerald-600 text-white shadow-sm font-bold' : 'text-neutral-600 hover:text-neutral-900'}`}>
+              className={`rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm transition-colors disabled:opacity-40 ${replay === 'after' ? 'bg-emerald-600 text-white shadow-sm font-bold' : 'text-neutral-600 hover:text-neutral-900'}`}>
               After resolution
             </button>
           </div>
