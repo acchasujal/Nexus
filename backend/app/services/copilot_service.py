@@ -46,6 +46,12 @@ def is_prohibited_query(query: str) -> bool:
     return any(term in normalized for term in _PROHIBITED_TERMS)
 
 
+def _get_val(obj: Any, key: str, default: Any = None) -> Any:
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
+
 class CopilotIntent(str, Enum):
     CASE_SUMMARY = "case_summary"
     NETWORK_EXPLORATION = "network_exploration"
@@ -125,8 +131,174 @@ class CopilotService:
         intent = CopilotIntent.CASE_SUMMARY.value
         store = self._repo.to_graph_store()
 
-        # Entity Scoped Queries
-        if entity_id:
+        # ── 1. Case-Scoped Copilot Handling (Prioritizes case_id) ────────────────
+        if case_id:
+            case_detail = self._repo.get_investigation_detail(case_id)
+            if case_detail:
+                case_network = self._repo.get_case_network(case_id, depth=1)
+                graph_context = case_network
+
+                # A. Accused / Suspects / People Query
+                if any(w in norm_query for w in ["accused", "suspect", "who", "person", "people", "named", "involved"]):
+                    intent = CopilotIntent.ENTITY_LOOKUP.value
+                    if case_detail.accused:
+                        accused_lines = []
+                        for a in case_detail.accused:
+                            a_id = _get_val(a, "id", "")
+                            full_name = _get_val(a, "full_name") or _get_val(a, "name") or a_id
+                            phone = _get_val(a, "phone_number") or _get_val(a, "phone")
+                            vehicle = _get_val(a, "vehicle_number") or _get_val(a, "vehicle")
+                            details = []
+                            if phone:
+                                details.append(f"Phone: {phone}")
+                            if vehicle:
+                                details.append(f"Vehicle: {vehicle}")
+                            det_str = f" — {', '.join(details)}" if details else ""
+                            accused_lines.append(f"• {full_name}{det_str}")
+                            citations.append(
+                                GroundedCitation(
+                                    source_type="PERSON",
+                                    source_id=str(a_id),
+                                    fact=f"Accused in FIR {case_detail.fir_number}: {full_name}",
+                                    confidence=1.0,
+                                )
+                            )
+                        answer = (
+                            f"Investigation {case_detail.fir_number} lists {len(case_detail.accused)} accused person(s):\n"
+                            + "\n".join(accused_lines)
+                        )
+                    else:
+                        answer = f"No registered accused persons found for case {case_detail.fir_number}."
+
+                    citations.append(
+                        GroundedCitation(
+                            source_type="FIR",
+                            source_id=case_detail.fir_number,
+                            fact=f"Case record registered at {case_detail.station_name}",
+                            confidence=1.0,
+                        )
+                    )
+
+                # B. Evidence Query
+                elif any(w in norm_query for w in ["evidence", "seized", "device", "proof", "document", "citation"]):
+                    intent = CopilotIntent.EVIDENCE_QUERY.value
+                    if case_detail.evidence:
+                        ev_lines = []
+                        for ev in case_detail.evidence:
+                            ev_num = _get_val(ev, "evidence_number") or _get_val(ev, "id", "EV-UNKNOWN")
+                            ev_type = _get_val(ev, "evidence_type", "PHYSICAL")
+                            ev_desc = _get_val(ev, "description", "Collected evidence item")
+                            ev_lines.append(f"• {ev_num} ({ev_type}): {ev_desc}")
+                            citations.append(
+                                GroundedCitation(
+                                    source_type="EVIDENCE",
+                                    source_id=str(ev_num),
+                                    fact=f"Seized under {case_detail.fir_number}: {ev_desc}",
+                                    confidence=1.0,
+                                )
+                            )
+                        answer = (
+                            f"Case {case_detail.fir_number} includes {len(case_detail.evidence)} recorded evidence item(s):\n"
+                            + "\n".join(ev_lines)
+                        )
+                    else:
+                        answer = f"No direct evidence items registered for case {case_detail.fir_number}."
+
+                    citations.append(
+                        GroundedCitation(
+                            source_type="FIR",
+                            source_id=case_detail.fir_number,
+                            fact=f"Case record registered at {case_detail.station_name}",
+                            confidence=1.0,
+                        )
+                    )
+
+                # C. Telecom / Communication Query
+                elif any(w in norm_query for w in ["phone", "cdr", "call", "telecom", "imei", "communication", "number"]):
+                    intent = CopilotIntent.COMMUNICATION_ANALYSIS.value
+                    phone_nodes = [n for n in case_network.nodes if n.entity_type in ("Phone", "PHONE")] if case_network else []
+                    accused_phones = []
+                    for a in case_detail.accused:
+                        fn = _get_val(a, "full_name") or _get_val(a, "name") or _get_val(a, "id")
+                        ph = _get_val(a, "phone_number") or _get_val(a, "phone")
+                        if ph:
+                            accused_phones.append(f"{fn}: {ph}")
+
+                    if accused_phones or phone_nodes:
+                        parts = []
+                        if accused_phones:
+                            parts.append("Accused Devices:\n" + "\n".join(f"• {p}" for p in accused_phones))
+                        if phone_nodes:
+                            parts.append("Network Phone Nodes:\n" + "\n".join(f"• {p.label}" for p in phone_nodes))
+                        answer = f"Telephone & CDR links for case {case_detail.fir_number}:\n" + "\n\n".join(parts)
+                    else:
+                        answer = f"No monitored telephone numbers associated with case {case_detail.fir_number}."
+
+                    citations.append(
+                        GroundedCitation(
+                            source_type="FIR",
+                            source_id=case_detail.fir_number,
+                            fact=f"Telecom logs indexed under {case_detail.fir_number}",
+                            confidence=1.0,
+                        )
+                    )
+
+                # D. Financial / Account Query
+                elif any(w in norm_query for w in ["bank", "money", "transaction", "transfer", "account", "financial", "ledger", "utr"]):
+                    intent = CopilotIntent.TRANSACTION_ANALYSIS.value
+                    account_nodes = [n for n in case_network.nodes if n.entity_type in ("Account", "ACCOUNT")] if case_network else []
+                    if account_nodes:
+                        answer = (
+                            f"Financial ledger analysis for case {case_detail.fir_number} indexes {len(account_nodes)} account(s):\n"
+                            + "\n".join(f"• {a.label}" for a in account_nodes)
+                        )
+                    else:
+                        answer = f"No financial bank accounts directly linked to case {case_detail.fir_number}."
+
+                    citations.append(
+                        GroundedCitation(
+                            source_type="FIR",
+                            source_id=case_detail.fir_number,
+                            fact=f"Financial records indexed under {case_detail.fir_number}",
+                            confidence=1.0,
+                        )
+                    )
+
+                # E. General Case Summary / Default Case Scope Fallback
+                else:
+                    intent = CopilotIntent.CASE_SUMMARY.value
+                    accused_str = ""
+                    if case_detail.accused:
+                        names = [_get_val(a, "full_name") or _get_val(a, "name") or _get_val(a, "id") for a in case_detail.accused]
+                        accused_str = f" Accused: {', '.join(names)}."
+                        for a in case_detail.accused:
+                            a_id = _get_val(a, "id", "")
+                            fn = _get_val(a, "full_name") or _get_val(a, "name") or a_id
+                            citations.append(
+                                GroundedCitation(
+                                    source_type="PERSON",
+                                    source_id=str(a_id),
+                                    fact=f"Accused in {case_detail.fir_number}: {fn}",
+                                    confidence=1.0,
+                                )
+                            )
+
+                    answer = (
+                        f"Investigation {case_detail.fir_number} ({case_detail.offence_category}) "
+                        f"is currently {case_detail.status} under {case_detail.station_name}, {case_detail.district}.{accused_str} "
+                        f"It involves {len(case_detail.evidence)} evidence artifact(s)."
+                    )
+                    citations.append(
+                        GroundedCitation(
+                            source_type="FIR",
+                            source_id=case_detail.fir_number,
+                            fact=f"Case record registered at {case_detail.station_name}",
+                            confidence=1.0,
+                        )
+                    )
+
+        # ── 2. Standalone / Global Copilot Handling (When case_id is None) ──────
+        elif entity_id:
             node = store.nodes.get(entity_id)
             if node:
                 props = node.properties or {}
@@ -185,26 +357,6 @@ class CopilotService:
                     )
             else:
                 answer = "No direct evidence artifacts mapped to this query scope."
-
-        # Intent: Case / Investigation Summary
-        elif case_id and any(w in norm_query for w in ["case", "fir", "detail", "status", "investigation"]):
-            case_detail = self._repo.get_investigation_detail(case_id)
-            if case_detail:
-                intent = CopilotIntent.CASE_SUMMARY.value
-                answer = (
-                    f"Investigation {case_detail.fir_number} ({case_detail.offence_category}) "
-                    f"is currently {case_detail.status} under {case_detail.station_name}, {case_detail.district}. "
-                    f"It involves {len(case_detail.accused)} accused person(s) and {len(case_detail.evidence)} evidence item(s)."
-                )
-                citations.append(
-                    GroundedCitation(
-                        source_type="FIR",
-                        source_id=case_detail.fir_number,
-                        fact=f"Case record registered at {case_detail.station_name}",
-                        confidence=1.0,
-                    )
-                )
-                graph_context = self._repo.get_case_network(case_id, depth=1)
 
         # Intent: Phone / Telecom / CDR
         elif any(w in norm_query for w in ["phone", "cdr", "call", "telecom", "imei", "communication"]):
