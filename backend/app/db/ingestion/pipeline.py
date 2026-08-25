@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable
+from collections.abc import Iterable
 
 from backend.app.core.graph.edges import GraphEdge
-from backend.app.core.graph.entities import GraphEntityBase, Person, SourceRecord
-from backend.app.core.graph.enums import DerivationClass
+from backend.app.core.graph.entities import GraphEntityBase, SourceRecord
 
 from .parsers.fir import parse_fir_source_file
 from .parsers.cdr import parse_cdr_source_file
@@ -20,7 +19,7 @@ from .mappers.intelligence import map_intelligence_bundle
 from .contracts import EntityReviewCandidate, IngestionBundle, IngestionSummary, IssueSeverity, ParseIssue, ParsedSourceBundle, SourceType
 from .resolution.matcher import IdentityClaim, decide_candidates
 from .graph_adapter import build_m1_graph_store, validate_graph_references
-from .identifiers import make_batch_id, make_provisional_person_id, make_relationship_id
+from .identifiers import make_batch_id, make_provisional_person_id
 from .resolution.registry import IdentityRegistry
 
 

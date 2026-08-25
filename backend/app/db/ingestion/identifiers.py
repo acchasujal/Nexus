@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Mapping
-from uuid import UUID
+from typing import Any
+from collections.abc import Mapping
 
 from synthetic_data.configs import stable_uuid
 
@@ -12,7 +12,6 @@ from .normalization import (
     normalize_account,
     normalize_phone,
     normalize_vehicle,
-    parse_utc_datetime,
 )
 
 

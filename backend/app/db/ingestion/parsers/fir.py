@@ -5,7 +5,8 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
+from collections.abc import Mapping
 
 from backend.app.core.graph.entities import SourceRecord
 from backend.app.core.graph.enums import GraphRelationshipType

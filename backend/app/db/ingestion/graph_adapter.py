@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable
+from typing import Any
+from collections.abc import Iterable
 
 from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord
 from backend.app.core.graph.edges import GraphEdge

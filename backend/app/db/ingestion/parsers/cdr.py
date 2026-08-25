@@ -5,7 +5,8 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
+from collections.abc import Mapping
 
 from backend.app.core.graph.entities import SourceRecord
 
@@ -19,7 +20,7 @@ from ..contracts import (
 )
 from ..csv_reader import CsvParseResult, parse_csv_text, read_csv_file
 from ..identifiers import make_source_record_id
-from ..normalization import CsvValidationError, canonicalize_csv_row, normalize_name, normalize_phone, parse_utc_datetime
+from ..normalization import CsvValidationError, canonicalize_csv_row, normalize_phone, parse_utc_datetime
 
 REQUIRED_COLUMNS = (
     "record_id", "caller_number", "callee_number", "start_time", "duration_seconds", "call_type",

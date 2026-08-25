@@ -11,8 +11,6 @@ from backend.app.core.graph.enums import DerivationClass, GraphRelationshipType
 
 from ..contracts import (
     IngestionBundle,
-    IngestionSummary,
-    IssueSeverity,
     ParsedSourceBundle,
     SourceType,
 )

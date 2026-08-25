@@ -7,7 +7,8 @@ import hashlib
 import io
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any
+from collections.abc import Iterable, Mapping
 
 from .contracts import IngestionSummary, IssueSeverity, ParseIssue, SourceType
 from .normalization import CsvValidationError, canonicalize_csv_row
@@ -128,7 +129,7 @@ def parse_csv_text(
                 continue
             canonical_hashes.add(row_hash)
             result.rows.append(row)
-    except csv.Error as exc:
+    except csv.Error:
         result.issues.append(_issue(source_type, file_name, 1, "MALFORMED_CSV", "Malformed CSV structure", IssueSeverity.ERROR))
     except (UnicodeError, CsvValidationError):
         result.issues.append(_issue(source_type, file_name, 1, "INVALID_ENCODING", "CSV contains invalid UTF-8 or row data", IssueSeverity.ERROR))

@@ -6,10 +6,10 @@ import argparse
 import csv
 import json
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
+from collections.abc import Sequence
 
 from backend.app.core.graph.algorithms.pattern_rules import detect_all_suspicious_patterns
-from backend.app.core.graph.entities import GraphEntityBase
 from backend.app.core.graph.edges import GraphEdge
 
 from .graph_adapter import validate_graph_references

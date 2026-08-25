@@ -12,12 +12,10 @@ from synthetic_data.configs import stable_uuid
 
 from ..contracts import (
     IngestionBundle,
-    IngestionSummary,
-    IssueSeverity,
     ParsedSourceBundle,
     SourceType,
 )
-from ..identifiers import make_phone_id, make_provisional_person_id, make_relationship_id
+from ..identifiers import make_provisional_person_id, make_relationship_id
 from ..normalization import normalize_name
 
 

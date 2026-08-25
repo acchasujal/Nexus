@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 from backend.app.core.graph.algorithms.entity_resolution import clean_phone, clean_vehicle, normalize_text, phonetic_normalize
 from synthetic_data.configs import stable_uuid
 
-from ..contracts import SourceType
 from .matcher import IdentityClaim
 
 

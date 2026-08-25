@@ -6,7 +6,8 @@ import json
 import re
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
-from typing import Any, Mapping
+from typing import Any
+from collections.abc import Mapping
 
 from .exceptions import CsvValidationError
 

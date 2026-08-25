@@ -5,7 +5,8 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
+from collections.abc import Mapping
 
 from backend.app.core.graph.entities import SourceRecord
 
@@ -25,7 +26,6 @@ from ..normalization import (
     normalize_account,
     normalize_currency,
     normalize_ifsc,
-    normalize_name,
     parse_non_negative_decimal,
     parse_utc_datetime,
 )

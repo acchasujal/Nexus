@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Iterable
+
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
@@ -10,6 +11,9 @@ from backend.app.core.graph.algorithms.entity_resolution import clean_phone, cle
 from backend.app.core.graph.enums import ResolutionStatus
 
 from ..contracts import SourceType
+
+if TYPE_CHECKING:
+    from .registry import IdentityRegistry
 
 
 class IdentityClaim(BaseModel):
@@ -25,7 +29,7 @@ class IdentityClaim(BaseModel):
     national_id: str = ""
     source_type: SourceType
 
-    def normalized(self) -> "IdentityClaim":
+    def normalized(self) -> IdentityClaim:
         """Return a normalized copy used only for deterministic matching."""
         return self.model_copy(update={
             "full_name": normalize_text(self.full_name),
@@ -66,7 +70,7 @@ def _name_match(incoming: IdentityClaim, existing: IdentityClaim) -> tuple[bool,
     return False, False, similarity
 
 
-def decide_candidates(registry: "IdentityRegistry", claim: IdentityClaim, review_threshold: float = 0.40) -> list[CandidateDecision]:
+def decide_candidates(registry: IdentityRegistry, claim: IdentityClaim, review_threshold: float = 0.40) -> list[CandidateDecision]:
     """Score indexed candidates under conservative automatic-link rules."""
     from .registry import IdentityRegistry
 
