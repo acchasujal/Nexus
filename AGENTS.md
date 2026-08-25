@@ -45,13 +45,14 @@ When resolving architectural or implementation questions, follow this strict hie
 
 ### Before Writing Any Code:
 1. Check [`PROGRESS.md`](file:///d:/Projects/CaseClock/PROGRESS.md) for current task status and dependencies.
-2. Confirm the branch originates from `origin/develop` (`git switch develop && git pull --rebase`).
+2. Confirm the branch originates from `origin/main` (`git switch main && git pull --rebase`).
 3. Create a short-lived local feature branch (`git switch -c feature/<short-name>`).
 4. Inspect existing utilities and algorithms before writing new functions (no duplicate logic).
 
 ### Before Opening a Pull Request:
-1. Run backend tests: `pytest` (Must pass all 296 tests).
-2. Run ground truth validation: `python scripts/evaluate_ground_truth.py` (Must pass 100% Precision/Recall).
-3. Run frontend tests and build: `cd frontend && npm test -- --run && npm run build`.
-4. Update your task status in [`PROGRESS.md`](file:///d:/Projects/CaseClock/PROGRESS.md).
-5. Open PR targeting `develop`.
+1. Run backend lint: `python -m ruff check backend/ shared/ tests/`.
+2. Run backend tests: `pytest` (Must pass all 493 tests).
+3. Run ground truth validation: `python scripts/evaluate_ground_truth.py` (Must pass 100% Precision/Recall).
+4. Run frontend tests and build: `cd frontend && npm test -- --run && npm run build`.
+5. Update your task status in [`PROGRESS.md`](file:///d:/Projects/CaseClock/PROGRESS.md).
+6. Open PR targeting `main`.

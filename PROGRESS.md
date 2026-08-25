@@ -3,9 +3,9 @@
 ## Project Snapshot
 - **Project:** NEXUS — Evidence-Grounded Criminal Network Intelligence System
 - **Event / Problem Statement:** SIH 2026 PS 26189 (Ministry of Home Affairs / NCRB — Women Safety Division)
-- **Permanent Branches:** `main` (Production/Demo) | `develop` (Integration Base)
+- **Permanent Branch:** `main` (Production, Integration & Demo Base)
 - **Current Phase:** Phase 2 (Multi-Source Ingestion, Graph Schema V2 & Evidence Hardened)
-- **Integration Status:** Person 1 (Graph Intelligence), Person 2 (Data & Entity Resolution), Person 3 (Backend/Evidence/Copilot), Person 5 (Research/Validation), and Person 6 (Integration/Demo) fully integrated into `develop` with Person 4 frontend preserved and running.
+- **Integration Status:** Person 1 (Graph Intelligence), Person 2 (Data & Entity Resolution), Person 3 (Backend/Evidence/Copilot), Person 5 (Research/Validation), and Person 6 (Integration/Demo) fully integrated into `main` with Person 4 frontend preserved and running.
 - **Test Suite Status:** 493 Pytest unit/integration tests passing (100%), Ground Truth ER benchmark passing (100% Precision/Recall), 35 Vitest frontend tests passing (100%), Frontend production build clean.
 - **Lint Status:** 0 errors across backend, shared, and tests (`ruff check` clean).
 - **Last Updated:** 2026-08-25

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
 jobs:
   backend:
@@ -22,7 +22,7 @@ jobs:
         run: pip install -r backend/requirements.txt
 
       - name: Lint (ruff)
-        run: python -m ruff check backend/ shared/
+        run: python -m ruff check backend/ shared/ tests/
 
       - name: Pytest Suite
         run: python -m pytest -v --tb=short
