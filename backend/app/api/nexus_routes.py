@@ -494,20 +494,199 @@ BRIDGE_LEAD = NexusLead(
 
 # ── Mutable State Store ────────────────────────────────────────────────────────
 
+CANDIDATE_RC1_INIT = ResolutionCandidate(
+    id="RC-1",
+    score=0.86,
+    status="PENDING",
+    left=ResolutionCandidateRecord(
+        node_id="P-RAFIQ-K",
+        entity_type="Person",
+        label="Rafiq Khan",
+        case_ids=["CASE-141"],
+        properties={
+            "full_name": "Rafiq Khan",
+            "father_name": "Iqbal Khan",
+            "age": 35,
+            "dob": "1991-03-14",
+            "address": "Hootagalli, Mysuru",
+            "phone": "+91 98450 11223",
+            "role": "Accused (FIR 141/2026)",
+        },
+        source_records=[RAW_SOURCES["SRC-FIR-141"], RAW_SOURCES["SRC-CDR-A12"]],
+    ),
+    right=ResolutionCandidateRecord(
+        node_id="P-RAFIQ-A",
+        entity_type="Person",
+        label="Rafiq Ahmed",
+        case_ids=["CASE-207"],
+        properties={
+            "full_name": "Rafiq Ahmed",
+            "father_name": "Iqbal Khan",
+            "age": 35,
+            "dob": "1991-04-13",
+            "address": "Hootagalli Colony, Mysuru",
+            "phone": "+91 98450 11223",
+            "role": "Accused (FIR 207/2026)",
+        },
+        source_records=[RAW_SOURCES["SRC-FIR-207"], RAW_SOURCES["SRC-CDR-B31"]],
+    ),
+    reasons=[
+        CandidateReason(field="phone", detail="Identical primary mobile +91 98450 11223 appears in both CDR pulls", weight=0.40),
+        CandidateReason(field="father_name", detail="Father's name 'Iqbal Khan' matches exactly in both FIRs", weight=0.25),
+        CandidateReason(field="address", detail="Address locality 'Hootagalli, Mysuru' matches with granularity difference", weight=0.21),
+    ],
+    conflicts=[
+        CandidateConflict(field="name", left_value="Rafiq Khan", right_value="Rafiq Ahmed"),
+        CandidateConflict(field="dob", left_value="1991-03-14", right_value="1991-04-13 (day/month transposition)"),
+        CandidateConflict(field="age", left_value="35", right_value="35 (consistent)"),
+    ],
+)
+
+CANDIDATE_RC2_INIT = ResolutionCandidate(
+    id="RC-2",
+    score=0.92,
+    status="PENDING",
+    left=ResolutionCandidateRecord(
+        node_id="P-VIKRAM-S",
+        entity_type="Person",
+        label="Vikram Sharma",
+        case_ids=["CASE-305"],
+        properties={
+            "full_name": "Vikram Sharma",
+            "age": 32,
+            "address": "Indiranagar Bengaluru",
+            "phone": "+91 98450 77310",
+            "national_id": "XXXX-XXXX-4491",
+            "role": "Accused (FIR 305/2026)",
+        },
+        source_records=[
+            NexusSourceRecord(
+                id="SRC-FIR-305",
+                batch_id="BATCH-2026-08-24",
+                source_type="FIR",
+                locator="fir_305_2026.pdf — page 2, row 3",
+                raw_excerpt="Accused: Vikram Sharma, age 32, res. Indiranagar Bengaluru. Mobile: +91 98450 77310. Aadhaar: XXXX-XXXX-4491.",
+                occurred_at="2026-03-15T11:00:00Z",
+            )
+        ],
+    ),
+    right=ResolutionCandidateRecord(
+        node_id="P-BIKRAM-S",
+        entity_type="Person",
+        label="Bikram Sarma",
+        case_ids=["CASE-412"],
+        properties={
+            "full_name": "Bikram Sarma",
+            "age": 32,
+            "address": "Domlur Layout Bengaluru",
+            "phone": "+91 98450 77310",
+            "national_id": "XXXX-XXXX-4491",
+            "role": "Accused (FIR 412/2026)",
+        },
+        source_records=[
+            NexusSourceRecord(
+                id="SRC-FIR-412",
+                batch_id="BATCH-2026-08-24",
+                source_type="FIR",
+                locator="fir_412_2026.pdf — page 1, row 5",
+                raw_excerpt="Accused: Bikram Sarma, age 32, res. Domlur Layout Bengaluru. Mobile: +91 98450 77310. Aadhaar: XXXX-XXXX-4491.",
+                occurred_at="2026-03-22T16:30:00Z",
+            )
+        ],
+    ),
+    reasons=[
+        CandidateReason(field="national_id", detail="Aadhaar suffix XXXX-XXXX-4491 matches exactly in both police reports", weight=0.45),
+        CandidateReason(field="phone", detail="Shared operational contact number +91 98450 77310", weight=0.35),
+        CandidateReason(field="age", detail="Age 32 matches perfectly across both state jurisdictions", weight=0.12),
+    ],
+    conflicts=[
+        CandidateConflict(field="name", left_value="Vikram Sharma", right_value="Bikram Sarma (Phonetic spelling)"),
+        CandidateConflict(field="address", left_value="Indiranagar Bengaluru", right_value="Domlur Layout Bengaluru (Adjacent sectors)"),
+    ],
+)
+
+CANDIDATE_RC3_INIT = ResolutionCandidate(
+    id="RC-3",
+    score=0.88,
+    status="PENDING",
+    left=ResolutionCandidateRecord(
+        node_id="P-SUNIEL-S",
+        entity_type="Person",
+        label="Suniel Shetty",
+        case_ids=["CASE-501"],
+        properties={
+            "full_name": "Suniel Shetty",
+            "father_name": "R. Shetty",
+            "age": 41,
+            "vehicle": "KA-01-AB-1001",
+            "address": "Jayanagar Bengaluru",
+            "role": "Accused (FIR 501/2026)",
+        },
+        source_records=[
+            NexusSourceRecord(
+                id="SRC-FIR-501",
+                batch_id="BATCH-2026-08-24",
+                source_type="FIR",
+                locator="fir_501_2026.pdf — page 3, row 2",
+                raw_excerpt="Accused: Suniel Shetty, s/o R. Shetty, age 41, res. Jayanagar Bengaluru. Vehicle: KA-01-AB-1001.",
+                occurred_at="2026-04-02T10:15:00Z",
+            )
+        ],
+    ),
+    right=ResolutionCandidateRecord(
+        node_id="P-SUNIL-S",
+        entity_type="Person",
+        label="Sunil Shetty",
+        case_ids=["CASE-502"],
+        properties={
+            "full_name": "Sunil Shetty",
+            "father_name": "R. Shetty",
+            "age": 41,
+            "vehicle": "KA-01-AB-1001",
+            "address": "4th Block Jayanagar",
+            "role": "Accused (FIR 502/2026)",
+        },
+        source_records=[
+            NexusSourceRecord(
+                id="SRC-FIR-502",
+                batch_id="BATCH-2026-08-24",
+                source_type="FIR",
+                locator="fir_502_2026.pdf — page 2, row 8",
+                raw_excerpt="Accused: Sunil Shetty, s/o R. Shetty, age 41, res. 4th Block Jayanagar. Vehicle: KA-01-AB-1001.",
+                occurred_at="2026-04-18T14:40:00Z",
+            )
+        ],
+    ),
+    reasons=[
+        CandidateReason(field="vehicle", detail="Vehicle registration KA-01-AB-1001 matches across both seizure reports", weight=0.42),
+        CandidateReason(field="father_name", detail="Father name 'R. Shetty' identical in both FIR accused sheets", weight=0.30),
+        CandidateReason(field="locality", detail="Jayanagar locality match with sub-block specification", weight=0.16),
+    ],
+    conflicts=[
+        CandidateConflict(field="name", left_value="Suniel Shetty", right_value="Sunil Shetty"),
+    ],
+)
+
+ALL_INITIAL_CANDIDATES = [CANDIDATE_RC1_INIT, CANDIDATE_RC2_INIT, CANDIDATE_RC3_INIT]
+
 class DemoState:
     def __init__(self) -> None:
-        self.candidate = copy.deepcopy(INITIAL_CANDIDATE)
+        self.candidates = [copy.deepcopy(c) for c in ALL_INITIAL_CANDIDATES]
         self.lead = copy.deepcopy(BRIDGE_LEAD)
         self.decision_count = 0
 
+    @property
+    def candidate(self) -> ResolutionCandidate:
+        return self.candidates[0]
+
     def reset(self) -> None:
-        self.candidate = copy.deepcopy(INITIAL_CANDIDATE)
+        self.candidates = [copy.deepcopy(c) for c in ALL_INITIAL_CANDIDATES]
         self.lead = copy.deepcopy(BRIDGE_LEAD)
         self.decision_count = 0
 
     @property
     def is_resolved(self) -> bool:
-        return self.candidate.status == "CONFIRMED"
+        return any(c.status == "CONFIRMED" for c in self.candidates)
 
 _demo_state = DemoState()
 
@@ -557,7 +736,7 @@ def create_nexus_router() -> APIRouter:
     def get_resolution_candidates(
         principal: Principal = Depends(get_principal),
     ) -> list[ResolutionCandidate]:
-        return [_demo_state.candidate]
+        return _demo_state.candidates
 
     @router.post("/nexus/resolution/{candidate_id}/decision", response_model=ResolutionDecisionResponse)
     def decide_resolution_candidate(
@@ -566,13 +745,14 @@ def create_nexus_router() -> APIRouter:
         principal: Principal = Depends(get_principal),
         audit: AuditService = Depends(get_audit_service),
     ) -> ResolutionDecisionResponse:
-        if candidate_id != _demo_state.candidate.id:
+        target_cand = next((c for c in _demo_state.candidates if c.id == candidate_id), None)
+        if not target_cand:
             raise HTTPException(status_code=404, detail="Candidate not found")
 
         status_map = {"CONFIRM": "CONFIRMED", "REJECT": "REJECTED", "DEFER": "DEFERRED"}
-        _demo_state.candidate.status = status_map[body.decision]
-        _demo_state.candidate.decided_at = datetime.now(timezone.utc).isoformat()
-        _demo_state.candidate.decided_by = body.decided_by or principal.user_id
+        target_cand.status = status_map[body.decision]
+        target_cand.decided_at = datetime.now(timezone.utc).isoformat()
+        target_cand.decided_by = body.decided_by or principal.user_id
         _demo_state.decision_count += 1
 
         audit.record(
@@ -584,8 +764,8 @@ def create_nexus_router() -> APIRouter:
         )
 
         return ResolutionDecisionResponse(
-            candidate_id=_demo_state.candidate.id,
-            status=_demo_state.candidate.status,
+            candidate_id=target_cand.id,
+            status=target_cand.status,
             affected_node_ids=SNAPSHOT_DIFF.added_node_ids if body.decision == "CONFIRM" else [],
             new_snapshot_id=SNAPSHOT_DIFF.after_snapshot_id if body.decision == "CONFIRM" else None,
         )
