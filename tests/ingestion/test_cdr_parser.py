@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-from backend.app.core.graph.algorithms.pattern_rules import detect_communication_burst_near_event
 from backend.app.core.graph.algorithms.utils import build_graph_store
 from backend.app.core.graph.enums import GraphRelationshipType
 from backend.app.db.ingestion.parsers.cdr import parse_cdr_csv, parse_cdr_text

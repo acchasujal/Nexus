@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-import pytest
 
 from backend.app.core.graph.enums import GraphRelationshipType
 from backend.app.db.ingestion.parsers.fir import parse_fir_csv, parse_fir_text

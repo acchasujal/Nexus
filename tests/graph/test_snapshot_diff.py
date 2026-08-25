@@ -25,10 +25,9 @@ Validates:
   20. Golden fixture (Sections 18-20 of prompt)
 """
 
-import pytest
 
 from backend.app.core.graph.algorithms.snapshot_diff import diff_graph_snapshots
-from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord, build_graph_store
+from backend.app.core.graph.algorithms.utils import AdjEdge, NodeRecord, build_graph_store
 
 
 # ── Fixture 1: Empty Snapshots ────────────────────────────────────────────────
@@ -277,6 +276,7 @@ def test_snapshot_diff_scaling_sanity():
     t1 = time.perf_counter()
 
     duration = t1 - t0
+    assert duration < 2.0
     assert diff.summary.modified_node_count == 50
     assert diff.summary.added_node_count == 10
     assert diff.summary.removed_node_count == 10

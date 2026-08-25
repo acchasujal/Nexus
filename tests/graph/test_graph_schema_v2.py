@@ -30,7 +30,6 @@ from backend.app.core.graph.entities import (
     Vehicle,
 )
 from backend.app.core.graph.edges import (
-    EvidenceProvenance,
     GraphEdge,
     Relationship,
 )

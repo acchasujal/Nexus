@@ -16,13 +16,10 @@ Tests:
 
 from __future__ import annotations
 
-import hashlib
-import json
 
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.app.auth.principal import Principal
 from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.main import create_app
 from backend.app.services.audit_service import AuditService
@@ -34,7 +31,6 @@ from backend.app.services.evidence_service import (
 from shared.contracts.api import (
     EvidenceItemResponse,
     EvidenceProvenanceContract,
-    UserRole,
 )
 
 

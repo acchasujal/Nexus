@@ -15,13 +15,11 @@ Validates:
  11. Multiple relationships between the same two people are preserved.
 """
 
-from datetime import datetime, timezone
 import pytest
 
 from backend.app.core.graph.algorithms.projection import (
     project_person_graph,
     project_person_nodes_and_edges,
-    DEFAULT_PERSON_RELATIONSHIPS,
 )
 from backend.app.core.graph.algorithms.utils import (
     AdjEdge,
@@ -30,21 +28,14 @@ from backend.app.core.graph.algorithms.utils import (
     build_graph_store,
 )
 from backend.app.core.graph.edges import (
-    EvidenceProvenance,
-    GraphEdge,
     Relationship,
 )
 from backend.app.core.graph.entities import (
-    Account,
-    Event,
     Person,
     Phone,
-    SourceRecord,
     Vehicle,
 )
 from backend.app.core.graph.enums import (
-    DerivationClass,
-    GraphEntityType,
     GraphRelationshipType,
 )
 

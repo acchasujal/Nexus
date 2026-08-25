@@ -13,10 +13,9 @@ Golden Test Coverage (Check 8):
   H. Invalid/non-case relationship negative (test_cross_case_invalid_non_case_relationship_negative)
 """
 
-import pytest
 
 from backend.app.core.graph.algorithms.cross_case import detect_cross_case_bridges
-from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord, build_graph_store
+from backend.app.core.graph.algorithms.utils import AdjEdge, NodeRecord, build_graph_store
 
 
 # ── Golden Test A: Person Cross-Case Bridge ──────────────────────────────────

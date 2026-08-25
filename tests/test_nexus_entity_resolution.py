@@ -31,7 +31,7 @@ def test_entity_resolution_with_ground_truth() -> None:
     if not ground_truth_path.exists():
         return
 
-    with open(ground_truth_path, "r", encoding="utf-8") as f:
+    with open(ground_truth_path, encoding="utf-8") as f:
         ground_truth = json.load(f)
 
     metrics = evaluate_ground_truth_dataset(engine, ground_truth)

@@ -20,7 +20,6 @@ import pytest
 
 from backend.app.core.graph.algorithms.communities import (
     NetworkCommunitiesSummary,
-    PersonCommunityResult,
     detect_louvain_communities,
     generate_stable_community_id,
 )
