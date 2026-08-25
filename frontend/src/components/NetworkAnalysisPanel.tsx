@@ -263,7 +263,7 @@ export function NetworkAnalysisPanel({
         <div className="flex items-center gap-3">
           <p className="text-small text-neutral-600">{graphDescription}</p>
           <Link
-            to={`/network?case_id=${caseId}`}
+            to="/network"
             className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md hover:bg-blue-100 transition-colors shadow-2xs"
             title="View this case in Global Multi-Case Network Explorer"
           >

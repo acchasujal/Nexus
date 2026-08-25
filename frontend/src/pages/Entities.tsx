@@ -154,39 +154,47 @@ export default function Entities() {
               <p className="text-sm">No candidate entities matched the provided threshold.</p>
             </div>
           ) : (
-            <div className="space-y-3.5">
+            <div className="space-y-4">
               {matches.map((m, idx) => (
-                <div key={idx} className="rounded-xl border border-neutral-200 bg-white p-4.5 space-y-3 hover:border-neutral-300 shadow-sm transition-colors min-w-0 overflow-hidden">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="text-base font-bold text-neutral-900 flex items-center gap-2 truncate">
-                        {m.properties.full_name || m.matched_node_id}
+                <div key={idx} className="rounded-xl border border-neutral-200 bg-white p-5 space-y-3.5 hover:border-blue-200 hover:shadow-md shadow-sm transition-all min-w-0 overflow-hidden">
+                  {/* Row 1: Name + Status Badge */}
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-[15px] font-bold text-neutral-900 truncate max-w-[280px]">
+                          {m.properties.full_name || m.matched_node_id}
+                        </h3>
                         {m.properties.aliases && m.properties.aliases.length > 0 && (
-                          <span className="text-xs font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                          <span className="inline-flex items-center text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 whitespace-nowrap">
                             Alias: {m.properties.aliases.join(', ')}
                           </span>
                         )}
-                      </h3>
-                      <div className="text-xs text-neutral-600 mt-0.5">
-                        Node ID: <code className="text-neutral-800 font-mono font-semibold">{m.matched_node_id}</code> • Phone: {m.properties.phone_number || 'N/A'} • Vehicle: {m.properties.vehicle_number || 'N/A'}
+                      </div>
+                      <div className="text-xs text-neutral-500 mt-1 flex items-center gap-1.5 flex-wrap">
+                        <span>Node ID: <code className="text-neutral-700 font-mono font-semibold bg-neutral-100 px-1 py-px rounded">{m.matched_node_id}</code></span>
+                        <span className="text-neutral-300">•</span>
+                        <span>Phone: <strong className="text-neutral-700">{m.properties.phone_number || 'N/A'}</strong></span>
+                        <span className="text-neutral-300">•</span>
+                        <span>Vehicle: <strong className="text-neutral-700">{m.properties.vehicle_number || 'N/A'}</strong></span>
                       </div>
                     </div>
-                    <div className="flex-shrink-0 ml-2">{getStatusBadge(m.status, m.confidence)}</div>
+                    <div className="flex-shrink-0">{getStatusBadge(m.status, m.confidence)}</div>
                   </div>
 
-                  {/* Why Match was made (Reason & Evidence) */}
-                  <div className="rounded-lg bg-neutral-50 p-3 text-xs border border-neutral-200">
-                    <div className="font-bold text-neutral-800 mb-1 flex items-center gap-1.5">
+                  {/* Row 2: Resolution Evidence */}
+                  <div className="rounded-lg bg-gradient-to-br from-neutral-50 to-slate-50 p-3.5 text-xs border border-neutral-200/80">
+                    <div className="font-bold text-neutral-800 mb-1.5 flex items-center gap-1.5">
                       <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
                       Resolution Evidence & Derivation:
                     </div>
                     <div className="text-xs text-neutral-600 leading-relaxed break-words">{m.reason}</div>
                     
                     {m.evidence_breakdown && Object.keys(m.evidence_breakdown).length > 0 && (
-                      <div className="mt-2.5 flex flex-wrap gap-1 pt-2 border-t border-neutral-200">
+                      <div className="mt-3 flex flex-wrap gap-1.5 pt-2.5 border-t border-neutral-200/70">
                         {Object.entries(m.evidence_breakdown).map(([k, v]) => (
-                          <span key={k} className="text-[11px] bg-white px-2 py-0.5 rounded text-neutral-800 border border-neutral-200 font-medium">
-                            {k}: <strong className="text-emerald-700">+{v as number}</strong>
+                          <span key={k} className="inline-flex items-center gap-1 text-[11px] bg-white px-2.5 py-1 rounded-md text-neutral-700 border border-neutral-200 font-medium shadow-xs">
+                            <span className="text-neutral-500">{k}:</span>
+                            <strong className="text-emerald-700">+{typeof v === 'number' ? v.toFixed(v % 1 === 0 ? 0 : 2) : v}</strong>
                           </span>
                         ))}
                       </div>
