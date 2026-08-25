@@ -57,6 +57,7 @@ class DevelopmentVerifier(TokenVerifier):
         auth_header = request.headers.get("Authorization") or request.headers.get("authorization")
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header[7:].strip()
+            # 1. Try standard signed JWT
             try:
                 payload = jwt.decode(token, self._secret_key, algorithms=["HS256"])
                 user_id = payload.get("sub", "user-001")
@@ -65,9 +66,26 @@ class DevelopmentVerifier(TokenVerifier):
                 role = self._ROLE_MAP.get(str(raw_role).strip().lower(), UserRole.INVESTIGATOR)
                 return Principal(user_id=user_id, email=email, role=role, is_anonymous=False)
             except (jwt.PyJWTError, ValueError):
-                # Token decode failed; if in production, raise forbidden
-                if self._is_production:
-                    raise ForbiddenError("Invalid or expired authentication token.")
+                pass
+
+            # 2. Try base64 demo session token (from client demo auth)
+            try:
+                import base64
+                import json
+                raw_json = base64.b64decode(token).decode("utf-8")
+                payload = json.loads(raw_json)
+                if isinstance(payload, dict) and ("sub" in payload or "role" in payload):
+                    user_id = payload.get("sub", "user-001")
+                    email = payload.get("email", f"{user_id}@nexus.internal")
+                    raw_role = payload.get("role", "INVESTIGATOR")
+                    role = self._ROLE_MAP.get(str(raw_role).strip().lower(), UserRole.INVESTIGATOR)
+                    return Principal(user_id=user_id, email=email, role=role, is_anonymous=False)
+            except Exception:
+                pass
+
+            # Token decode failed; if in production, raise forbidden
+            if self._is_production:
+                raise ForbiddenError("Invalid or expired authentication token.")
 
         # 2. Check X-Role or X-Dev-Role headers
         raw_role = request.headers.get("X-Role") or request.headers.get("X-Dev-Role")
@@ -93,4 +111,7 @@ class DevelopmentVerifier(TokenVerifier):
 
 def make_verifier(settings: Settings) -> TokenVerifier:
     """Factory to create appropriate TokenVerifier based on settings."""
-    return DevelopmentVerifier(is_production=settings.is_production)
+    return DevelopmentVerifier(
+        is_production=settings.is_production,
+        secret_key=settings.jwt_secret_key,
+    )

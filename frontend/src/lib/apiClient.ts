@@ -86,6 +86,11 @@ export async function apiFetch<T>(
     } catch {
       message = response.statusText
     }
+    if ((response.status === 401 || response.status === 403) && typeof window !== 'undefined' && window.localStorage) {
+      if (message.toLowerCase().includes('token')) {
+        window.localStorage.removeItem('nexus_token')
+      }
+    }
     throw new ApiError(response.status, response.statusText, message)
   }
 
