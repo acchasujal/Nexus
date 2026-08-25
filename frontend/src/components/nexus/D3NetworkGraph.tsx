@@ -90,6 +90,38 @@ const ENTITY_CONFIG: Record<string, { bg: string; stroke: string; text: string; 
   Officer: { bg: '#f8fafc', stroke: '#475569', text: '#1e293b', chipBg: '#f1f5f9', chipText: '#334155', icon: '🛡️' },
 }
 
+// Entity type to D3 symbol type mapping
+const ENTITY_SYMBOLS: Record<string, d3.SymbolType> = {
+  Case: d3.symbolSquare,
+  case: d3.symbolSquare,
+  Person: d3.symbolCircle,
+  person: d3.symbolCircle,
+  Phone: d3.symbolTriangle,
+  phone: d3.symbolTriangle,
+  Evidence: d3.symbolCross,
+  evidence: d3.symbolCross,
+  Law: d3.symbolStar,
+  law: d3.symbolStar,
+  Section: d3.symbolStar,
+  section: d3.symbolStar,
+  Officer: d3.symbolWye,
+  Dependency: d3.symbolWye,
+}
+
+function getNodeSymbolPath(type: string, area: number): string {
+  const raw = type.toLowerCase()
+  // Account / Bank uses a distinct regular hexagon (not diamond)
+  if (raw.includes('account') || raw.includes('bank')) {
+    const r = Math.sqrt(area / (2 * Math.sqrt(3))) * 1.35
+    const cos30 = 0.866025
+    const sin30 = 0.5
+    return `M 0,${-r} L ${r * cos30},${-r * sin30} L ${r * cos30},${r * sin30} L 0,${r} L ${-r * cos30},${r * sin30} L ${-r * cos30},${-r * sin30} Z`
+  }
+
+  const symType = ENTITY_SYMBOLS[type] ?? d3.symbolCircle
+  return d3.symbol().type(symType).size(area)() ?? ''
+}
+
 const COMMUNITY_STROKES: Record<string, string> = {
   'COMMUNITY-C1': '#8b5cf6',
   'COMMUNITY-C2': '#10b981',
@@ -131,6 +163,11 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
   const simulationRef = useRef<d3.Simulation<D3GraphNode, D3GraphEdge> | null>(null)
   const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
   const gRef = useRef<SVGGElement | null>(null)
+  const nodeContainersRef = useRef<d3.Selection<SVGGElement, D3GraphNode, SVGGElement, unknown> | null>(null)
+  const linkPathsRef = useRef<d3.Selection<SVGPathElement, D3GraphEdge, SVGGElement, unknown> | null>(null)
+  const linkHitboxesRef = useRef<d3.Selection<SVGPathElement, D3GraphEdge, SVGGElement, unknown> | null>(null)
+  const edgeBadgesRef = useRef<d3.Selection<SVGGElement, D3GraphEdge, SVGGElement, unknown> | null>(null)
+  const focusRingsRef = useRef<d3.Selection<SVGPathElement, D3GraphNode, SVGGElement, unknown> | null>(null)
 
   // Internal selection state for immediate reactivity (controlled or uncontrolled)
   const [internalNodeId, setInternalNodeId] = useState<string | null>(null)
@@ -156,7 +193,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
   // Temporal Scrubber State
   const [isPlaying, setIsPlaying] = useState(false)
   const [timeIndex, setTimeIndex] = useState<number>(100)
-  const [showScrubber, setShowScrubber] = useState(false)
+  const [showScrubber, setShowScrubber] = useState(enableTemporalScrubber)
 
   // Active Density Multiplier
   const densityScale = useMemo(() => {
@@ -168,68 +205,11 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
     }
   }, [densityMode])
 
-  // Filtered nodes/edges if temporal scrubber is enabled
-  const { filteredNodes, filteredEdges } = useMemo(() => {
-    if (!enableTemporalScrubber || timeIndex >= 100) {
-      return { filteredNodes: rawNodes, filteredEdges: rawEdges }
-    }
-
-    const allTimestamps: number[] = []
-    rawNodes.forEach((n) => {
-      const ts = n.timestamp || n.start || (n.properties?.occurred_at as string)
-      if (ts) {
-        const time = new Date(ts).getTime()
-        if (!isNaN(time)) allTimestamps.push(time)
-      }
-    })
-    rawEdges.forEach((e) => {
-      const ts = e.timestamp || e.start || (e.properties?.recorded_at as string)
-      if (ts) {
-        const time = new Date(ts).getTime()
-        if (!isNaN(time)) allTimestamps.push(time)
-      }
-    })
-
-    if (allTimestamps.length === 0) {
-      return { filteredNodes: rawNodes, filteredEdges: rawEdges }
-    }
-
-    const minTime = Math.min(...allTimestamps)
-    const maxTime = Math.max(...allTimestamps)
-    const cutoffTime = minTime + (maxTime - minTime) * (timeIndex / 100)
-
-    const activeNodeIds = new Set<string>()
-    const activeNodes = rawNodes.filter((n) => {
-      const ts = n.timestamp || n.start || (n.properties?.occurred_at as string)
-      if (!ts) {
-        activeNodeIds.add(n.id)
-        return true
-      }
-      const time = new Date(ts).getTime()
-      const isActive = isNaN(time) || time <= cutoffTime
-      if (isActive) activeNodeIds.add(n.id)
-      return isActive
-    })
-
-    const activeEdges = rawEdges.filter((e) => {
-      const srcId = typeof e.source === 'object' ? (e.source as D3GraphNode).id : e.source
-      const tgtId = typeof e.target === 'object' ? (e.target as D3GraphNode).id : e.target
-      if (!activeNodeIds.has(srcId) || !activeNodeIds.has(tgtId)) return false
-
-      const ts = e.timestamp || e.start || (e.properties?.recorded_at as string)
-      if (!ts) return true
-      const time = new Date(ts).getTime()
-      return isNaN(time) || time <= cutoffTime
-    })
-
-    return { filteredNodes: activeNodes, filteredEdges: activeEdges }
-  }, [rawNodes, rawEdges, timeIndex, enableTemporalScrubber])
-
   // Compute parallel edge groups for curved rendering
   const parallelEdgeMeta = useMemo(() => {
     const pairGroups = new Map<string, D3GraphEdge[]>()
 
-    filteredEdges.forEach((edge) => {
+    rawEdges.forEach((edge) => {
       const src = typeof edge.source === 'object' ? (edge.source as D3GraphNode).id : edge.source
       const tgt = typeof edge.target === 'object' ? (edge.target as D3GraphNode).id : edge.target
       const key = [src, tgt].sort().join(':::')
@@ -253,54 +233,54 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
     })
 
     return meta
-  }, [filteredEdges])
+  }, [rawEdges])
 
   // Neighborhood map for dimming
   const neighborhood = useMemo(() => {
     if (!activeNodeId) return null
     const set = new Set<string>([activeNodeId])
-    filteredEdges.forEach((e) => {
+    rawEdges.forEach((e) => {
       const s = typeof e.source === 'object' ? (e.source as D3GraphNode).id : e.source
       const t = typeof e.target === 'object' ? (e.target as D3GraphNode).id : e.target
       if (s === activeNodeId) set.add(t)
       if (t === activeNodeId) set.add(s)
     })
     return set
-  }, [activeNodeId, filteredEdges])
+  }, [activeNodeId, rawEdges])
 
   // Active selected node details
   const activeSelectedNode = useMemo(() => {
     if (!activeNodeId) return null
-    return filteredNodes.find((n) => n.id === activeNodeId) ?? null
-  }, [activeNodeId, filteredNodes])
+    return rawNodes.find((n) => n.id === activeNodeId) ?? null
+  }, [activeNodeId, rawNodes])
 
   // Active selected edge details
   const activeSelectedEdge = useMemo(() => {
     if (!activeEdgeId) return null
-    return filteredEdges.find((e) => e.id === activeEdgeId) ?? null
-  }, [activeEdgeId, filteredEdges])
+    return rawEdges.find((e) => e.id === activeEdgeId) ?? null
+  }, [activeEdgeId, rawEdges])
 
   const edgeSourceNode = useMemo(() => {
     if (!activeSelectedEdge) return null
     const srcId = typeof activeSelectedEdge.source === 'object' ? (activeSelectedEdge.source as D3GraphNode).id : activeSelectedEdge.source
-    return filteredNodes.find((n) => n.id === srcId) ?? null
-  }, [activeSelectedEdge, filteredNodes])
+    return rawNodes.find((n) => n.id === srcId) ?? null
+  }, [activeSelectedEdge, rawNodes])
 
   const edgeTargetNode = useMemo(() => {
     if (!activeSelectedEdge) return null
     const tgtId = typeof activeSelectedEdge.target === 'object' ? (activeSelectedEdge.target as D3GraphNode).id : activeSelectedEdge.target
-    return filteredNodes.find((n) => n.id === tgtId) ?? null
-  }, [activeSelectedEdge, filteredNodes])
+    return rawNodes.find((n) => n.id === tgtId) ?? null
+  }, [activeSelectedEdge, rawNodes])
 
   // Active node connections count
   const activeNodeConnections = useMemo(() => {
     if (!activeNodeId) return []
-    return filteredEdges.filter((e) => {
+    return rawEdges.filter((e) => {
       const s = typeof e.source === 'object' ? (e.source as D3GraphNode).id : e.source
       const t = typeof e.target === 'object' ? (e.target as D3GraphNode).id : e.target
       return s === activeNodeId || t === activeNodeId
     })
-  }, [activeNodeId, filteredEdges])
+  }, [activeNodeId, rawEdges])
 
   // Zoom & Viewport Action Helpers
   const zoomIn = useCallback(() => {
@@ -372,7 +352,162 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
     return () => clearInterval(timer)
   }, [isPlaying])
 
-  // Initialize and update D3 Force Simulation
+  const timeIndexRef = useRef(100)
+  useEffect(() => { timeIndexRef.current = timeIndex }, [timeIndex])
+
+  // Dedicated Effect: Live Selection & Highlighting (Runs instantly without tearing down simulation)
+  useEffect(() => {
+    if (!linkPathsRef.current || !nodeContainersRef.current) return
+
+    // 1. Update edge paths & active highlight
+    linkPathsRef.current
+      .attr('stroke', (d) => {
+        if (activeEdgeId === d.id) return '#e11d48'
+        const type = String(d.edge_type || d.label || '')
+        return EDGE_STROKES[type] ?? '#94a3b8'
+      })
+      .attr('stroke-width', (d) => (activeEdgeId === d.id ? 3.5 : 2))
+      .attr('opacity', (d) => {
+        if (!activeNodeId) return 0.85
+        const src = typeof d.source === 'object' ? (d.source as D3GraphNode).id : d.source
+        const tgt = typeof d.target === 'object' ? (d.target as D3GraphNode).id : d.target
+        return (src === activeNodeId || tgt === activeNodeId) ? 1.0 : 0.15
+      })
+
+    // 2. Update edge label badges (only visible when edge is selected)
+    if (edgeBadgesRef.current) {
+      edgeBadgesRef.current
+        .style('display', (d) => (d.id === activeEdgeId ? 'block' : 'none'))
+        .attr('opacity', (d) => (d.id === activeEdgeId ? 1.0 : 0.0))
+        .select('rect')
+        .attr('stroke', (d) => (activeEdgeId === d.id ? '#e11d48' : EDGE_STROKES[String(d.edge_type || d.label)] ?? '#cbd5e1'))
+        .attr('stroke-width', (d) => (activeEdgeId === d.id ? 2.5 : 1))
+    }
+
+    // 3. Update focus rings & Louvain community indicators
+    if (focusRingsRef.current) {
+      focusRingsRef.current
+        .attr('stroke', (d) => {
+          if (activeNodeId === d.id) return '#0284c7'
+          if (highlightDelta && d.isDelta) return '#10b981'
+          const communityBadge = (d.badges || []).find((b) => b.startsWith('COMMUNITY-'))
+          if (communityBadge && COMMUNITY_STROKES[communityBadge]) return COMMUNITY_STROKES[communityBadge]
+          return 'none'
+        })
+        .attr('stroke-width', (d) => (activeNodeId === d.id || (highlightDelta && d.isDelta) ? 3.5 : 2.5))
+        .attr('opacity', (d) => {
+          if (!activeNodeId) return 1.0
+          return neighborhood?.has(d.id) ? 1.0 : 0.2
+        })
+    }
+
+    // 4. Update node card elements & neighborhood dimming
+    nodeContainersRef.current
+      .select('path.node-circle')
+      .attr('stroke-width', (d) => ((d as D3GraphNode).id === activeNodeId ? 3.5 : 2))
+      .attr('opacity', (d) => {
+        if (!activeNodeId) return 1.0
+        return neighborhood?.has((d as D3GraphNode).id) ? 1.0 : 0.22
+      })
+
+    nodeContainersRef.current
+      .select('text')
+      .attr('opacity', (d) => (!activeNodeId || neighborhood?.has((d as D3GraphNode).id) ? 1.0 : 0.25))
+
+    nodeContainersRef.current
+      .select('.node-label-group')
+      .attr('opacity', (d) => (!activeNodeId || neighborhood?.has((d as D3GraphNode).id) ? 1.0 : 0.25))
+
+  }, [activeNodeId, activeEdgeId, neighborhood, highlightDelta])
+
+  // Dedicated Effect: Live Timeline Scrubber Filtering
+  useEffect(() => {
+    if (!nodeContainersRef.current || !linkPathsRef.current) return
+
+    // Extract all valid timestamps from nodes and edges
+    const allTimestamps: number[] = []
+    rawNodes.forEach((n) => {
+      const ts = n.timestamp || n.start || (n.properties?.occurred_at as string) || (n.properties?.recorded_at as string) || (n.properties?.timestamp as string)
+      if (ts) { const t = new Date(ts).getTime(); if (!isNaN(t)) allTimestamps.push(t) }
+    })
+    rawEdges.forEach((e) => {
+      const ts = e.timestamp || e.start || (e.properties?.recorded_at as string) || (e.properties?.occurred_at as string) || (e.properties?.timestamp as string)
+      if (ts) { const t = new Date(ts).getTime(); if (!isNaN(t)) allTimestamps.push(t) }
+    })
+
+    if (timeIndex >= 100) {
+      nodeContainersRef.current.style('display', 'block')
+      linkPathsRef.current.style('display', 'block')
+      if (linkHitboxesRef.current) linkHitboxesRef.current.style('display', 'block')
+      return
+    }
+
+    if (allTimestamps.length > 0) {
+      const minTime = Math.min(...allTimestamps)
+      const maxTime = Math.max(...allTimestamps)
+      const cutoffTime = minTime + (maxTime - minTime) * (timeIndex / 100)
+
+      const activeNodeIds = new Set<string>()
+      nodeContainersRef.current.style('display', (d) => {
+        const ts = d.timestamp || d.start || (d.properties?.occurred_at as string) || (d.properties?.recorded_at as string) || (d.properties?.timestamp as string)
+        if (!ts) {
+          activeNodeIds.add(d.id)
+          return 'block'
+        }
+        const t = new Date(ts).getTime()
+        const visible = isNaN(t) || t <= cutoffTime
+        if (visible) activeNodeIds.add(d.id)
+        return visible ? 'block' : 'none'
+      })
+
+      linkPathsRef.current.style('display', (d) => {
+        const src = typeof d.source === 'object' ? (d.source as D3GraphNode).id : d.source
+        const tgt = typeof d.target === 'object' ? (d.target as D3GraphNode).id : d.target
+        if (!activeNodeIds.has(src) || !activeNodeIds.has(tgt)) return 'none'
+
+        const ts = (d as D3GraphEdge).timestamp || (d as D3GraphEdge).start || ((d as D3GraphEdge).properties?.recorded_at as string)
+        if (!ts) return 'block'
+        const t = new Date(ts as string).getTime()
+        return (!isNaN(t) && t > cutoffTime) ? 'none' : 'block'
+      })
+
+      if (linkHitboxesRef.current) {
+        linkHitboxesRef.current.style('display', (d) => {
+          const src = typeof d.source === 'object' ? (d.source as D3GraphNode).id : d.source
+          const tgt = typeof d.target === 'object' ? (d.target as D3GraphNode).id : d.target
+          return (activeNodeIds.has(src) && activeNodeIds.has(tgt)) ? 'block' : 'none'
+        })
+      }
+    } else {
+      // Sequence-based filtering (fallback when no timestamps exist)
+      const totalNodes = rawNodes.length
+      const cutoffIndex = Math.max(1, Math.ceil(totalNodes * (timeIndex / 100)))
+      const activeNodeIds = new Set<string>()
+
+      nodeContainersRef.current.style('display', (d, idx) => {
+        const isCase = String(d.entity_type || d.type || '').toLowerCase().includes('case')
+        const visible = isCase || idx < cutoffIndex
+        if (visible) activeNodeIds.add(d.id)
+        return visible ? 'block' : 'none'
+      })
+
+      linkPathsRef.current.style('display', (d) => {
+        const src = typeof d.source === 'object' ? (d.source as D3GraphNode).id : d.source
+        const tgt = typeof d.target === 'object' ? (d.target as D3GraphNode).id : d.target
+        return (activeNodeIds.has(src) && activeNodeIds.has(tgt)) ? 'block' : 'none'
+      })
+
+      if (linkHitboxesRef.current) {
+        linkHitboxesRef.current.style('display', (d) => {
+          const src = typeof d.source === 'object' ? (d.source as D3GraphNode).id : d.source
+          const tgt = typeof d.target === 'object' ? (d.target as D3GraphNode).id : d.target
+          return (activeNodeIds.has(src) && activeNodeIds.has(tgt)) ? 'block' : 'none'
+        })
+      }
+    }
+  }, [timeIndex, rawNodes, rawEdges])
+
+  // Initialize and update D3 Force Simulation (Only runs on data/density changes)
   useEffect(() => {
     if (!svgRef.current || !containerRef.current) return
 
@@ -404,7 +539,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       defs.append('marker')
         .attr('id', `arrow-${type}`)
         .attr('viewBox', '0 -5 10 10')
-        .attr('refX', 30) // Position arrow cleanly at circle node boundary
+        .attr('refX', 30)
         .attr('refY', 0)
         .attr('markerWidth', 6.5)
         .attr('markerHeight', 6.5)
@@ -415,10 +550,10 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
     })
 
     // Clone data to preserve simulation state across updates
-    const simNodes: D3GraphNode[] = filteredNodes.map((d) => ({ ...d }))
+    const simNodes: D3GraphNode[] = rawNodes.map((d) => ({ ...d }))
     const nodeMap = new Map(simNodes.map((d) => [d.id, d]))
 
-    const simEdges: D3GraphEdge[] = filteredEdges
+    const simEdges: D3GraphEdge[] = rawEdges
       .map((d) => {
         const s = typeof d.source === 'object' ? (d.source as D3GraphNode).id : d.source
         const t = typeof d.target === 'object' ? (d.target as D3GraphNode).id : d.target
@@ -429,6 +564,16 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
         }
       })
       .filter((d) => typeof d.source === 'object' && typeof d.target === 'object')
+
+    // Degree map for visual emphasis of well-connected nodes
+    const degreeMap = new Map<string, number>()
+    simEdges.forEach((e) => {
+      const s = (e.source as D3GraphNode).id
+      const t = (e.target as D3GraphNode).id
+      degreeMap.set(s, (degreeMap.get(s) || 0) + 1)
+      degreeMap.set(t, (degreeMap.get(t) || 0) + 1)
+    })
+    const maxDegree = Math.max(...Array.from(degreeMap.values()), 1)
 
     // Create D3 Force Simulation
     const simulation = d3.forceSimulation<D3GraphNode>(simNodes)
@@ -459,8 +604,26 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
 
     simulationRef.current = simulation
 
-    // Link Layer (Curved paths)
+    // Link Group
     const linkGroup = g.append('g').attr('class', 'links')
+
+    // Hitbox Layer (Thick transparent clickable path for effortless clicking)
+    const linkHitboxes = linkGroup.selectAll<SVGPathElement, D3GraphEdge>('path.edge-hitbox')
+      .data(simEdges, (d) => d.id)
+      .join('path')
+      .attr('class', 'edge-hitbox cursor-pointer')
+      .attr('fill', 'none')
+      .attr('stroke', 'transparent')
+      .attr('stroke-width', 28)
+      .style('pointer-events', 'stroke')
+      .on('click', (event, d) => {
+        event.stopPropagation()
+        handleSelectEdge(d.id)
+      })
+
+    linkHitboxesRef.current = linkHitboxes
+
+    // Visible Edge Line
     const linkPaths = linkGroup.selectAll<SVGPathElement, D3GraphEdge>('path.edge-line')
       .data(simEdges, (d) => d.id)
       .join('path')
@@ -498,6 +661,8 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
         handleSelectEdge(d.id)
       })
 
+    linkPathsRef.current = linkPaths
+
     // Edge Label Group (HIDDEN BY DEFAULT — ONLY SHOWN ON CLICKED LINE)
     const edgeLabelGroup = g.append('g').attr('class', 'edge-labels')
     const edgeLabels = edgeLabelGroup.selectAll<SVGGElement, D3GraphEdge>('g.edge-badge')
@@ -510,6 +675,8 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
         event.stopPropagation()
         handleSelectEdge(d.id)
       })
+
+    edgeBadgesRef.current = edgeLabels
 
     // Edge Badge Background Capsule
     edgeLabels.append('rect')
@@ -559,12 +726,13 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
         if (!event.active) simulation.alphaTarget(0)
       })
 
-    // Node Group (Circle Nodes)
+    // Node Group (Shape Nodes)
     const nodeGroup = g.append('g').attr('class', 'nodes')
     const nodeContainers = nodeGroup.selectAll<SVGGElement, D3GraphNode>('g.node-card')
       .data(simNodes, (d) => d.id)
       .join('g')
       .attr('class', 'node-card cursor-pointer select-none')
+      .style('pointer-events', 'all')
       .call(dragBehavior)
       .on('click', (event, d) => {
         event.stopPropagation()
@@ -573,18 +741,23 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       .on('dblclick', (event, d) => {
         event.stopPropagation()
         onNodeDoubleClick?.(d.id)
-        // Reset pin on double click
         d.fx = null
         d.fy = null
         simulation.alpha(0.3).restart()
       })
 
+    nodeContainersRef.current = nodeContainers
+
     // 1. Outer Focus & Louvain Community Ring
-    nodeContainers.append('circle')
+    const focusRings = nodeContainers.append('path')
       .attr('class', 'focus-ring')
-      .attr('r', (d) => {
-        const isCase = String(d.entity_type || d.type || '').toLowerCase().includes('case')
-        return isCase ? 31 : 27
+      .attr('d', (d) => {
+        const rawType = String(d.entity_type || d.type || 'Person')
+        const isCase = rawType.toLowerCase().includes('case')
+        const degree = degreeMap.get(d.id) || 0
+        const degreeScale = 1 + (degree / maxDegree) * 0.6
+        const baseArea = isCase ? Math.PI * 31 * 31 : Math.PI * 27 * 27
+        return getNodeSymbolPath(rawType, baseArea * degreeScale)
       })
       .attr('fill', 'none')
       .attr('stroke', (d) => {
@@ -601,17 +774,25 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
         return neighborhood?.has(d.id) ? 1.0 : 0.2
       })
 
-    // 2. Inner Circle Body
-    nodeContainers.append('circle')
+    focusRingsRef.current = focusRings
+
+    // 2. Inner Shape Body
+    nodeContainers.append('path')
       .attr('class', 'node-circle')
-      .attr('r', (d) => {
-        const isCase = String(d.entity_type || d.type || '').toLowerCase().includes('case')
-        return isCase ? 25 : 21
+      .attr('d', (d) => {
+        const rawType = String(d.entity_type || d.type || 'Person')
+        const isCase = rawType.toLowerCase().includes('case')
+        const degree = degreeMap.get(d.id) || 0
+        const degreeScale = 1 + (degree / maxDegree) * 0.6
+        const baseArea = isCase ? Math.PI * 25 * 25 : Math.PI * 21 * 21
+        return getNodeSymbolPath(rawType, baseArea * degreeScale)
       })
       .attr('fill', (d) => {
         const rawType = String(d.entity_type || d.type || 'Person')
         const cfg = ENTITY_CONFIG[rawType] ?? ENTITY_CONFIG.Person
-        return cfg.bg
+        const degree = degreeMap.get(d.id) || 0
+        const intensity = degree / maxDegree
+        return String(d3.interpolate(cfg.bg, cfg.stroke)(Math.min(intensity * 0.6, 0.6)))
       })
       .attr('stroke', (d) => {
         const rawType = String(d.entity_type || d.type || 'Person')
@@ -697,8 +878,8 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
 
     // Simulation Tick Update (Physics Step)
     simulation.on('tick', () => {
-      // 1. Update curved link paths
-      linkPaths.attr('d', (d) => {
+      // 1. Update curved link paths and hitboxes
+      const updateLinkD = (d: D3GraphEdge) => {
         const source = d.source as D3GraphNode
         const target = d.target as D3GraphNode
         if (source.x === undefined || source.y === undefined || target.x === undefined || target.y === undefined) return ''
@@ -720,7 +901,10 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
         const midY = (source.y + target.y) / 2 + ny * offset
 
         return `M ${source.x} ${source.y} Q ${midX} ${midY} ${target.x} ${target.y}`
-      })
+      }
+
+      linkPaths.attr('d', updateLinkD)
+      linkHitboxes.attr('d', updateLinkD)
 
       // 2. Update edge label badges (ONLY VISIBLE ON CLICKED / SELECTED LINE)
       edgeLabels
@@ -773,7 +957,8 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       clearTimeout(timer)
       simulation.stop()
     }
-  }, [filteredNodes, filteredEdges, activeNodeId, activeEdgeId, highlightDelta, parallelEdgeMeta, neighborhood, densityScale, fitView, handleSelectEdge, handleSelectNode, onNodeDoubleClick])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- activeNodeId/activeEdgeId/highlightDelta/neighborhood are intentionally omitted; handled by the dedicated selection useEffect above to avoid full canvas teardown
+  }, [rawNodes, rawEdges, parallelEdgeMeta, densityScale, fitView, handleSelectEdge, handleSelectNode, onNodeDoubleClick])
 
   return (
     <div

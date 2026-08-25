@@ -75,7 +75,7 @@ export default function Entities() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
         {/* Search Query Form */}
         <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm space-y-4">
           <h2 className="text-base font-bold text-neutral-900">Suspect Query Attributes</h2>
@@ -136,7 +136,7 @@ export default function Entities() {
         </div>
 
         {/* Results Container */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-180px)]">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-neutral-900">
               Resolved Candidate Entities {hasSearched && `(${matches.length} found)`}
@@ -156,10 +156,10 @@ export default function Entities() {
           ) : (
             <div className="space-y-3.5">
               {matches.map((m, idx) => (
-                <div key={idx} className="rounded-xl border border-neutral-200 bg-white p-4.5 space-y-3 hover:border-neutral-300 shadow-sm transition-colors">
+                <div key={idx} className="rounded-xl border border-neutral-200 bg-white p-4.5 space-y-3 hover:border-neutral-300 shadow-sm transition-colors min-w-0 overflow-hidden">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-base font-bold text-neutral-900 flex items-center gap-2">
+                    <div className="min-w-0">
+                      <h3 className="text-base font-bold text-neutral-900 flex items-center gap-2 truncate">
                         {m.properties.full_name || m.matched_node_id}
                         {m.properties.aliases && m.properties.aliases.length > 0 && (
                           <span className="text-xs font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
@@ -171,7 +171,7 @@ export default function Entities() {
                         Node ID: <code className="text-neutral-800 font-mono font-semibold">{m.matched_node_id}</code> • Phone: {m.properties.phone_number || 'N/A'} • Vehicle: {m.properties.vehicle_number || 'N/A'}
                       </div>
                     </div>
-                    <div>{getStatusBadge(m.status, m.confidence)}</div>
+                    <div className="flex-shrink-0 ml-2">{getStatusBadge(m.status, m.confidence)}</div>
                   </div>
 
                   {/* Why Match was made (Reason & Evidence) */}
@@ -180,10 +180,10 @@ export default function Entities() {
                       <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
                       Resolution Evidence & Derivation:
                     </div>
-                    <div className="text-neutral-700">{m.reason}</div>
+                    <div className="text-xs text-neutral-600 leading-relaxed break-words">{m.reason}</div>
                     
                     {m.evidence_breakdown && Object.keys(m.evidence_breakdown).length > 0 && (
-                      <div className="mt-2.5 flex flex-wrap gap-2 pt-2 border-t border-neutral-200">
+                      <div className="mt-2.5 flex flex-wrap gap-1 pt-2 border-t border-neutral-200">
                         {Object.entries(m.evidence_breakdown).map(([k, v]) => (
                           <span key={k} className="text-[11px] bg-white px-2 py-0.5 rounded text-neutral-800 border border-neutral-200 font-medium">
                             {k}: <strong className="text-emerald-700">+{v as number}</strong>
@@ -201,3 +201,4 @@ export default function Entities() {
     </div>
   )
 }
+

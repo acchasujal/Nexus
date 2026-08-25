@@ -48,12 +48,14 @@ export function GlobalNetworkCanvas({
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null)
   const [showLegendMobile, setShowLegendMobile] = useState(false)
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (initialNodeId && graph?.nodes?.some((n) => n.id === initialNodeId)) {
       setSelectedNode(initialNodeId)
       onNodeSelect?.(initialNodeId)
     }
   }, [initialNodeId, graph, onNodeSelect])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const addedNodes = useMemo(() => new Set(diff?.added_node_ids ?? []), [diff])
   const addedEdges = useMemo(() => new Set(diff?.added_edge_ids ?? []), [diff])

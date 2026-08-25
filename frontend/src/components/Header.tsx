@@ -102,9 +102,11 @@ export function Header({ onMenuToggle }: HeaderProps) {
   }, [searchResults])
 
   // Reset highlight index when query or results change
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setHighlightedIndex(-1)
   }, [query, searchResults])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Reset demo mutation
   const resetMutation = useResetDemo()
