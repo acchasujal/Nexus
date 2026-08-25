@@ -25,7 +25,9 @@ const server = setupServer(...nexusHandlers)
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
 afterEach(() => {
   server.resetHandlers()
-  nexusState.current.candidate.status = 'PENDING'
+  nexusState.current.candidates.forEach((c) => {
+    c.status = 'PENDING'
+  })
   nexusState.current.lead.status = 'NEW'
 })
 afterAll(() => server.close())

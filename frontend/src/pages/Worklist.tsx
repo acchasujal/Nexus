@@ -198,14 +198,14 @@ export default function Worklist() {
       cell: (row) => (
         <div className="flex items-center gap-2">
           <Link
-            to={`/investigations/${row.id}`}
+            to={`/cases/${row.id}`}
             onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-1 text-xs text-blue-700 hover:text-blue-900 font-semibold p-1 hover:bg-blue-50 rounded transition-colors"
           >
             Open <ArrowRight className="h-3 w-3" />
           </Link>
           <Link
-            to={`/network?case_id=${row.id}`}
+            to={`/cases/${row.id}?tab=network`}
             onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 font-semibold p-1 hover:bg-emerald-50 rounded transition-colors"
           >
@@ -431,7 +431,7 @@ export default function Worklist() {
         <DataTable
           data={filteredData}
           columns={columns}
-          onRowClick={(row) => navigate(`/investigations/${row.id}`)}
+          onRowClick={(row) => navigate(`/cases/${row.id}`)}
         />
       )}
     </div>

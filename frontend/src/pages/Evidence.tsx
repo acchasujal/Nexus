@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { FileText, Calendar, Copy, Check, Phone, Landmark, FileSearch, ShieldCheck } from 'lucide-react'
+import { FileText, Calendar, Copy, Check, Phone, Landmark, FileSearch, ShieldCheck, MapPin } from 'lucide-react'
 import { allSourceRecords } from '@/lib/mocks/nexusFixture'
 import type { NexusSourceRecord } from '@shared/contracts/api'
 

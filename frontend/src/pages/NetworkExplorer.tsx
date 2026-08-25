@@ -16,11 +16,13 @@ import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import { DerivationBadge } from '@/components/nexus/DerivationBadge'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 type ReplayState = 'before' | 'after'
 
 export default function NetworkExplorer() {
+  const [searchParams] = useSearchParams()
+  const caseIdParam = searchParams.get('case_id')
   const [replay, setReplay] = useState<ReplayState>('before')
   const [edgeId, setEdgeId] = useState<string | null>(null)
 
@@ -122,7 +124,13 @@ export default function NetworkExplorer() {
               </span>
             )}
           </div>
-          <GlobalNetworkCanvas graph={graph} diff={replay === 'after' ? diff.data ?? null : null} highlightDelta={replay === 'after'} onEdgeSelect={setEdgeId} />
+          <GlobalNetworkCanvas
+            graph={graph}
+            diff={replay === 'after' ? diff.data ?? null : null}
+            highlightDelta={replay === 'after'}
+            initialCaseFilter={caseIdParam}
+            onEdgeSelect={setEdgeId}
+          />
         </>
       )}
 

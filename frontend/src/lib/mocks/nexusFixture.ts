@@ -59,6 +59,30 @@ const SRC: Record<string, NexusSourceRecord> = {
     raw_excerpt: '2026-03-11T16:47:00Z, ACC-9914 → ACC-7731, ₹2,15,000, ref NIFT/20260311/8830.',
     occurred_at: '2026-03-11T16:47:00Z',
   },
+  'SRC-FIR-305': {
+    id: 'SRC-FIR-305', batch_id: 'BATCH-2026-08-24', source_type: 'FIR',
+    locator: 'fir_305_2026.pdf — page 2, row 3',
+    raw_excerpt: 'Accused: Vikram Sharma, age 32, res. Indiranagar Bengaluru. Mobile: +91 98450 77310. Aadhaar: XXXX-XXXX-4491.',
+    occurred_at: '2026-03-15T11:00:00Z',
+  },
+  'SRC-FIR-412': {
+    id: 'SRC-FIR-412', batch_id: 'BATCH-2026-08-24', source_type: 'FIR',
+    locator: 'fir_412_2026.pdf — page 1, row 5',
+    raw_excerpt: 'Accused: Bikram Sarma, age 32, res. Domlur Layout Bengaluru. Mobile: +91 98450 77310. Aadhaar: XXXX-XXXX-4491.',
+    occurred_at: '2026-03-22T16:30:00Z',
+  },
+  'SRC-FIR-501': {
+    id: 'SRC-FIR-501', batch_id: 'BATCH-2026-08-24', source_type: 'FIR',
+    locator: 'fir_501_2026.pdf — page 3, row 2',
+    raw_excerpt: 'Accused: Suniel Shetty, s/o R. Shetty, age 41, res. Jayanagar Bengaluru. Vehicle: KA-01-AB-1001.',
+    occurred_at: '2026-04-02T10:15:00Z',
+  },
+  'SRC-FIR-502': {
+    id: 'SRC-FIR-502', batch_id: 'BATCH-2026-08-24', source_type: 'FIR',
+    locator: 'fir_502_2026.pdf — page 2, row 8',
+    raw_excerpt: 'Accused: Sunil Shetty, s/o R. Shetty, age 41, res. 4th Block Jayanagar. Vehicle: KA-01-AB-1001.',
+    occurred_at: '2026-04-18T14:40:00Z',
+  },
 }
 
 // ─── Resolution candidate (the planted alias) ────────────────────────────────
@@ -96,6 +120,71 @@ export const CANDIDATE_RC1: ResolutionCandidate = {
     { field: 'name', left_value: 'Rafiq Khan', right_value: 'Rafiq Ahmed' },
     { field: 'dob', left_value: '1991-03-14', right_value: '1991-04-13 (day/month transposition)' },
     { field: 'age', left_value: '35', right_value: '35 (consistent)' },
+  ],
+}
+
+export const CANDIDATE_RC2: ResolutionCandidate = {
+  id: 'RC-2',
+  score: 0.92,
+  status: 'PENDING',
+  left: {
+    node_id: 'P-VIKRAM-S', entity_type: 'Person', label: 'Vikram Sharma',
+    case_ids: ['CASE-305'],
+    properties: {
+      full_name: 'Vikram Sharma', age: 32, address: 'Indiranagar Bengaluru',
+      phone: '+91 98450 77310', national_id: 'XXXX-XXXX-4491', role: 'Accused (FIR 305/2026)',
+    },
+    source_records: [SRC['SRC-FIR-305']],
+  },
+  right: {
+    node_id: 'P-BIKRAM-S', entity_type: 'Person', label: 'Bikram Sarma',
+    case_ids: ['CASE-412'],
+    properties: {
+      full_name: 'Bikram Sarma', age: 32, address: 'Domlur Layout Bengaluru',
+      phone: '+91 98450 77310', national_id: 'XXXX-XXXX-4491', role: 'Accused (FIR 412/2026)',
+    },
+    source_records: [SRC['SRC-FIR-412']],
+  },
+  reasons: [
+    { field: 'national_id', detail: 'Aadhaar suffix XXXX-XXXX-4491 matches exactly in both police reports', weight: 0.45 },
+    { field: 'phone', detail: 'Shared operational contact number +91 98450 77310', weight: 0.35 },
+    { field: 'age', detail: 'Age 32 matches perfectly across both state jurisdictions', weight: 0.12 },
+  ],
+  conflicts: [
+    { field: 'name', left_value: 'Vikram Sharma', right_value: 'Bikram Sarma (Phonetic spelling)' },
+    { field: 'address', left_value: 'Indiranagar Bengaluru', right_value: 'Domlur Layout Bengaluru (Adjacent sectors)' },
+  ],
+}
+
+export const CANDIDATE_RC3: ResolutionCandidate = {
+  id: 'RC-3',
+  score: 0.88,
+  status: 'PENDING',
+  left: {
+    node_id: 'P-SUNIEL-S', entity_type: 'Person', label: 'Suniel Shetty',
+    case_ids: ['CASE-501'],
+    properties: {
+      full_name: 'Suniel Shetty', father_name: 'R. Shetty', age: 41,
+      vehicle: 'KA-01-AB-1001', address: 'Jayanagar Bengaluru', role: 'Accused (FIR 501/2026)',
+    },
+    source_records: [SRC['SRC-FIR-501']],
+  },
+  right: {
+    node_id: 'P-SUNIL-S', entity_type: 'Person', label: 'Sunil Shetty',
+    case_ids: ['CASE-502'],
+    properties: {
+      full_name: 'Sunil Shetty', father_name: 'R. Shetty', age: 41,
+      vehicle: 'KA-01-AB-1001', address: '4th Block Jayanagar', role: 'Accused (FIR 502/2026)',
+    },
+    source_records: [SRC['SRC-FIR-502']],
+  },
+  reasons: [
+    { field: 'vehicle', detail: 'Vehicle registration KA-01-AB-1001 matches across both seizure reports', weight: 0.42 },
+    { field: 'father_name', detail: 'Father name "R. Shetty" identical in both FIR accused sheets', weight: 0.30 },
+    { field: 'locality', detail: 'Jayanagar locality match with sub-block specification', weight: 0.16 },
+  ],
+  conflicts: [
+    { field: 'name', left_value: 'Suniel Shetty', right_value: 'Sunil Shetty' },
   ],
 }
 
@@ -146,12 +235,36 @@ const E = (
   properties: { evidence_ids: evidence },
 })
 
+const CASE_305: NexusGraphNode = {
+  id: 'CASE-305', entity_type: 'Case', label: 'FIR 305/2026 — Cyber Fraud',
+  case_ids: ['CASE-305'],
+  properties: { fir_number: '305/2026', station: 'Indiranagar PS', district: 'Bengaluru', offence: 'IT Act 66D & Fraud' },
+}
+const CASE_412: NexusGraphNode = {
+  id: 'CASE-412', entity_type: 'Case', label: 'FIR 412/2026 — Hawala Syndicate',
+  case_ids: ['CASE-412'],
+  properties: { fir_number: '412/2026', station: 'Domlur Cyber PS', district: 'Bengaluru', offence: 'Organized Crime (BNS 111)' },
+}
+const P_VIKRAM_S: NexusGraphNode = {
+  id: 'P-VIKRAM-S', entity_type: 'Person', label: 'Vikram Sharma (Accused)',
+  case_ids: ['CASE-305'], properties: { role: 'Accused', phone: '+91 98450 77310', national_id: 'XXXX-XXXX-4491' },
+}
+const P_BIKRAM_S: NexusGraphNode = {
+  id: 'P-BIKRAM-S', entity_type: 'Person', label: 'Bikram Sarma (Accused)',
+  case_ids: ['CASE-412'], properties: { role: 'Accused', phone: '+91 98450 77310', national_id: 'XXXX-XXXX-4491' },
+}
+const ACC_4491: NexusGraphNode = {
+  id: 'ACC-4491', entity_type: 'Account', label: 'ACC-4491 (HDFC)',
+  case_ids: ['CASE-412'], properties: { bank: 'HDFC Bank', holder: 'Bikram Sarma' },
+}
+
 export const BEFORE_NODES: NexusGraphNode[] = [
-  CASE_141, CASE_207, P_MEENA, P_DEEPAK, ACC_7731, ACC_9914, PH_A, PH_B,
+  CASE_141, CASE_207, CASE_305, CASE_412, P_MEENA, P_DEEPAK, ACC_7731, ACC_9914, ACC_4491, PH_A, PH_B,
   { id: 'P-RAFIQ-K', entity_type: 'Person', label: 'Rafiq Khan (Accused)', case_ids: ['CASE-141'],
     properties: { role: 'Accused', phone: '+91 98450 11223' } },
   { id: 'P-RAFIQ-A', entity_type: 'Person', label: 'Rafiq Ahmed (Accused)', case_ids: ['CASE-207'],
     properties: { role: 'Accused', phone: '+91 98450 11223' } },
+  P_VIKRAM_S, P_BIKRAM_S,
 ]
 
 export const BEFORE_EDGES: NexusGraphEdge[] = [
@@ -165,16 +278,23 @@ export const BEFORE_EDGES: NexusGraphEdge[] = [
   E('E-OWN-9914', 'P-DEEPAK', 'ACC-9914', 'OWNS_ACCOUNT', 'FACT', 0.95, '2026-03-02T14:15:00Z', ['CASE-207'], ['SRC-FIR-207']),
   E('E-TXN-55', 'ACC-9914', 'ACC-7731', 'TRANSFERRED_TO', 'FACT', 1.0, '2026-03-09T11:03:00Z', ['CASE-207', 'CASE-141'], ['SRC-TXN-55']),
   E('E-TXN-71', 'ACC-9914', 'ACC-7731', 'TRANSFERRED_TO', 'FACT', 1.0, '2026-03-11T16:47:00Z', ['CASE-207', 'CASE-141'], ['SRC-TXN-71']),
+  E('E-ACCUSE-305', 'P-VIKRAM-S', 'CASE-305', 'ACCUSED_IN', 'FACT', 1.0, '2026-03-15T11:00:00Z', ['CASE-305'], ['SRC-FIR-305']),
+  E('E-ACCUSE-412', 'P-BIKRAM-S', 'CASE-412', 'ACCUSED_IN', 'FACT', 1.0, '2026-03-22T16:30:00Z', ['CASE-412'], ['SRC-FIR-412']),
+  E('E-OWN-4491', 'P-BIKRAM-S', 'ACC-4491', 'OWNS_ACCOUNT', 'FACT', 0.95, '2026-03-22T16:30:00Z', ['CASE-412'], ['SRC-FIR-412']),
+  E('E-TXN-HWL', 'ACC-4491', 'ACC-9914', 'TRANSFERRED_TO', 'FACT', 0.90, '2026-03-25T12:00:00Z', ['CASE-412', 'CASE-207'], ['SRC-FIR-412']),
 ]
 
 export const AFTER_NODES: NexusGraphNode[] = [
-  CASE_141, CASE_207, P_MEENA, P_DEEPAK, ACC_7731, ACC_9914,
+  CASE_141, CASE_207, CASE_305, CASE_412, P_MEENA, P_DEEPAK, ACC_7731, ACC_9914, ACC_4491,
   { id: 'P-RAFIQ', entity_type: 'Person', label: 'Rafiq Khan / Rafiq Ahmed',
     case_ids: ['CASE-141', 'CASE-207'], badges: ['CROSS_CASE_BRIDGE', 'COMMUNITY-C1'],
     properties: { role: 'Accused in both FIRs', phone: '+91 98450 11223', aliases: ['Rafiq Khan', 'Rafiq Ahmed'] } },
   { id: 'PH-UNIFIED', entity_type: 'Phone', label: '+91 98450 11223 (shared)',
     case_ids: ['CASE-141', 'CASE-207'],
     properties: { number: '+91 98450 11223', seen_in: 'cdr_mysuru_feb.csv, cdr_bengaluru_mar.csv' } },
+  { id: 'P-VIKRAM', entity_type: 'Person', label: 'Vikram Sharma / Bikram Sarma',
+    case_ids: ['CASE-305', 'CASE-412'], badges: ['CROSS_CASE_BRIDGE', 'COMMUNITY-C2'],
+    properties: { role: 'Hawala Operator & Cyber Fraudster', phone: '+91 98450 77310', national_id: 'XXXX-XXXX-4491' } },
 ]
 
 export const AFTER_EDGES: NexusGraphEdge[] = [
@@ -191,6 +311,12 @@ export const AFTER_EDGES: NexusGraphEdge[] = [
   E('E-TXN-71', 'ACC-9914', 'ACC-7731', 'TRANSFERRED_TO', 'FACT', 1.0, '2026-03-11T16:47:00Z', ['CASE-207', 'CASE-141'], ['SRC-TXN-71']),
   E('E-BRIDGE', 'CASE-141', 'CASE-207', 'CONNECTS_CASES', 'DERIVED', 0.86, '2026-08-24T18:00:00Z', ['CASE-141', 'CASE-207'],
     ['SRC-FIR-141', 'SRC-FIR-207', 'SRC-CDR-A12', 'SRC-CDR-B31']),
+  E('E-ACCUSE-305', 'P-VIKRAM', 'CASE-305', 'ACCUSED_IN', 'FACT', 1.0, '2026-03-15T11:00:00Z', ['CASE-305'], ['SRC-FIR-305']),
+  E('E-ACCUSE-412', 'P-VIKRAM', 'CASE-412', 'ACCUSED_IN', 'FACT', 1.0, '2026-03-22T16:30:00Z', ['CASE-412'], ['SRC-FIR-412']),
+  E('E-OWN-4491', 'P-VIKRAM', 'ACC-4491', 'OWNS_ACCOUNT', 'FACT', 0.95, '2026-03-22T16:30:00Z', ['CASE-412'], ['SRC-FIR-412']),
+  E('E-TXN-HWL', 'ACC-4491', 'ACC-9914', 'TRANSFERRED_TO', 'FACT', 0.90, '2026-03-25T12:00:00Z', ['CASE-412', 'CASE-207'], ['SRC-FIR-412']),
+  E('E-BRIDGE-2', 'CASE-305', 'CASE-412', 'CONNECTS_CASES', 'DERIVED', 0.92, '2026-08-24T18:00:00Z', ['CASE-305', 'CASE-412'],
+    ['SRC-FIR-305', 'SRC-FIR-412']),
 ]
 
 export const SNAPSHOT_DIFF: SnapshotDiffResponse = {

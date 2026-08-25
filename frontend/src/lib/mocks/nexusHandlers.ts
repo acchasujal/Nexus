@@ -7,24 +7,28 @@ import { http, HttpResponse, delay } from 'msw'
 import type { ResolutionCandidate } from '@shared/contracts/api'
 import {
   AFTER_EDGES, AFTER_NODES, BEFORE_EDGES, BEFORE_NODES, BRIDGE_LEAD,
-  CANDIDATE_RC1, SNAPSHOT_DIFF, allSourceRecords, evidenceFor,
+  CANDIDATE_RC1, CANDIDATE_RC2, CANDIDATE_RC3, SNAPSHOT_DIFF, allSourceRecords, evidenceFor,
 } from './nexusFixture'
 
 interface NexusDemoState {
-  candidate: ResolutionCandidate
+  candidates: ResolutionCandidate[]
   lead: typeof BRIDGE_LEAD
   decisionCount: number
 }
 
 const freshState = (): NexusDemoState => ({
-  candidate: structuredClone(CANDIDATE_RC1),
+  candidates: [
+    structuredClone(CANDIDATE_RC1),
+    structuredClone(CANDIDATE_RC2),
+    structuredClone(CANDIDATE_RC3),
+  ],
   lead: structuredClone(BRIDGE_LEAD),
   decisionCount: 0,
 })
 
 export const nexusState: { current: NexusDemoState } = { current: freshState() }
 
-const isResolved = () => nexusState.current.candidate.status === 'CONFIRMED'
+const isResolved = () => nexusState.current.candidates.some(c => c.status === 'CONFIRMED')
 
 const networkFor = (snapshot: 'before' | 'after') => {
   const resolved = isResolved()
@@ -64,17 +68,17 @@ export const nexusHandlers = [
 
   http.get(/\/api\/v1\/nexus\/resolution\/candidates/, async () => {
     await simDelay(200)
-    return HttpResponse.json([nexusState.current.candidate])
+    return HttpResponse.json(nexusState.current.candidates)
   }),
 
   http.post(/\/api\/v1\/nexus\/resolution\/([^/]+)\/decision/, async ({ params, request }) => {
     await simDelay(350)
     const id = params[0] as string
-    if (id !== nexusState.current.candidate.id) {
+    const candidate = nexusState.current.candidates.find(c => c.id === id)
+    if (!candidate) {
       return new HttpResponse(null, { status: 404, statusText: 'Candidate not found' })
     }
     const body = (await request.json()) as { decision: 'CONFIRM' | 'REJECT' | 'DEFER'; decided_by?: string }
-    const candidate = nexusState.current.candidate
     candidate.status =
       body.decision === 'CONFIRM' ? 'CONFIRMED' : body.decision === 'REJECT' ? 'REJECTED' : 'DEFERRED'
     candidate.decided_at = new Date().toISOString()
