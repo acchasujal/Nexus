@@ -25,10 +25,11 @@ export function useDecideCandidate() {
   })
 }
 
-export function useNexusNetwork(snapshot: 'before' | 'after') {
+export function useNexusNetwork(snapshot: 'before' | 'after', enabled: boolean = true) {
   return useQuery({
     queryKey: ['nexus', 'network', snapshot],
     queryFn: () => apiClient.getNexusNetwork({ snapshot }),
+    enabled,
     retry: false,
   })
 }

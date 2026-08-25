@@ -24,9 +24,9 @@ export default function NetworkExplorer() {
   const [replay, setReplay] = useState<ReplayState>('before')
   const [edgeId, setEdgeId] = useState<string | null>(null)
 
-  const before = useNexusNetwork('before')
-  const after = useNexusNetwork('after')
-  const diff = useSnapshotDiff(after.data?.state === 'after')
+  const before = useNexusNetwork('before', replay === 'before')
+  const after = useNexusNetwork('after', replay === 'after')
+  const diff = useSnapshotDiff(replay === 'after' && after.data?.state === 'after')
 
   const network = replay === 'before' ? before : after
   const graph = network.data

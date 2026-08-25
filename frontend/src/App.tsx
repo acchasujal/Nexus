@@ -11,7 +11,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <UIProvider>
-          <RouterProvider router={router} />
+          <RouterProvider router={router} future={{ v7_startTransition: true }} />
           <Toaster 
             position="top-right" 
             toastOptions={{

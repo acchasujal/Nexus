@@ -24,12 +24,12 @@ const SEVERITY_STYLE: Record<string, string> = {
 export default function LeadInbox() {
   const { data: leads, isLoading, error, refetch } = useLeads()
   const decide = useDecideLead()
-  const afterNetwork = useNexusNetwork('after')
+  const lead = leads?.[0]
+  const afterNetwork = useNexusNetwork('after', Boolean(lead))
   const [copilotAnswer, setCopilotAnswer] = useState<string | null>(null)
   const [copilotError, setCopilotError] = useState<string | null>(null)
   const copilotQuery = useNexusCopilot(copilotAnswer === null && !copilotError ? 'How are the two cases connected?' : null)
 
-  const lead = leads?.[0]
   const nodeLabel = (id: string) => afterNetwork.data?.nodes.find((n) => n.id === id)?.label ?? id
 
   const submit = async (decision: 'ACCEPT' | 'REJECT') => {
