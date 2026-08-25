@@ -1,0 +1,37 @@
+# NEXUS Render Infrastructure-as-Code Blueprint
+# Defines Frontend Static Site and FastAPI Web Service for SIH 2026 PS 26189
+
+services:
+  # ── FASTAPI BACKEND WEB SERVICE ───────────────────────────────────────────
+  - type: web
+    name: nexus-backend
+    runtime: python
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: CORS_ORIGINS
+        value: "https://nexus-frontend.onrender.com,http://localhost:5173"
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: ARTIFACT_PATH
+        value: "artifacts/nexus_graph/nexus_graph.json"
+      - key: AUTH_MODE
+        value: "demo"
+    healthCheckPath: /health
+
+  # ── REACT / VITE FRONTEND STATIC SITE ─────────────────────────────────────
+  - type: static
+    name: nexus-frontend
+    rootDir: frontend
+    buildCommand: "npm ci && npm run build"
+    publishDir: dist
+    routes:
+      # SPA fallback rewrite: all deep routes resolve to index.html
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: "https://nexus-backend.onrender.com"
