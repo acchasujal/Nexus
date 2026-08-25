@@ -9,6 +9,7 @@ queries are refused deterministically.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+
 import pytest
 
 from backend.app.auth.principal import Principal

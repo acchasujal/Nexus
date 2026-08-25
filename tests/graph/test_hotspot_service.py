@@ -1,14 +1,14 @@
-from backend.app.core.graph.repositories.graph_repository import GraphRepository
-from backend.app.core.graph.services.hotspot_service import HotspotService
-
 from helpers import (
+    _FakeEdge,
     make_case,
     make_dependency,
     make_officer,
     make_person,
     make_store,
-    _FakeEdge,
 )
+
+from backend.app.core.graph.repositories.graph_repository import GraphRepository
+from backend.app.core.graph.services.hotspot_service import HotspotService
 
 
 def test_summary_counts():

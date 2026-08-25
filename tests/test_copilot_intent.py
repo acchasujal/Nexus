@@ -17,10 +17,11 @@ Tests for Phase 3 Copilot Intelligence Upgrade:
 from __future__ import annotations
 
 import pytest
+
 from backend.app.auth.principal import Principal
 from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.services.audit_service import AuditService
-from backend.app.services.copilot_service import CopilotService, CopilotIntent
+from backend.app.services.copilot_service import CopilotIntent, CopilotService
 from shared.contracts.api import CopilotQueryRequest, UserRole
 
 

@@ -88,28 +88,36 @@ def largest_connected_component(store: GraphStore) -> set[str]:
 
 def degree_centrality(store: GraphStore) -> dict[str, float]:
     """Compute degree centrality for all Person nodes using Person-Only Projection."""
-    from backend.app.core.graph.algorithms.centrality import compute_person_degree_centrality
+    from backend.app.core.graph.algorithms.centrality import (
+        compute_person_degree_centrality,
+    )
     results = compute_person_degree_centrality(store)
     return {r.person_id: r.degree_centrality for r in results}
 
 
 def in_degree_centrality(store: GraphStore) -> dict[str, float]:
     """Compute in-degree centrality for all Person nodes."""
-    from backend.app.core.graph.algorithms.centrality import compute_person_degree_centrality
+    from backend.app.core.graph.algorithms.centrality import (
+        compute_person_degree_centrality,
+    )
     results = compute_person_degree_centrality(store)
     return {r.person_id: r.in_degree_centrality for r in results}
 
 
 def out_degree_centrality(store: GraphStore) -> dict[str, float]:
     """Compute out-degree centrality for all Person nodes."""
-    from backend.app.core.graph.algorithms.centrality import compute_person_degree_centrality
+    from backend.app.core.graph.algorithms.centrality import (
+        compute_person_degree_centrality,
+    )
     results = compute_person_degree_centrality(store)
     return {r.person_id: r.out_degree_centrality for r in results}
 
 
 def betweenness_centrality(store: GraphStore, k: int | None = None) -> dict[str, float]:
     """Compute betweenness centrality for all Person nodes using Person-Only Projection."""
-    from backend.app.core.graph.algorithms.centrality import compute_person_betweenness_centrality
+    from backend.app.core.graph.algorithms.centrality import (
+        compute_person_betweenness_centrality,
+    )
     results = compute_person_betweenness_centrality(store, k=k)
     return {r.person_id: r.betweenness_centrality for r in results}
 
@@ -137,7 +145,9 @@ def detect_communities(store: GraphStore) -> list[CommunityResult]:
 
 def find_bridge_nodes(store: GraphStore) -> list[BridgeNodeResult]:
     """Find articulation points / bridge brokers that connect disjoint network modules."""
-    from backend.app.core.graph.algorithms.bridges import compute_person_bridge_intelligence
+    from backend.app.core.graph.algorithms.bridges import (
+        compute_person_bridge_intelligence,
+    )
     intel_results = compute_person_bridge_intelligence(store)
 
     bridge_results: list[BridgeNodeResult] = []

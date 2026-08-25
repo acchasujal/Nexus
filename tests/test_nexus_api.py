@@ -17,8 +17,9 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from backend.app.main import create_app
+
 from backend.app.db.in_memory import InMemoryBackendRepository
+from backend.app.main import create_app
 
 
 @pytest.fixture

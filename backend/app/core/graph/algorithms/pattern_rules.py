@@ -496,7 +496,7 @@ def detect_circular_repeated_financial_flow(
 
         try:
             cycles = list(nx.simple_cycles(G_fin))
-        except Exception:
+        except (ValueError, TypeError, nx.NetworkXError):
             cycles = []
 
         for cyc in cycles:

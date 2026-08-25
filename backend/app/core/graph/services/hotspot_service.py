@@ -10,13 +10,13 @@ from __future__ import annotations
 from typing import Any
 
 from backend.app.core.graph.algorithms.pattern_detection import (
-    detect_repeat_accused,
-    detect_repeat_phone,
-    detect_repeat_vehicle,
-    detect_repeat_address,
-    detect_high_workload_officers,
     detect_dependency_hotspots,
     detect_district_hotspots,
+    detect_high_workload_officers,
+    detect_repeat_accused,
+    detect_repeat_address,
+    detect_repeat_phone,
+    detect_repeat_vehicle,
     detect_temporal_hotspots,
 )
 from backend.app.core.graph.repositories.graph_repository import GraphRepository

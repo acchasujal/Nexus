@@ -16,7 +16,6 @@ from dataclasses import dataclass, field
 
 from backend.app.core.graph.algorithms.utils import GraphStore
 
-
 # ── Return type ───────────────────────────────────────────────────────────────
 
 

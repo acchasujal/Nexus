@@ -221,14 +221,12 @@ class EvidenceService:
                     continue
 
                 # Case filter: only include edges directly connected to the case node
-                if case_id:
-                    if edge.source_id != case_id and edge.target_id != case_id:
-                        continue
+                if case_id and edge.source_id != case_id and edge.target_id != case_id:
+                    continue
 
                 # Entity filter
-                if entity_id:
-                    if edge.source_id != entity_id and edge.target_id != entity_id:
-                        continue
+                if entity_id and edge.source_id != entity_id and edge.target_id != entity_id:
+                    continue
 
                 ev = self._edge_to_evidence(edge, etype)
                 if ev.id not in seen_ids:

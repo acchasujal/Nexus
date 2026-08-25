@@ -6,6 +6,7 @@ from backend.app.core.graph.algorithms.utils import (
     build_graph_store,
 )
 
+
 class _FakeNode:
     """Minimal stand-in for SyntheticNodeRecord."""
 

@@ -22,6 +22,16 @@ Coverage
 
 from __future__ import annotations
 
+from helpers import (
+    _FakeEdge,
+    make_case,
+    make_clock,
+    make_dependency,
+    make_officer,
+    make_person,
+    make_section,
+    make_store,
+)
 
 from backend.app.core.graph.algorithms.traversals import (
     SubgraphResult,
@@ -39,20 +49,6 @@ from backend.app.core.graph.algorithms.traversals import (
     get_sections_for_case,
     get_subgraph,
 )
-
-from helpers import (
-    _FakeEdge,
-    make_case,
-    make_clock,
-    make_dependency,
-    make_officer,
-    make_person,
-    make_section,
-    make_store,
-)
-
-
-
 
 # ── get_case ──────────────────────────────────────────────────────────────────
 

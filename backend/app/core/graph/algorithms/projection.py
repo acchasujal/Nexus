@@ -48,9 +48,15 @@ Developer Documentation:
 
 from __future__ import annotations
 
-from typing import Any
 from collections.abc import Iterable
-from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord, safe_str
+from typing import Any
+
+from backend.app.core.graph.algorithms.utils import (
+    AdjEdge,
+    GraphStore,
+    NodeRecord,
+    safe_str,
+)
 from backend.app.core.graph.enums import GraphEntityType, GraphRelationshipType
 
 # Valid Person-to-Person direct relationship types for network projection

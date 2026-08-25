@@ -23,7 +23,12 @@ from backend.app.core.graph.algorithms.communities import (
     detect_louvain_communities,
     generate_stable_community_id,
 )
-from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord, build_graph_store
+from backend.app.core.graph.algorithms.utils import (
+    AdjEdge,
+    GraphStore,
+    NodeRecord,
+    build_graph_store,
+)
 
 
 @pytest.fixture

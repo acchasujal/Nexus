@@ -11,33 +11,32 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
+from backend.app.api.graph_models import (
+    CaseCompareResponse,
+    CentralityResponse,
+    CoAccusedResponse,
+    ConnectedComponentsResponse,
+    CrimeSummaryResponse,
+    DependencyHotspotsResponse,
+    DimensionCountsResponse,
+    DistrictHotspotsResponse,
+    GraphNetworkResponse,
+    GraphStatsResponse,
+    MasterHotspotsResponse,
+    NetworkHotspotsResponse,
+    OffenderProfileResponse,
+    OfficerWorkloadResponse,
+    PathsBetweenResponse,
+    PersonNetworkResponse,
+    RepeatOffendersResponse,
+    SimilarCasesResponse,
+    TemporalHotspotsResponse,
+    WorkloadHotspotsResponse,
+)
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.core.graph.services.graph_service import GraphService
 from backend.app.core.graph.services.hotspot_service import HotspotService
 from backend.app.core.graph.services.offender_service import OffenderService
-from backend.app.api.graph_models import (
-    GraphNetworkResponse,
-    PersonNetworkResponse,
-    CoAccusedResponse,
-    PathsBetweenResponse,
-    SimilarCasesResponse,
-    CaseCompareResponse,
-    CrimeSummaryResponse,
-    DimensionCountsResponse,
-    OfficerWorkloadResponse,
-    MasterHotspotsResponse,
-    TemporalHotspotsResponse,
-    DependencyHotspotsResponse,
-    WorkloadHotspotsResponse,
-    NetworkHotspotsResponse,
-    DistrictHotspotsResponse,
-    RepeatOffendersResponse,
-    OffenderProfileResponse,
-    GraphStatsResponse,
-    ConnectedComponentsResponse,
-    CentralityResponse,
-)
-
 
 # ── Router factory (Dev 1 calls this with the repo instance) ─────────────
 

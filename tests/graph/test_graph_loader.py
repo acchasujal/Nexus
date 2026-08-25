@@ -1,5 +1,5 @@
+from backend.app.core.graph.algorithms.utils import AdjEdge, NodeRecord
 from backend.app.core.graph.graph_loader import GraphLoader
-from backend.app.core.graph.algorithms.utils import NodeRecord, AdjEdge
 
 
 def test_load_graph_valid():

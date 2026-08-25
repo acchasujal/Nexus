@@ -9,14 +9,14 @@ Comprehensive tests for NEXUS Graph Schema V2 contract:
   - M2 (Vikram) Handoff Contract Fixture verification (JSON serialization/deserialization)
 """
 
-from datetime import datetime, timezone
 import json
+from datetime import datetime, timezone
+
 import pytest
 
-from backend.app.core.graph.enums import (
-    DerivationClass,
-    GraphEntityType,
-    GraphRelationshipType,
+from backend.app.core.graph.edges import (
+    GraphEdge,
+    Relationship,
 )
 from backend.app.core.graph.entities import (
     Account,
@@ -29,12 +29,12 @@ from backend.app.core.graph.entities import (
     SourceRecord,
     Vehicle,
 )
-from backend.app.core.graph.edges import (
-    GraphEdge,
-    Relationship,
+from backend.app.core.graph.enums import (
+    DerivationClass,
+    GraphEntityType,
+    GraphRelationshipType,
 )
 from backend.app.core.graph.graph_schema import GRAPH_SCHEMA
-
 
 # ── Node Contract Tests ─────────────────────────────────────────────────────────
 

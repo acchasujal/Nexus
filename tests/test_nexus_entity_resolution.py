@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+
 from backend.app.core.graph.algorithms.entity_resolution import (
     EntityResolutionEngine,
     evaluate_ground_truth_dataset,

@@ -11,6 +11,7 @@ Generates large synthetic criminal intelligence graphs in-memory and benchmarks:
 from __future__ import annotations
 
 import time
+
 import pytest
 
 from backend.app.core.graph.algorithms.clustering import detect_communities

@@ -11,7 +11,10 @@ import pytest
 
 from backend.app.core.graph.algorithms.utils import GraphStore, NodeRecord
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
-from backend.app.core.graph.services.graph_service import GraphService, MAX_SEARCH_RESULTS
+from backend.app.core.graph.services.graph_service import (
+    MAX_SEARCH_RESULTS,
+    GraphService,
+)
 
 
 @pytest.fixture

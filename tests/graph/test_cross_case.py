@@ -15,8 +15,11 @@ Golden Test Coverage (Check 8):
 
 
 from backend.app.core.graph.algorithms.cross_case import detect_cross_case_bridges
-from backend.app.core.graph.algorithms.utils import AdjEdge, NodeRecord, build_graph_store
-
+from backend.app.core.graph.algorithms.utils import (
+    AdjEdge,
+    NodeRecord,
+    build_graph_store,
+)
 
 # ── Golden Test A: Person Cross-Case Bridge ──────────────────────────────────
 

@@ -1,7 +1,7 @@
+from helpers import _FakeEdge, make_case, make_officer, make_person, make_store
+
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.core.graph.services.graph_service import GraphService
-from helpers import make_case, make_store, _FakeEdge, make_officer, make_person
-
 
 
 def test_get_crime_summary():

@@ -1,7 +1,8 @@
 """tests/graph/conftest.py — shared fixtures for all graph algorithm tests."""
-import pytest
-import sys
 import pathlib
+import sys
+
+import pytest
 from helpers import (
     _FakeEdge,
     make_case,
@@ -12,9 +13,11 @@ from helpers import (
     make_person,
     make_store,
 )
+
 from backend.app.core.graph.algorithms.utils import (
     GraphStore,
 )
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 print("ROOT =", ROOT)
 

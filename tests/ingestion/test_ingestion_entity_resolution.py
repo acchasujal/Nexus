@@ -4,8 +4,8 @@ from pathlib import Path
 
 from backend.app.core.graph.enums import ResolutionStatus
 from backend.app.db.ingestion.contracts import SourceType
-from backend.app.db.ingestion.resolution.matcher import IdentityClaim, decide_candidates
 from backend.app.db.ingestion.resolution.evaluator import evaluate_ground_truth
+from backend.app.db.ingestion.resolution.matcher import IdentityClaim, decide_candidates
 from backend.app.db.ingestion.resolution.registry import IdentityRegistry
 
 

@@ -7,16 +7,17 @@ phonetic spelling variations, multiple match candidate ranking, low confidence f
 and address boosts. Also covers the resolved pattern detection integration.
 """
 
+from helpers import _FakeEdge, _FakeNode, make_store
+
 from backend.app.core.graph.algorithms.entity_resolution import (
+    jaccard_similarity,
     normalize_text,
     phonetic_normalize,
-    jaccard_similarity,
     resolve_person,
 )
 from backend.app.core.graph.algorithms.pattern_detection import (
     detect_repeat_accused_resolved,
 )
-from helpers import _FakeNode, _FakeEdge, make_store
 
 
 def test_normalization():

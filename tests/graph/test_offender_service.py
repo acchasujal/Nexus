@@ -1,6 +1,14 @@
+from helpers import (
+    _FakeEdge,
+    make_case,
+    make_crime_head,
+    make_person,
+    make_section,
+    make_store,
+)
+
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.core.graph.services.offender_service import OffenderService
-from helpers import make_case, make_person, make_store, _FakeEdge, make_section, make_crime_head
 
 
 def test_get_repeat_offenders():

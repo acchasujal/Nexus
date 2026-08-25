@@ -1,11 +1,11 @@
+from dataclasses import dataclass
 from datetime import datetime
 
-from dataclasses import dataclass
-from backend.app.core.graph.algorithms.utils import NodeRecord, AdjEdge
+from backend.app.core.graph.algorithms.utils import AdjEdge, NodeRecord
 from backend.app.core.graph.services.serializers import (
-    serialize_node,
-    serialize_edge,
     serialize_dataclass,
+    serialize_edge,
+    serialize_node,
 )
 
 

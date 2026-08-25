@@ -2,8 +2,11 @@
 
 from pathlib import Path
 
-from backend.app.db.ingestion.parsers.intelligence import parse_intelligence_csv, parse_intelligence_text
 from backend.app.core.graph.enums import GraphRelationshipType
+from backend.app.db.ingestion.parsers.intelligence import (
+    parse_intelligence_csv,
+    parse_intelligence_text,
+)
 
 HEADER = "record_id,report_id,report_date,source_agency,classification,subject_name,summary,alias,phone_number,national_id,organization,location"
 

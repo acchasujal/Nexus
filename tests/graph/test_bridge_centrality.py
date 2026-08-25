@@ -25,8 +25,12 @@ from backend.app.core.graph.algorithms.centrality import (
     compute_person_betweenness_centrality,
     compute_person_degree_centrality,
 )
-from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord, build_graph_store
-
+from backend.app.core.graph.algorithms.utils import (
+    AdjEdge,
+    GraphStore,
+    NodeRecord,
+    build_graph_store,
+)
 
 # ── Golden Fixture Definition ──────────────────────────────────────────────────
 

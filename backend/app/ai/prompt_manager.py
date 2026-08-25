@@ -13,7 +13,6 @@ from typing import Any
 
 from backend.app.ai.exceptions import PromptError
 
-
 # ── Prompt Type Enumeration ───────────────────────────────────────────────────
 
 class PromptType(StrEnum):

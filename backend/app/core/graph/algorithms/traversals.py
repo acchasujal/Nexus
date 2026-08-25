@@ -20,8 +20,8 @@ inside this pure-algorithm module.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from collections.abc import Sequence
+from dataclasses import dataclass, field
 
 from backend.app.core.graph.algorithms.utils import (
     AdjEdge,

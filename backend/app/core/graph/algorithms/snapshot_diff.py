@@ -25,7 +25,6 @@ from typing import Any
 
 from backend.app.core.graph.algorithms.utils import GraphStore
 
-
 # ── Diff Result Data Models ───────────────────────────────────────────────────
 
 @dataclass

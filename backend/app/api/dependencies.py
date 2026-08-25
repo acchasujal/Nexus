@@ -15,8 +15,8 @@ from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.services.audit_service import AuditService
 from backend.app.services.case_service import InvestigationService
 from backend.app.services.copilot_service import CopilotService
-from backend.app.services.evidence_service import EvidenceService
 from backend.app.services.entity_service import EntityService
+from backend.app.services.evidence_service import EvidenceService
 from backend.app.services.export_service import ExportService
 
 

@@ -14,7 +14,11 @@ from ..contracts import (
     ParsedSourceBundle,
     SourceType,
 )
-from ..identifiers import make_account_id, make_provisional_person_id, make_relationship_id
+from ..identifiers import (
+    make_account_id,
+    make_provisional_person_id,
+    make_relationship_id,
+)
 
 
 def _fact_edge(source_id: str, target_id: str, source_record_id: str, timestamp: datetime, properties: dict[str, Any]) -> GraphEdge:

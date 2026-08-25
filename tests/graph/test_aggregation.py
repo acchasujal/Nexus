@@ -22,6 +22,18 @@ Coverage
 from __future__ import annotations
 
 import pytest
+from helpers import (
+    _FakeEdge,
+    _FakeNode,
+    make_case,
+    make_clock,
+    make_crime_head,
+    make_dependency,
+    make_evidence,
+    make_officer,
+    make_person,
+    make_store,
+)
 
 from backend.app.core.graph.algorithms.aggregation import (
     CaseCounts,
@@ -37,24 +49,10 @@ from backend.app.core.graph.algorithms.aggregation import (
     officer_workload,
     officer_workload_named,
 )
-from backend.app.core.graph.algorithms.statistics import GraphStatistics, compute_graph_statistics
-
-from helpers import (
-    _FakeEdge,
-    make_case,
-    make_clock,
-    make_crime_head,
-    make_dependency,
-    make_evidence,
-    make_officer,
-    make_store,
-    _FakeNode,
-    make_person
-    
+from backend.app.core.graph.algorithms.statistics import (
+    GraphStatistics,
+    compute_graph_statistics,
 )
-
-
-
 
 # ── crime_count_by_district ───────────────────────────────────────────────────
 

@@ -1,12 +1,11 @@
 from types import SimpleNamespace
 
 import pytest
+from helpers import make_case, make_store
 
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.core.graph.services import graph_service as graph_service_module
 from backend.app.core.graph.services.graph_service import GraphService
-
-from helpers import make_case, make_store
 
 
 def test_similar_cases_maps_internal_result_to_public_contract(monkeypatch: pytest.MonkeyPatch):

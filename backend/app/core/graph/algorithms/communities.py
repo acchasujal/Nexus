@@ -35,8 +35,8 @@ Developer Documentation:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
+from dataclasses import dataclass
 
 try:
     import networkx as nx  # type: ignore[import]
@@ -154,7 +154,7 @@ def detect_louvain_communities(
             raw_communities = [set(c) for c in nx.community.louvain_communities(G, seed=seed)]
         else:  # Fallback for older NetworkX versions
             raw_communities = [set(c) for c in nx.community.greedy_modularity_communities(G)]
-    except Exception:
+    except (AttributeError, ValueError, TypeError):
         raw_communities = [set(c) for c in nx.connected_components(G)]
 
     # Compute overall modularity score
@@ -163,7 +163,7 @@ def detect_louvain_communities(
             modularity_score = round(float(nx.community.modularity(G, raw_communities)), 4)
         else:
             modularity_score = 0.0
-    except Exception:
+    except (ValueError, ZeroDivisionError, TypeError):
         modularity_score = 0.0
 
     # 4. Process each community deterministically

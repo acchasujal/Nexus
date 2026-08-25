@@ -2,24 +2,32 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from collections.abc import Iterable
+from pathlib import Path
 
 from backend.app.core.graph.edges import GraphEdge
 from backend.app.core.graph.entities import GraphEntityBase, SourceRecord
 
-from .parsers.fir import parse_fir_source_file
-from .parsers.cdr import parse_cdr_source_file
-from .parsers.bank import parse_bank_source_file
-from .parsers.intelligence import parse_intelligence_source_file
-from .mappers.fir import map_fir_bundle
-from .mappers.cdr import map_cdr_bundle
-from .mappers.bank import map_bank_bundle
-from .mappers.intelligence import map_intelligence_bundle
-from .contracts import EntityReviewCandidate, IngestionBundle, IngestionSummary, IssueSeverity, ParseIssue, ParsedSourceBundle, SourceType
-from .resolution.matcher import IdentityClaim, decide_candidates
+from .contracts import (
+    EntityReviewCandidate,
+    IngestionBundle,
+    IngestionSummary,
+    IssueSeverity,
+    ParsedSourceBundle,
+    ParseIssue,
+    SourceType,
+)
 from .graph_adapter import build_m1_graph_store, validate_graph_references
 from .identifiers import make_batch_id, make_provisional_person_id
+from .mappers.bank import map_bank_bundle
+from .mappers.cdr import map_cdr_bundle
+from .mappers.fir import map_fir_bundle
+from .mappers.intelligence import map_intelligence_bundle
+from .parsers.bank import parse_bank_source_file
+from .parsers.cdr import parse_cdr_source_file
+from .parsers.fir import parse_fir_source_file
+from .parsers.intelligence import parse_intelligence_source_file
+from .resolution.matcher import IdentityClaim, decide_candidates
 from .resolution.registry import IdentityRegistry
 
 

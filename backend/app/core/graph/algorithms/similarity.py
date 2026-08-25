@@ -21,10 +21,11 @@ No database calls.  No ML.  No embeddings.
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from collections.abc import Sequence
 
+from backend.app.core.graph.algorithms.entity_resolution import phonetic_normalize
 from backend.app.core.graph.algorithms.utils import (
     GraphStore,
     get_node,
@@ -34,7 +35,6 @@ from backend.app.core.graph.algorithms.utils import (
     prop_str,
     safe_str,
 )
-from backend.app.core.graph.algorithms.entity_resolution import phonetic_normalize
 
 # ── Edge / entity type string literals ───────────────────────────────────────
 

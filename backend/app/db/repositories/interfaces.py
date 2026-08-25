@@ -19,7 +19,6 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any
 
-
 # ── Canonical domain record types ─────────────────────────────────────────────
 # Using typed dicts here rather than Pydantic so that the repository layer
 # does not depend on the API contract layer.  Services map to contract types.

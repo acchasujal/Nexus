@@ -16,8 +16,8 @@ Design rules
 
 from __future__ import annotations
 
-from typing import Any
 from collections.abc import Sequence
+from typing import Any
 
 from backend.app.core.graph.algorithms.traversals import (
     get_case,

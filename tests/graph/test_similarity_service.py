@@ -1,7 +1,7 @@
+from helpers import make_case, make_store
+
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.core.graph.services.similarity_service import SimilarityService
-
-from helpers import make_case, make_store
 
 
 def test_get_similar_cases_unknown_case():

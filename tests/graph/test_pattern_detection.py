@@ -18,6 +18,14 @@ Coverage
 
 from __future__ import annotations
 
+from helpers import (
+    _FakeEdge,
+    make_case,
+    make_dependency,
+    make_officer,
+    make_person,
+    make_store,
+)
 
 from backend.app.core.graph.algorithms.pattern_detection import (
     ClusterResult,
@@ -33,16 +41,6 @@ from backend.app.core.graph.algorithms.pattern_detection import (
     detect_repeat_phone,
     detect_repeat_vehicle,
 )
-
-from helpers import (
-    _FakeEdge,
-    make_case,
-    make_dependency,
-    make_officer,
-    make_person,
-    make_store,
-)
-
 
 # ── detect_repeat_accused ─────────────────────────────────────────────────────
 

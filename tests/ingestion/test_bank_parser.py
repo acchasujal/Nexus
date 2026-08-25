@@ -2,7 +2,9 @@
 
 from pathlib import Path
 
-from backend.app.core.graph.algorithms.pattern_rules import detect_circular_repeated_financial_flow
+from backend.app.core.graph.algorithms.pattern_rules import (
+    detect_circular_repeated_financial_flow,
+)
 from backend.app.core.graph.algorithms.utils import build_graph_store
 from backend.app.core.graph.enums import GraphRelationshipType
 from backend.app.db.ingestion.parsers.bank import parse_bank_csv, parse_bank_text

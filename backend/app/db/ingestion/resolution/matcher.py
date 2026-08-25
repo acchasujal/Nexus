@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
-
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
-from backend.app.core.graph.algorithms.entity_resolution import clean_phone, clean_vehicle, jaccard_similarity, normalize_text, phonetic_normalize
+from backend.app.core.graph.algorithms.entity_resolution import (
+    clean_phone,
+    clean_vehicle,
+    jaccard_similarity,
+    normalize_text,
+    phonetic_normalize,
+)
 from backend.app.core.graph.enums import ResolutionStatus
 
 from ..contracts import SourceType

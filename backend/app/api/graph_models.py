@@ -8,8 +8,8 @@ for graph routes.
 from __future__ import annotations
 
 from typing import Any
-from pydantic import AliasChoices, BaseModel, Field
 
+from pydantic import AliasChoices, BaseModel, Field
 
 # ── Common Graph Shapes ────────────────────────────────────────────────────────
 

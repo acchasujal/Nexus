@@ -5,10 +5,10 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from collections.abc import Iterable, Mapping
 
 from .contracts import IngestionSummary, IssueSeverity, ParseIssue, SourceType
 from .normalization import CsvValidationError, canonicalize_csv_row

@@ -1,5 +1,6 @@
-from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from helpers import make_case, make_person, make_store
+
+from backend.app.core.graph.repositories.graph_repository import GraphRepository
 
 
 def test_get_case():

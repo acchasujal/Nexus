@@ -83,7 +83,7 @@ class EntityService:
                 if entity_id in comm.member_ids:
                     community_id = comm.community_id
                     break
-        except Exception:  # pragma: no cover
+        except (ValueError, TypeError, AttributeError):  # pragma: no cover
             community_id = None
 
         # Betweenness score
@@ -91,7 +91,7 @@ class EntityService:
         try:
             btw = betweenness_centrality(store)
             betweenness_score = btw.get(entity_id)
-        except Exception:  # pragma: no cover
+        except (ValueError, TypeError, ZeroDivisionError):  # pragma: no cover
             betweenness_score = None
 
         # Aliases from properties

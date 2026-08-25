@@ -23,7 +23,6 @@ from backend.app.services.audit_service import AuditService
 from backend.app.services.entity_service import EntityService
 from backend.app.services.evidence_service import EvidenceService
 
-
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
 @pytest.fixture

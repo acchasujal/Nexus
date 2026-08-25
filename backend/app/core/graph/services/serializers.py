@@ -11,7 +11,7 @@ from dataclasses import asdict
 from datetime import datetime
 from typing import Any
 
-from backend.app.core.graph.algorithms.utils import NodeRecord, AdjEdge
+from backend.app.core.graph.algorithms.utils import AdjEdge, NodeRecord
 
 
 def serialize_node(node: NodeRecord | None) -> dict[str, Any] | None:

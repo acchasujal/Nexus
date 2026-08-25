@@ -22,10 +22,9 @@ No database calls.  No API code.  No ML.
 from __future__ import annotations
 
 from collections import deque
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from typing import Any
-from collections.abc import Iterable, Iterator
-
 
 # ── Core data structures ──────────────────────────────────────────────────────
 

@@ -10,33 +10,32 @@ from __future__ import annotations
 from typing import Any
 
 from backend.app.core.graph.algorithms.aggregation import (
-    crime_count_by_district,
-    crime_count_by_station,
-    crime_count_by_crime_head,
-    crime_count_by_offence_category,
-    officer_workload,
     case_counts,
+    crime_count_by_crime_head,
+    crime_count_by_district,
+    crime_count_by_offence_category,
+    crime_count_by_station,
+    officer_workload,
 )
 from backend.app.core.graph.algorithms.clustering import (
-    connected_components,
     betweenness_centrality,
+    connected_components,
 )
 from backend.app.core.graph.algorithms.similarity import (
-    find_similar_cases,
     compute_case_similarity,
+    find_similar_cases,
 )
 from backend.app.core.graph.algorithms.statistics import compute_graph_statistics
 from backend.app.core.graph.algorithms.traversals import (
-    get_subgraph,
     get_co_accused,
+    get_subgraph,
 )
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.core.graph.services.serializers import (
-    serialize_node,
-    serialize_edge,
     serialize_dataclass,
+    serialize_edge,
+    serialize_node,
 )
-
 
 MAX_SEARCH_RESULTS: int = 50
 

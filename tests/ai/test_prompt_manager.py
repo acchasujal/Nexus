@@ -14,7 +14,6 @@ import pytest
 from backend.app.ai.exceptions import PromptError
 from backend.app.ai.prompt_manager import PromptManager, PromptType
 
-
 # ── Prompt Loading Tests ──────────────────────────────────────────────────────
 
 def test_get_prompt_with_prompt_type_enum() -> None:

@@ -4,18 +4,18 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any
-from collections.abc import Mapping
-
-from .exceptions import CsvValidationError
 
 from backend.app.core.graph.algorithms.entity_resolution import (
     clean_phone,
     clean_vehicle,
     normalize_text,
 )
+
+from .exceptions import CsvValidationError
 
 
 def _require_text(value: Any, field_name: str) -> str:

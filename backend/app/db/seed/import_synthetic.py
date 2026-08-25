@@ -17,7 +17,6 @@ from typing import Any
 from backend.app.core.graph.algorithms.utils import AdjEdge, NodeRecord
 from backend.app.core.graph.graph_loader import GraphLoader
 
-
 # ── Paths ──────────────────────────────────────────────────────────────────────
 
 _THIS_DIR = Path(__file__).resolve().parent

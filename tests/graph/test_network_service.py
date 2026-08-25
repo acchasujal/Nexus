@@ -1,16 +1,16 @@
-from backend.app.core.graph.repositories.graph_repository import GraphRepository
-from backend.app.core.graph.services.network_service import NetworkService
-
 from helpers import (
+    _FakeEdge,
     make_case,
-    make_person,
-    make_dependency,
     make_clock,
+    make_dependency,
     make_evidence,
+    make_person,
     make_section,
     make_store,
-    _FakeEdge,
 )
+
+from backend.app.core.graph.repositories.graph_repository import GraphRepository
+from backend.app.core.graph.services.network_service import NetworkService
 
 
 def test_get_case():

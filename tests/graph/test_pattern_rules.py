@@ -23,8 +23,11 @@ from backend.app.core.graph.algorithms.pattern_rules import (
     detect_communication_burst_near_event,
     detect_shared_phone_device,
 )
-from backend.app.core.graph.algorithms.utils import AdjEdge, NodeRecord, build_graph_store
-
+from backend.app.core.graph.algorithms.utils import (
+    AdjEdge,
+    NodeRecord,
+    build_graph_store,
+)
 
 # ── Rule 1 Tests: Shared Phone / Device ─────────────────────────────────────────
 

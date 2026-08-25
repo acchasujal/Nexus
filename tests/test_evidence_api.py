@@ -16,7 +16,6 @@ Tests:
 
 from __future__ import annotations
 
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -32,7 +31,6 @@ from shared.contracts.api import (
     EvidenceItemResponse,
     EvidenceProvenanceContract,
 )
-
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 

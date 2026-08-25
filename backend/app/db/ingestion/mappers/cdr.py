@@ -14,7 +14,11 @@ from ..contracts import (
     ParsedSourceBundle,
     SourceType,
 )
-from ..identifiers import make_phone_id, make_provisional_person_id, make_relationship_id
+from ..identifiers import (
+    make_phone_id,
+    make_provisional_person_id,
+    make_relationship_id,
+)
 
 
 def _edge(

@@ -27,8 +27,11 @@ Validates:
 
 
 from backend.app.core.graph.algorithms.snapshot_diff import diff_graph_snapshots
-from backend.app.core.graph.algorithms.utils import AdjEdge, NodeRecord, build_graph_store
-
+from backend.app.core.graph.algorithms.utils import (
+    AdjEdge,
+    NodeRecord,
+    build_graph_store,
+)
 
 # ── Fixture 1: Empty Snapshots ────────────────────────────────────────────────
 

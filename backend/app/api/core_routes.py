@@ -33,9 +33,17 @@ from backend.app.api.dependencies import (
 )
 from backend.app.auth.principal import Principal
 from backend.app.config import Settings, get_settings
-from backend.app.core.graph.algorithms.clustering import detect_communities, find_bridge_nodes, betweenness_centrality, degree_centrality
+from backend.app.core.graph.algorithms.clustering import (
+    betweenness_centrality,
+    degree_centrality,
+    detect_communities,
+    find_bridge_nodes,
+)
 from backend.app.core.graph.algorithms.entity_resolution import resolve_person
-from backend.app.core.graph.algorithms.pattern_detection import find_repeat_accused, find_shared_clusters
+from backend.app.core.graph.algorithms.pattern_detection import (
+    find_repeat_accused,
+    find_shared_clusters,
+)
 from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.case_service import InvestigationService
 from backend.app.services.copilot_service import CopilotService

@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
-from collections.abc import Sequence
 
-from backend.app.core.graph.algorithms.pattern_rules import detect_all_suspicious_patterns
+from backend.app.core.graph.algorithms.pattern_rules import (
+    detect_all_suspicious_patterns,
+)
 from backend.app.core.graph.edges import GraphEdge
 
 from .graph_adapter import validate_graph_references
@@ -36,12 +38,12 @@ def _validate_models(bundle: Any) -> list[str]:
     for node in bundle.nodes:
         try:
             type(node).model_validate(node.model_dump())
-        except Exception as exc:
+        except (ValueError, TypeError, KeyError) as exc:
             errors.append(f"node {node.id}: {exc}")
     for edge in bundle.relationships:
         try:
             GraphEdge.model_validate(edge.model_dump())
-        except Exception as exc:
+        except (ValueError, TypeError, KeyError) as exc:
             errors.append(f"relationship {edge.id}: {exc}")
     return errors
 

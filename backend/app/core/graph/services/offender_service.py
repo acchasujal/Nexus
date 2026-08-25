@@ -13,7 +13,7 @@ from backend.app.core.graph.algorithms.pattern_detection import (
     detect_repeat_accused_resolved,
 )
 from backend.app.core.graph.algorithms.traversals import get_co_accused
-from backend.app.core.graph.algorithms.utils import prop_str, get_edges_of_type
+from backend.app.core.graph.algorithms.utils import get_edges_of_type, prop_str
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.core.graph.services.serializers import serialize_node
 

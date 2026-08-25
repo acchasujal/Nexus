@@ -21,13 +21,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from backend.app.core.graph.algorithms.aggregation import officer_workload
+from backend.app.core.graph.algorithms.entity_resolution import resolve_person
 from backend.app.core.graph.algorithms.utils import (
     GraphStore,
     get_edges_of_type,
     iter_nodes_by_type,
     prop_str,
 )
-from backend.app.core.graph.algorithms.entity_resolution import resolve_person
 
 # ── Entity / edge type literals ───────────────────────────────────────────────
 

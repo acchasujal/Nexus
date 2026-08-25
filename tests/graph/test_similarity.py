@@ -16,17 +16,7 @@ Coverage
 
 from __future__ import annotations
 
-
 import pytest
-
-
-from backend.app.core.graph.algorithms.similarity import (
-    FEATURE_WEIGHTS,
-    SimilarityResult,
-    batch_similarity_matrix,
-    compute_case_similarity,
-    find_similar_cases,
-)
 from helpers import (
     _FakeEdge,
     make_case,
@@ -37,7 +27,13 @@ from helpers import (
     make_store,
 )
 
-
+from backend.app.core.graph.algorithms.similarity import (
+    FEATURE_WEIGHTS,
+    SimilarityResult,
+    batch_similarity_matrix,
+    compute_case_similarity,
+    find_similar_cases,
+)
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
