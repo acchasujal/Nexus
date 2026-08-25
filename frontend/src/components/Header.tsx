@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUI } from '@/contexts/UIContext'
 import { useAuth } from '@/contexts/AuthContext'
@@ -12,6 +12,12 @@ import {
   Check, 
   Briefcase, 
   User, 
+  Phone,
+  Landmark,
+  Car,
+  MapPin,
+  Shield,
+  FileText,
   X as CloseX 
 } from 'lucide-react'
 import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog'
@@ -19,6 +25,27 @@ import { useNexusSearch, useResetDemo } from '@/hooks/useNexus'
 
 interface HeaderProps {
   onMenuToggle: () => void
+}
+
+function getEntityIcon(type: string) {
+  switch (type) {
+    case 'Case':
+      return <Briefcase className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+    case 'Person':
+      return <User className="h-4 w-4 text-sky-600 shrink-0 mt-0.5" />
+    case 'Phone':
+      return <Phone className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+    case 'Account':
+      return <Landmark className="h-4 w-4 text-violet-600 shrink-0 mt-0.5" />
+    case 'Vehicle':
+      return <Car className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+    case 'Location':
+      return <MapPin className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
+    case 'Organization':
+      return <Shield className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+    default:
+      return <FileText className="h-4 w-4 text-neutral-500 shrink-0 mt-0.5" />
+  }
 }
 
 export function Header({ onMenuToggle }: HeaderProps) {
@@ -30,8 +57,54 @@ export function Header({ onMenuToggle }: HeaderProps) {
   // Search state
   const [query, setQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
+  const [highlightedIndex, setHighlightedIndex] = useState<number>(-1)
   const searchContainerRef = useRef<HTMLDivElement>(null)
-  const { data: searchResults, isLoading: isSearching } = useNexusSearch(query)
+  const { data: searchResults, isLoading: isSearching, isError } = useNexusSearch(query)
+
+  // Flattened results for keyboard navigation
+  const allResults = useMemo(() => {
+    const items: Array<{
+      id: string
+      type: 'case' | 'entity'
+      route: string
+      label: string
+      subtext?: string
+      entity_type: string
+    }> = []
+
+    if (searchResults?.cases) {
+      for (const c of searchResults.cases) {
+        items.push({
+          id: c.id,
+          type: 'case',
+          route: `/cases/${c.id}`,
+          label: c.fir_number ? `${c.fir_number} — ${c.title}` : c.title,
+          subtext: `FIR ${c.fir_number}`,
+          entity_type: 'Case',
+        })
+      }
+    }
+
+    if (searchResults?.entities) {
+      for (const e of searchResults.entities) {
+        items.push({
+          id: e.id,
+          type: 'entity',
+          route: `/network?node_id=${encodeURIComponent(e.id)}`,
+          label: e.label,
+          subtext: e.subtext,
+          entity_type: e.entity_type,
+        })
+      }
+    }
+
+    return items
+  }, [searchResults])
+
+  // Reset highlight index when query or results change
+  useEffect(() => {
+    setHighlightedIndex(-1)
+  }, [query, searchResults])
 
   // Reset demo mutation
   const resetMutation = useResetDemo()
@@ -89,6 +162,36 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const hasEntities = Boolean(searchResults?.entities && searchResults.entities.length > 0)
   const showResults = searchOpen && query.trim().length >= 2
 
+  const handleKeyDownInInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showResults || allResults.length === 0) {
+      if (e.key === 'Escape') {
+        setSearchOpen(false)
+      }
+      return
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setHighlightedIndex((prev) => (prev + 1 >= allResults.length ? 0 : prev + 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setHighlightedIndex((prev) => (prev - 1 < 0 ? allResults.length - 1 : prev - 1))
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      const targetIdx = highlightedIndex >= 0 ? highlightedIndex : 0
+      const targetItem = allResults[targetIdx]
+      if (targetItem) {
+        setSearchOpen(false)
+        navigate(targetItem.route)
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      setSearchOpen(false)
+    }
+  }
+
+  let itemCounter = 0
+
   return (
     <>
       <header
@@ -121,6 +224,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
               setSearchOpen(true)
             }}
             onFocus={() => setSearchOpen(true)}
+            onKeyDown={handleKeyDownInInput}
             placeholder="Search cases, FIRs, suspects... (/)"
             className="w-full rounded-lg border border-neutral-300 bg-neutral-100 py-1.5 pl-9 sm:pl-10 pr-7 text-xs sm:text-sm text-neutral-900 placeholder-neutral-500 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors shadow-inner"
             aria-label="Search cases, FIRs, suspects"
@@ -148,9 +252,15 @@ export function Header({ onMenuToggle }: HeaderProps) {
                 </div>
               )}
 
-              {!isSearching && !hasCases && !hasEntities && (
+              {isError && (
+                <div className="p-3 text-center text-xs text-rose-600">
+                  Failed to perform search. Please try again.
+                </div>
+              )}
+
+              {!isSearching && !isError && !hasCases && !hasEntities && (
                 <div className="p-3 text-center text-xs text-neutral-500">
-                  No matching cases or suspects found for "{query}"
+                  No matching cases or entities found for "{query}"
                 </div>
               )}
 
@@ -159,48 +269,80 @@ export function Header({ onMenuToggle }: HeaderProps) {
                   <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
                     Cases / FIRs
                   </div>
-                  {searchResults?.cases.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => {
-                        setSearchOpen(false)
-                        navigate(`/cases/${c.id}`)
-                      }}
-                      className="w-full flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-xs text-neutral-800 hover:bg-blue-50 hover:text-blue-900 transition-colors"
-                    >
-                      <Briefcase className="h-3.5 w-3.5 text-rose-600 shrink-0" />
-                      <div className="truncate">
-                        <span className="font-semibold text-neutral-900">{c.fir_number}</span>
-                        <span className="ml-2 text-neutral-500 truncate">{c.title}</span>
-                      </div>
-                    </button>
-                  ))}
+                  {searchResults?.cases.map((c) => {
+                    const currentIndex = itemCounter++
+                    const isHighlighted = highlightedIndex === currentIndex
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => {
+                          setSearchOpen(false)
+                          navigate(`/cases/${c.id}`)
+                        }}
+                        onMouseEnter={() => setHighlightedIndex(currentIndex)}
+                        className={`w-full flex items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-left text-xs transition-colors ${
+                          isHighlighted ? 'bg-blue-50 text-blue-900 ring-1 ring-blue-300' : 'hover:bg-neutral-50 text-neutral-800'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                          <Briefcase className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-neutral-900 truncate">
+                              {c.fir_number} <span className="font-normal text-neutral-600">{c.title}</span>
+                            </div>
+                            <div className="text-[11px] text-neutral-500 truncate">
+                              Case / FIR {c.fir_number}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-mono text-rose-700 border border-rose-200 shrink-0">
+                          Case
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
               )}
 
               {hasEntities && (
                 <div>
                   <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-                    Entities & Suspects
+                    Entities & Intelligence
                   </div>
-                  {searchResults?.entities.map((e) => (
-                    <button
-                      key={e.id}
-                      onClick={() => {
-                        setSearchOpen(false)
-                        navigate('/network')
-                      }}
-                      className="w-full flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-neutral-800 hover:bg-blue-50 hover:text-blue-900 transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5 truncate">
-                        <User className="h-3.5 w-3.5 text-sky-600 shrink-0" />
-                        <span className="font-medium text-neutral-900 truncate">{e.label}</span>
-                      </div>
-                      <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-mono text-neutral-600 border border-neutral-200">
-                        {e.entity_type}
-                      </span>
-                    </button>
-                  ))}
+                  {searchResults?.entities.map((e) => {
+                    const currentIndex = itemCounter++
+                    const isHighlighted = highlightedIndex === currentIndex
+                    return (
+                      <button
+                        key={e.id}
+                        onClick={() => {
+                          setSearchOpen(false)
+                          navigate(`/network?node_id=${encodeURIComponent(e.id)}`)
+                        }}
+                        onMouseEnter={() => setHighlightedIndex(currentIndex)}
+                        className={`w-full flex items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-left text-xs transition-colors ${
+                          isHighlighted ? 'bg-blue-50 text-blue-900 ring-1 ring-blue-300' : 'hover:bg-neutral-50 text-neutral-800'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                          {getEntityIcon(e.entity_type)}
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-neutral-900 truncate">
+                              {e.label}
+                            </div>
+                            {e.subtext && (
+                              <div className="text-[11px] text-neutral-500 truncate mt-0.5">
+                                {e.subtext}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-mono text-neutral-600 border border-neutral-200 shrink-0">
+                          {e.entity_type}
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </div>

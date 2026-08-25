@@ -9,7 +9,7 @@
  * - Focus & neighborhood dimming on click
  * - Interactive legend and zoom controls
  */
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import {
   User, Briefcase, Phone, Landmark, BadgeCheck, Sparkles,
 } from 'lucide-react'
@@ -21,6 +21,7 @@ interface GlobalNetworkCanvasProps {
   diff?: SnapshotDiffResponse | null
   highlightDelta?: boolean
   initialCaseFilter?: string | null
+  initialNodeId?: string | null
   onEdgeSelect: (edgeId: string) => void
   onNodeSelect?: (nodeId: string) => void
 }
@@ -37,14 +38,22 @@ export function GlobalNetworkCanvas({
   diff,
   highlightDelta = false,
   initialCaseFilter,
+  initialNodeId,
   onEdgeSelect,
   onNodeSelect,
 }: GlobalNetworkCanvasProps) {
   const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set())
   const [caseFilter, setCaseFilter] = useState<string>(initialCaseFilter || 'ALL')
-  const [selectedNode, setSelectedNode] = useState<string | null>(null)
+  const [selectedNode, setSelectedNode] = useState<string | null>(initialNodeId || null)
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null)
   const [showLegendMobile, setShowLegendMobile] = useState(false)
+
+  useEffect(() => {
+    if (initialNodeId && graph?.nodes?.some((n) => n.id === initialNodeId)) {
+      setSelectedNode(initialNodeId)
+      onNodeSelect?.(initialNodeId)
+    }
+  }, [initialNodeId, graph, onNodeSelect])
 
   const addedNodes = useMemo(() => new Set(diff?.added_node_ids ?? []), [diff])
   const addedEdges = useMemo(() => new Set(diff?.added_edge_ids ?? []), [diff])

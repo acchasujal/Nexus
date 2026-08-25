@@ -442,7 +442,7 @@ export interface NexusCopilotResponse {
 export interface NexusSearchResponse {
   query: string
   cases: { id: string; fir_number: string; title: string; score: number }[]
-  entities: { id: string; label: string; entity_type: string; case_ids: string[]; score: number }[]
+  entities: { id: string; label: string; entity_type: string; case_ids: string[]; score: number; subtext?: string }[]
 }
 
 export interface NexusIngestResponse {

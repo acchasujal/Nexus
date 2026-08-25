@@ -23,6 +23,7 @@ type ReplayState = 'before' | 'after'
 export default function NetworkExplorer() {
   const [searchParams] = useSearchParams()
   const caseIdParam = searchParams.get('case_id')
+  const nodeIdParam = searchParams.get('node_id')
   const [replay, setReplay] = useState<ReplayState>('before')
   const [edgeId, setEdgeId] = useState<string | null>(null)
 
@@ -129,6 +130,7 @@ export default function NetworkExplorer() {
             diff={replay === 'after' ? diff.data ?? null : null}
             highlightDelta={replay === 'after'}
             initialCaseFilter={caseIdParam}
+            initialNodeId={nodeIdParam}
             onEdgeSelect={setEdgeId}
           />
         </>

@@ -23,8 +23,9 @@ from typing import Any, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from backend.app.api.dependencies import get_audit_service, get_principal
+from backend.app.api.dependencies import get_audit_service, get_principal, get_repository
 from backend.app.auth.principal import Principal
+from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.services.audit_service import AuditEventType, AuditService
 
 # ── Pydantic Models ────────────────────────────────────────────────────────────
@@ -205,6 +206,7 @@ class SearchEntityItem(BaseModel):
     entity_type: str
     case_ids: list[str]
     score: float = 1.0
+    subtext: str | None = None
 
 
 class NexusSearchResponse(BaseModel):
@@ -824,27 +826,153 @@ def create_nexus_router() -> APIRouter:
     def nexus_search(
         q: str = Query(""),
         principal: Principal = Depends(get_principal),
+        repo: InMemoryBackendRepository = Depends(get_repository),
     ) -> NexusSearchResponse:
-        query_str = q.lower().strip()
+        query_raw = q.strip()
+        query_str = query_raw.lower()
         if not query_str:
             return NexusSearchResponse(query="", cases=[], entities=[])
 
-        nodes = AFTER_NODES if _demo_state.is_resolved else BEFORE_NODES
+        norm_query = re.sub(r"[^\w]", "", query_str)
+
+        # Build candidate nodes list starting with demo nodes, then appending repo GraphStore nodes (deduplicated by ID)
+        candidate_nodes: list[NexusGraphNode] = []
+        seen_ids: set[str] = set()
+
+        demo_nodes = AFTER_NODES if _demo_state.is_resolved else BEFORE_NODES
+        for n in demo_nodes:
+            if n.id not in seen_ids:
+                seen_ids.add(n.id)
+                candidate_nodes.append(n)
+
+        graph_store = repo.to_graph_store()
+        for nid, node_rec in graph_store.nodes.items():
+            if nid in seen_ids:
+                continue
+            seen_ids.add(nid)
+
+            props = node_rec.properties or {}
+            etype = node_rec.entity_type
+
+            # Derive primary label for GraphStore node records
+            if etype == "Case":
+                label = str(props.get("fir_number") or props.get("title") or nid)
+            elif etype == "Person":
+                label = str(props.get("full_name") or nid)
+            elif etype == "Phone":
+                label = str(props.get("phone_number") or props.get("number") or nid)
+            elif etype == "Account":
+                label = str(props.get("account_number") or props.get("bank") or nid)
+            elif etype == "Vehicle":
+                label = str(props.get("vehicle_number") or props.get("registration") or nid)
+            elif etype == "Location":
+                label = str(props.get("address_text") or props.get("district") or nid)
+            elif etype == "Evidence":
+                label = str(props.get("evidence_number") or props.get("description") or nid)
+            else:
+                label = str(props.get("full_name") or props.get("title") or props.get("name") or props.get("label") or nid)
+
+            case_ids_list = [str(props["case_id"])] if "case_id" in props and props["case_id"] else []
+
+            candidate_nodes.append(
+                NexusGraphNode(
+                    id=nid,
+                    entity_type=etype,
+                    label=label,
+                    case_ids=case_ids_list,
+                    properties=props,
+                )
+            )
+
+        def matches_node(n: NexusGraphNode) -> bool:
+            # 1. Substring match on node ID, label, and property values
+            if query_str in n.id.lower() or query_str in n.label.lower():
+                return True
+            for v in n.properties.values():
+                val_str = str(v).lower()
+                if query_str in val_str:
+                    return True
+
+            # 2. Normalized alphanumeric match for identifiers (phones, accounts, vehicles, FIRs, IDs)
+            if norm_query and len(norm_query) >= 2:
+                norm_id = re.sub(r"[^\w]", "", n.id.lower())
+                if norm_query in norm_id:
+                    return True
+                norm_label = re.sub(r"[^\w]", "", n.label.lower())
+                if norm_query in norm_label:
+                    return True
+                for v in n.properties.values():
+                    norm_val = re.sub(r"[^\w]", "", str(v).lower())
+                    if norm_query in norm_val:
+                        return True
+            return False
+
+        def build_subtext(n: NexusGraphNode) -> str | None:
+            props = n.properties or {}
+            etype = n.entity_type
+            case_info = f" • FIR: {', '.join(n.case_ids)}" if n.case_ids else ""
+
+            if etype == "Phone":
+                num = props.get("phone_number") or props.get("number") or props.get("phone") or n.label
+                seen = props.get("seen_in")
+                return f"Phone: {num}{f' ({seen})' if seen else ''}{case_info}"
+            elif etype == "Account":
+                holder = props.get("holder")
+                bank = props.get("bank")
+                parts = []
+                if holder:
+                    parts.append(f"Holder: {holder}")
+                if bank:
+                    parts.append(bank)
+                txt = " • ".join(parts) if parts else "Bank Account"
+                return f"{txt}{case_info}"
+            elif etype == "Person":
+                role = props.get("role")
+                phone = props.get("phone_number") or props.get("phone")
+                vehicle = props.get("vehicle_number") or props.get("vehicle")
+                aliases = props.get("aliases")
+                parts = []
+                if role:
+                    parts.append(str(role))
+                if phone:
+                    parts.append(f"Phone: {phone}")
+                if vehicle:
+                    parts.append(f"Vehicle: {vehicle}")
+                if aliases and isinstance(aliases, list) and aliases:
+                    parts.append(f"Aliases: {', '.join(aliases)}")
+                txt = " • ".join(parts) if parts else "Person"
+                return f"{txt}{case_info}"
+            elif etype == "Vehicle":
+                reg = props.get("vehicle_number") or props.get("registration")
+                owner = props.get("owner")
+                parts = []
+                if reg:
+                    parts.append(f"Reg: {reg}")
+                if owner:
+                    parts.append(f"Owner: {owner}")
+                txt = " • ".join(parts) if parts else "Vehicle"
+                return f"{txt}{case_info}"
+            elif etype == "Location":
+                district = props.get("district")
+                addr = props.get("address_text") or props.get("address")
+                parts = [p for p in (district, addr) if p]
+                txt = " • ".join(parts) if parts else "Location"
+                return f"{txt}{case_info}"
+
+            desc = props.get("description") or props.get("role")
+            if desc:
+                return f"{desc}{case_info}"
+            return f"{etype}{case_info}" if n.case_ids else None
 
         cases = [
             SearchCaseItem(
                 id=n.id,
-                fir_number=str(n.properties.get("fir_number", "")),
-                title=n.label,
+                fir_number=str(n.properties.get("fir_number") or n.label),
+                title=str(n.properties.get("title") or n.properties.get("fir_number") or n.label),
                 score=1.0,
             )
-            for n in nodes
-            if n.entity_type == "Case"
-            and (
-                query_str in n.label.lower()
-                or query_str in str(n.properties.get("fir_number", "")).lower()
-                or query_str in str(n.properties.get("station", "")).lower()
-            )
+            for n in candidate_nodes
+            if n.entity_type == "Case" and matches_node(n)
         ]
 
         entities = [
@@ -854,13 +982,10 @@ def create_nexus_router() -> APIRouter:
                 entity_type=n.entity_type,
                 case_ids=n.case_ids,
                 score=1.0,
+                subtext=build_subtext(n),
             )
-            for n in nodes
-            if n.entity_type != "Case"
-            and (
-                query_str in n.label.lower()
-                or any(query_str in str(v).lower() for v in n.properties.values())
-            )
+            for n in candidate_nodes
+            if n.entity_type != "Case" and matches_node(n)
         ]
 
         return NexusSearchResponse(query=q, cases=cases, entities=entities)

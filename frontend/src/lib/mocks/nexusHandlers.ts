@@ -222,22 +222,60 @@ export const nexusHandlers = [
   http.get(/\/api\/v1\/nexus\/search/, async ({ request }) => {
     await simDelay(150)
     const url = new URL(request.url)
-    const q = (url.searchParams.get('q') ?? '').toLowerCase().trim()
+    const q = (url.searchParams.get('q') ?? '').trim()
+    const qLower = q.toLowerCase()
     if (!q) return HttpResponse.json({ query: '', cases: [], entities: [] })
+    const normQ = qLower.replace(/[^\w]/g, '')
     const nodes = isResolved() ? AFTER_NODES : BEFORE_NODES
+
+    const matchesNode = (n: (typeof nodes)[0]) => {
+      if (n.label.toLowerCase().includes(qLower)) return true
+      if (Object.values(n.properties).some((v) => String(v).toLowerCase().includes(qLower))) return true
+      if (normQ && normQ.length >= 2) {
+        if (n.label.toLowerCase().replace(/[^\w]/g, '').includes(normQ)) return true
+        if (Object.values(n.properties).some((v) => String(v).toLowerCase().replace(/[^\w]/g, '').includes(normQ))) return true
+      }
+      return false
+    }
+
+    const buildSubtext = (n: (typeof nodes)[0]) => {
+      const props = n.properties || {}
+      const etype = n.entity_type
+      const caseInfo = n.case_ids?.length ? ` • FIR: ${n.case_ids.join(', ')}` : ''
+      if (etype === 'Phone') {
+        const num = props.number || props.phone || n.label
+        return `Phone: ${num}${props.seen_in ? ` (${props.seen_in})` : ''}${caseInfo}`
+      }
+      if (etype === 'Account') {
+        const parts = [props.holder ? `Holder: ${props.holder}` : null, props.bank].filter(Boolean)
+        return `${parts.length ? parts.join(' • ') : 'Bank Account'}${caseInfo}`
+      }
+      if (etype === 'Person') {
+        const parts = [props.role, props.phone ? `Phone: ${props.phone}` : null].filter(Boolean)
+        return `${parts.length ? parts.join(' • ') : 'Person'}${caseInfo}`
+      }
+      if (etype === 'Vehicle') {
+        const parts = [props.registration ? `Reg: ${props.registration}` : null, props.owner ? `Owner: ${props.owner}` : null].filter(Boolean)
+        return `${parts.length ? parts.join(' • ') : 'Vehicle'}${caseInfo}`
+      }
+      return (props.description || props.role || etype) + caseInfo
+    }
+
     const cases = nodes
-      .filter((n) => n.entity_type === 'Case')
-      .filter((n) =>
-        n.label.toLowerCase().includes(q) ||
-        (n.properties.fir_number ?? '').toLowerCase().includes(q) ||
-        (n.properties.station ?? '').toLowerCase().includes(q))
+      .filter((n) => n.entity_type === 'Case' && matchesNode(n))
       .map((n) => ({ id: n.id, fir_number: String(n.properties.fir_number ?? ''), title: n.label, score: 1 }))
+
     const entities = nodes
-      .filter((n) => n.entity_type !== 'Case')
-      .filter((n) =>
-        n.label.toLowerCase().includes(q) ||
-        Object.values(n.properties).some((v) => String(v).toLowerCase().includes(q)))
-      .map((n) => ({ id: n.id, label: n.label, entity_type: n.entity_type, case_ids: n.case_ids, score: 1 }))
+      .filter((n) => n.entity_type !== 'Case' && matchesNode(n))
+      .map((n) => ({
+        id: n.id,
+        label: n.label,
+        entity_type: n.entity_type,
+        case_ids: n.case_ids,
+        score: 1,
+        subtext: buildSubtext(n),
+      }))
+
     return HttpResponse.json({ query: q, cases, entities })
   }),
 
