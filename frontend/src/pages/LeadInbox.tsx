@@ -14,6 +14,18 @@ import { useLeads, useDecideLead, useNexusCopilot, useNexusNetwork } from '@/hoo
 import { DerivationBadge } from '@/components/nexus/DerivationBadge'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
+import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
+
+/** Maps canonical source record IDs to the most representative graph edge
+ *  that carries them in its evidence_ids. Derived from NEXUS golden fixture. */
+const SOURCE_TO_EDGE: Record<string, string> = {
+  'SRC-FIR-141':  'E-ACCUSE-141',
+  'SRC-FIR-207':  'E-ACCUSE-207',
+  'SRC-CDR-A12':  'E-USEPH-1',
+  'SRC-CDR-B31':  'E-USEPH-2',
+  'SRC-TXN-55':   'E-TXN-55',
+  'SRC-TXN-71':   'E-TXN-71',
+}
 
 const PRIORITY_STYLE: Record<string, string> = {
   HIGH: 'border-red-300 bg-red-50 text-red-900 font-bold',
@@ -29,6 +41,7 @@ export default function LeadInbox() {
   const [copilotAnswer, setCopilotAnswer] = useState<string | null>(null)
   const [copilotError, setCopilotError] = useState<string | null>(null)
   const copilotQuery = useNexusCopilot(copilotAnswer === null && !copilotError ? 'How are the two cases connected?' : null)
+  const [evidenceDrawerEdgeId, setEvidenceDrawerEdgeId] = useState<string | null>(null)
 
   const nodeLabel = (id: string) => afterNetwork.data?.nodes.find((n) => n.id === id)?.label ?? id
 
@@ -36,7 +49,7 @@ export default function LeadInbox() {
     setCopilotAnswer(null)
     setCopilotError(null)
     try {
-      await decide.mutateAsync({ id: lead!.id, req: { decision, decided_by: 'IO Demo' } })
+      await decide.mutateAsync({ id: lead!.id, req: { decision, decided_by: 'Investigating Officer' } })
     } catch (e) {
       setCopilotError(e instanceof Error ? e.message : 'Decision failed')
     }
@@ -102,9 +115,22 @@ export default function LeadInbox() {
                   <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-neutral-600">
                     <FileText className="h-3.5 w-3.5 text-blue-600" /> Cited evidence:
                   </span>
-                  {lead.evidence_ids.map((id) => (
-                    <code key={id} className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[11px] text-amber-900 border border-amber-200 font-semibold">{id}</code>
-                  ))}
+                  {lead.evidence_ids.map((id) => {
+                    const relId = SOURCE_TO_EDGE[id] ?? null
+                    return relId ? (
+                      <button
+                        key={id}
+                        onClick={() => setEvidenceDrawerEdgeId(relId)}
+                        className="inline-flex items-center gap-1 rounded bg-amber-100 hover:bg-amber-200 px-1.5 py-0.5 font-mono text-[11px] text-amber-900 border border-amber-200 font-semibold cursor-pointer transition-colors"
+                        title={`View evidence for ${id}`}
+                      >
+                        <FileText className="h-3 w-3 text-amber-700" />
+                        {id}
+                      </button>
+                    ) : (
+                      <code key={id} className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[11px] text-amber-900 border border-amber-200 font-semibold">{id}</code>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -176,6 +202,10 @@ export default function LeadInbox() {
           </section>
         </div>
       )}
+      <EvidenceDrawer
+        relationshipId={evidenceDrawerEdgeId}
+        onClose={() => setEvidenceDrawerEdgeId(null)}
+      />
     </div>
   )
 }

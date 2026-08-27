@@ -38,6 +38,7 @@ class AuditEventType(str, Enum):
 
     # Entity Resolution & Evidence
     ENTITY_RESOLUTION_EXECUTED = "entity_resolution_executed"
+    LEAD_ACTIONED = "lead_actioned"
     ENTITY_VIEWED = "entity_viewed"
     EVIDENCE_VIEWED = "evidence_viewed"
     EVIDENCE_HASH_COMPUTED = "evidence_hash_computed"

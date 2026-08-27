@@ -14,6 +14,17 @@ import { apiClient } from '@/lib/apiClient'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import type { GroundedCitation } from '@shared/contracts/api'
 
+/** Maps canonical source record IDs to the most representative graph edge
+ *  that carries them in its evidence_ids. Derived from NEXUS golden fixture. */
+const SOURCE_TO_EDGE: Record<string, string> = {
+  'SRC-FIR-141':  'E-ACCUSE-141',
+  'SRC-FIR-207':  'E-ACCUSE-207',
+  'SRC-CDR-A12':  'E-USEPH-1',
+  'SRC-CDR-B31':  'E-USEPH-2',
+  'SRC-TXN-55':   'E-TXN-55',
+  'SRC-TXN-71':   'E-TXN-71',
+}
+
 interface Message {
   id: string
   role: 'user' | 'assistant'
@@ -196,14 +207,14 @@ export default function Copilot() {
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {m.evidenceIds.map((id) => {
-                      // Map evidence ID to representative edge if applicable
-                      const relId = id.includes('141') ? 'E-ACCUSE-141' : id.includes('207') ? 'E-ACCUSE-207' : id.includes('CDR-A') ? 'E-USEPH-1' : id.includes('CDR-B') ? 'E-USEPH-2' : id.includes('TXN') ? 'E-TXN-55' : 'E-ACCUSE-141'
+                      const relId = SOURCE_TO_EDGE[id] ?? null
                       return (
                         <button
                           key={id}
-                          onClick={() => setSelectedRelationshipId(relId)}
-                          className="inline-flex items-center gap-1 rounded bg-amber-100 hover:bg-amber-200 px-2 py-0.5 font-mono text-[11px] font-semibold text-amber-900 border border-amber-300 transition-colors shadow-2xs cursor-pointer"
-                          title={`Click to view provenance for ${id}`}
+                          onClick={() => { if (relId) setSelectedRelationshipId(relId) }}
+                          disabled={!relId}
+                          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 font-mono text-[11px] font-semibold border transition-colors shadow-2xs ${relId ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border-amber-300 cursor-pointer' : 'bg-neutral-100 text-neutral-500 border-neutral-200 cursor-default'}`}
+                          title={relId ? `Click to view provenance for ${id}` : `Source record ${id}`}
                         >
                           <FileText className="h-3 w-3 text-amber-700" />
                           <span>{id}</span>

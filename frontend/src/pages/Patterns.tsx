@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Layers, Network, Users, Share2, AlertTriangle } from 'lucide-react'
+import { Layers, Network, Users, Share2, AlertTriangle, ShieldCheck } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 
 interface CommunityItem {
@@ -18,19 +18,19 @@ interface BridgeItem {
 }
 
 interface RepeatOffenderItem {
-  suspect_id?: string
-  name?: string
+  person_id?: string
+  person_name?: string
   case_count?: number
   case_ids?: string[]
-  severity?: string
+  reason?: string
 }
 
 interface SharedClusterItem {
   cluster_id?: string
-  attribute_type?: string
-  shared_value?: string
-  entity_count?: number
-  entity_names?: string[]
+  cluster_type?: string
+  person_ids?: string[]
+  case_ids?: string[]
+  reason?: string
 }
 
 export default function Patterns() {
@@ -67,6 +67,14 @@ export default function Patterns() {
         <p className="text-sm text-neutral-600 mt-1">
           Graph modularity communities, bridge broker nodes, shared attribute clusters, and repeat offender matrices.
         </p>
+      </div>
+
+      {/* Investigative framing disclaimer */}
+      <div className="flex items-start gap-2.5 text-xs text-neutral-700 bg-blue-50 border border-blue-200 p-3.5 rounded-xl">
+        <ShieldCheck className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+        <span>
+          <strong className="text-blue-900">Investigative use only:</strong> Community membership, betweenness centrality, and bridge scores are structural graph metrics that support investigative prioritisation. High centrality or bridge status does not establish criminal responsibility or guilt. All findings require investigator judgment and further corroboration.
+        </span>
       </div>
 
       {isLoading ? (
@@ -154,7 +162,7 @@ export default function Patterns() {
                     <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-neutral-50 border border-neutral-200">
                       <div>
                         <div className="text-sm font-bold text-neutral-900">{r.person_name}</div>
-                        <div className="text-xs text-neutral-600">Accused across {r.case_count} distinct cases ({r.case_ids.join(', ')})</div>
+                        <div className="text-xs text-neutral-600">Accused across {r.case_count ?? 0} distinct cases ({(r.case_ids ?? []).join(', ')})</div>
                       </div>
                       <span className="text-xs font-bold text-red-900 bg-red-50 px-2.5 py-1 rounded-full border border-red-200 shadow-xs">
                         {r.case_count} Cases
@@ -180,7 +188,7 @@ export default function Patterns() {
                     <div key={idx} className="p-3 rounded-lg bg-neutral-50 border border-neutral-200 space-y-1 shadow-xs">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-purple-900 uppercase bg-purple-50 px-2 py-0.5 rounded border border-purple-200">{c.cluster_type} Cluster</span>
-                        <span className="text-xs text-neutral-600 font-medium">{c.person_ids.length} Linked Persons</span>
+                        <span className="text-xs text-neutral-600 font-medium">{(c.person_ids ?? []).length} Linked Persons</span>
                       </div>
                       <div className="text-xs text-neutral-700">{c.reason}</div>
                     </div>
