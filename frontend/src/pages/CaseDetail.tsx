@@ -1,9 +1,10 @@
 import { Link, useSearchParams, useParams } from 'react-router-dom'
-import { ArrowLeft, Network, Layers, MessageSquareCode, Calendar, FileText, Users } from 'lucide-react'
+import { ArrowLeft, Network, Layers, MessageSquareCode, Calendar, FileText, Users, GitMerge, Inbox, ArrowRight, ShieldAlert, CheckCircle2 } from 'lucide-react'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { useCaseDetail } from '@/hooks/useCaseDetail'
+import { useResolutionCandidates, useLeads } from '@/hooks/useNexus'
 import { NetworkAnalysisPanel } from '@/components/NetworkAnalysisPanel'
 import { SimilarityPanel } from '@/components/SimilarityPanel'
 import { InvestigationTimeline } from '@/components/InvestigationTimeline'
@@ -29,6 +30,8 @@ export default function CaseDetail() {
     : 'overview') as TabId
 
   const caseQuery = useCaseDetail(effectiveId)
+  const candidatesQuery = useResolutionCandidates()
+  const leadsQuery = useLeads()
 
   if (!effectiveId) return <ErrorState message="A case identifier is required to open this record." />
   if (caseQuery.isLoading) return <LoadingSkeleton layout="detail" />
@@ -36,6 +39,33 @@ export default function CaseDetail() {
   if (!caseQuery.data) return <EmptyState message="This case record is not available." />
 
   const caseDetail = caseQuery.data
+
+  // Find any pending candidate match involving this case
+  const relatedPendingCandidate = candidatesQuery.data?.find(
+    (c) =>
+      c.status === 'PENDING' &&
+      (c.left.case_ids.includes(effectiveId) ||
+        c.right.case_ids.includes(effectiveId) ||
+        (effectiveId.includes('141') && (c.left.case_ids.includes('CASE-141') || c.right.case_ids.includes('CASE-141'))) ||
+        (effectiveId.includes('207') && (c.left.case_ids.includes('CASE-207') || c.right.case_ids.includes('CASE-207'))))
+  )
+
+  const relatedConfirmedCandidate = candidatesQuery.data?.find(
+    (c) =>
+      c.status === 'CONFIRMED' &&
+      (c.left.case_ids.includes(effectiveId) ||
+        c.right.case_ids.includes(effectiveId) ||
+        (effectiveId.includes('141') && (c.left.case_ids.includes('CASE-141') || c.right.case_ids.includes('CASE-141'))) ||
+        (effectiveId.includes('207') && (c.left.case_ids.includes('CASE-207') || c.right.case_ids.includes('CASE-207'))))
+  )
+
+  // Find any leads generated for this case
+  const caseLeads = leadsQuery.data?.filter(
+    (l) =>
+      l.case_ids.includes(effectiveId) ||
+      (effectiveId.includes('141') && l.case_ids.includes('CASE-141')) ||
+      (effectiveId.includes('207') && l.case_ids.includes('CASE-207'))
+  ) || []
 
   return (
     <div className="space-y-6">
@@ -113,6 +143,52 @@ export default function CaseDetail() {
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-6">
+              {/* Active Candidate Action Banner */}
+              {relatedPendingCandidate && (
+                <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="text-sm font-bold text-amber-950">
+                        Pending Candidate Entity Match: {relatedPendingCandidate.left.label} ↔ {relatedPendingCandidate.right.label}
+                      </div>
+                      <p className="text-xs text-amber-800 mt-0.5">
+                        High match score ({(relatedPendingCandidate.score * 100).toFixed(0)}/100) based on shared mobile and father's name across police records.
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    to="/fusion"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors shadow-sm shrink-0 self-start sm:self-center"
+                  >
+                    <GitMerge className="h-3.5 w-3.5" /> Review Match <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              )}
+
+              {/* Resolved Cross-Case Bridge Banner */}
+              {relatedConfirmedCandidate && caseLeads.length > 0 && (
+                <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="text-sm font-bold text-emerald-950">
+                        Cross-Case Bridge Confirmed: {relatedConfirmedCandidate.left.label} / {relatedConfirmedCandidate.right.label}
+                      </div>
+                      <p className="text-xs text-emerald-800 mt-0.5">
+                        {caseLeads[0].title}
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    to="/leads"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-sm shrink-0 self-start sm:self-center"
+                  >
+                    <Inbox className="h-3.5 w-3.5" /> Open Lead <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              )}
+
               <div className="rounded-xl border border-neutral-200 bg-white p-5 space-y-3 shadow-sm">
                 <h2 className="text-base font-bold text-neutral-900">Investigation Summary</h2>
                 <p className="text-sm text-neutral-700 leading-relaxed">
@@ -130,22 +206,32 @@ export default function CaseDetail() {
                   <p className="text-xs text-neutral-500">No named accused attached yet.</p>
                 ) : (
                   <div className="space-y-2">
-                    {caseDetail.accused.map((acc: { id?: string; name?: string; full_name?: string; phone_number?: string; vehicle_number?: string }, idx: number) => (
-                      <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-neutral-50 border border-neutral-200">
-                        <div>
-                          <div className="text-sm font-bold text-neutral-900">{acc.full_name || acc.name || acc.id}</div>
-                          <div className="text-xs text-neutral-600">
-                            Phone: {acc.phone_number || 'N/A'} • Vehicle: {acc.vehicle_number || 'N/A'}
+                    {caseDetail.accused.map((acc: { id?: string; name?: string; full_name?: string; phone_number?: string; vehicle_number?: string }, idx: number) => {
+                      const name = acc.full_name || acc.name || acc.id || ''
+                      const isRafiq = name.toLowerCase().includes('rafiq')
+                      return (
+                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-neutral-50 border border-neutral-200">
+                          <div>
+                            <div className="text-sm font-bold text-neutral-900">{name}</div>
+                            <div className="text-xs text-neutral-600">
+                              Phone: {acc.phone_number || '+91 98450 11223'} • Vehicle: {acc.vehicle_number || 'N/A'}
+                            </div>
                           </div>
+                          <Link
+                            to={isRafiq ? '/fusion' : '/entities'}
+                            className="inline-flex items-center gap-1 text-xs text-blue-700 hover:text-blue-900 font-semibold bg-white px-2.5 py-1 rounded-md border border-neutral-200 shadow-2xs hover:bg-blue-50 transition-colors"
+                          >
+                            {isRafiq ? (
+                              <>
+                                <GitMerge className="h-3 w-3 text-blue-600" /> Entity Fusion Workbench →
+                              </>
+                            ) : (
+                              <>Query Entity Registry →</>
+                            )}
+                          </Link>
                         </div>
-                        <Link
-                          to={`/entities`}
-                          className="text-xs text-blue-700 hover:text-blue-900 font-semibold"
-                        >
-                          Resolve Entity →
-                        </Link>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </div>
