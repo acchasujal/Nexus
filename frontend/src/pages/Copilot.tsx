@@ -7,9 +7,11 @@ import {
   AlertTriangle, 
   FileText, 
   Bot, 
-  User 
+  User,
+  ExternalLink,
 } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
+import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import type { GroundedCitation } from '@shared/contracts/api'
 
 interface Message {
@@ -50,6 +52,7 @@ export default function Copilot() {
   const [messages, setMessages] = useState<Message[]>([INITIAL_WELCOME_MESSAGE])
   const [inputQuery, setInputQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [selectedRelationshipId, setSelectedRelationshipId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -184,16 +187,30 @@ export default function Copilot() {
               {/* NEXUS Grounded Evidence Chips */}
               {m.evidenceIds && m.evidenceIds.length > 0 && (
                 <div className="rounded-xl bg-neutral-50 p-3 text-xs border border-neutral-200 space-y-2">
-                  <div className="font-bold text-neutral-800 flex items-center gap-1.5">
-                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                    Grounded Evidence Records:
+                  <div className="font-bold text-neutral-800 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                      Grounded Evidence Records:
+                    </span>
+                    <span className="text-[10px] text-neutral-500 font-normal">Click to inspect forensic record</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {m.evidenceIds.map((id) => (
-                      <code key={id} className="rounded bg-amber-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-amber-900 border border-amber-200">
-                        {id}
-                      </code>
-                    ))}
+                    {m.evidenceIds.map((id) => {
+                      // Map evidence ID to representative edge if applicable
+                      const relId = id.includes('141') ? 'E-ACCUSE-141' : id.includes('207') ? 'E-ACCUSE-207' : id.includes('CDR-A') ? 'E-USEPH-1' : id.includes('CDR-B') ? 'E-USEPH-2' : id.includes('TXN') ? 'E-TXN-55' : 'E-ACCUSE-141'
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => setSelectedRelationshipId(relId)}
+                          className="inline-flex items-center gap-1 rounded bg-amber-100 hover:bg-amber-200 px-2 py-0.5 font-mono text-[11px] font-semibold text-amber-900 border border-amber-300 transition-colors shadow-2xs cursor-pointer"
+                          title={`Click to view provenance for ${id}`}
+                        >
+                          <FileText className="h-3 w-3 text-amber-700" />
+                          <span>{id}</span>
+                          <ExternalLink className="h-2.5 w-2.5 opacity-60 ml-0.5" />
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -286,6 +303,11 @@ export default function Copilot() {
           </button>
         </form>
       </div>
+
+      <EvidenceDrawer
+        relationshipId={selectedRelationshipId}
+        onClose={() => setSelectedRelationshipId(null)}
+      />
     </div>
   )
 }
