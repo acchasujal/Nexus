@@ -65,6 +65,7 @@ def create_app(
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cfg.cors_origins_list,
+        allow_origin_regex=r"^https:\/\/.*\.vercel\.app$|^http:\/\/localhost(:\d+)?$|^http:\/\/127\.0\.0\.1(:\d+)?$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -88,11 +89,10 @@ def create_app(
         prefix="/api/v1",
     )
 
-    # System routes
-    app.include_router(
-        create_system_router(),
-        prefix="/api/v1",
-    )
+    # System routes (both root /health and /api/v1/health)
+    system_router = create_system_router()
+    app.include_router(system_router)
+    app.include_router(system_router, prefix="/api/v1")
 
     # Chat / Copilot routes
     app.include_router(chat.router, prefix="/api")

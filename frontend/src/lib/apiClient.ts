@@ -45,7 +45,8 @@ export async function apiFetch<T>(
   const origin = typeof window !== 'undefined' && window.location?.origin && window.location.origin !== 'null'
     ? window.location.origin
     : 'http://localhost'
-  const baseUrl = import.meta.env.VITE_API_BASE_URL ?? origin
+  const rawBase = (import.meta.env.VITE_API_BASE_URL || origin).trim()
+  const baseUrl = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase
   let savedRole = 'INVESTIGATOR'
   let token: string | null = null
   try {
@@ -84,6 +85,11 @@ export async function apiFetch<T>(
       message = body.detail ?? body.message ?? response.statusText
     } catch {
       message = response.statusText
+    }
+    if ((response.status === 401 || response.status === 403) && typeof window !== 'undefined' && window.localStorage) {
+      if (message.toLowerCase().includes('token')) {
+        window.localStorage.removeItem('nexus_token')
+      }
     }
     throw new ApiError(response.status, response.statusText, message)
   }

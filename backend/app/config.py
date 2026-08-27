@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     # ── CORS ────────────────────────────────────────────────────────────────
     cors_origins: str = Field(
-        default="http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000",
+        default="http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,https://nexus-eight-weld-33.vercel.app",
         alias="CORS_ORIGINS",
     )
 
@@ -63,6 +63,8 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
+        if self.cors_origins.strip() == "*":
+            return ["*"]
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property

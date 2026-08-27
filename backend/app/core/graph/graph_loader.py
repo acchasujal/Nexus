@@ -69,28 +69,10 @@ class GraphLoader:
     def validate_graph(
         self,
         store: GraphStore,
+        allow_multigraph: bool = False,
     ) -> dict[str, Any]:
         """
         Performs structural and referential validation on a GraphStore.
-
-        Checks:
-        ✓ duplicate node ids
-        ✓ duplicate edges (same source, target, edge_type)
-        ✓ missing source node
-        ✓ missing target node
-        ✓ orphan edges (either source or target node is missing from node list)
-        ✓ invalid ids (not string)
-        ✓ empty ids (None, empty string, or whitespace-only)
-        ✓ self loops (warning only)
-
-        Returns:
-        {
-            "is_valid": bool,
-            "errors": list[str],
-            "warnings": list[str],
-            "node_count": int,
-            "edge_count": int
-        }
         """
         errors: list[str] = []
         warnings: list[str] = []
@@ -138,7 +120,10 @@ class GraphLoader:
             # Duplicate edge detection
             edge_key = (src, tgt, etype)
             if edge_key in seen_edges:
-                errors.append(f"Duplicate edge detected: source={src}, target={tgt}, type={etype}")
+                if allow_multigraph:
+                    warnings.append(f"Multi-evidence parallel edge: source={src}, target={tgt}, type={etype}")
+                else:
+                    errors.append(f"Duplicate edge detected: source={src}, target={tgt}, type={etype}")
             else:
                 seen_edges.add(edge_key)
 

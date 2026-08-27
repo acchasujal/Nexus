@@ -31,9 +31,31 @@ class SystemHealthResponse(BaseModel):
 
 
 def create_system_router() -> APIRouter:
-    router = APIRouter(prefix="/system", tags=["system-monitoring"])
+    router = APIRouter(tags=["system-monitoring"])
 
-    @router.get("/status", response_model=SystemHealthResponse)
+    @router.get("/health")
+    def health_check() -> dict[str, Any]:
+        """Process liveness probe for cloud deployments (e.g. Render)."""
+        return {
+            "status": "healthy",
+            "service": "nexus-backend",
+            "uptime_seconds": round(max(0.0, time.time() - _START_TIME), 2),
+        }
+
+    @router.get("/ready")
+    def readiness_check(repo: Any = Depends(get_repository)) -> dict[str, Any]:
+        """Readiness probe checking backend repository and graph status."""
+        nodes = getattr(repo, "nodes", {})
+        edges = getattr(repo, "edges", [])
+        return {
+            "status": "ready",
+            "service": "nexus-backend",
+            "storage": "in_memory",
+            "total_nodes": len(nodes),
+            "total_edges": len(edges),
+        }
+
+    @router.get("/system/status", response_model=SystemHealthResponse)
     def system_status(
         principal: Principal = Depends(get_principal),
         repo: Any = Depends(get_repository),

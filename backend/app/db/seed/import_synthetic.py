@@ -57,7 +57,7 @@ def _load_artifact(file_path: Path) -> dict[str, Any]:
 def _validate_with_graph_loader(raw_data: dict[str, Any]) -> None:
     nodes = [
         NodeRecord(
-            id=n["id"],
+            node_id=n.get("node_id") or n["id"],
             entity_type=n.get("entity_type") or n.get("type", "Unknown"),
             properties=n.get("properties", {}),
         )
@@ -65,15 +65,24 @@ def _validate_with_graph_loader(raw_data: dict[str, Any]) -> None:
     ]
     edges = [
         AdjEdge(
-            target_id=e["target_id"],
-            edge_type=e["edge_type"],
+            source_id=e.get("source_id", ""),
+            target_id=e.get("target_id", ""),
+            edge_type=e.get("edge_type", ""),
             properties=e.get("properties", {}),
         )
         for e in raw_data.get("edges", [])
     ]
     loader = GraphLoader()
-    result = loader.validate_graph(nodes, edges)
-    if not result.is_valid:
+    store = loader.load_graph(nodes, edges)
+    result = loader.validate_graph(store, allow_multigraph=True)
+    if isinstance(result, dict):
+        if not result.get("is_valid", True):
+            errors = result.get("errors", [])
+            raise ValueError(
+                f"GraphLoader validation failed with {len(errors)} errors: "
+                + "; ".join(errors[:5])
+            )
+    elif hasattr(result, "is_valid") and not result.is_valid:
         raise ValueError(
             f"GraphLoader validation failed with {len(result.errors)} errors: "
             + "; ".join(result.errors[:5])

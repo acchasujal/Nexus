@@ -180,12 +180,14 @@ export function SimilarityPanel({ caseId, firNumber: _firNumber }: SimilarityPan
                       <p className="text-caption font-semibold text-neutral-800">
                         Case: {match.properties.fir_number ?? match.case_id}
                       </p>
-                      <p className="text-[10px] text-neutral-500 italic">
-                        {match.properties.offence_category ?? 'Unknown Category'}
-                      </p>
+                      {match.properties.offence_category && (
+                        <p className="text-[10px] text-neutral-600 font-medium">
+                          {match.properties.offence_category}
+                        </p>
+                      )}
                     </div>
-                    <span className="text-caption font-mono font-bold bg-neutral-100 text-status-info px-1.5 py-0.5 rounded-radius-sm">
-                      {Math.round(match.score * 100)}% Match
+                    <span className="text-caption font-mono font-bold bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded-radius-sm border border-blue-200">
+                      Match Score: {Math.round(match.score * 100)}/100
                     </span>
                   </div>
                   
@@ -199,10 +201,10 @@ export function SimilarityPanel({ caseId, firNumber: _firNumber }: SimilarityPan
                   
                   <div className="text-right pt-1">
                     <Link 
-                      to={`/case/${match.case_id}`}
-                      className="text-[11px] font-bold text-status-info hover:underline inline-flex items-center gap-1"
+                      to={`/cases/${match.case_id}`}
+                      className="text-[11px] font-bold text-blue-700 hover:underline inline-flex items-center gap-1"
                     >
-                      View Details &rarr;
+                      View Investigation &rarr;
                     </Link>
                   </div>
                 </div>

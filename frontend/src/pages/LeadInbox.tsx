@@ -15,7 +15,7 @@ import { DerivationBadge } from '@/components/nexus/DerivationBadge'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 
-const SEVERITY_STYLE: Record<string, string> = {
+const PRIORITY_STYLE: Record<string, string> = {
   HIGH: 'border-red-300 bg-red-50 text-red-900 font-bold',
   MEDIUM: 'border-amber-300 bg-amber-50 text-amber-900 font-bold',
   LOW: 'border-neutral-300 bg-neutral-100 text-neutral-800 font-medium',
@@ -71,7 +71,9 @@ export default function LeadInbox() {
           <section className="space-y-4 xl:col-span-2" aria-label="Lead detail">
             <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
               <div className="flex flex-wrap items-center gap-2">
-                <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${SEVERITY_STYLE[lead.severity]}`}>{lead.severity} severity</span>
+                <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${PRIORITY_STYLE[lead.severity] || PRIORITY_STYLE.HIGH}`}>
+                  {lead.severity} Review Priority
+                </span>
                 <span className="rounded-md border border-neutral-300 bg-neutral-100 px-2 py-0.5 font-mono text-[10px] font-bold text-neutral-800">rule: {lead.rule_id}</span>
                 <DerivationBadge klass={lead.derivation_class} />
                 {lead.status !== 'NEW' && (

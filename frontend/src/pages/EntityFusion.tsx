@@ -113,8 +113,11 @@ export default function EntityFusion() {
         </div>
         <div className="text-right">
           <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Match score</div>
-          <div data-testid="match-score" className="text-3xl font-extrabold text-emerald-700" aria-label={`Match score ${(candidate.score * 100).toFixed(0)} percent`}>
-            {(candidate.score * 100).toFixed(0)}%
+          <div data-testid="match-score" className="text-2xl sm:text-3xl font-extrabold text-emerald-700" aria-label={`Match score ${(candidate.score * 100).toFixed(0)} out of 100`}>
+            {(candidate.score * 100).toFixed(0)}/100
+          </div>
+          <div className="text-[10px] text-neutral-500 max-w-[200px] text-right mt-0.5">
+            Weighted evidence similarity score; not probability of identity.
           </div>
         </div>
       </div>
@@ -153,7 +156,7 @@ export default function EntityFusion() {
                   </span>
                 </span>
                 <span className="rounded bg-emerald-100 text-emerald-800 px-1.5 py-0.5 text-[10px] font-mono font-bold">
-                  {(c.score * 100).toFixed(0)}%
+                  {(c.score * 100).toFixed(0)}/100
                 </span>
                 {isConfirmed && <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Merged</span>}
                 {isRejected && <span className="text-[10px] bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded font-bold">Rejected</span>}

@@ -31,7 +31,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
-      name: 'Entity Fusion',
+      name: 'Entity Fusion (Workbench)',
       to: '/fusion',
       icon: GitMerge,
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
@@ -43,13 +43,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
-      name: 'Overview',
+      name: 'Investigation Worklist',
       to: '/worklist',
       icon: LayoutDashboard,
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
-      name: 'Entity Resolution',
+      name: 'Entity Search & Query',
       to: '/entities',
       icon: Users,
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']

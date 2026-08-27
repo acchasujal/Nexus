@@ -99,7 +99,7 @@ describe('NEXUS Frontend Prototype Suite', () => {
 
       await waitFor(() => {
         expect(screen.getByText(/Entity Fusion Workbench/i)).toBeInTheDocument()
-        expect(screen.getByTestId('match-score')).toHaveTextContent('86%')
+        expect(screen.getByTestId('match-score')).toHaveTextContent('86/100')
         expect(screen.getAllByText('Rafiq Khan').length).toBeGreaterThan(0)
         expect(screen.getAllByText('Rafiq Ahmed').length).toBeGreaterThan(0)
         expect(screen.getAllByText(/Cross-Case Match/i).length).toBeGreaterThan(0)
@@ -120,7 +120,7 @@ describe('NEXUS Frontend Prototype Suite', () => {
       fireEvent.click(screen.getByText(/#2 Vikram Sharma/i))
 
       await waitFor(() => {
-        expect(screen.getByTestId('match-score')).toHaveTextContent('92%')
+        expect(screen.getByTestId('match-score')).toHaveTextContent('92/100')
         expect(screen.getAllByText('Vikram Sharma').length).toBeGreaterThan(0)
         expect(screen.getAllByText('Bikram Sarma').length).toBeGreaterThan(0)
       })
