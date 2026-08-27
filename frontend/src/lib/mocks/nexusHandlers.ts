@@ -132,11 +132,83 @@ export const nexusHandlers = [
   http.get(/\/api\/v1\/nexus\/path/, async ({ request }) => {
     await simDelay(200)
     const url = new URL(request.url)
-    const source = url.searchParams.get('source') ?? ''
-    const target = url.searchParams.get('target') ?? ''
-    if (isResolved() && ((source === 'CASE-141' && target === 'CASE-207') || (source === 'CASE-207' && target === 'CASE-141'))) {
+    const source = (url.searchParams.get('source') ?? '').trim()
+    const target = (url.searchParams.get('target') ?? '').trim()
+    const maxDepth = Number.parseInt(url.searchParams.get('max_depth') || '6', 10)
+
+    if (!source || !target) {
       return HttpResponse.json({
-        found: true, source_id: source, target_id: target,
+        found: false,
+        source_id: source,
+        target_id: target,
+        node_ids: [],
+        edge_ids: [],
+        hops: 0,
+        explanation: 'Source and target entity identifiers are required.',
+        evidence_ids: [],
+      })
+    }
+
+    if (source === target) {
+      return HttpResponse.json({
+        found: false,
+        source_id: source,
+        target_id: target,
+        node_ids: [source],
+        edge_ids: [],
+        hops: 0,
+        explanation: `Source and target entities are identical ('${source}').`,
+        evidence_ids: [],
+      })
+    }
+
+    const net = networkFor(isResolved() ? 'after' : 'before')
+    const nodesById = new Map(net.nodes.map((n) => [n.id, n]))
+
+    const findNode = (val: string) => {
+      if (nodesById.has(val)) return nodesById.get(val)
+      const low = val.toLowerCase()
+      for (const n of net.nodes) {
+        if (n.id.toLowerCase() === low || n.label.toLowerCase() === low) return n
+      }
+      return null
+    }
+
+    const srcNode = findNode(source)
+    const tgtNode = findNode(target)
+
+    if (!srcNode) {
+      return HttpResponse.json({
+        found: false,
+        source_id: source,
+        target_id: target,
+        node_ids: [],
+        edge_ids: [],
+        hops: 0,
+        explanation: `Source entity '${source}' was not found in the active graph snapshot.`,
+        evidence_ids: [],
+      })
+    }
+
+    if (!tgtNode) {
+      return HttpResponse.json({
+        found: false,
+        source_id: source,
+        target_id: target,
+        node_ids: [],
+        edge_ids: [],
+        hops: 0,
+        explanation: `Target entity '${target}' was not found in the active graph snapshot.`,
+        evidence_ids: [],
+      })
+    }
+
+    // Golden path special explanation
+    if (isResolved() && ((srcNode.id === 'CASE-141' && tgtNode.id === 'CASE-207') || (srcNode.id === 'CASE-207' && tgtNode.id === 'CASE-141'))) {
+      return HttpResponse.json({
+        found: true,
+        source_id: srcNode.id,
+        target_id: tgtNode.id,
         node_ids: ['CASE-141', 'P-RAFIQ', 'CASE-207'],
         edge_ids: ['E-ACCUSE-141', 'E-ACCUSE-207'],
         hops: 2,
@@ -146,11 +218,69 @@ export const nexusHandlers = [
         evidence_ids: ['SRC-FIR-141', 'SRC-FIR-207', 'SRC-CDR-A12', 'SRC-CDR-B31'],
       })
     }
+
+    // Bidirectional Adjacency
+    const adj = new Map<string, { to: string; edgeId: string; edgeType: string; evs: string[] }[]>()
+    for (const e of net.edges) {
+      const evList = (Array.isArray(e.properties?.evidence_ids) ? e.properties.evidence_ids : []) as string[]
+      if (!adj.has(e.source_id)) adj.set(e.source_id, [])
+      if (!adj.has(e.target_id)) adj.set(e.target_id, [])
+      adj.get(e.source_id)!.push({ to: e.target_id, edgeId: e.id, edgeType: e.edge_type, evs: evList })
+      adj.get(e.target_id)!.push({ to: e.source_id, edgeId: e.id, edgeType: e.edge_type, evs: evList })
+    }
+
+    // BFS
+    const queue: { curr: string; pathNodes: string[]; pathEdges: string[]; pathEvs: string[] }[] = [
+      { curr: srcNode.id, pathNodes: [srcNode.id], pathEdges: [], pathEvs: [] },
+    ]
+    const visited = new Set<string>([srcNode.id])
+    let foundPath: { pathNodes: string[]; pathEdges: string[]; pathEvs: string[] } | null = null
+
+    while (queue.length > 0) {
+      const { curr, pathNodes, pathEdges, pathEvs } = queue.shift()!
+      if (pathNodes.length - 1 >= maxDepth) continue
+
+      for (const { to, edgeId, evs } of adj.get(curr) || []) {
+        if (visited.has(to)) continue
+        const nextNodes = [...pathNodes, to]
+        const nextEdges = [...pathEdges, edgeId]
+        const nextEvs = [...pathEvs, ...evs]
+
+        if (to === tgtNode.id) {
+          foundPath = { pathNodes: nextNodes, pathEdges: nextEdges, pathEvs: nextEvs }
+          break
+        }
+
+        visited.add(to)
+        queue.push({ curr: to, pathNodes: nextNodes, pathEdges: nextEdges, pathEvs: nextEvs })
+      }
+      if (foundPath) break
+    }
+
+    if (foundPath) {
+      const hops = foundPath.pathNodes.length - 1
+      const labels = foundPath.pathNodes.map((id) => nodesById.get(id)?.label || id)
+      return HttpResponse.json({
+        found: true,
+        source_id: srcNode.id,
+        target_id: tgtNode.id,
+        node_ids: foundPath.pathNodes,
+        edge_ids: foundPath.pathEdges,
+        hops,
+        explanation: `Discovered ${hops}-hop evidence connection: ${labels.join(' ➔ ')}.`,
+        evidence_ids: [...new Set(foundPath.pathEvs)],
+      })
+    }
+
     return HttpResponse.json({
-      found: false, source_id: source, target_id: target,
-      node_ids: [], edge_ids: [], hops: 0,
+      found: false,
+      source_id: srcNode.id,
+      target_id: tgtNode.id,
+      node_ids: [],
+      edge_ids: [],
+      hops: 0,
       explanation: isResolved()
-        ? `No explainable connection between ${source} and ${target} in the current snapshot.`
+        ? `No connection found between '${srcNode.label}' and '${tgtNode.label}' within ${maxDepth} hops in the current snapshot.`
         : 'No connection exists in the current snapshot. Confirm pending entity resolutions to reveal hidden links.',
       evidence_ids: [],
     })

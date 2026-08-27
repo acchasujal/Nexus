@@ -52,11 +52,11 @@ export function useEdgeEvidence(relationshipId: string | null) {
   })
 }
 
-export function useNexusPath(sourceId: string | null, targetId: string | null) {
+export function useNexusPath(sourceId: string | null, targetId: string | null, maxDepth: number = 6, enabled: boolean = true) {
   return useQuery({
-    queryKey: ['nexus', 'path', sourceId, targetId],
-    queryFn: () => apiClient.findNexusPath(sourceId!, targetId!),
-    enabled: Boolean(sourceId && targetId),
+    queryKey: ['nexus', 'path', sourceId, targetId, maxDepth],
+    queryFn: () => apiClient.findNexusPath(sourceId!, targetId!, maxDepth),
+    enabled: Boolean(enabled && sourceId && targetId && sourceId.trim() !== '' && targetId.trim() !== ''),
     retry: false,
   })
 }

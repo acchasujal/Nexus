@@ -152,6 +152,32 @@ describe('NEXUS Frontend Prototype Suite', () => {
         expect(screen.getByText('After resolution')).toBeInTheDocument()
       })
     })
+
+    it('toggles Investigative Pathfinder bar and allows selecting presets', async () => {
+      render(<NetworkExplorer />, { wrapper: createWrapper() })
+
+      await waitFor(() => {
+        expect(screen.getByText(/Investigative Pathfinder/i)).toBeInTheDocument()
+      })
+
+      fireEvent.click(screen.getByText(/Investigative Pathfinder/i))
+
+      await waitFor(() => {
+        expect(screen.getByText(/Interactive Graph Pathfinder/i)).toBeInTheDocument()
+        expect(screen.getByText(/Source Entity \/ Case/i)).toBeInTheDocument()
+        expect(screen.getByText(/Target Entity \/ Case/i)).toBeInTheDocument()
+        expect(screen.getByText(/🌟 FIR-141 ↔ FIR-207/i)).toBeInTheDocument()
+        expect(screen.getByText(/💳 Deepak ↔ Rafiq/i)).toBeInTheDocument()
+      })
+
+      // Click preset
+      fireEvent.click(screen.getByText(/💳 Deepak ↔ Rafiq/i))
+
+      await waitFor(() => {
+        expect(screen.getByText(/Connected in/i)).toBeInTheDocument()
+        expect(screen.getByText(/Investigative Chain Steps/i)).toBeInTheDocument()
+      })
+    })
   })
 
   describe('LeadInbox', () => {

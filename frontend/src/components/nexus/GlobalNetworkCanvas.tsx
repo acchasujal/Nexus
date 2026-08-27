@@ -22,8 +22,12 @@ interface GlobalNetworkCanvasProps {
   highlightDelta?: boolean
   initialCaseFilter?: string | null
   initialNodeId?: string | null
+  pathNodeIds?: string[] | null
+  pathEdgeIds?: string[] | null
   onEdgeSelect: (edgeId: string) => void
   onNodeSelect?: (nodeId: string) => void
+  onSetSource?: (nodeId: string, nodeLabel: string) => void
+  onSetTarget?: (nodeId: string, nodeLabel: string) => void
 }
 
 const NODE_STYLE: Record<string, { icon: typeof User; ring: string; chip: string }> = {
@@ -39,8 +43,12 @@ export function GlobalNetworkCanvas({
   highlightDelta = false,
   initialCaseFilter,
   initialNodeId,
+  pathNodeIds,
+  pathEdgeIds,
   onEdgeSelect,
   onNodeSelect,
+  onSetSource,
+  onSetTarget,
 }: GlobalNetworkCanvasProps) {
   const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set())
   const [selectedNode, setSelectedNode] = useState<string | null>(initialNodeId || null)
@@ -222,6 +230,10 @@ export function GlobalNetworkCanvas({
         edges={d3Edges}
         selectedNodeId={selectedNode}
         selectedEdgeId={selectedEdge}
+        pathNodeIds={pathNodeIds}
+        pathEdgeIds={pathEdgeIds}
+        onSetSource={onSetSource}
+        onSetTarget={onSetTarget}
         onNodeSelect={(nodeId) => {
           setSelectedNode(nodeId)
           if (nodeId) onNodeSelect?.(nodeId)

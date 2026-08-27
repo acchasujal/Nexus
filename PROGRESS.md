@@ -6,9 +6,9 @@
 - **Permanent Branch:** `main` (Production, Integration & Demo Base)
 - **Current Phase:** Phase 2 (Multi-Source Ingestion, Graph Schema V2 & Evidence Hardened)
 - **Integration Status:** Person 1 (Graph Intelligence), Person 2 (Data & Entity Resolution), Person 3 (Backend/Evidence/Copilot), Person 5 (Research/Validation), and Person 6 (Integration/Demo) fully integrated into `main` with Person 4 frontend preserved and running.
-- **Test Suite Status:** 493 Pytest unit/integration tests passing (100%), Ground Truth ER benchmark passing (100% Precision/Recall), 35 Vitest frontend tests passing (100%), Frontend production build clean.
+- **Test Suite Status:** 524 Pytest unit/integration tests passing (100%), Ground Truth ER benchmark passing (100% Precision/Recall), 47 Vitest frontend tests passing (100%), Frontend production build clean.
 - **Lint Status:** 0 errors across backend, shared, and tests (`ruff check` clean).
-- **Last Updated:** 2026-08-25
+- **Last Updated:** 2026-08-28
 
 ---
 
@@ -113,6 +113,7 @@ All data ingestion pipelines (FIR, CDR, Bank transactions, Intel reports), Schem
 
 ## 4. Recent Engineering Updates
 
+- **2026-08-28 [Lead / Feature #1]:** Delivered Interactive Investigative Pathfinder (P0 feature #1): Arbitrary entity/case BFS traversal with bounded max depth (1-10 hops), live swap controls, quick investigation presets, interactive step-by-step breadcrumbs with clickable Evidence Drawer links, D3 canvas path glowing/dimming, 10 backend tests (524 total), and 47 passing Vitest tests.
 - **2026-08-25 [Person 4 / Ram]:** Completed 100% of M4 Frontend scope: Global Network Explorer with Before/After replay, Entity Fusion Workbench, Lead Inbox & Pathfinder, Louvain community ring colors (FE-04), Section 63 BSA Dossier download (FE-05), Live Search header, Demo Ingestion Hero on Worklist, Evidence & Timeline registries, and 45 passing Vitest tests.
 - **2026-08-25 [Release Lead]:** Integrated Person 1's Schema V2, Louvain community detection, bridge scoring, cross-case analysis, pattern rules, and snapshot diffing into `main`.
 - **2026-08-25 [Release Lead]:** Merged Person 2's CSV ingestion pipeline and entity resolution registry into `main`.

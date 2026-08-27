@@ -863,41 +863,199 @@ def create_nexus_router() -> APIRouter:
 
     @router.get("/nexus/path", response_model=NexusPathResponse)
     def find_nexus_path(
-        source: str = Query(""),
-        target: str = Query(""),
+        source: str = Query("", description="Source node or case identifier"),
+        target: str = Query("", description="Target node or case identifier"),
+        max_depth: int = Query(6, ge=1, le=10, description="Maximum BFS traversal depth"),
         principal: Principal = Depends(get_principal),
+        audit: AuditService = Depends(get_audit_service),
     ) -> NexusPathResponse:
-        if _demo_state.is_resolved and (
-            (source == "CASE-141" and target == "CASE-207")
-            or (source == "CASE-207" and target == "CASE-141")
-        ):
+        src = (source or "").strip()
+        tgt = (target or "").strip()
+
+        if not src or not tgt:
             return NexusPathResponse(
-                found=True,
-                source_id=source,
-                target_id=target,
-                node_ids=["CASE-141", "P-RAFIQ", "CASE-207"],
-                edge_ids=["E-ACCUSE-141", "E-ACCUSE-207"],
-                hops=2,
-                explanation=(
+                found=False,
+                source_id=src,
+                target_id=tgt,
+                node_ids=[],
+                edge_ids=[],
+                hops=0,
+                explanation="Source and target entity identifiers are required.",
+                evidence_ids=[],
+            )
+
+        if src == tgt:
+            return NexusPathResponse(
+                found=False,
+                source_id=src,
+                target_id=tgt,
+                node_ids=[src],
+                edge_ids=[],
+                hops=0,
+                explanation=f"Source and target entities are identical ('{src}'). No traversal required.",
+                evidence_ids=[],
+            )
+
+        current_nodes = AFTER_NODES if _demo_state.is_resolved else BEFORE_NODES
+        current_edges = AFTER_EDGES if _demo_state.is_resolved else BEFORE_EDGES
+        nodes_by_id = {n.id: n for n in current_nodes}
+
+        # Case-insensitive / label fallback lookup
+        def find_node(val: str) -> NexusGraphNode | None:
+            if val in nodes_by_id:
+                return nodes_by_id[val]
+            val_lower = val.lower()
+            for n in current_nodes:
+                if n.id.lower() == val_lower or n.label.lower() == val_lower:
+                    return n
+                if n.properties.get("fir_number", "").lower() == val_lower:
+                    return n
+            return None
+
+        src_node = find_node(src)
+        tgt_node = find_node(tgt)
+
+        if not src_node:
+            return NexusPathResponse(
+                found=False,
+                source_id=src,
+                target_id=tgt,
+                node_ids=[],
+                edge_ids=[],
+                hops=0,
+                explanation=f"Source entity '{src}' was not found in the active investigation graph snapshot.",
+                evidence_ids=[],
+            )
+
+        if not tgt_node:
+            return NexusPathResponse(
+                found=False,
+                source_id=src,
+                target_id=tgt,
+                node_ids=[],
+                edge_ids=[],
+                hops=0,
+                explanation=f"Target entity '{tgt}' was not found in the active investigation graph snapshot.",
+                evidence_ids=[],
+            )
+
+        resolved_src_id = src_node.id
+        resolved_tgt_id = tgt_node.id
+
+        if resolved_src_id == resolved_tgt_id:
+            return NexusPathResponse(
+                found=False,
+                source_id=resolved_src_id,
+                target_id=resolved_tgt_id,
+                node_ids=[resolved_src_id],
+                edge_ids=[],
+                hops=0,
+                explanation="Source and target resolve to the same node in the graph.",
+                evidence_ids=[],
+            )
+
+        # Build bidirectional adjacency map from active snapshot edges
+        # adj[node_id] = list of (neighbor_id, edge_id, edge_type, evidence_ids)
+        adj: dict[str, list[tuple[str, str, str, list[str]]]] = {}
+        for edge in current_edges:
+            ev_list = edge.properties.get("evidence_ids", []) if edge.properties else []
+            if not isinstance(ev_list, list):
+                ev_list = [str(ev_list)]
+            adj.setdefault(edge.source_id, []).append((edge.target_id, edge.id, edge.edge_type, ev_list))
+            adj.setdefault(edge.target_id, []).append((edge.source_id, edge.id, edge.edge_type, ev_list))
+
+        # BFS shortest path search
+        from collections import deque
+        queue: deque[tuple[str, list[str], list[str], list[str]]] = deque([
+            (resolved_src_id, [resolved_src_id], [], [])
+        ])
+        visited: set[str] = {resolved_src_id}
+        found_path: tuple[list[str], list[str], list[str]] | None = None
+
+        while queue:
+            curr, path_nodes, path_edges, path_evs = queue.popleft()
+            if len(path_nodes) - 1 >= max_depth:
+                continue
+
+            for nxt, edge_id, edge_type, evs in adj.get(curr, []):
+                if nxt in visited:
+                    continue
+                next_nodes = [*path_nodes, nxt]
+                next_edges = [*path_edges, edge_id]
+                next_evs = [*path_evs, *evs]
+
+                if nxt == resolved_tgt_id:
+                    found_path = (next_nodes, next_edges, next_evs)
+                    break
+
+                visited.add(nxt)
+                queue.append((nxt, next_nodes, next_edges, next_evs))
+
+            if found_path:
+                break
+
+        if found_path:
+            p_nodes, p_edges, p_evs = found_path
+            hops = len(p_nodes) - 1
+            unique_evidence = list(dict.fromkeys(p_evs))
+
+            # Golden demo narrative when resolved FIR 141 <-> FIR 207 is matched
+            if _demo_state.is_resolved and (
+                (resolved_src_id in ("CASE-141", "CASE-207"))
+                and (resolved_tgt_id in ("CASE-141", "CASE-207"))
+            ):
+                explanation = (
                     "FIR 141/2026 and FIR 207/2026 are connected through the confirmed entity "
                     "'Rafiq Khan / Rafiq Ahmed' (candidate RC-1), accused in both cases and reachable "
                     "on phone +91 98450 11223 in both CDR pulls."
-                ),
-                evidence_ids=["SRC-FIR-141", "SRC-FIR-207", "SRC-CDR-A12", "SRC-CDR-B31"],
+                )
+            else:
+                labels = [nodes_by_id[nid].label if nid in nodes_by_id else nid for nid in p_nodes]
+                explanation = f"Discovered {hops}-hop evidence connection: {' ➔ '.join(labels)}."
+
+            audit.record(
+                event_type=AuditEventType.GRAPH_QUERY_EXECUTED,
+                actor_id=principal.user_id,
+                details={
+                    "path_found": True,
+                    "source": resolved_src_id,
+                    "target": resolved_tgt_id,
+                    "hops": hops,
+                    "nodes": p_nodes,
+                },
+            )
+
+            return NexusPathResponse(
+                found=True,
+                source_id=resolved_src_id,
+                target_id=resolved_tgt_id,
+                node_ids=p_nodes,
+                edge_ids=p_edges,
+                hops=hops,
+                explanation=explanation,
+                evidence_ids=unique_evidence,
+            )
+
+        # Path not found within depth limit
+        if not _demo_state.is_resolved:
+            explanation = (
+                f"No connection found between '{src_node.label}' and '{tgt_node.label}' in the unresolved graph state. "
+                "Confirm pending entity resolution candidate RC-1 to reveal the hidden cross-case bridge."
+            )
+        else:
+            explanation = (
+                f"No connection found between '{src_node.label}' and '{tgt_node.label}' within {max_depth} hops "
+                "in the current investigation snapshot."
             )
 
         return NexusPathResponse(
             found=False,
-            source_id=source,
-            target_id=target,
+            source_id=resolved_src_id,
+            target_id=resolved_tgt_id,
             node_ids=[],
             edge_ids=[],
             hops=0,
-            explanation=(
-                f"No explainable connection between {source} and {target} in the current snapshot."
-                if _demo_state.is_resolved
-                else "No connection exists in the current snapshot. Confirm pending entity resolutions to reveal hidden links."
-            ),
+            explanation=explanation,
             evidence_ids=[],
         )
 

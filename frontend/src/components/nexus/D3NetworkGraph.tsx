@@ -60,8 +60,12 @@ export interface D3NetworkGraphProps {
   edges: D3GraphEdge[]
   selectedNodeId?: string | null
   selectedEdgeId?: string | null
+  pathNodeIds?: string[] | null
+  pathEdgeIds?: string[] | null
   onNodeSelect?: (nodeId: string | null) => void
   onEdgeSelect?: (edgeId: string | null) => void
+  onSetSource?: (nodeId: string, nodeLabel: string) => void
+  onSetTarget?: (nodeId: string, nodeLabel: string) => void
   onNodeDoubleClick?: (nodeId: string) => void
   highlightDelta?: boolean
   enableTemporalScrubber?: boolean
@@ -149,8 +153,12 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
   edges: rawEdges,
   selectedNodeId,
   selectedEdgeId,
+  pathNodeIds,
+  pathEdgeIds,
   onNodeSelect,
   onEdgeSelect,
+  onSetSource,
+  onSetTarget,
   onNodeDoubleClick,
   highlightDelta = false,
   enableTemporalScrubber = false,
@@ -175,6 +183,11 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
 
   const activeNodeId = selectedNodeId !== undefined ? selectedNodeId : internalNodeId
   const activeEdgeId = selectedEdgeId !== undefined ? selectedEdgeId : internalEdgeId
+
+  // Pathfinder active sets
+  const pathNodeSet = useMemo(() => new Set(pathNodeIds ?? []), [pathNodeIds])
+  const pathEdgeSet = useMemo(() => new Set(pathEdgeIds ?? []), [pathEdgeIds])
+  const isPathActive = pathNodeSet.size > 0
 
   const handleSelectNode = useCallback((nodeId: string | null) => {
     setInternalNodeId(nodeId)
@@ -630,13 +643,20 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       .attr('class', 'edge-line cursor-pointer')
       .attr('fill', 'none')
       .attr('stroke', (d) => {
+        if (isPathActive && pathEdgeSet.has(d.id)) return '#2563eb'
         if (activeEdgeId === d.id) return '#e11d48'
         const type = String(d.edge_type || d.label || '')
         return EDGE_STROKES[type] ?? '#94a3b8'
       })
-      .attr('stroke-width', (d) => (activeEdgeId === d.id ? 3.5 : 2))
+      .attr('stroke-width', (d) => {
+        if (isPathActive && pathEdgeSet.has(d.id)) return 3.5
+        return activeEdgeId === d.id ? 3.5 : 2
+      })
       .attr('stroke-dasharray', (d) => (d.derivation_class === 'DERIVED' || String(d.label).includes('DEPENDENCY') ? '5,4' : null))
       .attr('opacity', (d) => {
+        if (isPathActive) {
+          return pathEdgeSet.has(d.id) ? 1.0 : 0.12
+        }
         if (!activeNodeId) return 0.85
         const src = (d.source as D3GraphNode).id
         const tgt = (d.target as D3GraphNode).id
@@ -663,14 +683,14 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
 
     linkPathsRef.current = linkPaths
 
-    // Edge Label Group (HIDDEN BY DEFAULT — ONLY SHOWN ON CLICKED LINE)
+    // Edge Label Group (SHOWN ON CLICKED LINE OR ON ACTIVE PATH)
     const edgeLabelGroup = g.append('g').attr('class', 'edge-labels')
     const edgeLabels = edgeLabelGroup.selectAll<SVGGElement, D3GraphEdge>('g.edge-badge')
       .data(simEdges, (d) => d.id)
       .join('g')
       .attr('class', 'edge-badge cursor-pointer select-none')
-      .style('display', (d) => (d.id === activeEdgeId ? 'block' : 'none'))
-      .attr('opacity', (d) => (d.id === activeEdgeId ? 1.0 : 0.0))
+      .style('display', (d) => (d.id === activeEdgeId || (isPathActive && pathEdgeSet.has(d.id)) ? 'block' : 'none'))
+      .attr('opacity', (d) => (d.id === activeEdgeId || (isPathActive && pathEdgeSet.has(d.id)) ? 1.0 : 0.0))
       .on('click', (event, d) => {
         event.stopPropagation()
         handleSelectEdge(d.id)
@@ -683,8 +703,13 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       .attr('rx', 10)
       .attr('ry', 10)
       .attr('fill', '#ffffff')
-      .attr('stroke', (d) => (activeEdgeId === d.id ? '#e11d48' : EDGE_STROKES[String(d.edge_type || d.label)] ?? '#cbd5e1'))
-      .attr('stroke-width', (d) => (activeEdgeId === d.id ? 2.5 : 1))
+      .attr('stroke', (d) => {
+        if (isPathActive && pathEdgeSet.has(d.id)) return '#2563eb'
+        if (activeEdgeId === d.id) return '#e11d48'
+        return EDGE_STROKES[String(d.edge_type || d.label)] ?? '#cbd5e1'
+      })
+      .attr('stroke-width', (d) => (activeEdgeId === d.id || (isPathActive && pathEdgeSet.has(d.id)) ? 2.5 : 1))
+      .attr('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))')
       .attr('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))')
 
     // Edge Badge Text
@@ -699,7 +724,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
     // Measure and resize badge rects
     edgeLabels.each(function() {
       const textElem = d3.select(this).select('text').node() as SVGTextElement
-      if (textElem) {
+      if (textElem && typeof textElem.getBBox === 'function') {
         const bbox = textElem.getBBox()
         const paddingX = 14
         const paddingY = 7
@@ -708,6 +733,14 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
           .attr('y', bbox.y - paddingY / 2)
           .attr('width', Math.max(bbox.width + paddingX, 38))
           .attr('height', bbox.height + paddingY)
+      } else if (textElem) {
+        const textLen = (textElem.textContent || '').length
+        const approxWidth = Math.max(textLen * 7 + 14, 38)
+        d3.select(this).select('rect')
+          .attr('x', -approxWidth / 2)
+          .attr('y', -10)
+          .attr('width', approxWidth)
+          .attr('height', 20)
       }
     })
 
@@ -761,15 +794,22 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       })
       .attr('fill', 'none')
       .attr('stroke', (d) => {
+        if (isPathActive && pathNodeSet.has(d.id)) return '#2563eb'
         if (activeNodeId === d.id) return '#0284c7'
         if (highlightDelta && d.isDelta) return '#10b981'
         const communityBadge = (d.badges || []).find((b) => b.startsWith('COMMUNITY-'))
         if (communityBadge && COMMUNITY_STROKES[communityBadge]) return COMMUNITY_STROKES[communityBadge]
         return 'none'
       })
-      .attr('stroke-width', (d) => (activeNodeId === d.id || (highlightDelta && d.isDelta) ? 3.5 : 2.5))
+      .attr('stroke-width', (d) => {
+        if (isPathActive && pathNodeSet.has(d.id)) return 4
+        return activeNodeId === d.id || (highlightDelta && d.isDelta) ? 3.5 : 2.5
+      })
       .attr('stroke-dasharray', (d) => (highlightDelta && d.isDelta ? '4,3' : null))
       .attr('opacity', (d) => {
+        if (isPathActive) {
+          return pathNodeSet.has(d.id) ? 1.0 : 0.15
+        }
         if (!activeNodeId) return 1.0
         return neighborhood?.has(d.id) ? 1.0 : 0.2
       })
@@ -795,13 +835,20 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
         return String(d3.interpolate(cfg.bg, cfg.stroke)(Math.min(intensity * 0.6, 0.6)))
       })
       .attr('stroke', (d) => {
+        if (isPathActive && pathNodeSet.has(d.id)) return '#2563eb'
         const rawType = String(d.entity_type || d.type || 'Person')
         const cfg = ENTITY_CONFIG[rawType] ?? ENTITY_CONFIG.Person
         return cfg.stroke
       })
-      .attr('stroke-width', (d) => (activeNodeId === d.id ? 3 : 2))
-      .attr('filter', 'drop-shadow(0 2px 5px rgba(0,0,0,0.12))')
+      .attr('stroke-width', (d) => {
+        if (isPathActive && pathNodeSet.has(d.id)) return 3.5
+        return activeNodeId === d.id ? 3 : 2
+      })
+      .attr('filter', (d) => (isPathActive && pathNodeSet.has(d.id) ? 'drop-shadow(0 0 8px rgba(37,99,235,0.7))' : 'drop-shadow(0 2px 5px rgba(0,0,0,0.12))'))
       .attr('opacity', (d) => {
+        if (isPathActive) {
+          return pathNodeSet.has(d.id) ? 1.0 : 0.18
+        }
         if (!activeNodeId) return 1.0
         return neighborhood?.has(d.id) ? 1.0 : 0.22
       })
@@ -816,7 +863,10 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
         const isCase = String(d.entity_type || d.type || '').toLowerCase().includes('case')
         return isCase ? '15px' : '13px'
       })
-      .attr('opacity', (d) => (!activeNodeId || neighborhood?.has(d.id) ? 1.0 : 0.25))
+      .attr('opacity', (d) => {
+        if (isPathActive) return pathNodeSet.has(d.id) ? 1.0 : 0.2
+        return !activeNodeId || neighborhood?.has(d.id) ? 1.0 : 0.25
+      })
       .text((d) => {
         const rawType = String(d.entity_type || d.type || 'Person')
         return (ENTITY_CONFIG[rawType] ?? ENTITY_CONFIG.Person).icon
@@ -835,7 +885,10 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
     // 5. Node Label (Positioned cleanly below circle)
     const labelGroup = nodeContainers.append('g')
       .attr('class', 'node-label-group')
-      .attr('opacity', (d) => (!activeNodeId || neighborhood?.has(d.id) ? 1.0 : 0.25))
+      .attr('opacity', (d) => {
+        if (isPathActive) return pathNodeSet.has(d.id) ? 1.0 : 0.2
+        return !activeNodeId || neighborhood?.has(d.id) ? 1.0 : 0.25
+      })
 
     // Background pill for text
     labelGroup.append('rect')
@@ -864,7 +917,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
     // Resize label pill rect to fit text
     labelGroup.each(function() {
       const textNode = d3.select(this).select('text').node() as SVGTextElement
-      if (textNode) {
+      if (textNode && typeof textNode.getBBox === 'function') {
         const bbox = textNode.getBBox()
         const paddingX = 10
         const paddingY = 5
@@ -873,6 +926,14 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
           .attr('y', bbox.y - paddingY / 2)
           .attr('width', Math.max(bbox.width + paddingX, 30))
           .attr('height', bbox.height + paddingY)
+      } else if (textNode) {
+        const textLen = (textNode.textContent || '').length
+        const approxWidth = Math.max(textLen * 6 + 10, 30)
+        d3.select(this).select('rect')
+          .attr('x', -approxWidth / 2)
+          .attr('y', 23)
+          .attr('width', approxWidth)
+          .attr('height', 16)
       }
     })
 
@@ -1076,6 +1137,28 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
                       </div>
                     ))}
                 </div>
+              </div>
+            )}
+
+            {/* Quick Pathfinder Actions */}
+            {(onSetSource || onSetTarget) && (
+              <div className="pt-2 border-t border-neutral-100 flex gap-2">
+                {onSetSource && (
+                  <button
+                    onClick={() => onSetSource(activeSelectedNode.id, String(activeSelectedNode.label || activeSelectedNode.id))}
+                    className="flex-1 rounded-lg bg-blue-50 border border-blue-200 px-2 py-1.5 text-[10px] font-bold text-blue-700 hover:bg-blue-100 transition-colors shadow-2xs"
+                  >
+                    📍 Set Source
+                  </button>
+                )}
+                {onSetTarget && (
+                  <button
+                    onClick={() => onSetTarget(activeSelectedNode.id, String(activeSelectedNode.label || activeSelectedNode.id))}
+                    className="flex-1 rounded-lg bg-rose-50 border border-rose-200 px-2 py-1.5 text-[10px] font-bold text-rose-700 hover:bg-rose-100 transition-colors shadow-2xs"
+                  >
+                    🎯 Set Target
+                  </button>
+                )}
               </div>
             )}
           </div>

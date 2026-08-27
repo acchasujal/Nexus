@@ -181,8 +181,8 @@ export const apiClient = {
   getEdgeEvidence: (relationshipId: string) => {
     return apiFetch<NexusEdgeEvidenceResponse>(`/api/v1/nexus/relationships/${relationshipId}/evidence`)
   },
-  findNexusPath: (sourceId: string, targetId: string) => {
-    return apiFetch<NexusPathResponse>(`/api/v1/nexus/path?source=${sourceId}&target=${targetId}`)
+  findNexusPath: (sourceId: string, targetId: string, maxDepth = 6) => {
+    return apiFetch<NexusPathResponse>(`/api/v1/nexus/path?source=${encodeURIComponent(sourceId)}&target=${encodeURIComponent(targetId)}&max_depth=${maxDepth}`)
   },
   getLeads: () => apiFetch<NexusLead[]>('/api/v1/nexus/leads'),
   decideLead: (id: string, req: NexusLeadDecisionRequest) => {
