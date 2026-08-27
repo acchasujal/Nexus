@@ -13,6 +13,34 @@ interface AuditLogEntry {
   details?: Record<string, unknown>
 }
 
+function formatAuditDetails(details?: Record<string, unknown>): React.ReactNode {
+  if (!details || Object.keys(details).length === 0) {
+    return <span className="text-neutral-400 italic text-xs">No extra metadata</span>
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5 max-w-md">
+      {Object.entries(details).map(([k, v]) => {
+        let displayVal = String(v)
+        if (typeof v === 'boolean') displayVal = v ? 'true' : 'false'
+        else if (Array.isArray(v)) displayVal = v.join(', ')
+        else if (typeof v === 'object' && v !== null) displayVal = JSON.stringify(v)
+
+        const formattedKey = k.replaceAll('_', ' ')
+        return (
+          <span
+            key={k}
+            className="inline-flex items-center gap-1 text-[11px] bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded-md text-neutral-800 font-medium"
+          >
+            <span className="text-neutral-500 capitalize">{formattedKey}:</span>
+            <span className="font-semibold text-neutral-900">{displayVal}</span>
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function Audit() {
   const [logs, setLogs] = useState<AuditLogEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -22,9 +50,9 @@ export default function Audit() {
       setLogs(Array.isArray(data) ? (data as AuditLogEntry[]) : [])
     }).catch(() => {
       setLogs([
-        { id: 'aud-1', user_id: 'dev-io', user_role: 'INVESTIGATOR', action: 'network_explored', entity_id: 'case-0001', timestamp: '2026-01-15T12:00:00Z', details: { depth: 2 } },
-        { id: 'aud-2', user_id: 'dev-sho', user_role: 'SUPERVISOR', action: 'entity_resolution_executed', entity_id: 'Vikram Sharma', timestamp: '2026-01-15T11:45:00Z', details: { matches: 2 } },
-        { id: 'aud-3', user_id: 'dev-io', user_role: 'INVESTIGATOR', action: 'copilot_answered', entity_id: 'case-0001', timestamp: '2026-01-15T11:30:00Z', details: { intent: 'case_summary' } },
+        { id: 'aud-1', user_id: 'dev-io', user_role: 'INVESTIGATOR', action: 'network_explored', entity_id: 'CASE-141', timestamp: '2026-02-15T12:00:00Z', details: { snapshot: 'before', total_nodes: 8, total_edges: 10 } },
+        { id: 'aud-2', user_id: 'dev-io', user_role: 'INVESTIGATOR', action: 'entity_resolution_executed', entity_id: 'RC-1', timestamp: '2026-02-15T12:05:00Z', details: { candidate: 'Rafiq Khan ↔ Rafiq Ahmed', decision: 'CONFIRM' } },
+        { id: 'aud-3', user_id: 'dev-io', user_role: 'INVESTIGATOR', action: 'copilot_answered', entity_id: 'Copilot', timestamp: '2026-02-15T12:10:00Z', details: { query: 'How are the two cases connected?', grounded: true } },
       ])
     }).finally(() => {
       setIsLoading(false)
@@ -39,19 +67,19 @@ export default function Audit() {
           Immutable Audit Trail & Compliance Log
         </h1>
         <p className="text-sm text-neutral-600 mt-1">
-          Cryptographically recorded actions, search queries, copilot responses, and evidence accesses by investigator principals.
+          Cryptographically recorded actions, candidate decisions, search queries, copilot responses, and evidence accesses by investigator principals.
         </p>
       </div>
 
       <div className="rounded-xl border border-neutral-200 bg-white overflow-x-auto shadow-sm">
-        <table className="w-full text-left text-sm text-neutral-800 min-w-[600px]">
+        <table className="w-full text-left text-sm text-neutral-800 min-w-[700px]">
           <thead className="bg-neutral-50 text-xs font-bold uppercase tracking-wider text-neutral-700 border-b border-neutral-200">
             <tr>
               <th className="px-4 py-3">Timestamp</th>
               <th className="px-4 py-3">Actor / Role</th>
               <th className="px-4 py-3">Action Executed</th>
               <th className="px-4 py-3">Target Entity</th>
-              <th className="px-4 py-3">Context Details</th>
+              <th className="px-4 py-3">Audit Context Details</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-200">
@@ -77,14 +105,14 @@ export default function Audit() {
                   </td>
                   <td className="px-4 py-3">
                     <code className="text-xs font-mono font-bold text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                      {log.action}
+                      {log.action.replaceAll('_', ' ')}
                     </code>
                   </td>
                   <td className="px-4 py-3 text-xs font-semibold text-neutral-900">
                     {log.entity_id || log.case_id || 'System / Batch'}
                   </td>
-                  <td className="px-4 py-3 text-xs text-neutral-600 font-mono">
-                    {JSON.stringify(log.details || {})}
+                  <td className="px-4 py-3 text-xs">
+                    {formatAuditDetails(log.details)}
                   </td>
                 </tr>
               ))
