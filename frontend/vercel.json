@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://nexus-e85dd136.fastapicloud.dev/api/$1"
+      "destination": "https://nexus-4djk.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
