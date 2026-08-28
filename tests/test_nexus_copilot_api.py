@@ -165,3 +165,76 @@ def test_copilot_telecom_cdr_query(client: TestClient) -> None:
     assert data["is_refusal"] is False
     assert "telephone" in data["answer"].lower() or "cdr" in data["answer"].lower()
     assert len(data["grounded_citations"]) > 0
+
+
+def test_copilot_explicit_case_briefing_fir_2026_608(client: TestClient) -> None:
+    """Explicit query 'Tell me about case FIR-2026-608' returns full case briefing and case_id."""
+    payload = {"query": "Tell me about case FIR-2026-608"}
+    resp = client.post("/api/v1/nexus/copilot/query", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["is_refusal"] is False
+    assert data["case_id"] == "case-0031"
+    assert "CASE BRIEF: FIR-2026-608" in data["answer"]
+    assert "Illegal Arms Trafficking" in data["answer"]
+    assert "Koramangala PS" in data["answer"]
+    assert "Belagavi" in data["answer"]
+    assert "Rahul Chauhan" in data["answer"]
+    assert "EV-2026-7955" in data["answer"]
+    assert "EV-2026-7955" in data["evidence_ids"]
+    assert any("case-0031" in step for step in data["reasoning_path"])
+    assert "Open Case Details" in data["suggested_actions"]
+
+
+def test_copilot_case_id_direct_lookup(client: TestClient) -> None:
+    """Direct query 'Summarize case-0031' resolves to FIR-2026-608 with complete briefing."""
+    payload = {"query": "Summarize case-0031"}
+    resp = client.post("/api/v1/nexus/copilot/query", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["is_refusal"] is False
+    assert data["case_id"] == "case-0031"
+    assert "FIR-2026-608" in data["answer"]
+    assert "Rahul Chauhan" in data["answer"]
+
+
+def test_copilot_case_context_lookup(client: TestClient) -> None:
+    """Providing case_id in request context with 'Tell me about this case' produces case briefing."""
+    payload = {"query": "Tell me about this case", "case_id": "case-0031"}
+    resp = client.post("/api/v1/nexus/copilot/query", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["is_refusal"] is False
+    assert data["case_id"] == "case-0031"
+    assert "FIR-2026-608" in data["answer"]
+    assert "Rahul Chauhan" in data["answer"]
+
+
+def test_copilot_case_subqueries_accused_and_evidence(client: TestClient) -> None:
+    """Sub-aspect queries for a case return isolated accused and evidence details."""
+    resp_acc = client.post("/api/v1/nexus/copilot/query", json={"query": "Who are the accused in FIR-2026-608?"})
+    assert resp_acc.status_code == 200
+    data_acc = resp_acc.json()
+    assert data_acc["case_id"] == "case-0031"
+    assert "Rahul Chauhan" in data_acc["answer"]
+    assert "9846361787" in data_acc["answer"]
+
+    resp_ev = client.post("/api/v1/nexus/copilot/query", json={"query": "What evidence is associated with case FIR-2026-608?"})
+    assert resp_ev.status_code == 200
+    data_ev = resp_ev.json()
+    assert data_ev["case_id"] == "case-0031"
+    assert "EV-2026-7955" in data_ev["answer"]
+    assert "EV-2026-7955" in data_ev["evidence_ids"]
+
+
+def test_copilot_unknown_case_not_found(client: TestClient) -> None:
+    """Non-existent case query returns clean zero-hallucination not found response."""
+    payload = {"query": "Tell me about FIR-9999-999"}
+    resp = client.post("/api/v1/nexus/copilot/query", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["is_refusal"] is False
+    assert data["case_id"] is None
+    assert "No case record found matching 'FIR-9999-999'" in data["answer"]
+    assert "No corresponding record is available" in data["answer"]
+    assert len(data["evidence_ids"]) == 0

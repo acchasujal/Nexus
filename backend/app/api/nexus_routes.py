@@ -203,6 +203,7 @@ class NexusCopilotResponse(BaseModel):
     grounded_citations: list[GroundedCitation] = Field(default_factory=list)
     suggested_actions: list[str] = Field(default_factory=list)
     graph_context: NetworkGraphResponse | None = None
+    case_id: str | None = None
 
 
 class SearchCaseItem(BaseModel):
@@ -1214,6 +1215,7 @@ def create_nexus_router() -> APIRouter:
             grounded_citations=res.grounded_citations,
             suggested_actions=res.suggested_actions,
             graph_context=res.graph_context,
+            case_id=res.case_id,
         )
 
     @router.get("/nexus/search", response_model=NexusSearchResponse)

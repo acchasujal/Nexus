@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   Sparkles, 
   Send, 
@@ -9,6 +10,10 @@ import {
   Bot, 
   User,
   ExternalLink,
+  Briefcase,
+  Network,
+  Clock,
+  ChevronRight,
 } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
@@ -35,6 +40,7 @@ interface Message {
   evidenceIds?: string[]
   reasoningPath?: string[]
   suggestedActions?: string[]
+  caseId?: string
   timestamp: string
 }
 
@@ -60,6 +66,7 @@ function createMessageId(role: 'user' | 'assistant' | 'err'): string {
 }
 
 export default function Copilot() {
+  const navigate = useNavigate()
   const [messages, setMessages] = useState<Message[]>([INITIAL_WELCOME_MESSAGE])
   const [inputQuery, setInputQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -73,6 +80,29 @@ export default function Copilot() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  const handleActionClick = (act: string, caseId?: string) => {
+    const actLower = act.toLowerCase()
+    if (caseId) {
+      if (actLower.includes('open case')) {
+        navigate(`/cases/${caseId}`)
+        return
+      }
+      if (actLower.includes('view case network') || actLower.includes('view network')) {
+        navigate(`/network?case_id=${caseId}`)
+        return
+      }
+      if (actLower.includes('view timeline') || actLower.includes('timeline')) {
+        navigate(`/timeline?case_id=${caseId}`)
+        return
+      }
+      if (actLower.includes('view evidence') || actLower.includes('evidence')) {
+        navigate(`/evidence?case_id=${caseId}`)
+        return
+      }
+    }
+    handleSend(act)
+  }
 
   const handleSend = async (queryText?: string) => {
     const textToSend = (queryText || inputQuery).trim()
@@ -105,6 +135,7 @@ export default function Copilot() {
         evidenceIds: response.evidence_ids,
         reasoningPath: response.reasoning_path,
         suggestedActions: response.suggested_actions,
+        caseId: response.case_id,
         timestamp: responseTimeIso,
       }
 
@@ -179,6 +210,54 @@ export default function Copilot() {
 
               <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.text}</p>
 
+              {/* Dedicated Case Context Navigation Bar */}
+              {m.caseId && (
+                <div className="rounded-xl bg-blue-50/80 border border-blue-200 p-3 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-blue-950 flex items-center gap-1.5">
+                      <Briefcase className="h-3.5 w-3.5 text-blue-700" />
+                      Investigation Case Context: {m.caseId}
+                    </span>
+                    <button
+                      onClick={() => navigate(`/cases/${m.caseId}`)}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 hover:text-blue-900 hover:underline cursor-pointer"
+                    >
+                      Open Case File <ChevronRight className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-1 border-t border-blue-100">
+                    <button
+                      onClick={() => navigate(`/cases/${m.caseId}`)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-600 text-white font-medium text-[11px] hover:bg-blue-700 shadow-2xs transition-colors cursor-pointer"
+                    >
+                      <Briefcase className="h-3 w-3" />
+                      Open Case Details
+                    </button>
+                    <button
+                      onClick={() => navigate(`/network?case_id=${m.caseId}`)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white border border-blue-300 text-blue-800 font-medium text-[11px] hover:bg-blue-50 shadow-2xs transition-colors cursor-pointer"
+                    >
+                      <Network className="h-3 w-3" />
+                      View Case Network
+                    </button>
+                    <button
+                      onClick={() => navigate(`/timeline?case_id=${m.caseId}`)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white border border-blue-300 text-blue-800 font-medium text-[11px] hover:bg-blue-50 shadow-2xs transition-colors cursor-pointer"
+                    >
+                      <Clock className="h-3 w-3" />
+                      View Timeline
+                    </button>
+                    <button
+                      onClick={() => navigate(`/evidence?case_id=${m.caseId}`)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white border border-blue-300 text-blue-800 font-medium text-[11px] hover:bg-blue-50 shadow-2xs transition-colors cursor-pointer"
+                    >
+                      <FileText className="h-3 w-3" />
+                      View Evidence
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Grounded Evidence Citations */}
               {m.citations && m.citations.length > 0 && (
                 <div className="rounded-xl bg-neutral-50 p-3 text-xs border border-neutral-200 space-y-2">
@@ -186,14 +265,29 @@ export default function Copilot() {
                     <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
                     Grounded Graph Citations &amp; Provenance:
                   </div>
-                  {m.citations.map((cite, cIdx) => (
-                    <div key={cIdx} className="text-neutral-700 flex items-start gap-2 bg-white p-2 rounded border border-neutral-200">
-                      <FileText className="h-3.5 w-3.5 text-blue-600 shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="text-neutral-900">[{cite.source_type} {cite.source_id}]</strong>: {cite.fact} (confidence: {Math.round(cite.confidence * 100)}%)
+                  {m.citations.map((cite, cIdx) => {
+                    const isCaseCitation = cite.source_type === 'FIR' || cite.source_type === 'CASE' || Boolean(m.caseId)
+                    return (
+                      <div key={cIdx} className="text-neutral-700 flex items-start justify-between gap-2 bg-white p-2 rounded border border-neutral-200">
+                        <div className="flex items-start gap-2">
+                          <FileText className="h-3.5 w-3.5 text-blue-600 shrink-0 mt-0.5" />
+                          <div>
+                            <strong className="text-neutral-900">[{cite.source_type} {cite.source_id}]</strong>: {cite.fact} (confidence: {Math.round(cite.confidence * 100)}%)
+                          </div>
+                        </div>
+                        {isCaseCitation && m.caseId && (
+                          <button
+                            onClick={() => navigate(`/cases/${m.caseId}`)}
+                            className="inline-flex items-center gap-0.5 text-[10px] font-bold text-blue-700 hover:text-blue-900 shrink-0 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 cursor-pointer"
+                            title={`Navigate to Case ${m.caseId}`}
+                          >
+                            <span>Open</span>
+                            <ChevronRight className="h-2.5 w-2.5" />
+                          </button>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
 
@@ -252,7 +346,7 @@ export default function Copilot() {
                     {m.suggestedActions.map((act, aIdx) => (
                       <button
                         key={aIdx}
-                        onClick={() => handleSend(act)}
+                        onClick={() => handleActionClick(act, m.caseId)}
                         className="text-xs bg-neutral-100 hover:bg-blue-50 hover:text-blue-800 hover:border-blue-300 text-neutral-800 px-2.5 py-1 rounded-lg border border-neutral-200 transition-colors cursor-pointer text-left"
                       >
                         {act}

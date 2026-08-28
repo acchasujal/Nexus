@@ -252,6 +252,7 @@ class CopilotQueryResponse(BaseModel):
     graph_context: NetworkGraphResponse | None = None
     evidence_ids: list[str] = Field(default_factory=list)
     reasoning_path: list[str] = Field(default_factory=list)
+    case_id: str | None = None
 
 
 # ── Audit & Auth ──────────────────────────────────────────────────────────────

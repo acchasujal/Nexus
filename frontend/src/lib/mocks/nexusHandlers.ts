@@ -347,6 +347,34 @@ export const nexusHandlers = [
         suggested_actions: ['Expand 2-hop neighborhood', 'Inspect telephone call logs'],
       })
     }
+    if (/(608|case-0031|arms trafficking)/.test(q) || (/(tell me about|summarize)/.test(q) && /(fir|case)/.test(q))) {
+      return HttpResponse.json({
+        query: body.query,
+        answer:
+          'CASE BRIEF: FIR-2026-608\n' +
+          '────────────────────────────────────────────────\n' +
+          'Offence / Title: Illegal Arms Trafficking (Investigation into Illegal Arms Trafficking at Belagavi)\n' +
+          'Jurisdiction: Koramangala PS, Belagavi\n' +
+          'Status: OPEN\n\n' +
+          'Summary:\nCase registered regarding suspected illegal arms trafficking involving syndicates in Belagavi.\n\n' +
+          'Accused / Suspects (2):\n• Rahul Chauhan — Phone: 9846361787, Vehicle: KA-20-IH-2976, ID: ID-661894\n• Vijay Khan — Phone: 9876543210\n\n' +
+          'Indexed Evidence (1):\n• EV-2026-7955 (CDR_RECORD): Evidentiary material seized for FIR-2026-608',
+        is_refusal: false,
+        evidence_ids: ['EV-2026-7955', 'SRC-FIR-FIR-2026-608'],
+        reasoning_path: [
+          'Case index match: FIR-2026-608 (case-0031)',
+          'Jurisdiction: Koramangala PS, Belagavi',
+          'Person Rahul Chauhan registered as accused in FIR-2026-608',
+        ],
+        grounded_citations: [
+          { source_type: 'PERSON', source_id: 'person-0060', fact: 'Accused in FIR-2026-608: Rahul Chauhan', confidence: 1.0 },
+          { source_type: 'EVIDENCE', source_id: 'EV-2026-7955', fact: 'Evidence EV-2026-7955 (CDR_RECORD) logged under FIR-2026-608', confidence: 1.0 },
+          { source_type: 'FIR', source_id: 'FIR-2026-608', fact: 'FIR registered at Koramangala PS, Belagavi', confidence: 1.0 },
+        ],
+        suggested_actions: ['Open Case Details', 'View Case Network', 'Inspect Accused', 'View Timeline', 'View Evidence'],
+        case_id: 'case-0031',
+      })
+    }
     return HttpResponse.json({
       query: body.query,
       answer: 'This query was parsed against the investigation graph. Ask "How are the two cases connected?" for the grounded connection explanation.',

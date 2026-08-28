@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Clock, Calendar, FileText, Phone, Landmark, ShieldCheck, MapPin, Briefcase } from 'lucide-react'
+import { useSearchParams, Link } from 'react-router-dom'
+import { Clock, Calendar, FileText, Phone, Landmark, ShieldCheck, MapPin, Briefcase, Filter, X } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 import { allSourceRecords } from '@/lib/mocks/nexusFixture'
 
@@ -12,6 +13,7 @@ interface TimelineEvent {
   batch_id?: string
   source_type?: string
   participant_ids?: string[]
+  case_id?: string
 }
 
 const TYPE_CONFIG: Record<string, { badge: string; dot: string; icon: typeof FileText; label: string }> = {
@@ -54,18 +56,31 @@ const TYPE_CONFIG: Record<string, { badge: string; dot: string; icon: typeof Fil
 }
 
 export default function Timeline() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const caseIdParam = searchParams.get('case_id')
   const [events, setEvents] = useState<TimelineEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'CASE' | 'CDR' | 'BANK_TXN'>('ALL')
 
   useEffect(() => {
-    apiClient.getTimeline()
+    setIsLoading(true)
+    apiClient.getTimeline(caseIdParam || undefined)
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          setEvents(data)
+          const parsed = data.map((ev: any) => ({
+            id: ev.id || String(ev.event_id || Math.random()),
+            event_type: ev.event_type || ev.source_type || 'CASE',
+            timestamp: ev.timestamp || ev.occurred_at || new Date().toISOString(),
+            description: ev.description || ev.raw_excerpt || '',
+            locator: ev.locator,
+            batch_id: ev.batch_id,
+            source_type: ev.source_type,
+            case_id: ev.case_id,
+          }))
+          setEvents(parsed)
         } else {
           // Fall back to converting golden fixture source records into chronological events
-          const sourceEvents: TimelineEvent[] = Object.values(allSourceRecords).map((src) => ({
+          let sourceEvents: TimelineEvent[] = Object.values(allSourceRecords).map((src) => ({
             id: src.id,
             event_type: src.source_type,
             timestamp: src.occurred_at,
@@ -73,13 +88,22 @@ export default function Timeline() {
             locator: src.locator,
             batch_id: src.batch_id,
             source_type: src.source_type,
+            case_id: src.case_ids?.[0],
           }))
+          if (caseIdParam) {
+            const cid = caseIdParam.toLowerCase()
+            sourceEvents = sourceEvents.filter(
+              (e) => (e.case_id && e.case_id.toLowerCase() === cid) ||
+                     e.description.toLowerCase().includes(cid) ||
+                     e.id.toLowerCase().includes(cid)
+            )
+          }
           sourceEvents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
           setEvents(sourceEvents)
         }
       })
       .catch(() => {
-        const sourceEvents: TimelineEvent[] = Object.values(allSourceRecords).map((src) => ({
+        let sourceEvents: TimelineEvent[] = Object.values(allSourceRecords).map((src) => ({
           id: src.id,
           event_type: src.source_type,
           timestamp: src.occurred_at,
@@ -87,14 +111,23 @@ export default function Timeline() {
           locator: src.locator,
           batch_id: src.batch_id,
           source_type: src.source_type,
+          case_id: src.case_ids?.[0],
         }))
+        if (caseIdParam) {
+          const cid = caseIdParam.toLowerCase()
+          sourceEvents = sourceEvents.filter(
+            (e) => (e.case_id && e.case_id.toLowerCase() === cid) ||
+                   e.description.toLowerCase().includes(cid) ||
+                   e.id.toLowerCase().includes(cid)
+          )
+        }
         sourceEvents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
         setEvents(sourceEvents)
       })
       .finally(() => {
         setIsLoading(false)
       })
-  }, [])
+  }, [caseIdParam])
 
   const filteredEvents = useMemo(() => {
     if (activeFilter === 'ALL') return events
@@ -125,6 +158,23 @@ export default function Timeline() {
         <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
         <span>All chronological events are derived directly from underlying source record timestamps with forensic Section 63 BSA locators.</span>
       </div>
+
+      {/* Case filter active banner */}
+      {caseIdParam && (
+        <div className="flex items-center justify-between gap-3 text-xs bg-blue-50 border border-blue-200 text-blue-900 px-4 py-2.5 rounded-xl">
+          <div className="flex items-center gap-2 font-medium">
+            <Briefcase className="h-4 w-4 text-blue-700 shrink-0" />
+            <span>Scoped to Case Context: <strong>{caseIdParam}</strong> ({events.length} event(s) found)</span>
+          </div>
+          <button
+            onClick={() => setSearchParams({})}
+            className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:text-blue-900 bg-white border border-blue-200 px-2 py-0.5 rounded-md text-xs shadow-2xs hover:bg-blue-100/50 transition-colors cursor-pointer"
+          >
+            <X className="h-3 w-3" />
+            Clear Filter
+          </button>
+        </div>
+      )}
 
       {/* Filter Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">

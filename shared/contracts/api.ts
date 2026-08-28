@@ -209,6 +209,7 @@ export interface CopilotQueryResponse {
   graph_context?: NetworkGraphResponse
   evidence_ids?: string[]
   reasoning_path?: string[]
+  case_id?: string
 }
 
 export interface AuditLogEntry {
@@ -444,6 +445,7 @@ export interface NexusCopilotResponse {
   grounded_citations?: GroundedCitation[]
   suggested_actions?: string[]
   graph_context?: NetworkGraphResponse
+  case_id?: string
 }
 
 export interface NexusSearchResponse {

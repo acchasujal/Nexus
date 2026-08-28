@@ -47,11 +47,14 @@ export default function NetworkExplorer() {
 
   // Pre-fill from query params if requested
   useEffect(() => {
-    if (nodeIdParam) {
+    if (caseIdParam) {
+      setSourceId(caseIdParam)
+      setShowPathfinder(true)
+    } else if (nodeIdParam) {
       setSourceId(nodeIdParam)
       setShowPathfinder(true)
     }
-  }, [nodeIdParam])
+  }, [caseIdParam, nodeIdParam])
 
   const pathQuery = useNexusPath(sourceId, targetId, maxHops, showPathfinder)
 

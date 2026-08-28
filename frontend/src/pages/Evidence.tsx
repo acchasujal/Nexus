@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
-import { FileText, Calendar, Copy, Check, Phone, Landmark, FileSearch, ShieldCheck, MapPin } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { FileText, Calendar, Copy, Check, Phone, Landmark, FileSearch, ShieldCheck, MapPin, Briefcase, X } from 'lucide-react'
 import { allSourceRecords } from '@/lib/mocks/nexusFixture'
 import type { NexusSourceRecord } from '@shared/contracts/api'
 
@@ -19,8 +20,22 @@ const TYPE_CONFIG: Record<string, { badge: string; icon: typeof FileText }> = {
 }
 
 export default function Evidence() {
-  const sources = useMemo<NexusSourceRecord[]>(() => Object.values(allSourceRecords), [])
+  const [searchParams, setSearchParams] = useSearchParams()
+  const caseIdParam = searchParams.get('case_id')
+  const allSources = useMemo<NexusSourceRecord[]>(() => Object.values(allSourceRecords), [])
   const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  const sources = useMemo(() => {
+    if (!caseIdParam) return allSources
+    const cid = caseIdParam.toLowerCase()
+    return allSources.filter(
+      (item) =>
+        (item.case_ids && item.case_ids.some((c) => c.toLowerCase() === cid)) ||
+        item.id.toLowerCase().includes(cid) ||
+        item.raw_excerpt.toLowerCase().includes(cid) ||
+        item.locator.toLowerCase().includes(cid)
+    )
+  }, [allSources, caseIdParam])
 
   const copyId = async (id: string) => {
     try {
@@ -45,6 +60,23 @@ export default function Evidence() {
           </p>
         </div>
       </div>
+
+      {/* Case Filter Active Banner */}
+      {caseIdParam && (
+        <div className="flex items-center justify-between gap-3 text-xs bg-blue-50 border border-blue-200 text-blue-900 px-4 py-2.5 rounded-xl">
+          <div className="flex items-center gap-2 font-medium">
+            <Briefcase className="h-4 w-4 text-blue-700 shrink-0" />
+            <span>Scoped to Case Context: <strong>{caseIdParam}</strong> ({sources.length} record(s) found)</span>
+          </div>
+          <button
+            onClick={() => setSearchParams({})}
+            className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:text-blue-900 bg-white border border-blue-200 px-2 py-0.5 rounded-md text-xs shadow-2xs hover:bg-blue-100/50 transition-colors cursor-pointer"
+          >
+            <X className="h-3 w-3" />
+            Clear Filter
+          </button>
+        </div>
+      )}
 
       <div className="flex items-center gap-2 text-xs text-neutral-700 bg-neutral-50 p-3 rounded-lg border border-neutral-200">
         <FileSearch className="h-4 w-4 text-blue-600 shrink-0" />
