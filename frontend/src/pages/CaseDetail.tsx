@@ -206,19 +206,32 @@ export default function CaseDetail() {
                   <p className="text-xs text-neutral-500">No named accused attached yet.</p>
                 ) : (
                   <div className="space-y-2">
-                    {caseDetail.accused.map((acc: { id?: string; name?: string; full_name?: string; phone_number?: string; vehicle_number?: string }, idx: number) => {
+                    {caseDetail.accused.map((acc: { id?: string; name?: string; full_name?: string; phone_number?: string; phone?: string; vehicle_number?: string; vehicle?: string; address?: string; address_text?: string }, idx: number) => {
                       const name = acc.full_name || acc.name || acc.id || ''
                       const isRafiq = name.toLowerCase().includes('rafiq')
+                      const phone = acc.phone_number || acc.phone || ''
+                      const vehicle = acc.vehicle_number || acc.vehicle || ''
+                      const address = acc.address_text || acc.address || ''
+
+                      const params = new URLSearchParams()
+                      if (name) params.set('name', name)
+                      if (phone) params.set('phone', phone)
+                      if (vehicle) params.set('vehicle', vehicle)
+                      if (address) params.set('address', address)
+
+                      const entitySearchUrl = params.toString() ? `/entities?${params.toString()}` : '/entities'
+
                       return (
                         <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-neutral-50 border border-neutral-200">
                           <div>
                             <div className="text-sm font-bold text-neutral-900">{name}</div>
                             <div className="text-xs text-neutral-600">
-                              Phone: {acc.phone_number || '+91 98450 11223'} • Vehicle: {acc.vehicle_number || 'N/A'}
+                              Phone: {phone || 'N/A'} • Vehicle: {vehicle || 'N/A'}
                             </div>
                           </div>
                           <Link
-                            to={isRafiq ? '/fusion' : '/entities'}
+                            to={isRafiq ? '/fusion' : entitySearchUrl}
+                            state={{ name, phone, vehicle, address }}
                             className="inline-flex items-center gap-1 text-xs text-blue-700 hover:text-blue-900 font-semibold bg-white px-2.5 py-1 rounded-md border border-neutral-200 shadow-2xs hover:bg-blue-50 transition-colors"
                           >
                             {isRafiq ? (

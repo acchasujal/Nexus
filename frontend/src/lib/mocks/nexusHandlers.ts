@@ -452,4 +452,51 @@ export const nexusHandlers = [
     if (!record) return new HttpResponse(null, { status: 404, statusText: 'Source record not found' })
     return HttpResponse.json(record)
   }),
+
+  http.get(/\/api\/v1\/investigations\/([^/]+)/, async ({ params }) => {
+    const id = String(params[0])
+    return HttpResponse.json({
+      id,
+      fir_number: id === 'CASE-207' ? 'FIR 207/2026' : `FIR ${id}`,
+      title: id === 'CASE-207' ? 'FIR 207/2026: Cyber Financial Layering' : `Investigation ${id}`,
+      station_name: 'Cyber Crime PS, Bengaluru',
+      district: 'Bengaluru',
+      offence_category: 'Cyber Financial Fraud',
+      incident_date: '2026-03-02T14:15:00Z',
+      status: 'UNDER_INVESTIGATION',
+      summary: 'Cross-district investigation tracking mule bank networks and forged credentials.',
+      sections: ['Section 66D IT Act', 'Section 318(4) BNS'],
+      accused: [
+        {
+          id: 'P-DEEPAK',
+          name: 'Deepak Khan',
+          full_name: 'Deepak Khan',
+          phone_number: '9884045292',
+          phone: '9884045292',
+          vehicle_number: 'KA-46-NR-1158',
+          vehicle: 'KA-46-NR-1158',
+          address_text: 'MG Road, Bengaluru',
+        },
+        {
+          id: 'P-RAFIQ-A',
+          name: 'Rafiq Ahmed',
+          full_name: 'Rafiq Ahmed',
+          phone_number: '+91 98450 11223',
+          phone: '+91 98450 11223',
+        },
+      ],
+      victims: [],
+      evidence: [],
+      updated_at: '2026-08-24T10:00:00Z',
+    })
+  }),
+
+  http.post(/\/api\/v1\/entity-resolution\/resolve/, async ({ request }) => {
+    const body = (await request.json()) as any
+    return HttpResponse.json({
+      query: body,
+      matches: [],
+      total_matches: 0,
+    })
+  }),
 ]

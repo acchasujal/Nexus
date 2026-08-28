@@ -1,16 +1,45 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useLocation } from 'react-router-dom'
 import { Users, CheckCircle2, HelpCircle, AlertTriangle, XCircle, ShieldCheck, Search } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 import type { EntityResolutionMatchResponse } from '@shared/contracts/api'
 
 export default function Entities() {
-  const [nameQuery, setNameQuery] = useState('Vikram Sharma')
-  const [phoneQuery, setPhoneQuery] = useState('9845012345')
-  const [vehicleQuery, setVehicleQuery] = useState('KA01AB1001')
-  const [addressQuery, setAddressQuery] = useState('MG Road, Bengaluru')
+  const [searchParams] = useSearchParams()
+  const location = useLocation()
+  const navState = (location.state as Record<string, string> | undefined) || {}
+
+  const getInitialValue = (keys: string[]) => {
+    for (const key of keys) {
+      const fromParam = searchParams.get(key)
+      if (fromParam !== null && fromParam !== undefined && fromParam !== '') return fromParam
+      const fromState = navState[key]
+      if (fromState !== null && fromState !== undefined && fromState !== '') return fromState
+    }
+    return ''
+  }
+
+  const [nameQuery, setNameQuery] = useState(() => getInitialValue(['name', 'full_name']))
+  const [phoneQuery, setPhoneQuery] = useState(() => getInitialValue(['phone', 'phone_number']))
+  const [vehicleQuery, setVehicleQuery] = useState(() => getInitialValue(['vehicle', 'vehicle_number']))
+  const [addressQuery, setAddressQuery] = useState(() => getInitialValue(['address', 'address_text']))
   const [matches, setMatches] = useState<EntityResolutionMatchResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+
+  useEffect(() => {
+    const name = searchParams.get('name') ?? searchParams.get('full_name') ?? (location.state as any)?.name ?? (location.state as any)?.full_name ?? ''
+    const phone = searchParams.get('phone') ?? searchParams.get('phone_number') ?? (location.state as any)?.phone ?? (location.state as any)?.phone_number ?? ''
+    const vehicle = searchParams.get('vehicle') ?? searchParams.get('vehicle_number') ?? (location.state as any)?.vehicle ?? (location.state as any)?.vehicle_number ?? ''
+    const address = searchParams.get('address') ?? searchParams.get('address_text') ?? (location.state as any)?.address ?? (location.state as any)?.address_text ?? ''
+
+    if (name || phone || vehicle || address) {
+      setNameQuery(name)
+      setPhoneQuery(phone)
+      setVehicleQuery(vehicle)
+      setAddressQuery(address)
+    }
+  }, [searchParams, location.state])
 
   const handleResolve = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -81,8 +110,9 @@ export default function Entities() {
           <h2 className="text-base font-bold text-neutral-900">Suspect Query Attributes</h2>
           <form onSubmit={handleResolve} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-bold text-neutral-700 mb-1">Full Name / Suspect Name</label>
+              <label htmlFor="suspect-name-input" className="block text-xs font-bold text-neutral-700 mb-1">Full Name / Suspect Name</label>
               <input
+                id="suspect-name-input"
                 type="text"
                 value={nameQuery}
                 onChange={(e) => setNameQuery(e.target.value)}
@@ -92,8 +122,9 @@ export default function Entities() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-neutral-700 mb-1">Phone Number (CDR / Subscribed)</label>
+              <label htmlFor="suspect-phone-input" className="block text-xs font-bold text-neutral-700 mb-1">Phone Number (CDR / Subscribed)</label>
               <input
+                id="suspect-phone-input"
                 type="text"
                 value={phoneQuery}
                 onChange={(e) => setPhoneQuery(e.target.value)}
@@ -103,8 +134,9 @@ export default function Entities() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-neutral-700 mb-1">Vehicle Registration Number</label>
+              <label htmlFor="suspect-vehicle-input" className="block text-xs font-bold text-neutral-700 mb-1">Vehicle Registration Number</label>
               <input
+                id="suspect-vehicle-input"
                 type="text"
                 value={vehicleQuery}
                 onChange={(e) => setVehicleQuery(e.target.value)}
@@ -114,8 +146,9 @@ export default function Entities() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-neutral-700 mb-1">Address / Known Hideout</label>
+              <label htmlFor="suspect-address-input" className="block text-xs font-bold text-neutral-700 mb-1">Address / Known Hideout</label>
               <input
+                id="suspect-address-input"
                 type="text"
                 value={addressQuery}
                 onChange={(e) => setAddressQuery(e.target.value)}
