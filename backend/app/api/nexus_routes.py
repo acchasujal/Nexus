@@ -275,6 +275,32 @@ class NexusIngestResponse(BaseModel):
 
 # ── Router Definition ──────────────────────────────────────────────────────────
 
+def _propagate_case_ids(nodes_data, edges_data):
+    node_case_ids = {n["id"]: set() for n in nodes_data}
+    for n in nodes_data:
+        nid = n["id"]
+        if n.get("entity_type") == "Case":
+            node_case_ids[nid].add(nid)
+        props = n.get("properties", {})
+        if props.get("case_id"):
+            node_case_ids[nid].add(str(props["case_id"]))
+            
+    adj = {n["id"]: [] for n in nodes_data}
+    for e in edges_data:
+        s, t = e["source_id"], e["target_id"]
+        if s in adj and t in adj:
+            adj[s].append(t)
+            adj[t].append(s)
+            
+    for _ in range(3):
+        new_case_ids = {nid: set(cids) for nid, cids in node_case_ids.items()}
+        for nid, neighbors in adj.items():
+            for nbr in neighbors:
+                new_case_ids[nbr].update(node_case_ids[nid])
+        node_case_ids = new_case_ids
+        
+    return node_case_ids
+
 def create_nexus_router() -> APIRouter:
     router = APIRouter(tags=["nexus"])
 
@@ -358,21 +384,25 @@ def create_nexus_router() -> APIRouter:
         if not batch_data:
             raise HTTPException(status_code=404, detail="Batch not found")
 
+        nodes_data = batch_data.get("nodes", [])
+        edges_data = batch_data.get("edges", [])
+        node_case_ids = _propagate_case_ids(nodes_data, edges_data)
+
         nodes = []
-        for n in batch_data.get("nodes", []):
+        for n in nodes_data:
+            nid = n["id"]
             props = n.get("properties", {})
-            case_ids = [str(props.get("case_id"))] if props.get("case_id") else []
             nodes.append(NexusGraphNode(
-                id=n["id"],
+                id=nid,
                 entity_type=n.get("entity_type", "Person"),
-                label=str(props.get("full_name") or props.get("name") or n["id"]),
-                case_ids=case_ids,
+                label=str(props.get("full_name") or props.get("name") or nid),
+                case_ids=list(node_case_ids.get(nid, set())),
                 properties=props,
                 badges=n.get("badges", []),
             ))
 
         edges = []
-        for e in batch_data.get("edges", []):
+        for e in edges_data:
             eid = e.get("id") or f"edge-{e['source_id']}-{e['target_id']}"
             edges.append(NexusGraphEdge(
                 id=eid,
@@ -497,21 +527,24 @@ def create_nexus_router() -> APIRouter:
         audit: AuditService = Depends(get_audit_service),
         repo: InMemoryBackendRepository = Depends(get_repository),
     ) -> NexusNetworkResponse:
+        nodes_data = list(repo.nodes.values())
+        edges_data = repo.edges
+        node_case_ids = _propagate_case_ids(nodes_data, edges_data)
+
         nodes = []
         for nid, n in repo.nodes.items():
             props = n.get("properties", {})
-            case_ids = [str(props.get("case_id"))] if props.get("case_id") else []
             nodes.append(NexusGraphNode(
                 id=nid,
                 entity_type=n.get("entity_type", "Person"),
                 label=str(props.get("full_name") or props.get("name") or nid),
-                case_ids=case_ids,
+                case_ids=list(node_case_ids.get(nid, set())),
                 properties=props,
                 badges=n.get("badges", []),
             ))
 
         edges = []
-        for e in repo.edges:
+        for e in edges_data:
             eid = e.get("id") or f"edge-{e['source_id']}-{e['target_id']}"
             edges.append(NexusGraphEdge(
                 id=eid,
