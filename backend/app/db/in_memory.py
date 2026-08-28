@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Any
 
 from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord
+from backend.app.db.ingestion.contracts import IngestionBundle
+from backend.app.db.ingestion.graph_adapter import validate_graph_references
 from shared.contracts.api import (
     AuditLogEntry,
     EvidenceItemResponse,
@@ -61,6 +63,7 @@ class InMemoryBackendRepository:
         self.nodes: dict[str, dict[str, Any]] = {}
         self.edges: list[dict[str, Any]] = []
         self.incident_edges: dict[str, list[dict[str, Any]]] = {}
+        self.source_records: dict[str, dict[str, Any]] = {}
         self.audit_events: list[dict[str, Any]] = []
         self.state_path = state_path
 
@@ -120,29 +123,68 @@ class InMemoryBackendRepository:
             self.incident_edges.setdefault(src, []).append(edge)
             self.incident_edges.setdefault(tgt, []).append(edge)
 
-    def apply_bundle(self, bundle: Any) -> None:
-        """Apply an IngestionBundle from the pipeline into the repository."""
+    def apply_bundle(self, bundle: IngestionBundle) -> tuple[int, int, int, int]:
+        """
+        Atomically apply a fully resolved IngestionBundle to the repository.
+        Returns: (nodes_created, nodes_reused, edges_created, edges_reused)
+        """
+        errors = validate_graph_references(bundle.nodes, bundle.relationships, bundle.source_records)
+        if errors:
+            raise ValueError(f"Bundle validation failed: {'; '.join(errors)}")
+
+        nodes_created = 0
+        nodes_reused = 0
+        edges_created = 0
+        edges_reused = 0
+
         for node in bundle.nodes:
-            self.nodes[str(node.id)] = {
-                "id": str(node.id),
-                "entity_type": node.entity_type,
-                "properties": dict(node.properties),
-            }
-        
+            nid = str(node.id)
+            if nid in self.nodes:
+                nodes_reused += 1
+                self.nodes[nid].setdefault("properties", {}).update(node.properties)
+            else:
+                nodes_created += 1
+                self.nodes[nid] = {
+                    "id": nid,
+                    "entity_type": node.entity_type.value,
+                    "properties": dict(node.properties),
+                }
+
+        existing_edge_ids = {str(e.get("id")) for e in self.edges if "id" in e}
         for edge in bundle.relationships:
-            self.edges.append({
-                "id": str(edge.id) if getattr(edge, "id", None) else f"{edge.source_id}-{edge.target_id}",
+            eid = str(edge.id)
+            edge_data = {
+                "id": eid,
                 "source_id": str(edge.source_id),
                 "target_id": str(edge.target_id),
-                "edge_type": edge.edge_type,
-                "weight": edge.weight,
-                "confidence": getattr(edge, "confidence", 1.0),
-                "provenance": edge.provenance.model_dump() if hasattr(edge, "provenance") and edge.provenance else {},
-                "properties": dict(edge.properties) if getattr(edge, "properties", None) else {},
-            })
-            
+                "edge_type": edge.edge_type.value,
+                "start_time": edge.start_time.isoformat() if edge.start_time else None,
+                "end_time": edge.end_time.isoformat() if edge.end_time else None,
+                "source_record_id": edge.source_record_id,
+                "derivation_class": edge.derivation_class.value,
+                "confidence": edge.confidence,
+                "provenance": edge.provenance.model_dump(mode="json"),
+                "properties": dict(edge.properties),
+            }
+
+            if eid in existing_edge_ids:
+                edges_reused += 1
+                for existing in self.edges:
+                    if str(existing.get("id")) == eid:
+                        existing.update(edge_data)
+                        break
+            else:
+                edges_created += 1
+                self.edges.append(edge_data)
+                existing_edge_ids.add(eid)
+
+        for sr in bundle.source_records:
+            srid = str(sr.id)
+            self.source_records[srid] = sr.model_dump(mode="json")
+
         self._rebuild_indexes()
         self._save_state()
+        return nodes_created, nodes_reused, edges_created, edges_reused
 
     def to_graph_store(self) -> GraphStore:
         """Export raw repository nodes and edges into an in-memory GraphStore."""

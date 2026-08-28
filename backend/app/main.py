@@ -84,6 +84,7 @@ def create_app(
 
     # Graph intelligence routes
     graph_repo = GraphRepository(repository.to_graph_store())
+    app.state.graph_repo = graph_repo
     app.include_router(
         create_graph_router(graph_repo),
         prefix="/api/v1",
