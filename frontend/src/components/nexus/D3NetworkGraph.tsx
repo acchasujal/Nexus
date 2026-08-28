@@ -210,6 +210,18 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
   const [timeIndex, setTimeIndex] = useState<number>(100)
   const [showScrubber, setShowScrubber] = useState(enableTemporalScrubber)
 
+  const handleTogglePlay = useCallback(() => {
+    if (!isPlaying) {
+      if (timeIndex >= 100) {
+        setTimeIndex(0)
+      }
+      setIsPlaying(true)
+    } else {
+      setIsPlaying(false)
+    }
+  }, [isPlaying, timeIndex])
+
+
   // Active Density Multiplier
   const densityScale = useMemo(() => {
     switch (densityMode) {
@@ -321,7 +333,9 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
     const svg = d3.select(svgRef.current)
     const g = d3.select(gRef.current)
 
-    const bounds = (g.node() as SVGGElement).getBBox()
+    const gNode = g.node() as SVGGElement
+    if (!gNode || typeof gNode.getBBox !== 'function') return
+    const bounds = gNode.getBBox()
     const fullWidth = containerRef.current.clientWidth || 900
     const fullHeight = containerRef.current.clientHeight || 580
 
@@ -356,11 +370,12 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
     if (isPlaying) {
       timer = setInterval(() => {
         setTimeIndex((prev) => {
-          if (prev >= 100) {
+          const next = prev + 2
+          if (next >= 100) {
             setIsPlaying(false)
             return 100
           }
-          return prev + 2
+          return next
         })
       }, 250)
     }
@@ -1231,7 +1246,8 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       {enableTemporalScrubber && showScrubber && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 w-[92%] max-w-lg bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-xl border border-neutral-300 shadow-lg flex items-center gap-3">
           <button
-            onClick={() => setIsPlaying((prev) => !prev)}
+            onClick={handleTogglePlay}
+            aria-label={isPlaying ? 'Pause Timeline' : 'Play Timeline Evolution'}
             className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors focus:outline-none"
             title={isPlaying ? 'Pause Timeline' : 'Play Timeline Evolution'}
           >
