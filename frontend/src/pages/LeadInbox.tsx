@@ -98,7 +98,50 @@ export default function LeadInbox() {
               <h2 className="mt-3 text-lg font-bold text-neutral-900">{lead.title}</h2>
               <p className="mt-2 text-sm leading-relaxed text-neutral-700">{lead.explanation}</p>
 
-              <div className="mt-5 rounded-lg border border-neutral-200 bg-neutral-50 p-4 shadow-xs">
+              {/* Multi-Factor Priority Breakdown */}
+              <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50/80 p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-800 flex items-center gap-1.5">
+                    <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+                    Review Prioritization Factors (Transparent &amp; Non-Predictive)
+                  </h3>
+                  <span className="text-[10px] font-bold text-neutral-500">
+                    Investigator Decision Support
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
+                    <span className="font-bold text-neutral-900">Evidence Volume</span>
+                    <p className="text-[11px] text-neutral-600">5 independent Section 63 BSA records</p>
+                  </div>
+                  <div className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
+                    <span className="font-bold text-neutral-900">Cross-Jurisdiction</span>
+                    <p className="text-[11px] text-neutral-600">Unifies Mysuru &amp; Bengaluru FIRs</p>
+                  </div>
+                  <div className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
+                    <span className="font-bold text-neutral-900">Network Centrality</span>
+                    <p className="text-[11px] text-neutral-600">Bridges 2 previously isolated subgraphs</p>
+                  </div>
+                  <div className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
+                    <span className="font-bold text-neutral-900">Corroboration</span>
+                    <p className="text-[11px] text-neutral-600">Dual CDR telephony &amp; Banking ledger</p>
+                  </div>
+                </div>
+
+                <div className="pt-1.5 border-t border-neutral-200">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                    Why Prioritized for Investigator Review:
+                  </div>
+                  <ul className="text-xs text-neutral-700 space-y-1 list-disc list-inside">
+                    <li>Cross-case bridge formed after investigator-confirmed entity resolution (RC-1).</li>
+                    <li>Dual corroboration: Shared mobile <code className="text-[10px] bg-neutral-100 px-1 py-0.5 rounded font-bold">+91 98450 11223</code> and repeated bank fund layering.</li>
+                    <li>High investigative yield for inter-district coordination meetings.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 shadow-xs">
                 <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-700">
                   <Route className="h-4 w-4 text-blue-600" /> Evidence-backed connection path
                 </h3>

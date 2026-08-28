@@ -417,6 +417,9 @@ export interface NexusLead {
   rule_id: string
   explanation: string
   severity: string
+  review_priority?: 'HIGH' | 'MEDIUM' | 'LOW'
+  priority_factors?: Record<string, string>
+  why_prioritized?: string[]
   derivation_class: 'FACT' | 'DERIVED' | 'HYPOTHESIS'
   case_ids: string[]
   status: 'NEW' | 'ACCEPTED' | 'REJECTED'

@@ -20,6 +20,7 @@ import { GlobalNetworkCanvas } from '@/components/nexus/GlobalNetworkCanvas'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import { DerivationBadge } from '@/components/nexus/DerivationBadge'
 import { PathfinderEntitySelector } from '@/components/nexus/PathfinderEntitySelector'
+import { NetworkDeltaSummary } from '@/components/nexus/NetworkDeltaSummary'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -335,6 +336,9 @@ export default function NetworkExplorer() {
           </div>
         </div>
       </div>
+
+      {/* ── Network Delta (What Changed) Component ───────────────────────────── */}
+      <NetworkDeltaSummary activeSnapshot={replay} />
 
       {/* ── Interactive Investigative Pathfinder Bar ────────────────────────────── */}
       {showPathfinder && (

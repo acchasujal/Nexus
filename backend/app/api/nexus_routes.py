@@ -175,6 +175,9 @@ class NexusLead(BaseModel):
     rule_id: str
     explanation: str
     severity: str
+    review_priority: Literal["HIGH", "MEDIUM", "LOW"] = "HIGH"
+    priority_factors: dict[str, str] = Field(default_factory=dict)
+    why_prioritized: list[str] = Field(default_factory=list)
     derivation_class: Literal["FACT", "DERIVED", "HYPOTHESIS"]
     case_ids: list[str]
     status: Literal["NEW", "ACCEPTED", "REJECTED"]
@@ -494,6 +497,20 @@ BRIDGE_LEAD = NexusLead(
         "(co-accused Deepak Rao) into ACC-7731. This is an investigative lead, not a determination of guilt."
     ),
     severity="HIGH",
+    review_priority="HIGH",
+    priority_factors={
+        "Evidence Strength": "HIGH (5 verifiable source records across FIR, CDR, Banking)",
+        "Cross-Case Impact": "HIGH (Directly links Mysuru and Bengaluru jurisdictions)",
+        "Network Importance": "HIGH (Articulation bridge connecting 2 isolated components)",
+        "Recency": "MEDIUM (Incidents registered Feb-Mar 2026)",
+        "Corroboration": "HIGH (Dual-source telecommunication & banking corroboration)",
+    },
+    why_prioritized=[
+        "Cross-Jurisdictional Bridge: Unifies Mysuru & Bengaluru investigations",
+        "Corroborated Telephony: Identical phone +91 98450 11223 active in both CDR pulls",
+        "Financial Layering: Repeated funds transfer from co-accused ACC-9914 to ACC-7731",
+        "High Evidentiary Integrity: 5 independent Section 63 BSA source records cited",
+    ],
     derivation_class="HYPOTHESIS",
     case_ids=["CASE-141", "CASE-207"],
     status="NEW",

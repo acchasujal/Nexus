@@ -110,6 +110,17 @@ describe('NEXUS Frontend Prototype Suite', () => {
       expect(screen.getByTestId('defer-fusion')).toBeInTheDocument()
     })
 
+    it('renders EvidenceConflictMatrix with verified agreements and flagged conflicts', async () => {
+      render(<EntityFusion />, { wrapper: createWrapper() })
+
+      await waitFor(() => {
+        expect(screen.getByText(/Evidentiary Contradiction & Agreement Matrix/i)).toBeInTheDocument()
+        expect(screen.getByText(/Corroborated Facts/i)).toBeInTheDocument()
+        expect(screen.getByText(/Discrepancies \/ Conflicts/i)).toBeInTheDocument()
+        expect(screen.getByText(/Unverified \/ Partial/i)).toBeInTheDocument()
+      })
+    })
+
     it('switches between candidate tabs correctly', async () => {
       render(<EntityFusion />, { wrapper: createWrapper() })
 

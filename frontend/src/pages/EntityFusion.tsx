@@ -11,6 +11,8 @@ import {
   ThumbsUp, PauseCircle, ShieldCheck, Network,
 } from 'lucide-react'
 import { useResolutionCandidates, useDecideCandidate } from '@/hooks/useNexus'
+import { DerivationBadge } from '@/components/nexus/DerivationBadge'
+import { EvidenceConflictMatrix } from '@/components/nexus/EvidenceConflictMatrix'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import type { ResolutionCandidateRecord } from '@shared/contracts/api'
@@ -180,41 +182,8 @@ export default function EntityFusion() {
         <RecordPanel title="Record B" record={candidate.right} accent="rose" />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-sm" aria-label="Match reasons">
-          <h3 className="flex items-center gap-2 text-sm font-bold text-emerald-900">
-            <ThumbsUp className="h-4 w-4 text-emerald-600" /> Why they might match
-          </h3>
-          <ul className="mt-3 space-y-2">
-            {candidate.reasons.map((r) => (
-              <li key={r.field} className="rounded-lg border border-emerald-100 bg-white p-3 text-sm shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold capitalize text-neutral-900">{r.field.replaceAll('_', ' ')}</span>
-                  <span className="rounded bg-emerald-100 border border-emerald-200 px-1.5 py-0.5 font-mono text-[10px] font-bold text-emerald-800">+{r.weight.toFixed(2)}</span>
-                </div>
-                <p className="mt-1 text-xs text-neutral-600">{r.detail}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm" aria-label="Conflicts">
-          <h3 className="flex items-center gap-2 text-sm font-bold text-amber-900">
-            <AlertTriangle className="h-4 w-4 text-amber-600" /> Conflicting fields — judge these yourself
-          </h3>
-          <ul className="mt-3 space-y-2">
-            {candidate.conflicts.map((c) => (
-              <li key={c.field} className="rounded-lg border border-amber-100 bg-white p-3 text-sm shadow-xs">
-                <span className="font-bold capitalize text-neutral-900">{c.field.replaceAll('_', ' ')}</span>
-                <div className="mt-1.5 grid grid-cols-2 gap-2 text-xs">
-                  <span className="rounded bg-sky-50 border border-sky-200 px-2 py-1 text-sky-900 font-medium">A: {c.left_value}</span>
-                  <span className="rounded bg-rose-50 border border-rose-200 px-2 py-1 text-rose-900 font-medium">B: {c.right_value}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
+      {/* Evidentiary Contradiction & Agreement Matrix */}
+      <EvidenceConflictMatrix candidate={candidate} />
 
       {decided ? (
         <section data-testid="post-decision" className={`rounded-xl border p-5 shadow-sm ${
