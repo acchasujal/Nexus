@@ -753,15 +753,11 @@ export default function NetworkExplorer() {
               setShowPathfinder(true)
             }}
             onEdgeSelect={setEdgeId}
-<<<<<<< HEAD
-            onOpenDetails={(nId) => setSelectedEntityId(nId)}
-=======
-            onNodeSelect={(nId) => {
+            onOpenDetails={(nId) => {
               setSelectedEntityId(nId)
               if (nId !== nodeIdParam) updateNetworkUrl({ node_id: nId })
             }}
             onCaseFocusChange={(caseId) => updateNetworkUrl({ case_focus: caseId })}
->>>>>>> 0e50591ed8ea694a0803740e7b887c3f6a0fdd92
           />
         </>
       )}

@@ -29,11 +29,8 @@ interface GlobalNetworkCanvasProps {
   onNodeSelect?: (nodeId: string) => void
   onSetSource?: (nodeId: string, nodeLabel: string) => void
   onSetTarget?: (nodeId: string, nodeLabel: string) => void
-<<<<<<< HEAD
   onOpenDetails?: (nodeId: string) => void
-=======
   onCaseFocusChange?: (caseId: string) => void
->>>>>>> 0e50591ed8ea694a0803740e7b887c3f6a0fdd92
 }
 
 const NODE_STYLE: Record<string, { icon: typeof User; ring: string; chip: string; bg: string }> = {
@@ -55,11 +52,8 @@ export function GlobalNetworkCanvas({
   onNodeSelect,
   onSetSource,
   onSetTarget,
-<<<<<<< HEAD
   onOpenDetails,
-=======
   onCaseFocusChange,
->>>>>>> 0e50591ed8ea694a0803740e7b887c3f6a0fdd92
 }: GlobalNetworkCanvasProps) {
   const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set())
   const [selectedNode, setSelectedNode] = useState<string | null>(initialNodeId || null)
