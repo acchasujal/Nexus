@@ -38,9 +38,9 @@ def _issue(row: Mapping[str, str], row_number: int, field_name: str, code: str, 
     return ParseIssue(source_type=SourceType.INTEL_REPORT, file_name=file_name, row_number=row_number, record_id=row.get("record_id", "") or f"row-{row_number}", field_name=field_name, code=code, message=message, severity=IssueSeverity.ERROR)
 
 
-def _source_record(row: Mapping[str, str], batch_id: str, occurred_at: datetime) -> SourceRecord:
+def _source_record(row: Mapping[str, str], batch_id: str, occurred_at: datetime, file_name: str) -> SourceRecord:
     canonical = canonicalize_csv_row(row)
-    return SourceRecord(id=make_source_record_id(SourceType.INTEL_REPORT.value, row), batch_id=batch_id, source_type=SourceType.INTEL_REPORT.value, locator=f"intelligence_records.csv:{row.get('record_id', '')}", raw_excerpt=canonical, hash=hashlib.sha256(canonical.encode("utf-8")).hexdigest(), occurred_at=occurred_at, created_at=occurred_at, updated_at=occurred_at)
+    return SourceRecord(id=make_source_record_id(SourceType.INTEL_REPORT.value, row), batch_id=batch_id, source_type=SourceType.INTEL_REPORT.value, locator=f"{file_name}:{row.get('record_id', '')}", raw_excerpt=canonical, hash=hashlib.sha256(canonical.encode("utf-8")).hexdigest(), occurred_at=occurred_at, created_at=occurred_at, updated_at=occurred_at)
 
 
 def _parse_rows(result: CsvParseResult, batch_id: str, file_name: str) -> ParsedSourceBundle:
@@ -62,7 +62,7 @@ def _parse_rows(result: CsvParseResult, batch_id: str, file_name: str) -> Parsed
             national_id = row.get("national_id", "").strip()
             organization = row.get("organization", "").strip()
 
-            source_record = _source_record(row, batch_id, report_date)
+            source_record = _source_record(row, batch_id, report_date, file_name)
             source_records[source_record.id] = source_record
 
             parsed_rows.append({
@@ -87,7 +87,22 @@ def _parse_rows(result: CsvParseResult, batch_id: str, file_name: str) -> Parsed
             issues.append(_issue(row, row_number, "row", "INVALID_INTELLIGENCE_ROW", str(exc), file_name))
 
     accepted = len(source_records)
-    summary = IngestionSummary(received_count=len(result.rows) + len(result.quarantined_rows), accepted_count=accepted, duplicate_count=result.summary.duplicate_count, rejected_count=sum(1 for issue in issues if issue.severity is IssueSeverity.ERROR), warning_count=sum(1 for issue in issues if issue.severity is IssueSeverity.WARNING), source_record_count=accepted)
+    rejected_rows = {
+        (issue.file_name, issue.row_number)
+        for issue in issues
+        if issue.severity is IssueSeverity.ERROR
+        and issue.code not in {"MISSING_HEADER", "MISSING_REQUIRED_COLUMN", "INVALID_HEADER", "DUPLICATE_HEADER"}
+        and issue.row_number is not None
+    }
+    summary = IngestionSummary(
+        received_count=len(result.rows) + len(result.quarantined_rows),
+        accepted_count=accepted,
+        duplicate_count=result.summary.duplicate_count,
+        conflict_count=result.summary.conflict_count,
+        rejected_count=len(rejected_rows),
+        warning_count=sum(1 for issue in issues if issue.severity is IssueSeverity.WARNING),
+        source_record_count=accepted
+    )
     return ParsedSourceBundle(
         batch_id=batch_id,
         source_type=SourceType.INTEL_REPORT,
@@ -102,6 +117,13 @@ def _parse_rows(result: CsvParseResult, batch_id: str, file_name: str) -> Parsed
 def parse_intelligence_source(text: str, *, batch_id: str = "batch_intelligence", file_name: str = "intelligence_records.csv") -> ParsedSourceBundle:
     """Parse intelligence CSV text into validated source records (no graph mapping)."""
     result = parse_csv_text(text, source_type=SourceType.INTEL_REPORT, file_name=file_name, required_columns=REQUIRED_COLUMNS)
+    return _parse_rows(result, batch_id, file_name)
+
+
+def parse_intelligence_source_bytes(data: bytes, *, batch_id: str = "batch_intelligence", file_name: str = "intelligence_records.csv") -> ParsedSourceBundle:
+    """Parse intelligence CSV bytes into validated source records."""
+    from ..csv_reader import read_csv_bytes
+    result = read_csv_bytes(data, source_type=SourceType.INTEL_REPORT, file_name=file_name, required_columns=REQUIRED_COLUMNS)
     return _parse_rows(result, batch_id, file_name)
 
 
@@ -126,4 +148,4 @@ def parse_intelligence_csv(path: str | Path, *, batch_id: str = "batch_intellige
     return map_intelligence_bundle(parsed)
 
 
-__all__ = ["OPTIONAL_COLUMNS", "REQUIRED_COLUMNS", "parse_intelligence_csv", "parse_intelligence_source", "parse_intelligence_source_file", "parse_intelligence_text"]
+__all__ = ["OPTIONAL_COLUMNS", "REQUIRED_COLUMNS", "parse_intelligence_csv", "parse_intelligence_source", "parse_intelligence_source_bytes", "parse_intelligence_source_file", "parse_intelligence_text"]

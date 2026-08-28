@@ -44,10 +44,10 @@ ROLE_RELATIONSHIPS = {
 }
 
 
-def _semantic_issue(row: Mapping[str, str], row_number: int, field_name: str, code: str, message: str) -> ParseIssue:
+def _semantic_issue(row: Mapping[str, str], row_number: int, field_name: str, code: str, message: str, file_name: str) -> ParseIssue:
     return ParseIssue(
         source_type=SourceType.FIR,
-        file_name="fir_records.csv",
+        file_name=file_name,
         row_number=row_number,
         record_id=row.get("record_id", "") or f"row-{row_number}",
         field_name=field_name,
@@ -61,13 +61,13 @@ def _row_hash(row: Mapping[str, str]) -> str:
     return hashlib.sha256(canonicalize_csv_row(row).encode("utf-8")).hexdigest()
 
 
-def _source_record(row: Mapping[str, str], batch_id: str, occurred_at: datetime) -> SourceRecord:
+def _source_record(row: Mapping[str, str], batch_id: str, occurred_at: datetime, file_name: str) -> SourceRecord:
     record_id = make_source_record_id(SourceType.FIR.value, row)
     return SourceRecord(
         id=record_id,
         batch_id=batch_id,
         source_type=SourceType.FIR.value,
-        locator=f"fir_records.csv:{row.get('record_id', '')}",
+        locator=f"{file_name}:{row.get('record_id', '')}",
         raw_excerpt=canonicalize_csv_row(row),
         hash=_row_hash(row),
         occurred_at=occurred_at,
@@ -86,7 +86,7 @@ def _parse_rows(result: CsvParseResult, batch_id: str, file_name: str) -> Parsed
         try:
             role = row["person_role"].strip().upper()
             if role not in ROLE_RELATIONSHIPS:
-                issues.append(_semantic_issue(row, row_number, "person_role", "UNKNOWN_ROLE", "Unsupported FIR person role"))
+                issues.append(_semantic_issue(row, row_number, "person_role", "UNKNOWN_ROLE", "Unsupported FIR person role", file_name))
                 continue
             incident_time = parse_utc_datetime(row["incident_time"])
             name = normalize_name(row["person_name"])
@@ -97,7 +97,7 @@ def _parse_rows(result: CsvParseResult, batch_id: str, file_name: str) -> Parsed
             address = normalize_address(row["address"]) if row.get("address", "").strip() else ""
             national_id = row.get("national_id", "").strip()
 
-            source_record = _source_record(row, batch_id, incident_time)
+            source_record = _source_record(row, batch_id, incident_time, file_name)
             source_records[source_record.id] = source_record
 
             parsed_rows.append({
@@ -122,14 +122,22 @@ def _parse_rows(result: CsvParseResult, batch_id: str, file_name: str) -> Parsed
             })
         except (KeyError, CsvValidationError, ValueError) as exc:
             field = "incident_time" if "timestamp" in str(exc) else "row"
-            issues.append(_semantic_issue(row, row_number, field, "INVALID_FIR_ROW", str(exc)))
+            issues.append(_semantic_issue(row, row_number, field, "INVALID_FIR_ROW", str(exc), file_name))
 
     accepted = len(source_records)
+    rejected_rows = {
+        (issue.file_name, issue.row_number)
+        for issue in issues
+        if issue.severity is IssueSeverity.ERROR
+        and issue.code not in {"MISSING_HEADER", "MISSING_REQUIRED_COLUMN", "INVALID_HEADER", "DUPLICATE_HEADER"}
+        and issue.row_number is not None
+    }
     summary = IngestionSummary(
         received_count=len(result.rows) + len(result.quarantined_rows),
         accepted_count=accepted,
         duplicate_count=result.summary.duplicate_count,
-        rejected_count=sum(1 for issue in issues if issue.severity is IssueSeverity.ERROR),
+        conflict_count=result.summary.conflict_count,
+        rejected_count=len(rejected_rows),
         warning_count=sum(1 for issue in issues if issue.severity is IssueSeverity.WARNING),
         source_record_count=accepted,
     )
@@ -147,6 +155,13 @@ def _parse_rows(result: CsvParseResult, batch_id: str, file_name: str) -> Parsed
 def parse_fir_source(text: str, *, batch_id: str = "batch_fir", file_name: str = "fir_records.csv") -> ParsedSourceBundle:
     """Parse FIR CSV text into validated source records (no graph mapping)."""
     result = parse_csv_text(text, source_type=SourceType.FIR, file_name=file_name, required_columns=REQUIRED_COLUMNS)
+    return _parse_rows(result, batch_id, file_name)
+
+
+def parse_fir_source_bytes(data: bytes, *, batch_id: str = "batch_fir", file_name: str = "fir_records.csv") -> ParsedSourceBundle:
+    """Parse FIR CSV bytes into validated source records (no graph mapping)."""
+    from ..csv_reader import read_csv_bytes
+    result = read_csv_bytes(data, source_type=SourceType.FIR, file_name=file_name, required_columns=REQUIRED_COLUMNS)
     return _parse_rows(result, batch_id, file_name)
 
 
@@ -170,4 +185,4 @@ def parse_fir_csv(path: str | Path, *, batch_id: str = "batch_fir") -> Ingestion
     return map_fir_bundle(parsed)
 
 
-__all__ = ["OPTIONAL_COLUMNS", "REQUIRED_COLUMNS", "parse_fir_csv", "parse_fir_source", "parse_fir_source_file", "parse_fir_text"]
+__all__ = ["OPTIONAL_COLUMNS", "REQUIRED_COLUMNS", "parse_fir_csv", "parse_fir_source", "parse_fir_source_bytes", "parse_fir_source_file", "parse_fir_text"]

@@ -16,6 +16,7 @@ from .contracts import (
     ParsedSourceBundle,
     ParseIssue,
     SourceType,
+    UploadedSource,
 )
 from .graph_adapter import build_m1_graph_store, validate_graph_references
 from .identifiers import make_batch_id, make_provisional_person_id
@@ -43,53 +44,103 @@ class CsvIngestionPipeline:
         self.registry = IdentityRegistry()
         self.graph_store = build_m1_graph_store([], [])
 
+    def ingest_batch(self, sources: Iterable[UploadedSource]) -> IngestionBundle:
+        """Ingest multiple byte-oriented sources as a unified batch."""
+        from .parsers.fir import parse_fir_source_bytes
+        from .parsers.cdr import parse_cdr_source_bytes
+        from .parsers.bank import parse_bank_source_bytes
+        from .parsers.intelligence import parse_intelligence_source_bytes
+
+        parsers_and_mappers = {
+            SourceType.FIR: (parse_fir_source_bytes, map_fir_bundle),
+            SourceType.CDR: (parse_cdr_source_bytes, map_cdr_bundle),
+            SourceType.BANK_TXN: (parse_bank_source_bytes, map_bank_bundle),
+            SourceType.INTEL_REPORT: (parse_intelligence_source_bytes, map_intelligence_bundle),
+        }
+
+        all_parsed: list[tuple[ParsedSourceBundle, Any]] = []
+        source_list = list(sources)
+        if not source_list:
+            return self._finalize(
+                IngestionBundle(
+                    batch_id=make_batch_id("MIXED", "empty"),
+                    source_type=SourceType.FIR,
+                    file_name="empty",
+                ),
+                [],
+            )
+
+        names = sorted(s.file_name for s in source_list)
+        batch_id = make_batch_id("MIXED", "|".join(names))
+
+        for source in source_list:
+            parser_fn, mapper_fn = parsers_and_mappers[source.source_type]
+            source_batch_id = make_batch_id(source.source_type.value, source.file_name)
+            parsed = parser_fn(source.data, batch_id=source_batch_id, file_name=source.file_name)
+            all_parsed.append((parsed, mapper_fn))
+
+        return self._resolve_and_map_bundles(all_parsed, batch_id)
+
+    def _resolve_and_map_bundles(self, all_parsed: list[tuple[ParsedSourceBundle, Any]], batch_id: str) -> IngestionBundle:
+        all_mappings: dict[str, str] = {}
+        all_reviews: list[EntityReviewCandidate] = []
+        for parsed, _ in all_parsed:
+            mapping, reviews = self._resolve_parsed(parsed)
+            all_mappings.update(mapping)
+            all_reviews.extend(reviews)
+
+        bundles: list[IngestionBundle] = []
+        for parsed, mapper_fn in all_parsed:
+            bundle = mapper_fn(parsed, person_id_mapping=all_mappings)
+            bundles.append(bundle)
+
+        if len(bundles) == 1:
+            return self._finalize(bundles[0], all_reviews)
+
+        combined = self._combine(bundles, batch_id)
+        return self._finalize(combined, all_reviews)
+
     def ingest_fir_csv(self, path: str | Path) -> IngestionBundle:
         """Ingest one FIR CSV file."""
-        parsed = parse_fir_source_file(path, batch_id=self._batch_id(path, SourceType.FIR))
-        mapping, reviews = self._resolve_parsed(parsed)
-        bundle = map_fir_bundle(parsed, person_id_mapping=mapping)
-        return self._finalize(bundle, reviews)
+        path_obj = Path(path)
+        source = UploadedSource(source_type=SourceType.FIR, file_name=path_obj.name, data=path_obj.read_bytes())
+        return self.ingest_batch([source])
 
     def ingest_cdr_csv(self, path: str | Path) -> IngestionBundle:
         """Ingest one CDR CSV file."""
-        parsed = parse_cdr_source_file(path, batch_id=self._batch_id(path, SourceType.CDR))
-        mapping, reviews = self._resolve_parsed(parsed)
-        bundle = map_cdr_bundle(parsed, person_id_mapping=mapping)
-        return self._finalize(bundle, reviews)
+        path_obj = Path(path)
+        source = UploadedSource(source_type=SourceType.CDR, file_name=path_obj.name, data=path_obj.read_bytes())
+        return self.ingest_batch([source])
 
     def ingest_bank_csv(self, path: str | Path) -> IngestionBundle:
         """Ingest one bank transaction CSV file."""
-        parsed = parse_bank_source_file(path, batch_id=self._batch_id(path, SourceType.BANK_TXN))
-        mapping, reviews = self._resolve_parsed(parsed)
-        bundle = map_bank_bundle(parsed, person_id_mapping=mapping)
-        return self._finalize(bundle, reviews)
+        path_obj = Path(path)
+        source = UploadedSource(source_type=SourceType.BANK_TXN, file_name=path_obj.name, data=path_obj.read_bytes())
+        return self.ingest_batch([source])
 
     def ingest_intelligence_csv(self, path: str | Path) -> IngestionBundle:
         """Ingest one intelligence CSV file."""
-        parsed = parse_intelligence_source_file(path, batch_id=self._batch_id(path, SourceType.INTEL_REPORT))
-        mapping, reviews = self._resolve_parsed(parsed)
-        bundle = map_intelligence_bundle(parsed, person_id_mapping=mapping)
-        return self._finalize(bundle, reviews)
+        path_obj = Path(path)
+        source = UploadedSource(source_type=SourceType.INTEL_REPORT, file_name=path_obj.name, data=path_obj.read_bytes())
+        return self.ingest_batch([source])
 
     def ingest_directory(self, directory: str | Path) -> IngestionBundle:
         """Ingest recognized trial CSV files from a caller-selected directory."""
         root = Path(directory)
-        parsers_and_mappers = (
-            ("fir_records.csv", SourceType.FIR, parse_fir_source_file, map_fir_bundle),
-            ("cdr_records.csv", SourceType.CDR, parse_cdr_source_file, map_cdr_bundle),
-            ("bank_transactions.csv", SourceType.BANK_TXN, parse_bank_source_file, map_bank_bundle),
-            ("intelligence_records.csv", SourceType.INTEL_REPORT, parse_intelligence_source_file, map_intelligence_bundle),
-        )
+        mapping = {
+            "fir_records.csv": SourceType.FIR,
+            "cdr_records.csv": SourceType.CDR,
+            "bank_transactions.csv": SourceType.BANK_TXN,
+            "intelligence_records.csv": SourceType.INTEL_REPORT,
+        }
 
-        # Phase 1: Parse all sources
-        all_parsed: list[tuple[ParsedSourceBundle, type]] = []
-        for filename, source_type, parser_fn, mapper_fn in parsers_and_mappers:
+        sources: list[UploadedSource] = []
+        for filename, source_type in mapping.items():
             path = root / filename
             if path.exists() and path.is_file():
-                parsed = parser_fn(path, batch_id=self._batch_id(path, source_type))
-                all_parsed.append((parsed, mapper_fn))
+                sources.append(UploadedSource(source_type=source_type, file_name=filename, data=path.read_bytes()))
 
-        if not all_parsed:
+        if not sources:
             return self._finalize(
                 IngestionBundle(
                     batch_id=make_batch_id("MIXED", root.name or "empty"),
@@ -99,23 +150,7 @@ class CsvIngestionPipeline:
                 [],
             )
 
-        # Phase 2: Collect claims and resolve identities across all sources
-        all_mappings: dict[str, str] = {}
-        all_reviews: list[EntityReviewCandidate] = []
-        for parsed, _ in all_parsed:
-            mapping, reviews = self._resolve_parsed(parsed)
-            all_mappings.update(mapping)
-            all_reviews.extend(reviews)
-
-        # Phase 3: Map each parsed bundle with canonical IDs
-        bundles: list[IngestionBundle] = []
-        for parsed, mapper_fn in all_parsed:
-            bundle = mapper_fn(parsed, person_id_mapping=all_mappings)
-            bundles.append(bundle)
-
-        # Phase 4: Combine and finalize
-        combined = self._combine(bundles, make_batch_id("MIXED", "|".join(sorted(bundle.file_name for bundle in bundles))))
-        return self._finalize(combined, all_reviews)
+        return self.ingest_batch(sources)
 
     @staticmethod
     def _batch_id(path: str | Path, source_type: SourceType) -> str:
@@ -258,6 +293,7 @@ class CsvIngestionPipeline:
                 "received_count": summary.received_count + bundle.summary.received_count,
                 "accepted_count": summary.accepted_count + bundle.summary.accepted_count,
                 "duplicate_count": summary.duplicate_count + bundle.summary.duplicate_count,
+                "conflict_count": summary.conflict_count + bundle.summary.conflict_count,
                 "rejected_count": summary.rejected_count + bundle.summary.rejected_count,
                 "warning_count": summary.warning_count + bundle.summary.warning_count,
                 "source_record_count": summary.source_record_count + bundle.summary.source_record_count,
