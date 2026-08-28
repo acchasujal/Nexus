@@ -115,6 +115,9 @@ export const apiClient = {
   getCaseNetwork: (caseId: string, depth = 2) => {
     return apiFetch<NetworkGraphResponse>(`/api/v1/network/cases/${encodeURIComponent(caseId)}?depth=${depth}`)
   },
+  getEntityProfile: (entityId: string) => {
+    return apiFetch<Record<string, unknown>>(`/api/v1/entities/${encodeURIComponent(entityId)}`)
+  },
   getEntityNetwork: (entityId: string, depth = 2) => {
     return apiFetch<NetworkGraphResponse>(`/api/v1/entities/${encodeURIComponent(entityId)}/network?depth=${depth}`)
   },

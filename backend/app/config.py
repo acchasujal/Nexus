@@ -54,6 +54,18 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_seconds: int = 86400
 
+    # ── AI & Gemini / LLM Provider ───────────────────────────────────────────
+    gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
+    llm_api_key: str = Field(default="", alias="LLM_API_KEY")
+    openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
+    llm_provider: str = Field(default="gemini", alias="LLM_PROVIDER")
+    llm_model: str = Field(default="gemini-2.5-flash", alias="LLM_MODEL")
+    llm_base_url: str = Field(
+        default="https://generativelanguage.googleapis.com/v1beta/openai",
+        alias="LLM_BASE_URL",
+    )
+    nexus_use_mock_llm: bool = Field(default=False, alias="NEXUS_USE_MOCK_LLM")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

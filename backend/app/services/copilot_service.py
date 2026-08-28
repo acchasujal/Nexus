@@ -20,6 +20,9 @@ from collections import deque
 from enum import Enum
 from typing import Any
 
+from backend.app.ai.llm_client import get_llm_client
+from backend.app.ai.orchestrator import AIToolOrchestrator
+from backend.app.ai.tools import NEXUSToolRegistry
 from backend.app.auth.principal import Principal
 from backend.app.core.graph.algorithms.clustering import (
     detect_communities,
@@ -77,10 +80,21 @@ class CopilotIntent(str, Enum):
 class CopilotService:
     """Orchestrates natural language intent parsing and evidence-grounded responses."""
 
-    def __init__(self, repository: Any, audit_service: AuditService) -> None:
+    def __init__(
+        self,
+        repository: Any,
+        audit_service: AuditService,
+        orchestrator: AIToolOrchestrator | None = None,
+    ) -> None:
         self._repo = repository
         self._audit = audit_service
         self._evidence_svc = EvidenceService(repository, audit_service)
+        self._tool_registry = NEXUSToolRegistry(repository, audit_service)
+        self._orchestrator = orchestrator or AIToolOrchestrator(
+            llm_client=get_llm_client(),
+            tool_registry=self._tool_registry,
+            audit_service=audit_service,
+        )
 
     def _get_active_graph(
         self, is_resolved_override: bool | None = None
@@ -397,6 +411,15 @@ class CopilotService:
                 evidence_ids=[],
                 reasoning_path=[],
             )
+
+        # 3. AI Tool-Calling Orchestrator (When LLM Provider is Active)
+        if self._orchestrator.is_active:
+            try:
+                orchestrated_res = self._orchestrator.process_query(request, principal=principal, request_id=request_id)
+                if orchestrated_res is not None:
+                    return orchestrated_res
+            except Exception as exc:
+                logger.warning("AI Orchestrator encountered error, proceeding to deterministic fallback: %s", exc)
 
         citations: list[GroundedCitation] = []
         evidence_ids: list[str] = []

@@ -102,7 +102,7 @@ export function EvidenceDrawer({ relationshipId, evidenceId, onClose }: Evidence
           {hasError && (
             <div className="rounded-xl border border-red-200 bg-red-50 p-4" role="alert">
               <div className="flex items-center gap-2 font-bold text-red-900">
-                <ShieldQuestion className="h-5 w-5 text-red-600" /> Evidence record unavailable
+                <ShieldQuestion className="h-5 w-5 text-red-600" /> {activeEvidenceId ? 'Evidence record unavailable' : 'Evidence chain unavailable'}
               </div>
               <p className="mt-2 text-sm text-red-800">
                 {sourceError || 'The full lineage for this record cannot be returned right now. No summary is shown without its source chain — this view fails closed.'}
