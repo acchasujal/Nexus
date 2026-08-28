@@ -12,7 +12,6 @@ import {
   FileText, 
   Users, 
   ArrowRight,
-  ShieldAlert,
 } from 'lucide-react'
 import { CsvIngestionPanel } from '@/components/CsvIngestionPanel'
 
