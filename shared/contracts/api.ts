@@ -454,6 +454,68 @@ export interface NexusSearchResponse {
   entities: { id: string; label: string; entity_type: string; case_ids: string[]; score: number; subtext?: string }[]
 }
 
+/** @deprecated Prototype Request */
+export interface IngestRequest {
+  source_type: string
+  file_name: string
+  records: Record<string, any>[]
+}
+
+/** @deprecated Prototype Response */
+export interface IngestResponse {
+  ingested_count: number
+  skipped_count: number
+  error_count: number
+  audit_event_id: string
+}
+
+// ── Real Ingestion API ────────────────────────────────────────────────────────
+
+export type BatchStatus = 'COMPLETED' | 'COMPLETED_WITH_WARNINGS' | 'FAILED'
+
+export interface IngestionFileSummary {
+  received: number
+  accepted: number
+  rejected: number
+  duplicates: number
+  conflicts: number
+  warnings: number
+  source_records: number
+  nodes_created: number
+  nodes_reused: number
+  relationships_created: number
+  review_required: number
+}
+
+export interface IngestionFileResult {
+  source_type: string
+  file_name: string
+  size_bytes: number
+  summary: IngestionFileSummary
+}
+
+export interface IngestionParseIssue {
+  source_type: string
+  file_name: string
+  row_number?: number
+  record_id?: string
+  field?: string
+  code: string
+  message: string
+  severity: string
+}
+
+export interface IngestionBatchResponse {
+  batch_id: string
+  status: BatchStatus
+  files_processed: IngestionFileResult[]
+  summary: IngestionFileSummary
+  parse_issues: IngestionParseIssue[]
+  review_candidates: Record<string, any>[]
+  graph_updated: boolean
+}
+
+/** @deprecated M4 Mock Response */
 export interface NexusIngestResponse {
   batch_id: string
   source_type: string
