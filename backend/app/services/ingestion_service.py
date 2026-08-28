@@ -76,6 +76,20 @@ class IngestionService:
                     )
                     return self._build_response(bundle, BatchStatus.FAILED, sources, 0, 0, 0, 0)
 
+                existing_source_ids = set(self._repo.source_records)
+                existing_source_hashes = {
+                    (record.get("source_type"), str(record.get("locator", "")).split(":", 1)[-1]): record.get("hash")
+                    for record in self._repo.source_records.values()
+                    if record.get("locator")
+                }
+                duplicate_count = sum(1 for record in bundle.source_records if record.id in existing_source_ids)
+                conflict_count = sum(
+                    1
+                    for record in bundle.source_records
+                    if (record.source_type, record.locator.split(":", 1)[-1]) in existing_source_hashes
+                    and existing_source_hashes[(record.source_type, record.locator.split(":", 1)[-1])] != record.hash
+                )
+
                 # Apply to in-memory repository (Atomic operation)
                 created_n, reused_n, created_e, reused_e = self._repo.apply_bundle(bundle)
                 
@@ -102,7 +116,10 @@ class IngestionService:
                     },
                 )
 
-                return self._build_response(bundle, status, sources, created_n, reused_n, created_e, reused_e)
+                return self._build_response(
+                    bundle, status, sources, created_n, reused_n, created_e, reused_e,
+                    duplicate_count=duplicate_count, conflict_count=conflict_count,
+                )
 
             except Exception as e:
                 self._audit.record(
@@ -114,7 +131,8 @@ class IngestionService:
 
     def _build_response(
         self, bundle: Any, status: BatchStatus, sources: list[UploadedSource],
-        created_n: int, reused_n: int, created_e: int, reused_e: int
+        created_n: int, reused_n: int, created_e: int, reused_e: int,
+        duplicate_count: int = 0, conflict_count: int = 0,
     ) -> IngestionBatchResponse:
         """Translate internal IngestionBundle into the public API contract."""
         
@@ -123,8 +141,8 @@ class IngestionService:
             received=bundle.summary.received_count,
             accepted=bundle.summary.accepted_count,
             rejected=bundle.summary.rejected_count,
-            duplicates=bundle.summary.duplicate_count,
-            conflicts=getattr(bundle.summary, "conflict_count", 0),
+            duplicates=bundle.summary.duplicate_count + duplicate_count,
+            conflicts=getattr(bundle.summary, "conflict_count", 0) + conflict_count,
             warnings=sum(1 for i in bundle.issues if i.severity.name == "WARNING"),
             source_records=len(bundle.source_records),
             nodes_created=created_n,

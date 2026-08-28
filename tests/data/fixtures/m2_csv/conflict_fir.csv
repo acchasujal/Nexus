@@ -1,0 +1,2 @@
+record_id,fir_number,fir_year,station_name,district,incident_time,offence_category,section,person_name,person_role,phone_number,vehicle_number,address,national_id
+FIR-101-P1,FIR-101,2026,Central Station,Mysuru,2026-03-01T10:00:00Z,Robbery,392,John Doe,ACCUSED,9876543210,,Jayanagar,

@@ -1,0 +1,2 @@
+record_id,caller_number,callee_number,start_time,duration_seconds,call_type,caller_subscriber_name,callee_subscriber_name,cell_location
+CDR-101-1,9876543210,9123456789,2026-03-01T11:00:00Z,120,VOICE,John Doe,,Mysuru

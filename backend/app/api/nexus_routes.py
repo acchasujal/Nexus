@@ -854,10 +854,14 @@ def create_nexus_router() -> APIRouter:
     ) -> NexusIngestResponse:
         
         uploaded_files = []
-        if fir: uploaded_files.append((fir, SourceType.FIR, "fir_records.csv"))
-        if cdr: uploaded_files.append((cdr, SourceType.CDR, "cdr_records.csv"))
-        if bank: uploaded_files.append((bank, SourceType.BANK_TXN, "bank_transactions.csv"))
-        if intelligence: uploaded_files.append((intelligence, SourceType.INTEL_REPORT, "intelligence_records.csv"))
+        if fir:
+            uploaded_files.append((fir, SourceType.FIR, "fir_records.csv"))
+        if cdr:
+            uploaded_files.append((cdr, SourceType.CDR, "cdr_records.csv"))
+        if bank:
+            uploaded_files.append((bank, SourceType.BANK_TXN, "bank_transactions.csv"))
+        if intelligence:
+            uploaded_files.append((intelligence, SourceType.INTEL_REPORT, "intelligence_records.csv"))
 
         if not any((fir, cdr, bank, intelligence)):
             raise HTTPException(status_code=422, detail="Upload at least one CSV file.")

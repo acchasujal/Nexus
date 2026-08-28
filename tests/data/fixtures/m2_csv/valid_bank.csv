@@ -1,0 +1,2 @@
+record_id,utr,from_account,from_bank,to_account,to_bank,amount,currency,timestamp,from_holder_name,to_holder_name
+BANK-101-1,UTR-101,ACC-1234,SBI,ACC-5678,HDFC,1000,INR,2026-03-01T12:00:00Z,John Doe,
