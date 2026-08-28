@@ -1019,10 +1019,12 @@ def create_nexus_router() -> APIRouter:
     def get_source_record(
         source_id: str,
         principal: Principal = Depends(get_principal),
+        repo: InMemoryBackendRepository = Depends(get_repository),
     ) -> NexusSourceRecord:
-        record = RAW_SOURCES.get(source_id)
-        if not record:
+        record_data = repo.source_records.get(source_id)
+        if not record_data:
             raise HTTPException(status_code=404, detail="Source record not found")
-        return record
+        # Ensure it maps nicely to the pydantic model if it's a dict
+        return NexusSourceRecord(**record_data)
 
     return router
