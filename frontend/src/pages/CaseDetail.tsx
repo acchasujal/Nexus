@@ -158,7 +158,7 @@ export default function CaseDetail() {
                     </div>
                   </div>
                   <Link
-                    to="/fusion"
+                    to={`/fusion?candidate_id=${relatedPendingCandidate.id}&case_id=${encodeURIComponent(effectiveId)}`}
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors shadow-sm shrink-0 self-start sm:self-center"
                   >
                     <GitMerge className="h-3.5 w-3.5" /> Review Match <ArrowRight className="h-3 w-3" />
@@ -230,7 +230,7 @@ export default function CaseDetail() {
                             </div>
                           </div>
                           <Link
-                            to={isRafiq ? '/fusion' : entitySearchUrl}
+                            to={isRafiq ? `/fusion?case_id=${encodeURIComponent(effectiveId)}` : entitySearchUrl}
                             state={{ name, phone, vehicle, address }}
                             className="inline-flex items-center gap-1 text-xs text-blue-700 hover:text-blue-900 font-semibold bg-white px-2.5 py-1 rounded-md border border-neutral-200 shadow-2xs hover:bg-blue-50 transition-colors"
                           >

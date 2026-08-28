@@ -205,5 +205,8 @@ export const apiClient = {
   nexusSearch: (q: string) => {
     return apiFetch<NexusSearchResponse>(`/api/v1/nexus/search?q=${encodeURIComponent(q)}`)
   },
+  getSourceRecord: (sourceId: string) => {
+    return apiFetch<NexusSourceRecord>(`/api/v1/nexus/sources/${encodeURIComponent(sourceId)}`)
+  },
   resetDemo: () => apiFetch<{ status: string }>('/api/v1/nexus/demo/reset', { method: 'POST' }),
 }

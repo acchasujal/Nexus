@@ -4,11 +4,11 @@
  * Lead Inbox + Pathfinder: cross-case bridge finding, evidence-backed
  * connection path, Accept/Reject controls, and grounded copilot explanation.
  */
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useMemo } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   Inbox, Route, ThumbsUp, ThumbsDown, ShieldCheck, ShieldQuestion,
-  MessageSquareCode, FileText, AlertOctagon,
+  MessageSquareCode, FileText, AlertOctagon, ChevronRight,
 } from 'lucide-react'
 import { useLeads, useDecideLead, useNexusCopilot, useNexusNetwork } from '@/hooks/useNexus'
 import { DerivationBadge } from '@/components/nexus/DerivationBadge'
@@ -33,10 +33,30 @@ const PRIORITY_STYLE: Record<string, string> = {
   LOW: 'border-neutral-300 bg-neutral-100 text-neutral-800 font-medium',
 }
 
+type QueueFilter = 'ALL' | 'HIGH' | 'PENDING' | 'ACCEPTED' | 'REJECTED'
+
 export default function LeadInbox() {
+  const [searchParams] = useSearchParams()
+  const caseIdParam = searchParams.get('case_id')
   const { data: leads, isLoading, error, refetch } = useLeads()
   const decide = useDecideLead()
-  const lead = leads?.[0]
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = useState<QueueFilter>('ALL')
+
+  const effectiveLeads = useMemo(() => {
+    if (!leads) return []
+    return leads.filter((l) => {
+      if (activeFilter === 'HIGH') return l.severity === 'HIGH'
+      if (activeFilter === 'PENDING') return l.status === 'NEW'
+      if (activeFilter === 'ACCEPTED') return l.status === 'ACCEPTED'
+      if (activeFilter === 'REJECTED') return l.status === 'REJECTED'
+      return true
+    })
+  }, [leads, activeFilter])
+
+  const effectiveSelectedId = selectedLeadId ?? effectiveLeads[0]?.id ?? leads?.[0]?.id
+  const lead = effectiveLeads.find((l) => l.id === effectiveSelectedId) ?? effectiveLeads[0] ?? leads?.[0]
+
   const afterNetwork = useNexusNetwork('after', Boolean(lead))
   const [copilotAnswer, setCopilotAnswer] = useState<string | null>(null)
   const [copilotError, setCopilotError] = useState<string | null>(null)
@@ -58,30 +78,102 @@ export default function LeadInbox() {
   if (isLoading) return <LoadingSkeleton layout="detail" />
   if (error) return <ErrorState message="Failed to load leads." onRetry={() => void refetch()} />
 
+  const FILTER_PILLS: { label: string; value: QueueFilter }[] = [
+    { label: 'All', value: 'ALL' },
+    { label: 'High Priority', value: 'HIGH' },
+    { label: 'Pending', value: 'PENDING' },
+    { label: 'Accepted', value: 'ACCEPTED' },
+    { label: 'Rejected', value: 'REJECTED' },
+  ]
+
   return (
     <div className="space-y-5">
       <div className="border-b border-neutral-200 pb-4">
         <h1 className="flex items-center gap-2.5 text-2xl font-bold text-neutral-900">
           <Inbox className="h-6 w-6 text-blue-600" /> Lead Inbox
+          {caseIdParam && (
+            <span className="ml-2 rounded-md border border-blue-300 bg-blue-50 px-2 py-0.5 font-mono text-xs font-bold text-blue-800">
+              {caseIdParam}
+            </span>
+          )}
         </h1>
         <p className="mt-1 text-sm text-neutral-600">
           Explainable, evidence-backed investigative leads. Every lead stays a hypothesis until an investigator decides.
         </p>
       </div>
 
-      {!lead ? (
+      {/* Filter pills */}
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter leads">
+        {FILTER_PILLS.map((pill) => (
+          <button
+            key={pill.value}
+            onClick={() => setActiveFilter(pill.value)}
+            className={`rounded-full px-3.5 py-1 text-xs font-bold border transition-colors ${
+              activeFilter === pill.value
+                ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50'
+            }`}
+          >
+            {pill.label}
+            {pill.value === 'ALL' && leads ? ` (${leads.length})` : ''}
+            {pill.value !== 'ALL' && leads ? ` (${leads.filter(l =>
+              pill.value === 'HIGH' ? l.severity === 'HIGH' :
+              pill.value === 'PENDING' ? l.status === 'NEW' :
+              l.status === pill.value
+            ).length})` : ''}
+          </button>
+        ))}
+      </div>
+
+      {!effectiveLeads.length ? (
         <div className="rounded-xl border border-dashed border-neutral-300 bg-white py-16 text-center shadow-xs">
           <Inbox className="mx-auto h-12 w-12 text-neutral-400" />
-          <h2 className="mt-3 text-lg font-bold text-neutral-900">No open leads</h2>
+          <h2 className="mt-3 text-lg font-bold text-neutral-900">
+            {activeFilter === 'ALL' ? 'No open leads' : `No ${activeFilter.toLowerCase()} leads`}
+          </h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-neutral-600">
-            Leads are generated by deterministic rules — e.g. a cross-case bridge — once entity resolutions are
-            confirmed. Confirm the pending match in{' '}
-            <Link to="/fusion" className="font-bold text-blue-700 underline hover:text-blue-900">Entity Fusion</Link>{' '}first.
+            {activeFilter === 'ALL'
+              ? <>Leads are generated by deterministic rules once entity resolutions are confirmed. Confirm the pending match in{' '}
+                  <Link to="/fusion" className="font-bold text-blue-700 underline hover:text-blue-900">Entity Fusion</Link> first.</>           
+              : `No leads match the "${activeFilter}" filter. Try "All" to see all leads.`
+            }
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-          <section className="space-y-4 xl:col-span-2" aria-label="Lead detail">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-4">
+          {/* Queue list — xl:col-span-1 */}
+          <section className="xl:col-span-1 rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden" aria-label="Lead queue">
+            <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-700">Lead Queue</h3>
+            </div>
+            <ul className="divide-y divide-neutral-100 max-h-[70vh] overflow-y-auto">
+              {effectiveLeads.map((l) => (
+                <li key={l.id}>
+                  <button
+                    onClick={() => setSelectedLeadId(l.id)}
+                    className={`w-full text-left px-4 py-3 transition-colors flex items-start gap-2 ${
+                      l.id === (lead?.id) ? 'bg-blue-50 border-l-2 border-blue-600' : 'hover:bg-neutral-50'
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase border ${
+                          PRIORITY_STYLE[l.severity] || PRIORITY_STYLE.HIGH
+                        }`}>{l.severity}</span>
+                        {l.status !== 'NEW' && (
+                          <span className="text-[9px] font-bold text-blue-700 uppercase">{l.status}</span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs font-semibold text-neutral-900 leading-tight line-clamp-2">{l.title}</p>
+                    </div>
+                    {l.id === (lead?.id) && <ChevronRight className="h-3.5 w-3.5 shrink-0 mt-0.5 text-blue-600" />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="space-y-4 xl:col-span-3" aria-label="Lead detail">
             <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${PRIORITY_STYLE[lead.severity] || PRIORITY_STYLE.HIGH}`}>

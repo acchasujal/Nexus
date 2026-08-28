@@ -5,7 +5,7 @@
  * reasons, conflicts, source links, and Confirm/Reject/Defer actions.
  */
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   GitMerge, CheckCircle2, XCircle, Clock, FileText, AlertTriangle,
   ThumbsUp, PauseCircle, ShieldCheck, Network,
@@ -23,10 +23,10 @@ function RecordPanel({ title, record, accent }: { title: string; record: Resolut
   return (
     <div className={`rounded-xl border ${border} bg-white p-4 shadow-sm`}>
       <div className="flex items-center justify-between">
-        <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${chip}`}>{title}</span>
-        <code className="font-mono text-[10px] text-neutral-500 font-semibold">{record.node_id}</code>
+        <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">{title}</span>
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${chip}`}>{record.entity_type}</span>
       </div>
-      <h3 className="mt-2 text-lg font-bold text-neutral-900">{record.label}</h3>
+      <h3 className="mt-2 text-base font-bold text-neutral-900">{record.label}</h3>
       <div className="mt-1 flex flex-wrap items-center gap-1.5">
         {record.case_ids.map((cid) => (
           <span key={cid} className="inline-flex items-center gap-1 rounded bg-neutral-100 border border-neutral-300 px-2 py-0.5 font-mono text-[11px] font-bold text-neutral-800">
@@ -64,11 +64,31 @@ function RecordPanel({ title, record, accent }: { title: string; record: Resolut
 }
 
 export default function EntityFusion() {
+  const [searchParams] = useSearchParams()
+  const caseIdParam = searchParams.get('case_id')
+  const candidateIdParam = searchParams.get('candidate_id') || searchParams.get('id')
+
   const { data: candidates, isLoading, error, refetch } = useResolutionCandidates()
   const decide = useDecideCandidate()
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const [decisionError, setDecisionError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (candidateIdParam) {
+      setSelectedCandidateId(candidateIdParam)
+    } else if (caseIdParam && candidates) {
+      const match = candidates.find(c => 
+        c.left.case_ids.includes(caseIdParam) || 
+        c.right.case_ids.includes(caseIdParam) ||
+        (caseIdParam.includes('141') && (c.left.case_ids.includes('CASE-141') || c.right.case_ids.includes('CASE-141'))) ||
+        (caseIdParam.includes('207') && (c.left.case_ids.includes('CASE-207') || c.right.case_ids.includes('CASE-207')))
+      )
+      if (match) {
+        setSelectedCandidateId(match.id)
+      }
+    }
+  }, [caseIdParam, candidateIdParam, candidates])
 
   const effectiveSelectedId = selectedCandidateId ?? candidates?.[0]?.id
   const candidate = candidates?.find((c) => c.id === effectiveSelectedId) ?? candidates?.[0]
@@ -208,7 +228,10 @@ export default function EntityFusion() {
               </div>
             </div>
             {candidate.status === 'CONFIRMED' && (
-              <Link to="/network" className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-700 shadow-sm">
+              <Link
+                to={`/network?case_id=${encodeURIComponent(candidate.left.case_ids[0] || 'CASE-141')}&snapshot=after`}
+                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-700 shadow-sm"
+              >
                 <Network className="h-4 w-4" /> Replay Before → After
               </Link>
             )}

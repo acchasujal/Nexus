@@ -6,11 +6,27 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 
+/** Returns current sidebar collapsed state by polling the data attribute set by Sidebar.tsx */
+function useSidebarCollapsed() {
+  const [collapsed, setCollapsed] = useState(
+    () => document.documentElement.getAttribute('data-sidebar-collapsed') === 'true'
+  )
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setCollapsed(document.documentElement.getAttribute('data-sidebar-collapsed') === 'true')
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-sidebar-collapsed'] })
+    return () => observer.disconnect()
+  }, [])
+  return collapsed
+}
+
 export function AppShell() {
   const { isAuthenticated } = useAuth()
   const [isSidebarOpen, setSidebarOpen] = useState(false)
   const isOnline = useOnlineStatus()
   const location = useLocation()
+  const sidebarCollapsed = useSidebarCollapsed()
 
   // Live region ref for route change announcements
   const announceRef = useRef<HTMLParagraphElement>(null)
@@ -75,7 +91,10 @@ export function AppShell() {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Layout Area */}
-      <div className="flex-1 flex flex-col lg:pl-sidebar min-w-0">
+      <div
+        className="flex-1 flex flex-col min-w-0 transition-all duration-200"
+        style={{ paddingLeft: `${sidebarCollapsed ? 56 : 240}px` }}
+      >
         <Header onMenuToggle={() => setSidebarOpen(true)} />
 
         {/* Offline Banner */}

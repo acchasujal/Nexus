@@ -18,6 +18,7 @@ import {
 import { useNexusNetwork, useSnapshotDiff, useNexusPath, useEntityNetwork, useCaseNetworkData } from '@/hooks/useNexus'
 import { GlobalNetworkCanvas } from '@/components/nexus/GlobalNetworkCanvas'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
+import { EntityDetailsDrawer } from '@/components/nexus/EntityDetailsDrawer'
 import { DerivationBadge } from '@/components/nexus/DerivationBadge'
 import { PathfinderEntitySelector } from '@/components/nexus/PathfinderEntitySelector'
 import { NetworkDeltaSummary } from '@/components/nexus/NetworkDeltaSummary'
@@ -152,6 +153,8 @@ export default function NetworkExplorer() {
   const nodeIdParam = searchParams.get('node_id')
   const [replay, setReplay] = useState<ReplayState>('before')
   const [edgeId, setEdgeId] = useState<string | null>(null)
+  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(nodeIdParam || null)
+  const [densityMode, setDensityMode] = useState<'ALL' | '1HOP' | '2HOP' | 'CROSS_CASE'>('ALL')
 
   // ── Dynamic Pathfinder & Exploration State ──────────────────────────────────
   const [showPathfinder, setShowPathfinder] = useState(false)
@@ -257,6 +260,36 @@ export default function NetworkExplorer() {
     if (!graph?.edges) return new Map()
     return new Map(graph.edges.map((e) => [e.id, e]))
   }, [graph?.edges])
+
+  /** Apply density/investigator mode filter to reduce graph clutter */
+  const filteredGraph = useMemo(() => {
+    if (!graph || densityMode === 'ALL') return graph
+    const anchorId = effectiveSourceId || nodeIdParam || caseIdParam || ''
+    if (densityMode === 'CROSS_CASE') {
+      // Keep only nodes that appear in more than one case_ids entry
+      const crossCaseNodes = new Set(
+        graph.nodes.filter((n) => n.case_ids && n.case_ids.length > 1).map((n) => n.id)
+      )
+      const edges = graph.edges.filter(
+        (e) => crossCaseNodes.has(e.source_id) && crossCaseNodes.has(e.target_id)
+      )
+      const nodeIds = new Set([...edges.map((e) => e.source_id), ...edges.map((e) => e.target_id)])
+      return { ...graph, nodes: graph.nodes.filter((n) => nodeIds.has(n.id)), edges, total_nodes: nodeIds.size, total_edges: edges.length }
+    }
+    if (densityMode === '1HOP' && anchorId) {
+      const directEdges = graph.edges.filter((e) => e.source_id === anchorId || e.target_id === anchorId)
+      const nodeIds = new Set([anchorId, ...directEdges.map((e) => e.source_id), ...directEdges.map((e) => e.target_id)])
+      return { ...graph, nodes: graph.nodes.filter((n) => nodeIds.has(n.id)), edges: directEdges, total_nodes: nodeIds.size, total_edges: directEdges.length }
+    }
+    if (densityMode === '2HOP' && anchorId) {
+      const hop1Edges = graph.edges.filter((e) => e.source_id === anchorId || e.target_id === anchorId)
+      const hop1Ids = new Set([anchorId, ...hop1Edges.map((e) => e.source_id), ...hop1Edges.map((e) => e.target_id)])
+      const hop2Edges = graph.edges.filter((e) => hop1Ids.has(e.source_id) || hop1Ids.has(e.target_id))
+      const nodeIds = new Set([...hop1Ids, ...hop2Edges.map((e) => e.source_id), ...hop2Edges.map((e) => e.target_id)])
+      return { ...graph, nodes: graph.nodes.filter((n) => nodeIds.has(n.id)), edges: hop2Edges, total_nodes: nodeIds.size, total_edges: hop2Edges.length }
+    }
+    return graph
+  }, [graph, densityMode, effectiveSourceId, nodeIdParam, caseIdParam])
 
   // Handler to swap source & target
   const handleSwap = () => {
@@ -629,8 +662,26 @@ export default function NetworkExplorer() {
         <>
           <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-neutral-600 font-medium">
             <span data-testid="snapshot-label">
-              Snapshot <code className="text-neutral-900 font-semibold">{graph.snapshot_id}</code> · {graph.total_nodes} nodes · {graph.total_edges} links
+              Snapshot <code className="text-neutral-900 font-semibold">{filteredGraph?.snapshot_id ?? graph.snapshot_id}</code> · {filteredGraph?.total_nodes ?? graph.total_nodes} nodes · {filteredGraph?.total_edges ?? graph.total_edges} links
             </span>
+            <div className="flex items-center gap-1.5" role="group" aria-label="Graph density filter">
+              {(
+                [['ALL', 'All Nodes'], ['1HOP', '1-Hop'], ['2HOP', '2-Hop'], ['CROSS_CASE', 'Cross-Case']] as const
+              ).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  onClick={() => setDensityMode(mode)}
+                  title={mode === 'CROSS_CASE' ? 'Show only nodes shared across multiple cases' : mode === '1HOP' ? 'Show direct neighbours of the anchor node' : mode === '2HOP' ? 'Show up to 2-hop neighbours' : 'Show full graph'}
+                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border transition-colors ${
+                    densityMode === mode
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             {replay === 'after' && diff.data && (
               <span className="flex items-center gap-2">
                 <DerivationBadge klass="DERIVED" size="xs" /> Only the delta from resolution is highlighted
@@ -643,7 +694,7 @@ export default function NetworkExplorer() {
             )}
           </div>
           <GlobalNetworkCanvas
-            graph={graph}
+            graph={filteredGraph ?? graph}
             diff={replay === 'after' ? diff.data ?? null : null}
             highlightDelta={replay === 'after'}
             initialCaseFilter={caseIdParam}
@@ -659,11 +710,20 @@ export default function NetworkExplorer() {
               setShowPathfinder(true)
             }}
             onEdgeSelect={setEdgeId}
+            onNodeSelect={(nId) => setSelectedEntityId(nId)}
           />
         </>
       )}
 
       <EvidenceDrawer relationshipId={edgeId} onClose={() => setEdgeId(null)} />
+      <EntityDetailsDrawer
+        entityId={selectedEntityId}
+        onClose={() => setSelectedEntityId(null)}
+        onFocusEntity={(nId) => {
+          setSourceId(nId)
+          setShowPathfinder(true)
+        }}
+      />
     </div>
   )
 }
