@@ -50,7 +50,7 @@ describe('Dynamic Pathfinder Graph Synchronization', () => {
     )
 
     // Open Pathfinder
-    const openPathfinderBtn = screen.getByRole('button', { name: /Open Pathfinder/i })
+    const openPathfinderBtn = screen.getByRole('button', { name: /Investigative Pathfinder/i })
     fireEvent.click(openPathfinderBtn)
 
     // Select Source Entity (person-0040 / Sunil Shetty)

@@ -895,7 +895,11 @@ def create_nexus_router() -> APIRouter:
         if resp.status.value == "FAILED":
             raise HTTPException(status_code=422, detail="Fatal validation error during ingestion.")
 
-        graph_ready = resp.status.value != "FAILED" and (resp.summary.nodes_created > 0 or resp.summary.relationships_created > 0)
+        graph_ready = resp.status.value != "FAILED" and (
+            resp.summary.nodes_created > 0 or 
+            resp.summary.relationships_created > 0 or
+            resp.summary.duplicates > 0
+        )
 
         # Map to the strict required format
         return NexusIngestResponse(
