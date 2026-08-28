@@ -162,6 +162,28 @@ export const nexusHandlers = [
       })
     }
 
+    // Dynamic mock path for Sunil Shetty <-> Sunil Gupta
+    if (
+      (source === 'person-0040' && target === 'person-0037') ||
+      (source === 'person-0037' && target === 'person-0040')
+    ) {
+      const srcId = source
+      const tgtId = target
+      const isForward = srcId === 'person-0040'
+      const nodes = isForward ? ['person-0040', 'person-0037'] : ['person-0037', 'person-0040']
+      const labels = isForward ? ['Sunil Shetty', 'Sunil Gupta'] : ['Sunil Gupta', 'Sunil Shetty']
+      return HttpResponse.json({
+        found: true,
+        source_id: srcId,
+        target_id: tgtId,
+        node_ids: nodes,
+        edge_ids: ['e-40-37'],
+        hops: 1,
+        explanation: `Discovered 1-hop evidence connection: ${labels.join(' ➔ ')}.`,
+        evidence_ids: ['EV-2026-4037'],
+      })
+    }
+
     const net = networkFor(isResolved() ? 'after' : 'before')
     const nodesById = new Map(net.nodes.map((n) => [n.id, n]))
 
@@ -448,6 +470,20 @@ export const nexusHandlers = [
         properties: { fir_number: 'FIR-2026-101', title: 'Narcotics Trafficking & Money Laundering' },
       },
       {
+        id: 'person-0040',
+        entity_type: 'Person',
+        label: 'Sunil Shetty',
+        case_ids: ['case-0040'],
+        properties: { full_name: 'Sunil Shetty', role: 'Suspect', district: 'Bengaluru' },
+      },
+      {
+        id: 'person-0037',
+        entity_type: 'Person',
+        label: 'Sunil Gupta',
+        case_ids: ['case-0040'],
+        properties: { full_name: 'Sunil Gupta', role: 'Associate', district: 'Bengaluru' },
+      },
+      {
         id: 'case-0049',
         entity_type: 'Case',
         label: 'FIR-2026-984 — Extortion',
@@ -564,6 +600,48 @@ export const nexusHandlers = [
         ],
         total_nodes: 3,
         total_edges: 2,
+      })
+    }
+    if (id === 'person-0040' || id === 'person-0037') {
+      return HttpResponse.json({
+        nodes: [
+          {
+            id: 'person-0040',
+            entity_type: 'Person',
+            label: 'Sunil Shetty',
+            properties: { full_name: 'Sunil Shetty', role: 'Suspect', district: 'Bengaluru' },
+            degree: 1,
+            confidence: 1.0,
+          },
+          {
+            id: 'person-0037',
+            entity_type: 'Person',
+            label: 'Sunil Gupta',
+            properties: { full_name: 'Sunil Gupta', role: 'Associate', district: 'Bengaluru' },
+            degree: 1,
+            confidence: 1.0,
+          },
+        ],
+        edges: [
+          {
+            id: 'e-40-37',
+            source_id: 'person-0040',
+            target_id: 'person-0037',
+            edge_type: 'CONNECTED_TO',
+            weight: 1.0,
+            provenance: {
+              source_type: 'INTEL_REPORT',
+              source_id: 'INTEL-2026-4037',
+              timestamp: '2026-03-01T10:00:00Z',
+              extracted_fact: 'Direct financial connection between Sunil Shetty and Sunil Gupta',
+              derivation_method: 'DIRECT',
+              confidence: 1.0,
+            },
+            properties: {},
+          },
+        ],
+        total_nodes: 2,
+        total_edges: 1,
       })
     }
 

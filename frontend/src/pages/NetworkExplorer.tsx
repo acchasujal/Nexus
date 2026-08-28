@@ -71,6 +71,80 @@ function toNexusGraph(res: NetworkGraphResponse, snapshotId: string): NexusNetwo
   }
 }
 
+function mergeNetworkGraphs(
+  graphs: (NetworkGraphResponse | undefined | null)[],
+  pathData?: NexusPathResponse | null,
+  snapshotId: string = 'ACTIVE-INVESTIGATION'
+): NexusNetworkResponse | null {
+  const validGraphs = graphs.filter((g): g is NetworkGraphResponse => Boolean(g && (g.nodes?.length || 0) > 0))
+  if (validGraphs.length === 0 && (!pathData || !pathData.found || pathData.node_ids.length === 0)) {
+    return null
+  }
+
+  const nodesMap = new Map<string, NexusGraphNode>()
+  const edgesMap = new Map<string, NexusGraphEdge>()
+
+  for (const g of validGraphs) {
+    const nexusG = toNexusGraph(g, snapshotId)
+    for (const node of nexusG.nodes) {
+      if (!nodesMap.has(node.id)) {
+        nodesMap.set(node.id, node)
+      }
+    }
+    for (const edge of nexusG.edges) {
+      if (!edgesMap.has(edge.id)) {
+        edgesMap.set(edge.id, edge)
+      }
+    }
+  }
+
+  // If path traversal returned nodes/edges, ensure they are present in the canvas
+  if (pathData && pathData.found) {
+    for (const nid of pathData.node_ids) {
+      if (!nodesMap.has(nid)) {
+        nodesMap.set(nid, {
+          id: nid,
+          entity_type: 'Person',
+          label: nid,
+          case_ids: [],
+          properties: {},
+        })
+      }
+    }
+    for (let i = 0; i < pathData.node_ids.length - 1; i++) {
+      const u = pathData.node_ids[i]
+      const v = pathData.node_ids[i + 1]
+      const edgeId = pathData.edge_ids[i] || `edge-${u}-${v}`
+      if (!edgesMap.has(edgeId)) {
+        edgesMap.set(edgeId, {
+          id: edgeId,
+          source_id: u,
+          target_id: v,
+          edge_type: 'CONNECTED_TO',
+          weight: 1.0,
+          confidence: 1.0,
+          derivation_class: 'FACT',
+          recorded_at: new Date().toISOString(),
+          case_ids: [],
+          properties: {},
+        })
+      }
+    }
+  }
+
+  const allNodes = Array.from(nodesMap.values())
+  const allEdges = Array.from(edgesMap.values())
+
+  return {
+    snapshot_id: snapshotId,
+    state: 'before',
+    nodes: allNodes,
+    edges: allEdges,
+    total_nodes: allNodes.length,
+    total_edges: allEdges.length,
+  }
+}
+
 export default function NetworkExplorer() {
   const [searchParams] = useSearchParams()
   const caseIdParam = searchParams.get('case_id')
@@ -101,35 +175,76 @@ export default function NetworkExplorer() {
   // Context classification
   const isEntityScoped = Boolean(nodeIdParam)
   const isCaseScoped = Boolean(caseIdParam)
-  const isDemoCase = isCaseScoped && (caseIdParam === 'CASE-141' || caseIdParam === 'CASE-207')
-  const hasActiveGraph = Boolean(caseIdParam || nodeIdParam || isExploring || (sourceId && targetId))
+  const isExplicitDemo =
+    (caseIdParam === 'CASE-141' || caseIdParam === 'CASE-207') ||
+    (sourceId === 'CASE-141' && targetId === 'CASE-207') ||
+    (sourceId === 'CASE-207' && targetId === 'CASE-141')
+
+  const effectiveSourceId = sourceId || nodeIdParam || ''
+  const effectiveTargetId = targetId || ''
+  const hasSelection = Boolean(isExplicitDemo || isCaseScoped || isEntityScoped || effectiveSourceId || effectiveTargetId)
 
   // Network queries
-  const entityQuery = useEntityNetwork(nodeIdParam, 2, isEntityScoped)
-  const caseQuery = useCaseNetworkData(caseIdParam, 2, isCaseScoped && !isDemoCase)
-  const demoQuery = useNexusNetwork(replay, (isCaseScoped && isDemoCase) || (!isEntityScoped && !isCaseScoped && hasActiveGraph))
-  const diff = useSnapshotDiff(replay === 'after' && demoQuery.data?.state === 'after')
-
-  const activeQuery = isEntityScoped ? entityQuery : (isCaseScoped && !isDemoCase ? caseQuery : demoQuery)
-
-  const graph: NexusNetworkResponse | null = useMemo(() => {
-    if (isEntityScoped) {
-      if (!entityQuery.data || entityQuery.data.total_nodes === 0) return null
-      return toNexusGraph(entityQuery.data, `ENTITY-${nodeIdParam}`)
-    }
-    if (isCaseScoped && !isDemoCase) {
-      if (!caseQuery.data || caseQuery.data.total_nodes === 0) return null
-      return toNexusGraph(caseQuery.data, `CASE-${caseIdParam}`)
-    }
-    if (hasActiveGraph && demoQuery.data) {
-      return demoQuery.data
-    }
-    return null
-  }, [isEntityScoped, isCaseScoped, isDemoCase, nodeIdParam, caseIdParam, entityQuery.data, caseQuery.data, demoQuery.data, hasActiveGraph])
+  const sourceEntityQuery = useEntityNetwork(
+    effectiveSourceId,
+    2,
+    Boolean(effectiveSourceId && !isExplicitDemo && (!isCaseScoped || isEntityScoped))
+  )
+  const targetEntityQuery = useEntityNetwork(
+    effectiveTargetId,
+    2,
+    Boolean(effectiveTargetId && effectiveTargetId !== effectiveSourceId && !isExplicitDemo)
+  )
+  const caseQuery = useCaseNetworkData(
+    caseIdParam,
+    2,
+    Boolean(isCaseScoped && !isExplicitDemo)
+  )
+  const demoQuery = useNexusNetwork(
+    replay,
+    isExplicitDemo
+  )
+  const diff = useSnapshotDiff(replay === 'after' && isExplicitDemo && demoQuery.data?.state === 'after')
 
   const pathQuery = useNexusPath(sourceId, targetId, maxHops, showPathfinder && Boolean(sourceId && targetId))
 
-  const afterUnavailable = !isEntityScoped && !isCaseScoped && replay === 'after' && demoQuery.error
+  const activeQuery = isExplicitDemo
+    ? demoQuery
+    : isCaseScoped && !isEntityScoped
+    ? caseQuery
+    : sourceEntityQuery
+
+  const graph: NexusNetworkResponse | null = useMemo(() => {
+    if (isExplicitDemo) {
+      return demoQuery.data ?? null
+    }
+    if (isCaseScoped && !isEntityScoped) {
+      if (!caseQuery.data || caseQuery.data.total_nodes === 0) return null
+      return toNexusGraph(caseQuery.data, `CASE-${caseIdParam}`)
+    }
+    if (effectiveSourceId || effectiveTargetId) {
+      return mergeNetworkGraphs(
+        [sourceEntityQuery.data, targetEntityQuery.data],
+        pathQuery.data,
+        effectiveSourceId ? `ENTITY-${effectiveSourceId}` : 'PATHFINDER-GRAPH'
+      )
+    }
+    return null
+  }, [
+    isExplicitDemo,
+    demoQuery.data,
+    isCaseScoped,
+    isEntityScoped,
+    caseIdParam,
+    caseQuery.data,
+    effectiveSourceId,
+    effectiveTargetId,
+    sourceEntityQuery.data,
+    targetEntityQuery.data,
+    pathQuery.data,
+  ])
+
+  const afterUnavailable = isExplicitDemo && replay === 'after' && demoQuery.error
 
   // Lookups for labels and edges
   const nodesById = useMemo(() => {
@@ -438,36 +553,24 @@ export default function NetworkExplorer() {
         </div>
       )}
 
-      {hasActiveGraph && activeQuery.isLoading && <LoadingSkeleton layout="detail" />}
-      {hasActiveGraph && activeQuery.isError && !isEntityScoped && !isCaseScoped && !afterUnavailable && (
+      {hasSelection && activeQuery.isLoading && <LoadingSkeleton layout="detail" />}
+      {hasSelection && activeQuery.isError && isExplicitDemo && !afterUnavailable && (
         <ErrorState message="Failed to load the investigation network." onRetry={() => void activeQuery.refetch()} />
       )}
 
-      {isEntityScoped && !activeQuery.isLoading && (activeQuery.isError || !entityQuery.data || entityQuery.data.total_nodes === 0) && (
+      {hasSelection && !isExplicitDemo && !activeQuery.isLoading && !graph && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900 shadow-sm space-y-2">
           <div className="flex items-center gap-2 font-bold text-base text-amber-950">
             <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
-            No graph relationships found for entity: <span className="font-mono">{nodeIdParam}</span>
+            No graph relationships found for {isCaseScoped ? 'case' : 'entity'}: <span className="font-mono">{effectiveSourceId || caseIdParam || 'selected entity'}</span>
           </div>
           <p className="text-amber-800">
-            No recorded relationships or multi-hop connections are available for this entity in the active intelligence repository.
+            No recorded relationships or multi-hop connections are available for this selection in the active intelligence repository.
           </p>
         </div>
       )}
 
-      {isCaseScoped && !isDemoCase && !activeQuery.isLoading && (activeQuery.isError || !caseQuery.data || caseQuery.data.total_nodes === 0) && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900 shadow-sm space-y-2">
-          <div className="flex items-center gap-2 font-bold text-base text-amber-950">
-            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
-            No graph relationships found for case: <span className="font-mono">{caseIdParam}</span>
-          </div>
-          <p className="text-amber-800">
-            No recorded relationships or multi-hop connections are available for this case in the active intelligence repository.
-          </p>
-        </div>
-      )}
-
-      {!hasActiveGraph && (
+      {!hasSelection && (
         <div className="rounded-2xl border border-dashed border-neutral-300 bg-white/80 p-10 sm:p-14 text-center space-y-4 shadow-2xs">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 shadow-xs">
             <Network className="h-6 w-6" />
