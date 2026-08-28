@@ -25,6 +25,9 @@ from backend.app.api.system_routes import create_system_router
 from backend.app.config import Settings, get_settings
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.db.in_memory import InMemoryBackendRepository
+from backend.app.db.ingestion.pipeline import CsvIngestionPipeline
+from backend.app.services.audit_service import AuditService
+from backend.app.services.ingestion_service import IngestionService
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +61,9 @@ def create_app(
     # Store repository on app.state for dependency injection
     app.state.repository = repository
     app.state.settings = cfg
+    
+    # Store shared pipeline instance to maintain resolution registries
+    app.state.pipeline = CsvIngestionPipeline()
 
     # ── Middleware and error handlers ────────────────────────────────────────
     install_error_handlers(app)
@@ -85,6 +91,14 @@ def create_app(
     # Graph intelligence routes
     graph_repo = GraphRepository(repository.to_graph_store())
     app.state.graph_repo = graph_repo
+    
+    app.state.ingestion_service = IngestionService(
+        repository=repository,
+        graph_repo=graph_repo,
+        audit_service=AuditService(repository),
+        pipeline=app.state.pipeline,
+    )
+
     app.include_router(
         create_graph_router(graph_repo),
         prefix="/api/v1",

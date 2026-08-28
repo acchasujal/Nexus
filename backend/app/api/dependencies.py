@@ -18,6 +18,7 @@ from backend.app.services.copilot_service import CopilotService
 from backend.app.services.entity_service import EntityService
 from backend.app.services.evidence_service import EvidenceService
 from backend.app.services.export_service import ExportService
+from backend.app.services.ingestion_service import IngestionService
 
 
 def get_settings_dep(request: Request) -> Settings:
@@ -82,3 +83,8 @@ def get_export_service(
 ) -> ExportService:
     evidence_svc = EvidenceService(repo, audit_svc)
     return ExportService(repo, audit_svc, evidence_svc)
+
+
+def get_ingestion_service(request: Request) -> IngestionService:
+    """Return the application-level shared IngestionService instance."""
+    return request.app.state.ingestion_service  # type: ignore[no-any-return]
