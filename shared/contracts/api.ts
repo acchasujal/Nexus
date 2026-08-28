@@ -515,11 +515,20 @@ export interface IngestionBatchResponse {
   graph_updated: boolean
 }
 
-/** @deprecated M4 Mock Response */
 export interface NexusIngestResponse {
+  status: string
   batch_id: string
-  source_type: string
-  ingested_count: number
-  extraction_summary: { persons: number; phones: number; accounts: number; events: number; relationships: number }
-  snapshot_id: string
+  files_processed: string[]
+  received_rows: number
+  accepted_rows: number
+  rejected_rows: number
+  duplicates: number
+  conflicts: number
+  warnings: number
+  nodes_extracted: number
+  relations_formed: number
+  source_records: number
+  review_required: number
+  provenance_completeness: number
+  graph_ready: boolean
 }

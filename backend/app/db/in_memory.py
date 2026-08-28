@@ -67,6 +67,7 @@ class InMemoryBackendRepository:
         self.source_records: dict[str, dict[str, Any]] = {}
         self.audit_events: list[dict[str, Any]] = []
         self.review_candidates: dict[str, dict[str, Any]] = {}
+        self.batches: dict[str, dict[str, Any]] = {}
         self.state_path = state_path
 
         self._load_artifact(artifact_path or self._default_artifact_path())
@@ -81,6 +82,7 @@ class InMemoryBackendRepository:
         self.source_records.clear()
         self.audit_events.clear()
         self.review_candidates.clear()
+        self.batches.clear()
         self._load_artifact(self._default_artifact_path())
         if self.state_path and self.state_path.exists():
             try:
@@ -157,18 +159,25 @@ class InMemoryBackendRepository:
         edges_created = 0
         edges_reused = 0
 
+        batch_id = bundle.batch_id
+        if batch_id not in self.batches:
+            self.batches[batch_id] = {"nodes": [], "edges": []}
+
         for node in bundle.nodes:
             nid = str(node.id)
             if nid in self.nodes:
                 nodes_reused += 1
                 self.nodes[nid].setdefault("properties", {}).update(node.properties)
+                self.batches[batch_id]["nodes"].append(self.nodes[nid])
             else:
                 nodes_created += 1
-                self.nodes[nid] = {
+                new_node = {
                     "id": nid,
                     "entity_type": node.entity_type.value,
                     "properties": dict(node.properties),
                 }
+                self.nodes[nid] = new_node
+                self.batches[batch_id]["nodes"].append(new_node)
 
         existing_edge_ids = {str(e.get("id")) for e in self.edges if "id" in e}
         for edge in bundle.relationships:
@@ -192,11 +201,13 @@ class InMemoryBackendRepository:
                 for existing in self.edges:
                     if str(existing.get("id")) == eid:
                         existing.update(edge_data)
+                        self.batches[batch_id]["edges"].append(existing)
                         break
             else:
                 edges_created += 1
                 self.edges.append(edge_data)
                 existing_edge_ids.add(eid)
+                self.batches[batch_id]["edges"].append(edge_data)
 
         for sr in bundle.source_records:
             srid = str(sr.id)
@@ -205,6 +216,10 @@ class InMemoryBackendRepository:
         self._rebuild_indexes()
         self._save_state()
         return nodes_created, nodes_reused, edges_created, edges_reused
+
+    def get_batch_network(self, batch_id: str) -> dict[str, Any] | None:
+        """Return the isolated nodes and edges for a specific batch."""
+        return self.batches.get(batch_id)
 
     def store_review_candidates(self, candidates: list[EntityReviewCandidate]) -> None:
         """Store entity review candidates from an ingestion batch."""

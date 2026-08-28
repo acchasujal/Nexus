@@ -256,11 +256,21 @@ class NexusIngestRequest(BaseModel):
 
 
 class NexusIngestResponse(BaseModel):
+    status: str
     batch_id: str
-    source_type: str
-    ingested_count: int = 3
-    extraction_summary: ExtractionSummary
-    snapshot_id: str
+    files_processed: list[str]
+    received_rows: int
+    accepted_rows: int
+    rejected_rows: int
+    duplicates: int
+    conflicts: int
+    warnings: int
+    nodes_extracted: int
+    relations_formed: int
+    source_records: int
+    review_required: int
+    provenance_completeness: float
+    graph_ready: bool
 
 
 # ── Router Definition ──────────────────────────────────────────────────────────
@@ -270,29 +280,28 @@ def create_nexus_router() -> APIRouter:
 
     @router.post("/nexus/ingest", response_model=NexusIngestResponse)
     async def ingest_csv_files(
-        files: list[UploadFile] = File(...),
+        fir: UploadFile | None = File(None),
+        cdr: UploadFile | None = File(None),
+        bank: UploadFile | None = File(None),
+        intelligence: UploadFile | None = File(None),
         principal: Principal = Depends(get_principal),
         ingestion_service: IngestionService = Depends(get_ingestion_service),
     ) -> NexusIngestResponse:
-        if not files:
-            raise HTTPException(status_code=400, detail="No files provided.")
+        
+        uploaded_files = []
+        if fir: uploaded_files.append((fir, SourceType.FIR, "fir_records.csv"))
+        if cdr: uploaded_files.append((cdr, SourceType.CDR, "cdr_records.csv"))
+        if bank: uploaded_files.append((bank, SourceType.BANK_TXN, "bank_transactions.csv"))
+        if intelligence: uploaded_files.append((intelligence, SourceType.INTEL_REPORT, "intelligence_records.csv"))
+
+        if not any((fir, cdr, bank, intelligence)):
+            raise HTTPException(status_code=422, detail="Upload at least one CSV file.")
 
         sources: list[UploadedSource] = []
-        for uf in files:
+        for uf, stype, fixed_name in uploaded_files:
             if not uf.filename or not uf.filename.lower().endswith(".csv"):
                 raise HTTPException(status_code=415, detail=f"File {uf.filename} must be a .csv file.")
             
-            # Infer source type for legacy endpoint by looking at filename
-            fname = uf.filename.lower()
-            if "fir" in fname:
-                stype = SourceType.FIR
-            elif "cdr" in fname:
-                stype = SourceType.CDR
-            elif "bank" in fname:
-                stype = SourceType.BANK_TXN
-            else:
-                stype = SourceType.INTEL_REPORT
-                
             content = await uf.read()
             if len(content) > 5 * 1024 * 1024:
                 raise HTTPException(status_code=413, detail=f"File {uf.filename} exceeds 5MB limit.")
@@ -301,7 +310,7 @@ def create_nexus_router() -> APIRouter:
                 
             sources.append(UploadedSource(
                 source_type=stype,
-                file_name=uf.filename,
+                file_name=fixed_name,
                 data=content
             ))
 
@@ -317,18 +326,74 @@ def create_nexus_router() -> APIRouter:
         if resp.status.value == "FAILED":
             raise HTTPException(status_code=422, detail="Fatal validation error during ingestion.")
 
+        graph_ready = resp.status.value != "FAILED" and (resp.summary.nodes_created > 0 or resp.summary.relationships_created > 0)
+
+        # Map to the strict required format
         return NexusIngestResponse(
+            status=resp.status.value,
             batch_id=resp.batch_id,
-            source_type=sources[0].source_type.value,
-            ingested_count=resp.summary.received,
-            extraction_summary=ExtractionSummary(
-                persons=resp.summary.nodes_created,
-                phones=0,
-                accounts=0,
-                events=0,
-                relationships=resp.summary.relationships_created
-            ),
-            snapshot_id="SNAP-BASE-001",
+            files_processed=[f.file_name for f in resp.files_processed],
+            received_rows=resp.summary.received,
+            accepted_rows=resp.summary.accepted,
+            rejected_rows=resp.summary.rejected,
+            duplicates=resp.summary.duplicates,
+            conflicts=resp.summary.conflicts,
+            warnings=resp.summary.warnings,
+            nodes_extracted=resp.summary.nodes_created,
+            relations_formed=resp.summary.relationships_created,
+            source_records=resp.summary.source_records,
+            review_required=resp.summary.review_required,
+            provenance_completeness=100.0,
+            graph_ready=graph_ready,
+        )
+
+    @router.get("/nexus/batches/{batch_id}/network", response_model=NexusNetworkResponse)
+    def get_batch_network(
+        batch_id: str,
+        principal: Principal = Depends(get_principal),
+        audit: AuditService = Depends(get_audit_service),
+        repo: InMemoryBackendRepository = Depends(get_repository),
+    ) -> NexusNetworkResponse:
+        batch_data = repo.get_batch_network(batch_id)
+        if not batch_data:
+            raise HTTPException(status_code=404, detail="Batch not found")
+
+        nodes = []
+        for n in batch_data.get("nodes", []):
+            props = n.get("properties", {})
+            case_ids = [str(props.get("case_id"))] if props.get("case_id") else []
+            nodes.append(NexusGraphNode(
+                id=n["id"],
+                entity_type=n.get("entity_type", "Person"),
+                label=str(props.get("full_name") or props.get("name") or n["id"]),
+                case_ids=case_ids,
+                properties=props,
+                badges=n.get("badges", []),
+            ))
+
+        edges = []
+        for e in batch_data.get("edges", []):
+            eid = e.get("id") or f"edge-{e['source_id']}-{e['target_id']}"
+            edges.append(NexusGraphEdge(
+                id=eid,
+                source_id=e["source_id"],
+                target_id=e["target_id"],
+                edge_type=e.get("edge_type", "UNKNOWN"),
+                weight=e.get("confidence", 1.0),
+                confidence=e.get("confidence", 1.0),
+                derivation_class=e.get("derivation_class", "FACT"),
+                recorded_at=e.get("start_time") or datetime.now(timezone.utc).isoformat(),
+                case_ids=[],
+                properties=e.get("properties", {}),
+            ))
+
+        return NexusNetworkResponse(
+            snapshot_id=batch_id,
+            state="after",
+            nodes=nodes,
+            edges=edges,
+            total_nodes=len(nodes),
+            total_edges=len(edges),
         )
 
     @router.post("/nexus/demo/reset")
@@ -379,7 +444,7 @@ def create_nexus_router() -> APIRouter:
             results.append(ResolutionCandidate(
                 id=c_id,
                 score=c_data.get("confidence", 0.0),
-                status=c_data.get("status", "PENDING"),
+                status="PENDING" if c_data.get("status") in ("MATCHED", "PROBABLE_MATCH", "REVIEW_REQUIRED", "NOT_MATCHED") else c_data.get("status", "PENDING"),
                 left=make_rec(left_node_id, source_ids),
                 right=make_rec(right_node_id, []),
                 reasons=reasons,

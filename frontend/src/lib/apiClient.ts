@@ -68,10 +68,14 @@ export async function apiFetch<T>(
     fullUrl = `${fullUrl}${separator}role=${encodeURIComponent(savedRole)}`
   }
 
-  const isFormData = typeof FormData !== 'undefined' && 
-    (options?.body instanceof FormData || options?.body?.constructor?.name === 'FormData')
+  const isFormData = options?.body instanceof FormData
+
   const headers: Record<string, string> = {
-    ...(isMutating && !isFormData ? { 'Content-Type': 'application/json' } : {}),
+    ...(
+      isMutating && !isFormData
+        ? { 'Content-Type': 'application/json' }
+        : {}
+    ),
     ...(isMutating ? { 'X-Role': savedRole } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options?.headers as Record<string, string> | undefined),
@@ -168,13 +172,20 @@ export const apiClient = {
   },
 
   // ── NEXUS prototype endpoints (frozen M4 contract) ──────────────────────
-  nexusIngest: (files: File[]) => {
+  nexusIngest: (files: { fir?: File, cdr?: File, bank?: File, intelligence?: File }) => {
     const formData = new FormData()
-    files.forEach(f => formData.append('files', f))
+    if (files.fir) formData.append('fir', files.fir)
+    if (files.cdr) formData.append('cdr', files.cdr)
+    if (files.bank) formData.append('bank', files.bank)
+    if (files.intelligence) formData.append('intelligence', files.intelligence)
+    
     return apiFetch<NexusIngestResponse>('/api/v1/nexus/ingest', {
       method: 'POST',
       body: formData,
     })
+  },
+  getBatchNetwork: (batchId: string) => {
+    return apiFetch<NexusNetworkResponse>(`/api/v1/nexus/batches/${batchId}/network`)
   },
   getResolutionCandidates: () => {
     return apiFetch<ResolutionCandidate[]>('/api/v1/nexus/resolution/candidates')

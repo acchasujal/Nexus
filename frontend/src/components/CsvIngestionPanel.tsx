@@ -21,7 +21,6 @@ import {
 } from 'lucide-react'
 import { useIngestFiles } from '@/hooks/useIngestion'
 import { DataTable, type ColumnDef } from '@/components/DataTable'
-import type { IngestionParseIssue } from '@shared/contracts/api'
 
 type FileSlotType = 'fir' | 'cdr' | 'bank' | 'intelligence'
 
@@ -34,9 +33,9 @@ interface FileSlot {
 }
 
 const FILE_SLOTS: FileSlot[] = [
-  { id: 'fir', label: 'FIR & Cases', icon: ShieldAlert, required: true, description: 'Base case data and suspect entities' },
-  { id: 'cdr', label: 'Telecom CDR', icon: Phone, required: true, description: 'Call Detail Records for network links' },
-  { id: 'bank', label: 'Bank Transactions', icon: Landmark, required: true, description: 'Financial flow and account entities' },
+  { id: 'fir', label: 'FIR & Cases', icon: ShieldAlert, required: false, description: 'Base case data and suspect entities' },
+  { id: 'cdr', label: 'Telecom CDR', icon: Phone, required: false, description: 'Call Detail Records for network links' },
+  { id: 'bank', label: 'Bank Transactions', icon: Landmark, required: false, description: 'Financial flow and account entities' },
   { id: 'intelligence', label: 'Intelligence (Optional)', icon: FileText, required: false, description: 'Custom watchlists and OSINT reports' },
 ]
 
@@ -66,9 +65,6 @@ export function CsvIngestionPanel() {
 
   const [stageIndex, setStageIndex] = useState(0)
   const { mutate: ingestFiles, isPending, isSuccess, data: result, error: submitError, reset } = useIngestFiles()
-
-  const [issueSeverityFilter, setIssueSeverityFilter] = useState<string>('all')
-  const [issueSearch, setIssueSearch] = useState<string>('')
 
   // Simulate progress steps while pending
   useEffect(() => {
@@ -121,9 +117,9 @@ export function CsvIngestionPanel() {
   }
 
   const isFormValid = useMemo(() => {
-    const hasRequiredFiles = FILE_SLOTS.filter(s => s.required).every(s => files[s.id] !== null)
+    const hasAtLeastOneFile = Boolean(files.fir || files.cdr || files.bank || files.intelligence)
     const hasNoErrors = Object.values(errors).every(e => e === null)
-    return hasRequiredFiles && hasNoErrors
+    return hasAtLeastOneFile && hasNoErrors
   }, [files, errors])
 
   const onSubmit = () => {
@@ -140,8 +136,6 @@ export function CsvIngestionPanel() {
     reset()
     setFiles({ fir: null, cdr: null, bank: null, intelligence: null })
     setErrors({ fir: null, cdr: null, bank: null, intelligence: null })
-    setIssueSeverityFilter('all')
-    setIssueSearch('')
   }
 
   // File Selection View
@@ -154,7 +148,7 @@ export function CsvIngestionPanel() {
             Upload Evidence & Intelligence
           </h2>
           <p className="text-sm text-neutral-600 mt-1">
-            Provide the required CSV extracts to populate the investigation workspace. The system will automatically map identities, discover graph relationships, and check for conflicts.
+            Select one or more data sources. Only one CSV file is required. The system will automatically map identities, discover graph relationships, and check for conflicts.
           </p>
         </div>
 
@@ -264,7 +258,7 @@ export function CsvIngestionPanel() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-neutral-100">
           <div className="text-xs text-neutral-500 flex items-center gap-1.5">
             <Info className="h-4 w-4" />
-            Files must be valid CSV format, up to 5MB each.
+            <span className="font-bold">AT LEAST ONE REQUIRED.</span> Files must be valid CSV format, up to 5MB each.
           </div>
           <button
             onClick={onSubmit}
@@ -280,7 +274,7 @@ export function CsvIngestionPanel() {
             ) : (
               <>
                 <UploadCloud className="h-4 w-4" />
-                Validate and Ingest Files
+                Validate, Ingest & Build Graph
               </>
             )}
           </button>
@@ -290,42 +284,7 @@ export function CsvIngestionPanel() {
   }
 
   // Success View
-  const { summary, parse_issues, status, batch_id } = result
-
-  const filteredIssues = parse_issues.filter(issue => {
-    const matchesSeverity = issueSeverityFilter === 'all' || issue.severity === issueSeverityFilter
-    const matchesSearch = !issueSearch || 
-      issue.code.toLowerCase().includes(issueSearch.toLowerCase()) ||
-      issue.message.toLowerCase().includes(issueSearch.toLowerCase())
-    return matchesSeverity && matchesSearch
-  })
-
-  const columns: ColumnDef<IngestionParseIssue>[] = [
-    {
-      header: 'Severity',
-      accessorKey: 'severity',
-      cell: (row) => {
-        let color = 'bg-neutral-100 text-neutral-800'
-        if (row.severity === 'ERROR') color = 'bg-red-100 text-red-800'
-        if (row.severity === 'WARNING') color = 'bg-amber-100 text-amber-800'
-        if (row.severity === 'INFO') color = 'bg-blue-100 text-blue-800'
-        
-        return (
-          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${color}`}>
-            {row.severity}
-          </span>
-        )
-      }
-    },
-    { header: 'File', accessorKey: 'file_name' },
-    { 
-      header: 'Location', 
-      accessorKey: 'row_number',
-      cell: (row) => row.row_number ? `Row ${row.row_number}` : 'Global'
-    },
-    { header: 'Code', accessorKey: 'code' },
-    { header: 'Message', accessorKey: 'message' },
-  ]
+  const { status, batch_id, received_rows, accepted_rows, rejected_rows, duplicates, conflicts, warnings, nodes_extracted, relations_formed, review_required, graph_ready } = result
 
   const SummaryCard = ({ label, value, type = 'neutral' }: { label: string, value: number, type?: 'success' | 'warning' | 'error' | 'neutral' | 'info' }) => {
     let colorCls = 'text-neutral-900 border-neutral-200 bg-white'
@@ -360,19 +319,34 @@ export function CsvIngestionPanel() {
             Ingestion {status.replace(/_/g, ' ')}
           </h2>
           <p className="text-sm text-neutral-600 mt-1">
-            Batch ID: <span className="font-mono bg-neutral-100 px-1.5 py-0.5 rounded text-neutral-800">{batch_id}</span>
+            Batch ID: <span className="font-bold font-mono bg-neutral-100 px-1.5 py-0.5 rounded text-neutral-800">{batch_id}</span>
           </p>
+          <div className="mt-4 text-sm text-neutral-700 bg-neutral-50 p-3 rounded-lg border border-neutral-200">
+            <div><span className="font-semibold">FIR:</span> {files.fir ? 'Uploaded' : 'Not uploaded'}</div>
+            <div><span className="font-semibold">CDR:</span> {files.cdr ? 'Uploaded' : 'Not uploaded'}</div>
+            <div><span className="font-semibold">Bank:</span> {files.bank ? 'Uploaded' : 'Not uploaded'}</div>
+            <div><span className="font-semibold">Intelligence:</span> {files.intelligence ? 'Uploaded' : 'Not uploaded'}</div>
+            <div className="mt-2 text-blue-700 font-semibold">Graph status: {graph_ready ? 'Ready' : 'Not ready'}</div>
+          </div>
+          {review_required === 0 && graph_ready && (
+            <p className="mt-4 text-sm font-semibold text-emerald-700 bg-emerald-50 p-3 rounded-lg border border-emerald-200">
+              No entity matches require human review.<br/>
+              The graph was built successfully.
+            </p>
+          )}
         </div>
         
         <div className="flex flex-wrap gap-2">
-          {summary.review_required > 0 && (
-            <Link to="/fusion" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-lg text-sm font-semibold transition-colors">
+          {review_required > 0 && (
+            <Link to={`/fusion?batch_id=${batch_id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-lg text-sm font-semibold transition-colors">
               <Users className="h-4 w-4" /> Review Entity Matches
             </Link>
           )}
-          <Link to="/network" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-sm font-semibold transition-colors">
-            <Network className="h-4 w-4" /> Open Network
-          </Link>
+          {(graph_ready && nodes_extracted > 0) && (
+            <Link to={`/network?batch_id=${batch_id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-sm font-semibold transition-colors">
+              <Network className="h-4 w-4" /> Open Built Graph
+            </Link>
+          )}
           <button onClick={onReset} data-testid="upload-another-btn" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-neutral-700 hover:bg-neutral-50 border border-neutral-300 rounded-lg text-sm font-semibold transition-colors">
             <RotateCcw className="h-4 w-4" /> Upload Another
           </button>
@@ -381,66 +355,17 @@ export function CsvIngestionPanel() {
 
       {/* Summary Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-        <SummaryCard label="Received Rows" value={summary.received} />
-        <SummaryCard label="Accepted Rows" value={summary.accepted} type="success" />
-        <SummaryCard label="Rejected Rows" value={summary.rejected} type="error" />
-        <SummaryCard label="Duplicates" value={summary.duplicates} type="info" />
-        <SummaryCard label="Conflicts" value={summary.conflicts} type="warning" />
+        <SummaryCard label="Received Rows" value={received_rows} />
+        <SummaryCard label="Accepted Rows" value={accepted_rows} type="success" />
+        <SummaryCard label="Rejected Rows" value={rejected_rows} type="error" />
+        <SummaryCard label="Duplicates" value={duplicates} type="info" />
+        <SummaryCard label="Conflicts" value={conflicts} type="warning" />
         
-        <SummaryCard label="Warnings" value={summary.warnings} type="warning" />
-        <SummaryCard label="Nodes Extracted" value={summary.nodes_created} type="success" />
-        <SummaryCard label="Relations Formed" value={summary.relationships_created} type="success" />
-        <SummaryCard label="Review Required" value={summary.review_required} type={summary.review_required > 0 ? 'warning' : 'neutral'} />
+        <SummaryCard label="Warnings" value={warnings} type="warning" />
+        <SummaryCard label="Nodes Extracted" value={nodes_extracted} type="success" />
+        <SummaryCard label="Relations Formed" value={relations_formed} type="success" />
+        <SummaryCard label="Review Required" value={review_required} type={review_required > 0 ? 'warning' : 'neutral'} />
       </div>
-
-      {/* Issue Table */}
-      {parse_issues.length > 0 && (
-        <div className="pt-4 border-t border-neutral-100 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <h3 className="font-bold text-neutral-900">Parse Issues & Logs</h3>
-            <div className="flex gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2 h-4 w-4 text-neutral-400" />
-                <input
-                  type="text"
-                  placeholder="Search code or message..."
-                  value={issueSearch}
-                  onChange={(e) => setIssueSearch(e.target.value)}
-                  data-testid="issue-search"
-                  className="pl-8 pr-3 py-1.5 text-sm border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                />
-              </div>
-              <div className="flex items-center gap-2 border border-neutral-300 rounded-md px-2.5 py-1.5">
-                <Filter className="h-4 w-4 text-neutral-400" />
-                <select
-                  value={issueSeverityFilter}
-                  onChange={(e) => setIssueSeverityFilter(e.target.value)}
-                  data-testid="issue-filter"
-                  className="text-sm bg-transparent focus:outline-none"
-                >
-                  <option value="all">All Severities</option>
-                  <option value="ERROR">Error</option>
-                  <option value="WARNING">Warning</option>
-                  <option value="INFO">Info</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          
-          <div className="border border-neutral-200 rounded-lg overflow-hidden">
-            <DataTable
-              data={filteredIssues}
-              columns={columns}
-              onRowClick={() => {}}
-            />
-            {filteredIssues.length === 0 && (
-              <div className="p-4 text-center text-sm text-neutral-500">
-                No issues match your current filters.
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

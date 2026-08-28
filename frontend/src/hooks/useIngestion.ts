@@ -5,7 +5,7 @@
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/apiClient'
-import type { IngestionBatchResponse } from '@shared/contracts/api'
+import type { NexusIngestResponse } from '@shared/contracts/api'
 
 export interface IngestFilesParams {
   fir?: File
@@ -17,9 +17,9 @@ export interface IngestFilesParams {
 export function useIngestFiles() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (files: IngestFilesParams) => apiClient.ingestFiles(files),
-    onSuccess: (data: IngestionBatchResponse) => {
-      if (data.graph_updated) {
+    mutationFn: (files: IngestFilesParams) => apiClient.nexusIngest(files),
+    onSuccess: (data: NexusIngestResponse) => {
+      if (data.graph_ready) {
         void qc.invalidateQueries({ queryKey: ['worklist'] })
         void qc.invalidateQueries({ queryKey: ['case-network'] })
         void qc.invalidateQueries({ queryKey: ['network'] })

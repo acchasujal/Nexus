@@ -14,7 +14,7 @@ import {
   User, Briefcase, Phone, Landmark, BadgeCheck, Sparkles,
 } from 'lucide-react'
 import type { NexusNetworkResponse, SnapshotDiffResponse } from '@shared/contracts/api'
-import { D3NetworkGraph, type D3GraphNode, type D3GraphEdge } from './D3NetworkGraph'
+import { D3NetworkGraph, type D3GraphNode, type D3GraphEdge, EDGE_STROKES } from './D3NetworkGraph'
 
 interface GlobalNetworkCanvasProps {
   graph: NexusNetworkResponse
@@ -30,11 +30,11 @@ interface GlobalNetworkCanvasProps {
   onSetTarget?: (nodeId: string, nodeLabel: string) => void
 }
 
-const NODE_STYLE: Record<string, { icon: typeof User; ring: string; chip: string }> = {
-  Person: { icon: User, ring: 'border-sky-500', chip: 'text-sky-900 bg-sky-50 border border-sky-200' },
-  Case: { icon: Briefcase, ring: 'border-rose-500', chip: 'text-rose-900 bg-rose-50 border border-rose-200' },
-  Phone: { icon: Phone, ring: 'border-amber-500', chip: 'text-amber-900 bg-amber-50 border border-amber-200' },
-  Account: { icon: Landmark, ring: 'border-violet-500', chip: 'text-violet-900 bg-violet-50 border border-violet-200' },
+const NODE_STYLE: Record<string, { icon: typeof User; ring: string; chip: string; bg: string }> = {
+  Person: { icon: User, ring: 'border-sky-500', chip: 'text-sky-900 bg-sky-50 border border-sky-200', bg: 'bg-sky-500' },
+  Case: { icon: Briefcase, ring: 'border-rose-500', chip: 'text-rose-900 bg-rose-50 border border-rose-200', bg: 'bg-rose-500' },
+  Phone: { icon: Phone, ring: 'border-amber-500', chip: 'text-amber-900 bg-amber-50 border border-amber-200', bg: 'bg-amber-500' },
+  Account: { icon: Landmark, ring: 'border-violet-500', chip: 'text-violet-900 bg-violet-50 border border-violet-200', bg: 'bg-violet-500' },
 }
 
 export function GlobalNetworkCanvas({
@@ -150,6 +150,7 @@ export function GlobalNetworkCanvas({
   }, [graph.edges, visibleIds])
 
   const typeOptions = [...new Set(graph.nodes.map((n) => n.entity_type))]
+  const edgeTypeOptions = [...new Set(graph.edges.map((e) => e.edge_type))]
 
   return (
     <div className="relative h-[500px] sm:h-[560px] md:h-[620px] w-full overflow-hidden rounded-xl border border-neutral-200 bg-slate-50 shadow-sm flex flex-col">
@@ -172,19 +173,23 @@ export function GlobalNetworkCanvas({
         <div className={`${showLegendMobile ? 'block mt-1.5' : 'hidden'} sm:block space-y-1.5 rounded-lg border border-neutral-200 bg-white/95 backdrop-blur p-2.5 text-[10px] text-neutral-700 shadow-md max-w-xs`}>
           <div className="font-bold text-neutral-800 uppercase tracking-wider text-[9px] mb-1">Entities</div>
           <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-            <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-sky-500" /> Person</div>
-            <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-rose-500" /> Case / FIR</div>
-            <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500" /> Phone</div>
-            <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-violet-500" /> Account</div>
+            {typeOptions.map(t => {
+              const style = NODE_STYLE[t] || { bg: 'bg-neutral-500' }
+              return (
+                <div key={t} className="flex items-center gap-1.5">
+                  <span className={`h-2 w-2 rounded-full ${style.bg}`} /> {t === 'Case' ? 'Case / FIR' : t}
+                </div>
+              )
+            })}
           </div>
           <div className="border-t border-neutral-200 pt-1 mt-1 font-bold text-neutral-800 uppercase tracking-wider text-[9px]">Relationships</div>
           <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-            <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-rose-600" /> Accused</div>
-            <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-emerald-600" /> Bank Wire</div>
-            <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-amber-600" /> CDR Phone</div>
-            <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-violet-600" /> Owner</div>
-            <div className="flex items-center gap-1.5"><span className="h-1 w-3 rounded bg-blue-600" /> Bridge</div>
-            <div className="flex items-center gap-1.5"><BadgeCheck className="h-2.5 w-2.5 text-blue-600" /> BRIDGE</div>
+            {edgeTypeOptions.map(t => (
+              <div key={t} className="flex items-center gap-1.5">
+                <span className="h-1 w-3 rounded" style={{ backgroundColor: EDGE_STROKES[t] || '#9ca3af' }} />
+                {t.replaceAll('_', ' ')}
+              </div>
+            ))}
           </div>
         </div>
       </div>

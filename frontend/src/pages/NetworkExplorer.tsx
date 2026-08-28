@@ -14,7 +14,7 @@ import {
   ExternalLink,
   ChevronRight,
 } from 'lucide-react'
-import { useNexusNetwork, useSnapshotDiff, useNexusPath } from '@/hooks/useNexus'
+import { useNexusNetwork, useSnapshotDiff, useNexusPath, useBatchNetwork } from '@/hooks/useNexus'
 import { GlobalNetworkCanvas } from '@/components/nexus/GlobalNetworkCanvas'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import { DerivationBadge } from '@/components/nexus/DerivationBadge'
@@ -29,14 +29,17 @@ export default function NetworkExplorer() {
   const [searchParams, setSearchParams] = useSearchParams()
   const caseIdParam = searchParams.get('case_id')
   const nodeIdParam = searchParams.get('node_id')
+  const batchIdParam = searchParams.get('batch_id')
+  
   const [replay, setReplay] = useState<ReplayState>('before')
   const [edgeId, setEdgeId] = useState<string | null>(null)
 
-  const before = useNexusNetwork('before', replay === 'before')
-  const after = useNexusNetwork('after', replay === 'after')
-  const diff = useSnapshotDiff(replay === 'after' && after.data?.state === 'after')
+  const batchNetwork = useBatchNetwork(batchIdParam, Boolean(batchIdParam))
+  const before = useNexusNetwork('before', replay === 'before' && !batchIdParam)
+  const after = useNexusNetwork('after', replay === 'after' && !batchIdParam)
+  const diff = useSnapshotDiff(replay === 'after' && after.data?.state === 'after' && !batchIdParam)
 
-  const network = replay === 'before' ? before : after
+  const network = batchIdParam ? batchNetwork : (replay === 'before' ? before : after)
   const graph = network.data
 
   // ── Dynamic Pathfinder State ────────────────────────────────────────────────
@@ -111,35 +114,37 @@ export default function NetworkExplorer() {
             <Route className="h-4 w-4 text-blue-600" />
             {showPathfinder ? 'Hide Pathfinder' : 'Investigative Pathfinder'}
           </button>
-          <div
-            role="group"
-            aria-label="Network snapshot replay"
-            className="flex items-center rounded-lg border border-neutral-300 bg-neutral-100 p-0.5 sm:p-1 text-xs sm:text-sm font-semibold shadow-inner"
-          >
-            <button
-              onClick={() => setReplay('before')}
-              aria-pressed={replay === 'before'}
-              className={`rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm transition-colors ${
-                replay === 'before'
-                  ? 'bg-white text-neutral-900 shadow-sm font-bold'
-                  : 'text-neutral-600 hover:text-neutral-900'
-              }`}
+          {!batchIdParam && (
+            <div
+              role="group"
+              aria-label="Network snapshot replay"
+              className="flex items-center rounded-lg border border-neutral-300 bg-neutral-100 p-0.5 sm:p-1 text-xs sm:text-sm font-semibold shadow-inner"
             >
-              Before resolution
-            </button>
-            <button
-              onClick={() => setReplay('after')}
-              aria-pressed={replay === 'after'}
-              disabled={after.isLoading && !after.data}
-              className={`rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm transition-colors disabled:opacity-40 ${
-                replay === 'after'
-                  ? 'bg-emerald-600 text-white shadow-sm font-bold'
-                  : 'text-neutral-600 hover:text-neutral-900'
-              }`}
-            >
-              After resolution
-            </button>
-          </div>
+              <button
+                onClick={() => setReplay('before')}
+                aria-pressed={replay === 'before'}
+                className={`rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm transition-colors ${
+                  replay === 'before'
+                    ? 'bg-white text-neutral-900 shadow-sm font-bold'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                Before resolution
+              </button>
+              <button
+                onClick={() => setReplay('after')}
+                aria-pressed={replay === 'after'}
+                disabled={after.isLoading && !after.data}
+                className={`rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm transition-colors disabled:opacity-40 ${
+                  replay === 'after'
+                    ? 'bg-emerald-600 text-white shadow-sm font-bold'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                After resolution
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

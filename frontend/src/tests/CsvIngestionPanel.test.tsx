@@ -5,12 +5,12 @@ import { CsvIngestionPanel } from '@/components/CsvIngestionPanel'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { apiClient } from '@/lib/apiClient'
-import type { IngestionBatchResponse } from '@shared/contracts/api'
+import type { NexusIngestResponse } from '@shared/contracts/api'
 
 // Mock the API client
 vi.mock('@/lib/apiClient', () => ({
   apiClient: {
-    ingestFiles: vi.fn(),
+    nexusIngest: vi.fn(),
   },
 }))
 
@@ -98,40 +98,84 @@ describe('CsvIngestionPanel', () => {
     expect(screen.getByTestId('filename-fir')).toHaveTextContent('second.csv')
   })
 
-  it('enables submit button only when all required files are present and valid', () => {
+  it('enables submit button with FIR only', () => {
     render(<CsvIngestionPanel />, { wrapper: createWrapper() })
-    
     const validFile = new File(['data'], 'test.csv', { type: 'text/csv' })
-    
     fireEvent.change(screen.getByTestId('file-input-fir'), { target: { files: [validFile] } })
-    fireEvent.change(screen.getByTestId('file-input-cdr'), { target: { files: [validFile] } })
-    
-    // Still disabled because bank is missing
-    expect(screen.getByTestId('submit-btn')).toBeDisabled()
-    
-    fireEvent.change(screen.getByTestId('file-input-bank'), { target: { files: [validFile] } })
-    
-    // Now enabled
     expect(screen.getByTestId('submit-btn')).not.toBeDisabled()
   })
 
-  it('displays loading state and submits payload to apiClient', async () => {
+  it('enables submit button with CDR only', () => {
+    render(<CsvIngestionPanel />, { wrapper: createWrapper() })
+    const validFile = new File(['data'], 'test.csv', { type: 'text/csv' })
+    fireEvent.change(screen.getByTestId('file-input-cdr'), { target: { files: [validFile] } })
+    expect(screen.getByTestId('submit-btn')).not.toBeDisabled()
+  })
+
+  it('enables submit button with Bank only', () => {
+    render(<CsvIngestionPanel />, { wrapper: createWrapper() })
+    const validFile = new File(['data'], 'test.csv', { type: 'text/csv' })
+    fireEvent.change(screen.getByTestId('file-input-bank'), { target: { files: [validFile] } })
+    expect(screen.getByTestId('submit-btn')).not.toBeDisabled()
+  })
+
+  it('enables submit button with Intelligence only', () => {
+    render(<CsvIngestionPanel />, { wrapper: createWrapper() })
+    const validFile = new File(['data'], 'test.csv', { type: 'text/csv' })
+    fireEvent.change(screen.getByTestId('file-input-intelligence'), { target: { files: [validFile] } })
+    expect(screen.getByTestId('submit-btn')).not.toBeDisabled()
+  })
+
+  it('enables submit button with FIR + CDR', () => {
+    render(<CsvIngestionPanel />, { wrapper: createWrapper() })
+    const validFile = new File(['data'], 'test.csv', { type: 'text/csv' })
+    fireEvent.change(screen.getByTestId('file-input-fir'), { target: { files: [validFile] } })
+    fireEvent.change(screen.getByTestId('file-input-cdr'), { target: { files: [validFile] } })
+    expect(screen.getByTestId('submit-btn')).not.toBeDisabled()
+  })
+
+  it('enables submit button with FIR + Bank', () => {
+    render(<CsvIngestionPanel />, { wrapper: createWrapper() })
+    const validFile = new File(['data'], 'test.csv', { type: 'text/csv' })
+    fireEvent.change(screen.getByTestId('file-input-fir'), { target: { files: [validFile] } })
+    fireEvent.change(screen.getByTestId('file-input-bank'), { target: { files: [validFile] } })
+    expect(screen.getByTestId('submit-btn')).not.toBeDisabled()
+  })
+
+  it('enables submit button with CDR + Bank', () => {
+    render(<CsvIngestionPanel />, { wrapper: createWrapper() })
+    const validFile = new File(['data'], 'test.csv', { type: 'text/csv' })
+    fireEvent.change(screen.getByTestId('file-input-cdr'), { target: { files: [validFile] } })
+    fireEvent.change(screen.getByTestId('file-input-bank'), { target: { files: [validFile] } })
+    expect(screen.getByTestId('submit-btn')).not.toBeDisabled()
+  })
+
+  it('enables submit button with all files', () => {
+    render(<CsvIngestionPanel />, { wrapper: createWrapper() })
+    const validFile = new File(['data'], 'test.csv', { type: 'text/csv' })
+    fireEvent.change(screen.getByTestId('file-input-fir'), { target: { files: [validFile] } })
+    fireEvent.change(screen.getByTestId('file-input-cdr'), { target: { files: [validFile] } })
+    fireEvent.change(screen.getByTestId('file-input-bank'), { target: { files: [validFile] } })
+    fireEvent.change(screen.getByTestId('file-input-intelligence'), { target: { files: [validFile] } })
+    expect(screen.getByTestId('submit-btn')).not.toBeDisabled()
+  })
+
+  it('displays loading state and submits only selected files payload to apiClient', async () => {
     const user = userEvent.setup()
-    vi.mocked(apiClient.ingestFiles).mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100))) // Never resolves in this test timeline
+    vi.mocked(apiClient.nexusIngest).mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100))) 
     
     render(<CsvIngestionPanel />, { wrapper: createWrapper() })
     
     const validFile = new File(['data'], 'test.csv', { type: 'text/csv' })
     fireEvent.change(screen.getByTestId('file-input-fir'), { target: { files: [validFile] } })
-    fireEvent.change(screen.getByTestId('file-input-cdr'), { target: { files: [validFile] } })
     fireEvent.change(screen.getByTestId('file-input-bank'), { target: { files: [validFile] } })
     
     const submitBtn = screen.getByTestId('submit-btn')
     await user.click(submitBtn)
     
-    expect(apiClient.ingestFiles).toHaveBeenCalledWith({
+    expect(apiClient.nexusIngest).toHaveBeenCalledWith({
       fir: validFile,
-      cdr: validFile,
+      cdr: undefined,
       bank: validFile,
       intelligence: undefined
     })
@@ -144,7 +188,7 @@ describe('CsvIngestionPanel', () => {
 
   it('displays error message when backend fails', async () => {
     const user = userEvent.setup()
-    vi.mocked(apiClient.ingestFiles).mockRejectedValueOnce(new Error('Network disconnected'))
+    vi.mocked(apiClient.nexusIngest).mockRejectedValueOnce(new Error('Network disconnected'))
     
     render(<CsvIngestionPanel />, { wrapper: createWrapper() })
     
@@ -163,31 +207,25 @@ describe('CsvIngestionPanel', () => {
   it('displays success panel and summary cards on successful ingestion', async () => {
     const user = userEvent.setup()
     
-    const mockResponse: IngestionBatchResponse = {
+    const mockResponse: NexusIngestResponse = {
       batch_id: 'batch_123',
       status: 'COMPLETED_WITH_WARNINGS',
-      files_processed: [],
-      summary: {
-        received: 100,
-        accepted: 90,
-        rejected: 10,
-        duplicates: 5,
-        conflicts: 2,
-        warnings: 3,
-        source_records: 90,
-        nodes_created: 50,
-        nodes_reused: 10,
-        relationships_created: 100,
-        review_required: 4,
-      },
-      parse_issues: [
-        { source_type: 'FIR', file_name: 'fir.csv', row_number: 10, code: 'VAL_ERR', message: 'Missing date', severity: 'ERROR' }
-      ],
-      review_candidates: [],
-      graph_updated: true
+      files_processed: ['fir.csv', 'cdr.csv', 'bank.csv'],
+      received_rows: 100,
+      accepted_rows: 90,
+      rejected_rows: 10,
+      duplicates: 5,
+      conflicts: 2,
+      warnings: 3,
+      nodes_extracted: 50,
+      relations_formed: 100,
+      source_records: 100,
+      review_required: 4,
+      provenance_completeness: 1.0,
+      graph_ready: true
     }
     
-    vi.mocked(apiClient.ingestFiles).mockResolvedValueOnce(mockResponse)
+    vi.mocked(apiClient.nexusIngest).mockResolvedValueOnce(mockResponse)
     
     render(<CsvIngestionPanel />, { wrapper: createWrapper() })
     
@@ -208,15 +246,6 @@ describe('CsvIngestionPanel', () => {
     // Check summary cards
     expect(screen.getByTestId('summary-received-rows')).toHaveTextContent('100')
     expect(screen.getByTestId('summary-rejected-rows')).toHaveTextContent('10')
-    
-    // Check issue table (mocked)
-    expect(screen.getByTestId('mock-data-table')).toBeInTheDocument()
-    
-    // Test filter
-    const filterSelect = screen.getByTestId('issue-filter')
-    await user.selectOptions(filterSelect, 'INFO')
-    
-    expect(screen.getByText('No issues match your current filters.')).toBeInTheDocument()
     
     // Test Reset
     await user.click(screen.getByTestId('upload-another-btn'))
