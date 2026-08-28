@@ -74,10 +74,14 @@ class IngestionService:
                         actor_id=user_id,
                         details={"batch_id": bundle.batch_id, "reason": "Fatal parse errors encountered"},
                     )
-                    return self._build_response(bundle, BatchStatus.FAILED, sources)
+                    return self._build_response(bundle, BatchStatus.FAILED, sources, 0, 0, 0, 0)
 
                 # Apply to in-memory repository (Atomic operation)
                 created_n, reused_n, created_e, reused_e = self._repo.apply_bundle(bundle)
+                
+                # Store review candidates
+                if bundle.review_candidates:
+                    self._repo.store_review_candidates(bundle.review_candidates)
 
                 # Refresh the analytical graph store
                 self._graph_repo.replace_store(self._repo.to_graph_store())
@@ -98,7 +102,7 @@ class IngestionService:
                     },
                 )
 
-                return self._build_response(bundle, status, sources)
+                return self._build_response(bundle, status, sources, created_n, reused_n, created_e, reused_e)
 
             except Exception as e:
                 self._audit.record(
@@ -109,7 +113,8 @@ class IngestionService:
                 raise
 
     def _build_response(
-        self, bundle: Any, status: BatchStatus, sources: list[UploadedSource]
+        self, bundle: Any, status: BatchStatus, sources: list[UploadedSource],
+        created_n: int, reused_n: int, created_e: int, reused_e: int
     ) -> IngestionBatchResponse:
         """Translate internal IngestionBundle into the public API contract."""
         
@@ -122,9 +127,9 @@ class IngestionService:
             conflicts=getattr(bundle.summary, "conflict_count", 0),
             warnings=sum(1 for i in bundle.issues if i.severity.name == "WARNING"),
             source_records=len(bundle.source_records),
-            nodes_created=bundle.summary.node_created_count,
-            nodes_reused=bundle.summary.node_reused_count,
-            relationships_created=bundle.summary.relationship_created_count,
+            nodes_created=created_n,
+            nodes_reused=reused_n,
+            relationships_created=created_e,
             review_required=len(bundle.review_candidates),
         )
 

@@ -142,6 +142,12 @@ def build_graph_store(nodes: Iterable[Any], edges: Iterable[Any]) -> GraphStore:
         tgt = safe_str(raw.target_id)
 
         props = dict(raw.properties) if hasattr(raw, "properties") else {}
+        
+        if hasattr(raw, "source_record_id") and raw.source_record_id:
+            if "provenance" not in props:
+                props["provenance"] = {}
+            if not props["provenance"].get("source_id"):
+                props["provenance"]["source_id"] = safe_str(raw.source_record_id)
         edge_id = props.get("id") or getattr(raw, "id", None)
         key = (edge_id,) if edge_id else (etype, src, tgt)
         if key in seen_edges:

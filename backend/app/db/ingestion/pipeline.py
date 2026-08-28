@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 from backend.app.core.graph.edges import GraphEdge
 from backend.app.core.graph.entities import GraphEntityBase, SourceRecord
@@ -225,9 +226,11 @@ class CsvIngestionPipeline:
 
         for claim in claims:
             decisions = decide_candidates(self.registry, claim)
+            provisional_id = make_provisional_person_id(claim.record_id, claim.source_type.value)
+            
             for decision in decisions:
                 reviews.append(EntityReviewCandidate(
-                    incoming_record_id=claim.record_id,
+                    incoming_record_id=provisional_id,
                     candidate_node_id=decision.candidate_person_id,
                     status=decision.status,
                     confidence=decision.confidence,
@@ -242,7 +245,6 @@ class CsvIngestionPipeline:
             canonical_id = self.registry.register_claim(claim, person_id=approved)
 
             # Create provisional→canonical mapping for the mapper
-            provisional_id = make_provisional_person_id(claim.record_id, claim.source_type.value)
             mapping[provisional_id] = canonical_id
 
         return mapping, reviews

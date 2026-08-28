@@ -15,6 +15,7 @@ import type {
   NexusCopilotResponse,
   NexusEdgeEvidenceResponse,
   NexusIngestResponse,
+  IngestionBatchResponse,
   NexusLead,
   NexusLeadDecisionRequest,
   NexusNetworkResponse,
@@ -67,7 +68,8 @@ export async function apiFetch<T>(
     fullUrl = `${fullUrl}${separator}role=${encodeURIComponent(savedRole)}`
   }
 
-  const isFormData = typeof FormData !== 'undefined' && options?.body instanceof FormData
+  const isFormData = typeof FormData !== 'undefined' && 
+    (options?.body instanceof FormData || options?.body?.constructor?.name === 'FormData')
   const headers: Record<string, string> = {
     ...(isMutating && !isFormData ? { 'Content-Type': 'application/json' } : {}),
     ...(isMutating ? { 'X-Role': savedRole } : {}),
@@ -150,6 +152,20 @@ export const apiClient = {
 
   // Audit
   getAuditLogs: (limit = 50) => apiFetch<Record<string, unknown>[]>(`/api/v1/audit?limit=${limit}`),
+
+  // Ingestion
+  ingestFiles: (files: { fir?: File, cdr?: File, bank?: File, intelligence?: File }) => {
+    const formData = new FormData()
+    if (files.fir) formData.append('fir', files.fir)
+    if (files.cdr) formData.append('cdr', files.cdr)
+    if (files.bank) formData.append('bank', files.bank)
+    if (files.intelligence) formData.append('intelligence', files.intelligence)
+    
+    return apiFetch<IngestionBatchResponse>('/api/v1/ingest', {
+      method: 'POST',
+      body: formData,
+    })
+  },
 
   // ── NEXUS prototype endpoints (frozen M4 contract) ──────────────────────
   nexusIngest: (files: File[]) => {

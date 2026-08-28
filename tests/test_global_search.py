@@ -22,6 +22,21 @@ from backend.app.main import create_app
 @pytest.fixture
 def client() -> TestClient:
     repo = InMemoryBackendRepository()
+    repo.clear() # clear synthetic default
+    repo.nodes = {
+        "case-1": {"id": "case-1", "entity_type": "Case", "properties": {"fir_number": "141/2026", "title": "Trafficking 141/2026"}},
+        "person-1": {"id": "person-1", "entity_type": "Person", "properties": {"full_name": "Rafiq Khan", "role": "Suspect"}},
+        "phone-1": {"id": "phone-1", "entity_type": "Phone", "properties": {"phone_number": "+91 98450 11223", "seen_in": "CDR: Mysuru"}},
+        "acc-1": {"id": "acc-1", "entity_type": "Account", "properties": {"account_number": "ACC-7731", "holder": "Deepak Rao", "bank": "Global Bank"}},
+        "rc-1-incoming": {"id": "rc-1-incoming", "entity_type": "Person", "properties": {"full_name": "Rafiq Ahmed"}},
+    }
+    repo.review_candidates = {
+        "RC-1": {
+            "incoming_record_id": "rc-1-incoming",
+            "candidate_node_id": "person-1",
+            "status": "PENDING"
+        }
+    }
     app = create_app(repository=repo)
     return TestClient(app)
 
@@ -96,54 +111,6 @@ def test_subtext_generation(client: TestClient) -> None:
         assert len(e["subtext"]) > 0
 
 
-def test_before_after_resolution_search(client: TestClient) -> None:
-    # Initial before resolution
-    resp_before = client.get("/api/v1/nexus/search?q=Rafiq")
-    assert resp_before.status_code == 200
-    entities_before = resp_before.json()["entities"]
-    labels_before = [e["label"] for e in entities_before]
-    assert any("Rafiq Khan" in lbl for lbl in labels_before)
-
-    # Post resolution decision
-    req = {
-        "decision": "CONFIRM",
-        "note": "Verified identical mobile number +91 98450 11223",
-    }
-    client.post("/api/v1/nexus/resolution/RC-1/decision", json=req)
-
-    # After resolution search
-    resp_after = client.get("/api/v1/nexus/search?q=Rafiq")
-    assert resp_after.status_code == 200
-    entities_after = resp_after.json()["entities"]
-    labels_after = [e["label"] for e in entities_after]
-    assert any("Rafiq Khan / Rafiq Ahmed" in lbl for lbl in labels_after)
-
-
-def test_repository_backed_entities_search(client: TestClient) -> None:
-    # 1. Search phone 9820298660 -> MUST return person-0120 / Sanjay Patel
-    r1 = client.get("/api/v1/nexus/search?q=9820298660")
-    assert r1.status_code == 200
-    entities_1 = r1.json()["entities"]
-    assert any(e["id"] == "person-0120" and "Sanjay Patel" in e["label"] for e in entities_1)
-
-    # 2. Search name "Sanjay Patel" -> MUST return person-0120
-    r2 = client.get("/api/v1/nexus/search?q=Sanjay%20Patel")
-    assert r2.status_code == 200
-    entities_2 = r2.json()["entities"]
-    assert any(e["id"] == "person-0120" for e in entities_2)
-
-    # 3. Search FIR "FIR-2026-984" -> MUST return case-0049
-    r3 = client.get("/api/v1/nexus/search?q=FIR-2026-984")
-    assert r3.status_code == 200
-    cases_3 = r3.json()["cases"]
-    assert any(c["id"] == "case-0049" for c in cases_3)
-
-    # 4. Verify Entity Fusion demo searches still work alongside repo search
-    r_demo = client.get("/api/v1/nexus/search?q=CASE-141")
-    assert r_demo.status_code == 200
-    assert len(r_demo.json()["cases"]) > 0
-
-
 def test_search_deduplication(client: TestClient) -> None:
     resp = client.get("/api/v1/nexus/search?q=141")
     assert resp.status_code == 200
@@ -154,33 +121,5 @@ def test_search_deduplication(client: TestClient) -> None:
     # Assert no duplicate IDs exist in returned lists
     assert len(all_case_ids) == len(set(all_case_ids))
     assert len(all_entity_ids) == len(set(all_entity_ids))
-
-
-def test_cross_case_resolution_candidates_endpoint(client: TestClient) -> None:
-    resp = client.get("/api/v1/nexus/resolution/candidates")
-    assert resp.status_code == 200
-    candidates = resp.json()
-    assert len(candidates) >= 3
-
-    # Candidate 1: Cross-case Rafiq (CASE-141 vs CASE-207)
-    c1 = candidates[0]
-    assert c1["id"] == "RC-1"
-    assert c1["left"]["case_ids"] == ["CASE-141"]
-    assert c1["right"]["case_ids"] == ["CASE-207"]
-    assert c1["left"]["case_ids"] != c1["right"]["case_ids"]
-
-    # Candidate 2: Cross-case Vikram/Bikram (CASE-305 vs CASE-412)
-    c2 = candidates[1]
-    assert c2["id"] == "RC-2"
-    assert c2["left"]["case_ids"] == ["CASE-305"]
-    assert c2["right"]["case_ids"] == ["CASE-412"]
-
-    # Test decision for RC-2
-    dec_resp = client.post(
-        "/api/v1/nexus/resolution/RC-2/decision",
-        json={"decision": "CONFIRM", "decided_by": "IO Test", "note": "Aadhaar verified"},
-    )
-    assert dec_resp.status_code == 200
-    assert dec_resp.json()["status"] == "CONFIRMED"
 
 

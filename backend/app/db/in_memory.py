@@ -14,7 +14,8 @@ from pathlib import Path
 from typing import Any
 
 from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord
-from backend.app.db.ingestion.contracts import IngestionBundle
+from backend.app.core.graph.enums import ResolutionStatus
+from backend.app.db.ingestion.contracts import IngestionBundle, EntityReviewCandidate
 from backend.app.db.ingestion.graph_adapter import validate_graph_references
 from shared.contracts.api import (
     AuditLogEntry,
@@ -65,10 +66,27 @@ class InMemoryBackendRepository:
         self.incident_edges: dict[str, list[dict[str, Any]]] = {}
         self.source_records: dict[str, dict[str, Any]] = {}
         self.audit_events: list[dict[str, Any]] = []
+        self.review_candidates: dict[str, dict[str, Any]] = {}
         self.state_path = state_path
 
         self._load_artifact(artifact_path or self._default_artifact_path())
         self._load_state()
+        self._rebuild_indexes()
+
+    def clear(self) -> None:
+        """Clear all in-memory state and reload the base artifact."""
+        self.nodes.clear()
+        self.edges.clear()
+        self.incident_edges.clear()
+        self.source_records.clear()
+        self.audit_events.clear()
+        self.review_candidates.clear()
+        self._load_artifact(self._default_artifact_path())
+        if self.state_path and self.state_path.exists():
+            try:
+                self.state_path.unlink()
+            except OSError:
+                pass
         self._rebuild_indexes()
 
     def _default_artifact_path(self) -> Path:
@@ -102,6 +120,7 @@ class InMemoryBackendRepository:
                 if node_id in self.nodes:
                     self.nodes[node_id].setdefault("properties", {}).update(patch)
             self.audit_events = list(raw.get("audit_events", []))
+            self.review_candidates = dict(raw.get("review_candidates", {}))
         except (json.JSONDecodeError, OSError, ValueError, TypeError) as exc:
             logger.debug("Optional state file loading skipped: %s", exc)
 
@@ -111,6 +130,7 @@ class InMemoryBackendRepository:
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "audit_events": self.audit_events,
+            "review_candidates": self.review_candidates,
             "saved_at": _utcnow().isoformat(),
         }
         self.state_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -185,6 +205,86 @@ class InMemoryBackendRepository:
         self._rebuild_indexes()
         self._save_state()
         return nodes_created, nodes_reused, edges_created, edges_reused
+
+    def store_review_candidates(self, candidates: list[EntityReviewCandidate]) -> None:
+        """Store entity review candidates from an ingestion batch."""
+        for c in candidates:
+            # Generate a stable candidate ID
+            candidate_id = f"RC-{c.incoming_record_id}-{c.candidate_node_id}"
+            self.review_candidates[candidate_id] = c.model_dump(mode="json")
+        self._save_state()
+
+    def get_review_candidates(self) -> list[EntityReviewCandidate]:
+        """Return all pending review candidates."""
+        return [
+            EntityReviewCandidate(**data)
+            for data in self.review_candidates.values()
+        ]
+
+    def update_candidate_status(self, candidate_id: str, status: str) -> None:
+        """Update the status of a review candidate."""
+        if candidate_id in self.review_candidates:
+            self.review_candidates[candidate_id]["status"] = status
+            self._save_state()
+
+    def merge_nodes(self, incoming_node_id: str, canonical_node_id: str) -> None:
+        """Merge an incoming (provisional) node into a canonical node."""
+        if incoming_node_id not in self.nodes or canonical_node_id not in self.nodes:
+            return
+
+        incoming = self.nodes[incoming_node_id]
+        canonical = self.nodes[canonical_node_id]
+
+        # Merge properties (canonical overwrites provisional if conflicts exist)
+        merged_props = dict(incoming.get("properties", {}))
+        merged_props.update(canonical.get("properties", {}))
+        
+        # Add badge to indicate it's a merged node
+        if "badges" not in canonical:
+            canonical["badges"] = []
+        if "MERGED_ENTITY" not in canonical["badges"]:
+            canonical["badges"].append("MERGED_ENTITY")
+            
+        canonical["properties"] = merged_props
+
+        # Migrate all edges pointing to/from incoming_node_id
+        for edge in self.edges:
+            if edge.get("source_id") == incoming_node_id:
+                edge["source_id"] = canonical_node_id
+            if edge.get("target_id") == incoming_node_id:
+                edge["target_id"] = canonical_node_id
+
+        # Remove the incoming node
+        del self.nodes[incoming_node_id]
+
+        self._rebuild_indexes()
+        self._save_state()
+
+    def global_search(self, query: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Search cases and entities by matching text fields."""
+        query_lower = query.lower()
+        cases = []
+        entities = []
+        
+        for nid, n_data in self.nodes.items():
+            props = n_data.get("properties", {})
+            entity_type = n_data.get("entity_type", "")
+            
+            # Extract searchable text
+            searchable_texts = [nid.lower()]
+            for val in props.values():
+                if isinstance(val, str):
+                    searchable_texts.append(val.lower())
+                elif isinstance(val, (int, float)):
+                    searchable_texts.append(str(val))
+                    
+            if any(query_lower in text for text in searchable_texts):
+                if entity_type in ("Case", "CASE"):
+                    cases.append(n_data)
+                else:
+                    entities.append(n_data)
+                    
+        return cases, entities
 
     def to_graph_store(self) -> GraphStore:
         """Export raw repository nodes and edges into an in-memory GraphStore."""
@@ -391,7 +491,10 @@ class InMemoryBackendRepository:
             src = str(e.get("source_id"))
             tgt = str(e.get("target_id"))
             if src in visited_nodes and tgt in visited_nodes:
-                prov = e.get("provenance", {})
+                prov = e.get("provenance") or {}
+                if not prov.get("source_id") and e.get("source_record_id"):
+                    prov["source_id"] = e["source_record_id"]
+                
                 resp_edges.append(
                     GraphEdgeResponse(
                         id=str(e.get("id", f"{src}-{tgt}")),

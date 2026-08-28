@@ -4,8 +4,6 @@ import { DataTable, type ColumnDef } from '@/components/DataTable'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { apiClient } from '@/lib/apiClient'
-import { useResetDemo } from '@/hooks/useNexus'
-import type { NexusIngestResponse } from '@shared/contracts/api'
 import { 
   ShieldAlert, 
   Search, 
@@ -14,14 +12,9 @@ import {
   FileText, 
   Users, 
   ArrowRight,
-  Upload,
-  Phone,
-  Landmark,
-  RotateCcw,
-  CheckCircle2,
-  Loader2,
-  ChevronDown,
+  ShieldAlert,
 } from 'lucide-react'
+import { CsvIngestionPanel } from '@/components/CsvIngestionPanel'
 
 interface InvestigationItem {
   id: string
@@ -50,26 +43,6 @@ export default function Worklist() {
   const [searchQuery, setSearchQuery] = useState('')
   const [districtFilter, setDistrictFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
-
-  // Ingestion state
-  const [ingestingType, setIngestingType] = useState<string | null>(null)
-  const [ingestResult, setIngestResult] = useState<NexusIngestResponse | null>(null)
-  const [ingestError, setIngestError] = useState<string | null>(null)
-  const resetDemo = useResetDemo()
-  const [showDemoPanel, setShowDemoPanel] = useState(false)
-
-  const handleIngest = async (files: File[]) => {
-    setIngestingType('UPLOADING')
-    setIngestError(null)
-    try {
-      const res = await apiClient.nexusIngest(files)
-      setIngestResult(res)
-    } catch (err) {
-      setIngestError(err instanceof Error ? err.message : 'Ingestion failed')
-    } finally {
-      setIngestingType(null)
-    }
-  }
 
   const fetchInvestigations = useCallback(() => {
     setIsLoading(true)
@@ -285,121 +258,8 @@ export default function Worklist() {
         </div>
       </div>
 
-      {/* Demo Setup */}
-      <section className="rounded-xl border border-neutral-200 bg-white shadow-sm">
-        <button
-          onClick={() => setShowDemoPanel(v => !v)}
-          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-neutral-50 transition-colors rounded-xl"
-          aria-expanded={showDemoPanel}
-        >
-          <div className="flex items-center gap-2.5">
-            <Upload className="h-4 w-4 text-neutral-400" />
-            <span className="text-sm font-semibold text-neutral-700">Demo Setup</span>
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-neutral-100 text-neutral-600 border border-neutral-200">Golden Fixture</span>
-          </div>
-          <ChevronDown className={`h-4 w-4 text-neutral-400 transition-transform ${showDemoPanel ? 'rotate-180' : ''}`} />
-        </button>
-
-        {showDemoPanel && (
-          <div className="px-5 pb-5 pt-2 border-t border-neutral-200 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
-              <p className="text-xs text-neutral-600">
-                Ingest synthetic police files, phone records, and banking logs to populate the intelligence graph.
-              </p>
-              <button
-                onClick={() => {
-                  resetDemo.mutate()
-                  setIngestResult(null)
-                }}
-                disabled={resetDemo.isPending}
-                className="self-start sm:self-auto flex items-center gap-1.5 text-xs text-neutral-700 hover:text-neutral-900 px-3 py-1.5 rounded-lg border border-neutral-300 bg-white hover:bg-neutral-50 shadow-sm transition-colors"
-              >
-                <RotateCcw className="h-3.5 w-3.5 text-neutral-500" />
-                {resetDemo.isPending ? 'Resetting…' : 'Reset Demo'}
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="col-span-1 sm:col-span-3">
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-neutral-300 rounded-lg cursor-pointer bg-neutral-50 hover:bg-neutral-100 transition-colors">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Upload className="h-8 w-8 text-neutral-400 mb-2" />
-                    <p className="mb-2 text-sm text-neutral-600"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                    <p className="text-xs text-neutral-500">FIR, CDR, Bank, or Intelligence CSVs</p>
-                  </div>
-                  <input 
-                    type="file" 
-                    className="hidden" 
-                    multiple 
-                    accept=".csv,.txt"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        handleIngest(Array.from(e.target.files))
-                      }
-                    }} 
-                    disabled={ingestingType !== null}
-                  />
-                </label>
-                {ingestingType === 'UPLOADING' && (
-                  <div className="flex items-center justify-center gap-2 mt-4 text-sm text-blue-600 font-medium">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Processing & Mapping to Graph Schema...
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Ingest Result Card */}
-            {ingestResult && (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-3 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-900">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    Ingestion Batch Completed: {ingestResult.batch_id}
-                  </div>
-                  <Link
-                    to="/network"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-sm"
-                  >
-                    Begin Investigation in Network Explorer <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
-                  <div className="bg-white rounded-lg p-2.5 border border-emerald-100 shadow-xs">
-                    <div className="text-[11px] text-neutral-500 font-medium">Persons</div>
-                    <div className="text-base font-bold text-neutral-900">{ingestResult.extraction_summary.persons}</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2.5 border border-emerald-100 shadow-xs">
-                    <div className="text-[11px] text-neutral-500 font-medium">Phones</div>
-                    <div className="text-base font-bold text-neutral-900">{ingestResult.extraction_summary.phones}</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2.5 border border-emerald-100 shadow-xs">
-                    <div className="text-[11px] text-neutral-500 font-medium">Accounts</div>
-                    <div className="text-base font-bold text-neutral-900">{ingestResult.extraction_summary.accounts}</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2.5 border border-emerald-100 shadow-xs">
-                    <div className="text-[11px] text-neutral-500 font-medium">Events</div>
-                    <div className="text-base font-bold text-neutral-900">{ingestResult.extraction_summary.events}</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-2.5 border border-emerald-100 shadow-xs col-span-2 sm:col-span-1">
-                    <div className="text-[11px] text-neutral-500 font-medium">Relationships</div>
-                    <div className="text-base font-bold text-emerald-700">{ingestResult.extraction_summary.relationships}</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {ingestError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
-                {ingestError}
-              </div>
-            )}
-
-            <p className="text-[11px] text-neutral-600">
-              🛡️ All files are synthetic demo fixtures. No real citizen data. Fully explainable and verified.
-            </p>
-          </div>
-        )}
-      </section>
+      {/* Csv Ingestion Interface */}
+      <CsvIngestionPanel />
 
       {/* Content */}
       {isLoading ? (

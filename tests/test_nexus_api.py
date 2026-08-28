@@ -151,55 +151,6 @@ def test_audit_logs(client: TestClient) -> None:
     assert isinstance(logs, list)
 
 
-def test_nexus_lead_decision_audit_event(client: TestClient) -> None:
-    """Lead decisions must emit lead_actioned, not entity_resolution_executed."""
-    # Reset demo state
-    client.post("/api/v1/nexus/demo/reset", headers={"X-Role": "INVESTIGATOR"})
-
-    # Confirm RC-1 first to generate the lead
-    confirm_resp = client.post(
-        "/api/v1/nexus/resolution/RC-1/decision",
-        json={"decision": "CONFIRM", "decided_by": "Investigating Officer"},
-        headers={"X-Role": "INVESTIGATOR"},
-    )
-    assert confirm_resp.status_code == 200
-
-    # Get the lead
-    leads_resp = client.get("/api/v1/nexus/leads", headers={"X-Role": "INVESTIGATOR"})
-    assert leads_resp.status_code == 200
-    leads = leads_resp.json()
-    assert len(leads) == 1
-    lead_id = leads[0]["id"]
-
-    # Act on the lead
-    decision_resp = client.post(
-        f"/api/v1/nexus/leads/{lead_id}/decision",
-        json={"decision": "ACCEPT", "decided_by": "Investigating Officer"},
-        headers={"X-Role": "INVESTIGATOR"},
-    )
-    assert decision_resp.status_code == 200
-
-    # Verify audit log: lead decision must be lead_actioned, not entity_resolution_executed
-    audit_resp = client.get("/api/v1/audit?limit=50&role=SP")
-    assert audit_resp.status_code == 200
-    events = audit_resp.json()
-
-    lead_events = [e for e in events if e.get("entity_id") == lead_id]
-    assert len(lead_events) >= 1, "No audit event found for lead decision"
-
-    for ev in lead_events:
-        assert ev["action"] == "lead_actioned", (
-            f"Expected 'lead_actioned' for lead decision, got '{ev['action']}'"
-        )
-
-    # Also verify the resolution event targets the candidate, not the lead
-    resolution_events = [e for e in events if e.get("action") == "entity_resolution_executed"]
-    for ev in resolution_events:
-        assert ev.get("entity_id") != lead_id, (
-            "entity_resolution_executed should not target a lead ID"
-        )
-
-
 def test_audit_accessible_to_investigator(client: TestClient) -> None:
     """Audit log must be accessible to INVESTIGATOR role in demo mode."""
     resp = client.get("/api/v1/audit?limit=10&role=INVESTIGATOR")

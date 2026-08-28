@@ -26,7 +26,6 @@ from backend.app.api.dependencies import (
     get_copilot_service,
     get_entity_service,
     get_evidence_service,
-    get_evidence_service,
     get_export_service,
     get_ingestion_service,
     get_principal,
