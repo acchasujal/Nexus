@@ -132,7 +132,8 @@ export function PathfinderEntitySelector({
   }, [activeGraphNodes])
 
   // Resolve currently selected entity display details
-  const selectedEntity = useMemo<EntityOption>(() => {
+  const selectedEntity = useMemo<EntityOption | null>(() => {
+    if (!selectedId || !selectedId.trim()) return null
     if (activeNodesMap.has(selectedId)) {
       return activeNodesMap.get(selectedId)!
     }
@@ -285,20 +286,28 @@ export function PathfinderEntitySelector({
         aria-expanded={isOpen}
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          {getEntityIcon(selectedEntity.type)}
-          <span
-            className={`rounded px-1.5 py-0.5 text-[10px] font-bold border uppercase tracking-wider shrink-0 ${getTypeBadgeClass(
-              selectedEntity.type
-            )}`}
-          >
-            {selectedEntity.type}
-          </span>
-          <span className="truncate font-semibold text-neutral-900">
-            {selectedEntity.label}
-          </span>
-          <span className="font-mono text-[11px] text-neutral-500 shrink-0">
-            ({selectedEntity.id})
-          </span>
+          {selectedEntity ? (
+            <>
+              {getEntityIcon(selectedEntity.type)}
+              <span
+                className={`rounded px-1.5 py-0.5 text-[10px] font-bold border uppercase tracking-wider shrink-0 ${getTypeBadgeClass(
+                  selectedEntity.type
+                )}`}
+              >
+                {selectedEntity.type}
+              </span>
+              <span className="truncate font-semibold text-neutral-900">
+                {selectedEntity.label}
+              </span>
+              <span className="font-mono text-[11px] text-neutral-500 shrink-0">
+                ({selectedEntity.id})
+              </span>
+            </>
+          ) : (
+            <span className="text-neutral-400 text-xs sm:text-sm font-normal">
+              Select entity or case...
+            </span>
+          )}
         </div>
         <ChevronDown className={`h-4 w-4 text-neutral-500 shrink-0 transition-transform ${isOpen ? 'rotate-180 text-blue-600' : ''}`} />
       </button>

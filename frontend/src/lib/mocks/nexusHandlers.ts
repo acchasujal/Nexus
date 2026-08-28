@@ -395,17 +395,7 @@ export const nexusHandlers = [
     const normQ = qLower.replace(/[^\w]/g, '')
     const nodes = isResolved() ? AFTER_NODES : BEFORE_NODES
 
-    const matchesNode = (n: (typeof nodes)[0]) => {
-      if (n.label.toLowerCase().includes(qLower)) return true
-      if (Object.values(n.properties).some((v) => String(v).toLowerCase().includes(qLower))) return true
-      if (normQ && normQ.length >= 2) {
-        if (n.label.toLowerCase().replace(/[^\w]/g, '').includes(normQ)) return true
-        if (Object.values(n.properties).some((v) => String(v).toLowerCase().replace(/[^\w]/g, '').includes(normQ))) return true
-      }
-      return false
-    }
-
-    const buildSubtext = (n: (typeof nodes)[0]) => {
+    const buildSubtext = (n: { entity_type: string; label: string; properties?: Record<string, unknown>; case_ids?: string[] }) => {
       const props = n.properties || {}
       const etype = n.entity_type
       const caseInfo = n.case_ids?.length ? ` • FIR: ${n.case_ids.join(', ')}` : ''
@@ -428,29 +418,211 @@ export const nexusHandlers = [
       return (props.description || props.role || etype) + caseInfo
     }
 
-    const cases = nodes
-      .filter((n) => n.entity_type === 'Case' && matchesNode(n))
+    const additionalMockNodes = [
+      {
+        id: 'person-0073',
+        entity_type: 'Person',
+        label: 'Vinod Sharma',
+        case_ids: ['case-0049'],
+        properties: { full_name: 'Vinod Sharma', role: 'Hawala Courier', district: 'Bengaluru' },
+      },
+      {
+        id: 'person-0051',
+        entity_type: 'Person',
+        label: 'Ramesh Hegde',
+        case_ids: ['case-0001', 'case-0049'],
+        properties: { full_name: 'Ramesh Hegde', role: 'The Broker', district: 'Bengaluru' },
+      },
+      {
+        id: 'person-0011',
+        entity_type: 'Person',
+        label: 'Praveen Iyer',
+        case_ids: ['case-0001'],
+        properties: { full_name: 'Praveen Iyer', role: 'Syndicate Lead', district: 'Mangaluru' },
+      },
+      {
+        id: 'case-0001',
+        entity_type: 'Case',
+        label: 'FIR-2026-101 — Narcotics Trafficking',
+        case_ids: ['case-0001'],
+        properties: { fir_number: 'FIR-2026-101', title: 'Narcotics Trafficking & Money Laundering' },
+      },
+      {
+        id: 'case-0049',
+        entity_type: 'Case',
+        label: 'FIR-2026-984 — Extortion',
+        case_ids: ['case-0049'],
+        properties: { fir_number: 'FIR-2026-984', title: 'Extortion & Hawala Transport' },
+      },
+    ]
+
+    const allCandidateNodes = [...nodes, ...additionalMockNodes]
+
+    const matchesCandidate = (n: (typeof allCandidateNodes)[0]) => {
+      if (n.label.toLowerCase().includes(qLower)) return true
+      if (Object.values(n.properties).some((v) => String(v).toLowerCase().includes(qLower))) return true
+      if (normQ && normQ.length >= 2) {
+        if (n.label.toLowerCase().replace(/[^\w]/g, '').includes(normQ)) return true
+        if (Object.values(n.properties).some((v) => String(v).toLowerCase().replace(/[^\w]/g, '').includes(normQ))) return true
+      }
+      return false
+    }
+
+    const cases = allCandidateNodes
+      .filter((n) => n.entity_type === 'Case' && matchesCandidate(n))
       .map((n) => ({ id: n.id, fir_number: String(n.properties.fir_number ?? ''), title: n.label, score: 1 }))
 
-    const entities = nodes
-      .filter((n) => n.entity_type !== 'Case' && matchesNode(n))
+    const entities = allCandidateNodes
+      .filter((n) => n.entity_type !== 'Case' && matchesCandidate(n))
       .map((n) => ({
         id: n.id,
         label: n.label,
         entity_type: n.entity_type,
         case_ids: n.case_ids,
         score: 1,
-        subtext: buildSubtext(n),
+        subtext: buildSubtext(n as any),
       }))
 
     return HttpResponse.json({ query: q, cases, entities })
   }),
 
-  http.get(/\/api\/v1\/nexus\/sources\/([^/]+)/, async ({ params }) => {
-    const id = params[0] as string
-    const record = allSourceRecords[String(id)]
+  http.get(/\/api\/v1\/nexus\/sources\/([^/]+)/, async ({ request }) => {
+    const match = new URL(request.url).pathname.match(/\/api\/v1\/nexus\/sources\/([^/]+)/)
+    const id = match ? decodeURIComponent(match[1]) : ''
+    const record = allSourceRecords[id]
     if (!record) return new HttpResponse(null, { status: 404, statusText: 'Source record not found' })
     return HttpResponse.json(record)
+  }),
+
+  http.get(/\/api\/v1\/entities\/([^/]+)\/network/, async ({ request }) => {
+    const match = new URL(request.url).pathname.match(/\/api\/v1\/entities\/([^/]+)\/network/)
+    const id = match ? decodeURIComponent(match[1]) : ''
+    if (id === 'empty-entity' || id === 'non-existent') {
+      return HttpResponse.json({ nodes: [], edges: [], total_nodes: 0, total_edges: 0 })
+    }
+    if (id === 'person-0073') {
+      return HttpResponse.json({
+        nodes: [
+          {
+            id: 'person-0073',
+            entity_type: 'Person',
+            label: 'Vinod Sharma',
+            properties: { full_name: 'Vinod Sharma', role: 'Hawala Courier', district: 'Bengaluru', case_id: 'case-0049' },
+            degree: 2,
+            confidence: 1.0,
+          },
+          {
+            id: 'phone-0073',
+            entity_type: 'Phone',
+            label: '+91 98450 77889',
+            properties: { phone_number: '+91 98450 77889', subscriber: 'Vinod Sharma', case_id: 'case-0049' },
+            degree: 1,
+            confidence: 1.0,
+          },
+          {
+            id: 'case-0049',
+            entity_type: 'Case',
+            label: 'FIR-2026-984 — Extortion',
+            properties: { fir_number: 'FIR-2026-984', title: 'Extortion & Hawala Transport' },
+            degree: 1,
+            confidence: 1.0,
+          },
+        ],
+        edges: [
+          {
+            id: 'e-vinod-phone',
+            source_id: 'person-0073',
+            target_id: 'phone-0073',
+            edge_type: 'USES_PHONE',
+            weight: 1.0,
+            provenance: {
+              source_type: 'CDR',
+              source_id: 'CDR-2026-073',
+              timestamp: '2026-03-01T10:00:00Z',
+              extracted_fact: 'Subscribed phone in Vinod Sharma name',
+              derivation_method: 'DIRECT',
+              confidence: 1.0,
+            },
+            properties: { case_id: 'case-0049' },
+          },
+          {
+            id: 'e-vinod-case',
+            source_id: 'person-0073',
+            target_id: 'case-0049',
+            edge_type: 'ACCUSED_IN',
+            weight: 1.0,
+            provenance: {
+              source_type: 'FIR',
+              source_id: 'FIR-2026-984',
+              timestamp: '2026-03-02T12:00:00Z',
+              extracted_fact: 'Named accused in FIR 2026/984',
+              derivation_method: 'DIRECT',
+              confidence: 1.0,
+            },
+            properties: { case_id: 'case-0049' },
+          },
+        ],
+        total_nodes: 3,
+        total_edges: 2,
+      })
+    }
+
+    // Default mock neighborhood for other entities
+    return HttpResponse.json({
+      nodes: [
+        {
+          id,
+          entity_type: 'Person',
+          label: id,
+          properties: { id },
+          degree: 1,
+          confidence: 1.0,
+        },
+      ],
+      edges: [],
+      total_nodes: 1,
+      total_edges: 0,
+    })
+  }),
+
+  http.get(/\/api\/v1\/network\/cases\/([^/]+)/, async ({ request }) => {
+    const match = new URL(request.url).pathname.match(/\/api\/v1\/network\/cases\/([^/]+)/)
+    const id = match ? decodeURIComponent(match[1]) : ''
+    return HttpResponse.json({
+      nodes: [
+        {
+          id,
+          entity_type: 'Case',
+          label: `Case ${id}`,
+          properties: { fir_number: id },
+          degree: 1,
+          confidence: 1.0,
+        },
+      ],
+      edges: [],
+      total_nodes: 1,
+      total_edges: 0,
+    })
+  }),
+
+  http.get(/\/api\/v1\/cases\/([^/]+)\/network/, async ({ request }) => {
+    const match = new URL(request.url).pathname.match(/\/api\/v1\/cases\/([^/]+)\/network/)
+    const id = match ? decodeURIComponent(match[1]) : ''
+    return HttpResponse.json({
+      nodes: [
+        {
+          id,
+          entity_type: 'Case',
+          label: `Case ${id}`,
+          properties: { fir_number: id },
+          degree: 1,
+          confidence: 1.0,
+        },
+      ],
+      edges: [],
+      total_nodes: 1,
+      total_edges: 0,
+    })
   }),
 
   http.get(/\/api\/v1\/investigations\/([^/]+)/, async ({ params }) => {

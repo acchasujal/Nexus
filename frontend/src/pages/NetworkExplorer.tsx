@@ -13,8 +13,9 @@ import {
   X,
   ExternalLink,
   ChevronRight,
+  Briefcase,
 } from 'lucide-react'
-import { useNexusNetwork, useSnapshotDiff, useNexusPath } from '@/hooks/useNexus'
+import { useNexusNetwork, useSnapshotDiff, useNexusPath, useEntityNetwork, useCaseNetworkData } from '@/hooks/useNexus'
 import { GlobalNetworkCanvas } from '@/components/nexus/GlobalNetworkCanvas'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import { DerivationBadge } from '@/components/nexus/DerivationBadge'
@@ -22,43 +23,113 @@ import { PathfinderEntitySelector } from '@/components/nexus/PathfinderEntitySel
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { Link, useSearchParams } from 'react-router-dom'
+import type { NetworkGraphResponse, NexusNetworkResponse } from '@shared/contracts/api'
 
 type ReplayState = 'before' | 'after'
 
+function toNexusGraph(res: NetworkGraphResponse, snapshotId: string): NexusNetworkResponse {
+  return {
+    snapshot_id: snapshotId,
+    state: 'before',
+    nodes: (res.nodes || []).map((n) => {
+      const props = (n.properties || {}) as Record<string, unknown>
+      const cIds: string[] = props.case_id
+        ? [String(props.case_id)]
+        : Array.isArray(props.case_ids)
+        ? props.case_ids.map(String)
+        : []
+      return {
+        id: n.id,
+        entity_type: n.entity_type || 'Entity',
+        label: n.label || String(props.full_name || props.fir_number || n.id),
+        case_ids: cIds,
+        properties: props,
+      }
+    }),
+    edges: (res.edges || []).map((e) => {
+      const props = (e.properties || {}) as Record<string, unknown>
+      const cIds: string[] = props.case_id
+        ? [String(props.case_id)]
+        : Array.isArray(props.case_ids)
+        ? props.case_ids.map(String)
+        : []
+      return {
+        id: e.id,
+        source_id: e.source_id,
+        target_id: e.target_id,
+        edge_type: e.edge_type,
+        weight: typeof e.weight === 'number' ? e.weight : 1.0,
+        confidence: typeof e.provenance?.confidence === 'number' ? e.provenance.confidence : 1.0,
+        derivation_class: (e.provenance?.derivation_method === 'DIRECT' ? 'FACT' : 'DERIVED') as 'FACT' | 'DERIVED',
+        recorded_at: e.provenance?.timestamp || new Date().toISOString(),
+        case_ids: cIds,
+        properties: props,
+      }
+    }),
+    total_nodes: res.total_nodes ?? res.nodes?.length ?? 0,
+    total_edges: res.total_edges ?? res.edges?.length ?? 0,
+  }
+}
+
 export default function NetworkExplorer() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const caseIdParam = searchParams.get('case_id')
   const nodeIdParam = searchParams.get('node_id')
   const [replay, setReplay] = useState<ReplayState>('before')
   const [edgeId, setEdgeId] = useState<string | null>(null)
 
-  const before = useNexusNetwork('before', replay === 'before')
-  const after = useNexusNetwork('after', replay === 'after')
-  const diff = useSnapshotDiff(replay === 'after' && after.data?.state === 'after')
-
-  const network = replay === 'before' ? before : after
-  const graph = network.data
-
-  // ── Dynamic Pathfinder State ────────────────────────────────────────────────
+  // ── Dynamic Pathfinder & Exploration State ──────────────────────────────────
   const [showPathfinder, setShowPathfinder] = useState(false)
-  const [sourceId, setSourceId] = useState('CASE-141')
-  const [targetId, setTargetId] = useState('CASE-207')
+  const [sourceId, setSourceId] = useState(caseIdParam || nodeIdParam || '')
+  const [targetId, setTargetId] = useState('')
   const [maxHops, setMaxHops] = useState(6)
+  const [isExploring, setIsExploring] = useState(Boolean(caseIdParam || nodeIdParam))
 
   // Pre-fill from query params if requested
   useEffect(() => {
     if (caseIdParam) {
       setSourceId(caseIdParam)
       setShowPathfinder(true)
+      setIsExploring(true)
     } else if (nodeIdParam) {
       setSourceId(nodeIdParam)
       setShowPathfinder(true)
+      setIsExploring(true)
     }
   }, [caseIdParam, nodeIdParam])
 
-  const pathQuery = useNexusPath(sourceId, targetId, maxHops, showPathfinder)
+  // Context classification
+  const isEntityScoped = Boolean(nodeIdParam)
+  const isCaseScoped = Boolean(caseIdParam)
+  const isDemoCase = isCaseScoped && (caseIdParam === 'CASE-141' || caseIdParam === 'CASE-207')
+  const hasActiveGraph = Boolean(caseIdParam || nodeIdParam || isExploring || (sourceId && targetId))
 
-  const afterUnavailable = replay === 'after' && after.error
+  // Network queries
+  const entityQuery = useEntityNetwork(nodeIdParam, 2, isEntityScoped)
+  const caseQuery = useCaseNetworkData(caseIdParam, 2, isCaseScoped && !isDemoCase)
+  const demoQuery = useNexusNetwork(replay, (isCaseScoped && isDemoCase) || (!isEntityScoped && !isCaseScoped && hasActiveGraph))
+  const diff = useSnapshotDiff(replay === 'after' && demoQuery.data?.state === 'after')
+
+  const activeQuery = isEntityScoped ? entityQuery : (isCaseScoped && !isDemoCase ? caseQuery : demoQuery)
+
+  const graph: NexusNetworkResponse | null = useMemo(() => {
+    if (isEntityScoped) {
+      if (!entityQuery.data || entityQuery.data.total_nodes === 0) return null
+      return toNexusGraph(entityQuery.data, `ENTITY-${nodeIdParam}`)
+    }
+    if (isCaseScoped && !isDemoCase) {
+      if (!caseQuery.data || caseQuery.data.total_nodes === 0) return null
+      return toNexusGraph(caseQuery.data, `CASE-${caseIdParam}`)
+    }
+    if (hasActiveGraph && demoQuery.data) {
+      return demoQuery.data
+    }
+    return null
+  }, [isEntityScoped, isCaseScoped, isDemoCase, nodeIdParam, caseIdParam, entityQuery.data, caseQuery.data, demoQuery.data, hasActiveGraph])
+
+  const pathQuery = useNexusPath(sourceId, targetId, maxHops, showPathfinder && Boolean(sourceId && targetId))
+
+  const afterUnavailable = !isEntityScoped && !isCaseScoped && replay === 'after' && demoQuery.error
 
   // Lookups for labels and edges
   const nodesById = useMemo(() => {
@@ -84,6 +155,7 @@ export default function NetworkExplorer() {
     setTargetId(tgt)
     setMaxHops(hops)
     setShowPathfinder(true)
+    setIsExploring(true)
   }
 
   return (
@@ -109,7 +181,7 @@ export default function NetworkExplorer() {
             aria-expanded={showPathfinder}
           >
             <Route className="h-4 w-4 text-blue-600" />
-            {showPathfinder ? 'Hide Pathfinder' : 'Investigative Pathfinder'}
+            Investigative Pathfinder
           </button>
           <div
             role="group"
@@ -117,7 +189,10 @@ export default function NetworkExplorer() {
             className="flex items-center rounded-lg border border-neutral-300 bg-neutral-100 p-0.5 sm:p-1 text-xs sm:text-sm font-semibold shadow-inner"
           >
             <button
-              onClick={() => setReplay('before')}
+              onClick={() => {
+                setReplay('before')
+                setIsExploring(true)
+              }}
               aria-pressed={replay === 'before'}
               className={`rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm transition-colors ${
                 replay === 'before'
@@ -128,9 +203,12 @@ export default function NetworkExplorer() {
               Before resolution
             </button>
             <button
-              onClick={() => setReplay('after')}
+              onClick={() => {
+                setReplay('after')
+                setIsExploring(true)
+              }}
               aria-pressed={replay === 'after'}
-              disabled={after.isLoading && !after.data}
+              disabled={demoQuery.isLoading && !demoQuery.data}
               className={`rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm transition-colors disabled:opacity-40 ${
                 replay === 'after'
                   ? 'bg-emerald-600 text-white shadow-sm font-bold'
@@ -360,9 +438,72 @@ export default function NetworkExplorer() {
         </div>
       )}
 
-      {network.isLoading && <LoadingSkeleton layout="detail" />}
-      {network.isError && !afterUnavailable && (
-        <ErrorState message="Failed to load the investigation network." onRetry={() => void network.refetch()} />
+      {hasActiveGraph && activeQuery.isLoading && <LoadingSkeleton layout="detail" />}
+      {hasActiveGraph && activeQuery.isError && !isEntityScoped && !isCaseScoped && !afterUnavailable && (
+        <ErrorState message="Failed to load the investigation network." onRetry={() => void activeQuery.refetch()} />
+      )}
+
+      {isEntityScoped && !activeQuery.isLoading && (activeQuery.isError || !entityQuery.data || entityQuery.data.total_nodes === 0) && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900 shadow-sm space-y-2">
+          <div className="flex items-center gap-2 font-bold text-base text-amber-950">
+            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
+            No graph relationships found for entity: <span className="font-mono">{nodeIdParam}</span>
+          </div>
+          <p className="text-amber-800">
+            No recorded relationships or multi-hop connections are available for this entity in the active intelligence repository.
+          </p>
+        </div>
+      )}
+
+      {isCaseScoped && !isDemoCase && !activeQuery.isLoading && (activeQuery.isError || !caseQuery.data || caseQuery.data.total_nodes === 0) && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900 shadow-sm space-y-2">
+          <div className="flex items-center gap-2 font-bold text-base text-amber-950">
+            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
+            No graph relationships found for case: <span className="font-mono">{caseIdParam}</span>
+          </div>
+          <p className="text-amber-800">
+            No recorded relationships or multi-hop connections are available for this case in the active intelligence repository.
+          </p>
+        </div>
+      )}
+
+      {!hasActiveGraph && (
+        <div className="rounded-2xl border border-dashed border-neutral-300 bg-white/80 p-10 sm:p-14 text-center space-y-4 shadow-2xs">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 shadow-xs">
+            <Network className="h-6 w-6" />
+          </div>
+          <div className="max-w-md mx-auto space-y-1.5">
+            <h3 className="text-base sm:text-lg font-bold text-neutral-900">No investigation selected</h3>
+            <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
+              Select entities or open a case to explore its network.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <Link
+              to="/worklist"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3.5 py-2 text-xs font-bold text-neutral-800 hover:bg-neutral-50 transition-colors shadow-xs"
+            >
+              <Briefcase className="h-3.5 w-3.5 text-neutral-600" />
+              Open Investigations Worklist
+            </Link>
+            <button
+              onClick={() => setShowPathfinder(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 px-3.5 py-2 text-xs font-bold text-blue-700 transition-colors shadow-2xs"
+            >
+              <Route className="h-3.5 w-3.5" />
+              Open Pathfinder
+            </button>
+            <button
+              onClick={() => {
+                applyPreset('CASE-141', 'CASE-207', 6)
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-3.5 py-2 text-xs font-bold text-white transition-colors shadow-sm"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Load Demo Case (FIR-141 ↔ FIR-207)
+            </button>
+          </div>
+        </div>
       )}
 
       {afterUnavailable && (

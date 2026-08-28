@@ -43,6 +43,24 @@ export function useSnapshotDiff(enabled: boolean) {
   })
 }
 
+export function useEntityNetwork(entityId: string | null, depth: number = 2, enabled: boolean = true) {
+  return useQuery({
+    queryKey: ['entities', 'network', entityId, depth],
+    queryFn: () => apiClient.getEntityNetwork(entityId!, depth),
+    enabled: Boolean(enabled && entityId && entityId.trim() !== ''),
+    retry: false,
+  })
+}
+
+export function useCaseNetworkData(caseId: string | null, depth: number = 2, enabled: boolean = true) {
+  return useQuery({
+    queryKey: ['cases', 'network', caseId, depth],
+    queryFn: () => apiClient.getCaseNetwork(caseId!, depth),
+    enabled: Boolean(enabled && caseId && caseId.trim() !== ''),
+    retry: false,
+  })
+}
+
 export function useEdgeEvidence(relationshipId: string | null) {
   return useQuery({
     queryKey: ['nexus', 'evidence', relationshipId],

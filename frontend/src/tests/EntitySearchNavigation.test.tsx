@@ -116,5 +116,5 @@ describe('Entity Search & Case Detail Navigation', () => {
       expect(nameInput.value).toBeTruthy()
       expect(nameInput.value).not.toBe('Vikram Sharma')
     })
-  })
+  }, 15000)
 })

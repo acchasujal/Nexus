@@ -113,7 +113,10 @@ export const apiClient = {
 
   // Network Explorer
   getCaseNetwork: (caseId: string, depth = 2) => {
-    return apiFetch<NetworkGraphResponse>(`/api/v1/network/cases/${caseId}?depth=${depth}`)
+    return apiFetch<NetworkGraphResponse>(`/api/v1/network/cases/${encodeURIComponent(caseId)}?depth=${depth}`)
+  },
+  getEntityNetwork: (entityId: string, depth = 2) => {
+    return apiFetch<NetworkGraphResponse>(`/api/v1/entities/${encodeURIComponent(entityId)}/network?depth=${depth}`)
   },
 
   // Entity Resolution
