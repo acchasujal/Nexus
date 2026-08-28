@@ -122,3 +122,13 @@ export function useResetDemo() {
     },
   })
 }
+
+export function useScanLeads() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiClient.scanLeads(),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['nexus', 'leads'] })
+    },
+  })
+}

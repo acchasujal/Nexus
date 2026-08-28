@@ -191,6 +191,7 @@ export const apiClient = {
     return apiFetch<NexusPathResponse>(`/api/v1/nexus/path?source=${encodeURIComponent(sourceId)}&target=${encodeURIComponent(targetId)}&max_depth=${maxDepth}`)
   },
   getLeads: () => apiFetch<NexusLead[]>('/api/v1/nexus/leads'),
+  scanLeads: () => apiFetch<NexusLead[]>('/api/v1/nexus/leads/scan', { method: 'POST' }),
   decideLead: (id: string, req: NexusLeadDecisionRequest) => {
     return apiFetch<NexusLead>(`/api/v1/nexus/leads/${id}/decision`, {
       method: 'POST',

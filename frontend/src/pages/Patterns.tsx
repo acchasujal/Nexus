@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Layers, Network, Users, Share2, AlertTriangle, ShieldCheck } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Layers, Network, Users, Share2, AlertTriangle, ShieldCheck, Inbox } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 
 interface CommunityItem {
@@ -59,14 +60,23 @@ export default function Patterns() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="border-b border-neutral-200 pb-5">
-        <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2.5">
-          <Layers className="h-6 w-6 text-blue-600" />
-          Criminal Network Patterns & Community Analytics
-        </h1>
-        <p className="text-sm text-neutral-600 mt-1">
-          Graph modularity communities, bridge broker nodes, shared attribute clusters, and repeat offender matrices.
-        </p>
+      <div className="border-b border-neutral-200 pb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2.5">
+            <Layers className="h-6 w-6 text-blue-600" />
+            Criminal Network Patterns &amp; Community Analytics
+          </h1>
+          <p className="text-sm text-neutral-600 mt-1">
+            Graph modularity communities, bridge broker nodes, shared attribute clusters, and repeat offender matrices.
+          </p>
+        </div>
+        <Link
+          to="/leads"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-colors cursor-pointer"
+        >
+          <Inbox className="h-4 w-4" />
+          View Lead Inbox
+        </Link>
       </div>
 
       {/* Investigative framing disclaimer */}

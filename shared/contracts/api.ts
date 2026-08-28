@@ -422,10 +422,15 @@ export interface NexusLead {
   why_prioritized?: string[]
   derivation_class: 'FACT' | 'DERIVED' | 'HYPOTHESIS'
   case_ids: string[]
+  entity_ids?: string[]
   status: 'NEW' | 'ACCEPTED' | 'REJECTED'
   path: { node_ids: string[]; edge_ids: string[] }
   evidence_ids: string[]
+  citations?: GroundedCitation[]
+  reasoning_path?: string[]
   created_at: string
+  generation_mode?: 'REAL_LLM' | 'MOCK_LLM_TEST' | 'DETERMINISTIC_FALLBACK'
+  lead_type?: string
   decided_at?: string
   decided_by?: string
   decision_note?: string

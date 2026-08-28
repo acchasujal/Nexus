@@ -8,13 +8,14 @@ import { useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   Inbox, Route, ThumbsUp, ThumbsDown, ShieldCheck, ShieldQuestion,
-  MessageSquareCode, FileText, AlertOctagon, ChevronRight,
+  MessageSquareCode, FileText, AlertOctagon, ChevronRight, RefreshCw, Sparkles,
 } from 'lucide-react'
-import { useLeads, useDecideLead, useNexusCopilot, useNexusNetwork } from '@/hooks/useNexus'
+import { useLeads, useScanLeads, useDecideLead, useNexusCopilot, useNexusNetwork } from '@/hooks/useNexus'
 import { DerivationBadge } from '@/components/nexus/DerivationBadge'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
+import { MarkdownContent } from '@/components/nexus/MarkdownContent'
 
 /** Maps canonical source record IDs to the most representative graph edge
  *  that carries them in its evidence_ids. Derived from NEXUS golden fixture. */
@@ -39,6 +40,7 @@ export default function LeadInbox() {
   const [searchParams] = useSearchParams()
   const caseIdParam = searchParams.get('case_id')
   const { data: leads, isLoading, error, refetch } = useLeads()
+  const scanLeadsMutation = useScanLeads()
   const decide = useDecideLead()
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
   const [activeFilter, setActiveFilter] = useState<QueueFilter>('ALL')
@@ -46,7 +48,7 @@ export default function LeadInbox() {
   const effectiveLeads = useMemo(() => {
     if (!leads) return []
     return leads.filter((l) => {
-      if (activeFilter === 'HIGH') return l.severity === 'HIGH'
+      if (activeFilter === 'HIGH') return l.severity === 'HIGH' || l.review_priority === 'HIGH'
       if (activeFilter === 'PENDING') return l.status === 'NEW'
       if (activeFilter === 'ACCEPTED') return l.status === 'ACCEPTED'
       if (activeFilter === 'REJECTED') return l.status === 'REJECTED'
@@ -61,7 +63,9 @@ export default function LeadInbox() {
   const [copilotAnswer, setCopilotAnswer] = useState<string | null>(null)
   const [copilotError, setCopilotError] = useState<string | null>(null)
   const copilotQuery = useNexusCopilot(copilotAnswer === null && !copilotError ? 'How are the two cases connected?' : null)
+  
   const [evidenceDrawerEdgeId, setEvidenceDrawerEdgeId] = useState<string | null>(null)
+  const [evidenceDrawerEvidenceId, setEvidenceDrawerEvidenceId] = useState<string | null>(null)
 
   const nodeLabel = (id: string) => afterNetwork.data?.nodes.find((n) => n.id === id)?.label ?? id
 
@@ -72,6 +76,26 @@ export default function LeadInbox() {
       await decide.mutateAsync({ id: lead!.id, req: { decision, decided_by: 'Investigating Officer' } })
     } catch (e) {
       setCopilotError(e instanceof Error ? e.message : 'Decision failed')
+    }
+  }
+
+  const handleScanLeads = async () => {
+    try {
+      await scanLeadsMutation.mutateAsync()
+      await refetch()
+    } catch (e) {
+      console.error('Lead scan failed:', e)
+    }
+  }
+
+  const openEvidence = (id: string) => {
+    const relId = SOURCE_TO_EDGE[id] ?? null
+    if (relId) {
+      setEvidenceDrawerEdgeId(relId)
+      setEvidenceDrawerEvidenceId(null)
+    } else {
+      setEvidenceDrawerEvidenceId(id)
+      setEvidenceDrawerEdgeId(null)
     }
   }
 
@@ -88,18 +112,28 @@ export default function LeadInbox() {
 
   return (
     <div className="space-y-5">
-      <div className="border-b border-neutral-200 pb-4">
-        <h1 className="flex items-center gap-2.5 text-2xl font-bold text-neutral-900">
-          <Inbox className="h-6 w-6 text-blue-600" /> Lead Inbox
-          {caseIdParam && (
-            <span className="ml-2 rounded-md border border-blue-300 bg-blue-50 px-2 py-0.5 font-mono text-xs font-bold text-blue-800">
-              {caseIdParam}
-            </span>
-          )}
-        </h1>
-        <p className="mt-1 text-sm text-neutral-600">
-          Explainable, evidence-backed investigative leads. Every lead stays a hypothesis until an investigator decides.
-        </p>
+      <div className="border-b border-neutral-200 pb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="flex items-center gap-2.5 text-2xl font-bold text-neutral-900">
+            <Inbox className="h-6 w-6 text-blue-600" /> Lead Inbox
+            {caseIdParam && (
+              <span className="ml-2 rounded-md border border-blue-300 bg-blue-50 px-2 py-0.5 font-mono text-xs font-bold text-blue-800">
+                {caseIdParam}
+              </span>
+            )}
+          </h1>
+          <p className="mt-1 text-sm text-neutral-600">
+            Explainable, evidence-backed investigative leads. Every lead stays a hypothesis until an investigator decides.
+          </p>
+        </div>
+        <button
+          onClick={handleScanLeads}
+          disabled={scanLeadsMutation.isPending}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-800 text-xs font-bold hover:bg-blue-100 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${scanLeadsMutation.isPending ? 'animate-spin' : ''}`} />
+          {scanLeadsMutation.isPending ? 'Scanning Graph...' : 'Scan Graph Leads'}
+        </button>
       </div>
 
       {/* Filter pills */}
@@ -108,7 +142,7 @@ export default function LeadInbox() {
           <button
             key={pill.value}
             onClick={() => setActiveFilter(pill.value)}
-            className={`rounded-full px-3.5 py-1 text-xs font-bold border transition-colors ${
+            className={`rounded-full px-3.5 py-1 text-xs font-bold border transition-colors cursor-pointer ${
               activeFilter === pill.value
                 ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                 : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50'
@@ -117,7 +151,7 @@ export default function LeadInbox() {
             {pill.label}
             {pill.value === 'ALL' && leads ? ` (${leads.length})` : ''}
             {pill.value !== 'ALL' && leads ? ` (${leads.filter(l =>
-              pill.value === 'HIGH' ? l.severity === 'HIGH' :
+              pill.value === 'HIGH' ? (l.severity === 'HIGH' || l.review_priority === 'HIGH') :
               pill.value === 'PENDING' ? l.status === 'NEW' :
               l.status === pill.value
             ).length})` : ''}
@@ -133,8 +167,8 @@ export default function LeadInbox() {
           </h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-neutral-600">
             {activeFilter === 'ALL'
-              ? <>Leads are generated by deterministic rules once entity resolutions are confirmed. Confirm the pending match in{' '}
-                  <Link to="/fusion" className="font-bold text-blue-700 underline hover:text-blue-900">Entity Fusion</Link> first.</>           
+              ? <>Leads are discovered from deterministic graph patterns and confirmed entity matches. Click &quot;Scan Graph Leads&quot; or visit{' '}
+                  <Link to="/fusion" className="font-bold text-blue-700 underline hover:text-blue-900">Entity Fusion</Link> to resolve pending candidates.</>           
               : `No leads match the "${activeFilter}" filter. Try "All" to see all leads.`
             }
           </p>
@@ -143,25 +177,28 @@ export default function LeadInbox() {
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-4">
           {/* Queue list — xl:col-span-1 */}
           <section className="xl:col-span-1 rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden" aria-label="Lead queue">
-            <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+            <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3 flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-700">Lead Queue</h3>
+              <span className="text-[11px] font-bold text-neutral-500">{effectiveLeads.length} Items</span>
             </div>
             <ul className="divide-y divide-neutral-100 max-h-[70vh] overflow-y-auto">
               {effectiveLeads.map((l) => (
                 <li key={l.id}>
                   <button
                     onClick={() => setSelectedLeadId(l.id)}
-                    className={`w-full text-left px-4 py-3 transition-colors flex items-start gap-2 ${
-                      l.id === (lead?.id) ? 'bg-blue-50 border-l-2 border-blue-600' : 'hover:bg-neutral-50'
+                    className={`w-full text-left px-4 py-3 transition-colors flex items-start gap-2 cursor-pointer ${
+                      l.id === (lead?.id) ? 'bg-blue-50 border-l-3 border-blue-600' : 'hover:bg-neutral-50'
                     }`}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase border ${
-                          PRIORITY_STYLE[l.severity] || PRIORITY_STYLE.HIGH
-                        }`}>{l.severity}</span>
+                          PRIORITY_STYLE[l.review_priority || l.severity] || PRIORITY_STYLE.HIGH
+                        }`}>{l.review_priority || l.severity}</span>
                         {l.status !== 'NEW' && (
-                          <span className="text-[9px] font-bold text-blue-700 uppercase">{l.status}</span>
+                          <span className={`text-[9px] font-bold uppercase px-1 rounded ${
+                            l.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                          }`}>{l.status}</span>
                         )}
                       </div>
                       <p className="mt-1 text-xs font-semibold text-neutral-900 leading-tight line-clamp-2">{l.title}</p>
@@ -176,19 +213,30 @@ export default function LeadInbox() {
           <section className="space-y-4 xl:col-span-3" aria-label="Lead detail">
             <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
               <div className="flex flex-wrap items-center gap-2">
-                <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${PRIORITY_STYLE[lead.severity] || PRIORITY_STYLE.HIGH}`}>
-                  {lead.severity} Review Priority
+                <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${PRIORITY_STYLE[lead.review_priority || lead.severity] || PRIORITY_STYLE.HIGH}`}>
+                  {lead.review_priority || lead.severity} Review Priority
                 </span>
                 <span className="rounded-md border border-neutral-300 bg-neutral-100 px-2 py-0.5 font-mono text-[10px] font-bold text-neutral-800">rule: {lead.rule_id}</span>
                 <DerivationBadge klass={lead.derivation_class} />
+                {lead.generation_mode && (
+                  <span className="rounded-md border border-purple-200 bg-purple-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-purple-900 flex items-center gap-1">
+                    <Sparkles className="h-3 w-3 text-purple-600" /> {lead.generation_mode}
+                  </span>
+                )}
                 {lead.status !== 'NEW' && (
-                  <span data-testid="lead-status" className="rounded-md border border-blue-300 bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-900">
-                    {lead.status} by {lead.decided_by}
+                  <span data-testid="lead-status" className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                    lead.status === 'ACCEPTED' ? 'border-emerald-300 bg-emerald-50 text-emerald-900' : 'border-red-300 bg-red-50 text-red-900'
+                  }`}>
+                    {lead.status} by {lead.decided_by || 'Investigating Officer'}
                   </span>
                 )}
               </div>
               <h2 className="mt-3 text-lg font-bold text-neutral-900">{lead.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-neutral-700">{lead.explanation}</p>
+              
+              {/* Rich Markdown Explanation */}
+              <div className="mt-3 rounded-lg border border-neutral-100 bg-neutral-50/50 p-3.5">
+                <MarkdownContent content={lead.explanation} />
+              </div>
 
               {/* Multi-Factor Priority Breakdown */}
               <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50/80 p-3.5 space-y-2.5">
@@ -203,80 +251,85 @@ export default function LeadInbox() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  <div className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
-                    <span className="font-bold text-neutral-900">Evidence Volume</span>
-                    <p className="text-[11px] text-neutral-600">5 independent Section 63 BSA records</p>
-                  </div>
-                  <div className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
-                    <span className="font-bold text-neutral-900">Cross-Jurisdiction</span>
-                    <p className="text-[11px] text-neutral-600">Unifies Mysuru &amp; Bengaluru FIRs</p>
-                  </div>
-                  <div className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
-                    <span className="font-bold text-neutral-900">Network Centrality</span>
-                    <p className="text-[11px] text-neutral-600">Bridges 2 previously isolated subgraphs</p>
-                  </div>
-                  <div className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
-                    <span className="font-bold text-neutral-900">Corroboration</span>
-                    <p className="text-[11px] text-neutral-600">Dual CDR telephony &amp; Banking ledger</p>
-                  </div>
+                  {lead.priority_factors && Object.keys(lead.priority_factors).length > 0 ? (
+                    Object.entries(lead.priority_factors).map(([factorKey, factorVal]) => (
+                      <div key={factorKey} className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
+                        <span className="font-bold text-neutral-900">{factorKey}</span>
+                        <p className="text-[11px] text-neutral-600">{factorVal}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <>
+                      <div className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
+                        <span className="font-bold text-neutral-900">Evidence Volume</span>
+                        <p className="text-[11px] text-neutral-600">{lead.evidence_ids.length} independent Section 63 BSA records</p>
+                      </div>
+                      <div className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
+                        <span className="font-bold text-neutral-900">Cross-Jurisdiction</span>
+                        <p className="text-[11px] text-neutral-600">{lead.case_ids.length > 1 ? `Connects ${lead.case_ids.join(' & ')}` : 'Single case scope'}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                <div className="pt-1.5 border-t border-neutral-200">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 mb-1">
-                    Why Prioritized for Investigator Review:
+                {lead.why_prioritized && lead.why_prioritized.length > 0 && (
+                  <div className="pt-1.5 border-t border-neutral-200">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                      Why Prioritized for Investigator Review:
+                    </div>
+                    <ul className="text-xs text-neutral-700 space-y-1 list-disc list-inside">
+                      {lead.why_prioritized.map((reason, rIdx) => (
+                        <li key={rIdx}>{reason}</li>
+                      ))}
+                    </ul>
                   </div>
-                  <ul className="text-xs text-neutral-700 space-y-1 list-disc list-inside">
-                    <li>Cross-case bridge formed after investigator-confirmed entity resolution (RC-1).</li>
-                    <li>Dual corroboration: Shared mobile <code className="text-[10px] bg-neutral-100 px-1 py-0.5 rounded font-bold">+91 98450 11223</code> and repeated bank fund layering.</li>
-                    <li>High investigative yield for inter-district coordination meetings.</li>
-                  </ul>
-                </div>
+                )}
               </div>
 
-              <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 shadow-xs">
-                <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-700">
-                  <Route className="h-4 w-4 text-blue-600" /> Evidence-backed connection path
-                </h3>
-                <ol className="mt-3 space-y-0">
-                  {lead.path.node_ids.map((id, i) => (
-                    <li key={id} className="flex items-center gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-blue-300 bg-blue-100 font-mono text-[10px] font-bold text-blue-900">{i + 1}</span>
-                      <span className="text-sm font-semibold text-neutral-900">{nodeLabel(id)}</span>
-                      {i < lead.path.node_ids.length - 1 && <span className="text-neutral-400 font-bold">↓</span>}
-                    </li>
-                  ))}
-                </ol>
-                <div className="mt-4 flex flex-wrap items-center gap-1.5 pt-2 border-t border-neutral-200">
-                  <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-neutral-600">
-                    <FileText className="h-3.5 w-3.5 text-blue-600" /> Cited evidence:
-                  </span>
-                  {lead.evidence_ids.map((id) => {
-                    const relId = SOURCE_TO_EDGE[id] ?? null
-                    return relId ? (
+              {/* Evidence-backed connection path */}
+              {lead.path && lead.path.node_ids && lead.path.node_ids.length > 0 && (
+                <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 shadow-xs">
+                  <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-700">
+                    <Route className="h-4 w-4 text-blue-600" /> Evidence-backed connection path
+                  </h3>
+                  <ol className="mt-3 space-y-0 flex flex-wrap items-center gap-2">
+                    {lead.path.node_ids.map((id, i) => (
+                      <li key={id} className="flex items-center gap-2">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-blue-300 bg-blue-100 font-mono text-[10px] font-bold text-blue-900">{i + 1}</span>
+                        <span className="text-xs font-semibold text-neutral-900 bg-white border border-neutral-200 px-2 py-1 rounded-md">{nodeLabel(id)}</span>
+                        {i < lead.path.node_ids.length - 1 && <span className="text-neutral-400 font-bold">→</span>}
+                      </li>
+                    ))}
+                  </ol>
+                  
+                  {/* Cited Evidence Chips */}
+                  <div className="mt-4 flex flex-wrap items-center gap-1.5 pt-2 border-t border-neutral-200">
+                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-neutral-600">
+                      <FileText className="h-3.5 w-3.5 text-blue-600" /> Cited evidence:
+                    </span>
+                    {lead.evidence_ids.map((id) => (
                       <button
                         key={id}
-                        onClick={() => setEvidenceDrawerEdgeId(relId)}
-                        className="inline-flex items-center gap-1 rounded bg-amber-100 hover:bg-amber-200 px-1.5 py-0.5 font-mono text-[11px] text-amber-900 border border-amber-200 font-semibold cursor-pointer transition-colors"
-                        title={`View evidence for ${id}`}
+                        onClick={() => openEvidence(id)}
+                        className="inline-flex items-center gap-1 rounded bg-amber-100 hover:bg-amber-200 px-2 py-0.5 font-mono text-[11px] text-amber-900 border border-amber-300 font-semibold cursor-pointer transition-colors"
+                        title={`Click to open source record for ${id}`}
                       >
                         <FileText className="h-3 w-3 text-amber-700" />
                         {id}
                       </button>
-                    ) : (
-                      <code key={id} className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[11px] text-amber-900 border border-amber-200 font-semibold">{id}</code>
-                    )
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {lead.status === 'NEW' ? (
                 <div className="mt-5 flex flex-wrap gap-3">
                   <button onClick={() => submit('ACCEPT')} disabled={decide.isPending} data-testid="accept-lead"
-                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 shadow-sm disabled:opacity-50">
+                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 shadow-sm disabled:opacity-50 cursor-pointer">
                     <ThumbsUp className="h-4 w-4" /> Accept lead
                   </button>
                   <button onClick={() => submit('REJECT')} disabled={decide.isPending} data-testid="reject-lead"
-                    className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-800 transition-colors hover:bg-red-100 disabled:opacity-50">
+                    className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-800 transition-colors hover:bg-red-100 disabled:opacity-50 cursor-pointer">
                     <ThumbsDown className="h-4 w-4" /> Reject lead
                   </button>
                   <span className="self-center text-xs text-neutral-600 font-medium">
@@ -295,7 +348,7 @@ export default function LeadInbox() {
 
           <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm" aria-label="Copilot explanation">
             <h3 className="flex items-center gap-2 text-sm font-bold text-neutral-900">
-              <MessageSquareCode className="h-4 w-4 text-blue-600" /> Copilot — grounded explanation
+              <MessageSquareCode className="h-4 w-4 text-blue-600" /> Copilot — Grounded Graph Intelligence
             </h3>
             <p className="mt-1 text-xs text-neutral-600">Deterministic fallback. Same lead, same evidence; refuses unsupported claims.</p>
 
@@ -309,12 +362,19 @@ export default function LeadInbox() {
                     {copilotQuery.data.refusal_reason ?? copilotQuery.data.answer}
                   </div>
                 ) : (
-                  <p className="text-sm leading-relaxed text-neutral-800">{copilotQuery.data.answer}</p>
+                  <MarkdownContent content={copilotQuery.data.answer} />
                 )}
                 {copilotQuery.data.evidence_ids.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {copilotQuery.data.evidence_ids.map((id) => (
-                      <code key={id} className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[11px] text-amber-900 border border-amber-200 font-semibold">{id}</code>
+                      <button
+                        key={id}
+                        onClick={() => openEvidence(id)}
+                        className="inline-flex items-center gap-1 rounded bg-amber-100 hover:bg-amber-200 px-1.5 py-0.5 font-mono text-[11px] text-amber-900 border border-amber-200 font-semibold cursor-pointer"
+                      >
+                        <FileText className="h-3 w-3 text-amber-700" />
+                        {id}
+                      </button>
                     ))}
                   </div>
                 )}
@@ -339,7 +399,11 @@ export default function LeadInbox() {
       )}
       <EvidenceDrawer
         relationshipId={evidenceDrawerEdgeId}
-        onClose={() => setEvidenceDrawerEdgeId(null)}
+        evidenceId={evidenceDrawerEvidenceId}
+        onClose={() => {
+          setEvidenceDrawerEdgeId(null)
+          setEvidenceDrawerEvidenceId(null)
+        }}
       />
     </div>
   )

@@ -168,7 +168,7 @@ def test_nexus_lead_decision_audit_event(client: TestClient) -> None:
     leads_resp = client.get("/api/v1/nexus/leads", headers={"X-Role": "INVESTIGATOR"})
     assert leads_resp.status_code == 200
     leads = leads_resp.json()
-    assert len(leads) == 1
+    assert len(leads) >= 1
     lead_id = leads[0]["id"]
 
     # Act on the lead

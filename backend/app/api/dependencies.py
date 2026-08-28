@@ -6,6 +6,7 @@ Wires together repositories, verifiers, services, and audit logging per request.
 
 from __future__ import annotations
 
+from typing import Any
 from fastapi import Depends, Request
 
 from backend.app.auth.principal import Principal
@@ -82,3 +83,25 @@ def get_export_service(
 ) -> ExportService:
     evidence_svc = EvidenceService(repo, audit_svc)
     return ExportService(repo, audit_svc, evidence_svc)
+
+
+def get_lead_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> Any:
+    lead_svc = getattr(request.app.state, "lead_service", None)
+    if lead_svc is not None:
+        return lead_svc
+
+    from backend.app.ai.context_builder import GraphRAGContextBuilder
+    from backend.app.ai.llm_client import get_llm_client
+    from backend.app.services.lead_service import LeadPipelineService
+
+    llm = get_llm_client()
+    context_builder = GraphRAGContextBuilder(repo, audit_service=audit_svc)
+    lead_svc = LeadPipelineService(repo, audit_svc, context_builder=context_builder, llm_client=llm)
+    request.app.state.lead_service = lead_svc
+    return lead_svc
+
+

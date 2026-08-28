@@ -347,3 +347,42 @@ class IngestResponse(BaseModel):
     skipped_count: int = 0
     error_count: int = 0
     audit_event_id: str = ""
+
+
+# ── Investigative Leads ───────────────────────────────────────────────────────
+
+class NexusLeadPath(BaseModel):
+    node_ids: list[str] = Field(default_factory=list)
+    edge_ids: list[str] = Field(default_factory=list)
+
+
+class NexusLead(BaseModel):
+    id: str
+    title: str
+    rule_id: str
+    explanation: str
+    severity: str
+    review_priority: str = "HIGH"  # HIGH | MEDIUM | LOW
+    priority_factors: dict[str, str] = Field(default_factory=dict)
+    why_prioritized: list[str] = Field(default_factory=list)
+    derivation_class: str = "DERIVED"  # FACT | DERIVED | HYPOTHESIS
+    case_ids: list[str] = Field(default_factory=list)
+    entity_ids: list[str] = Field(default_factory=list)
+    status: str = "NEW"  # NEW | ACCEPTED | REJECTED
+    path: NexusLeadPath = Field(default_factory=NexusLeadPath)
+    evidence_ids: list[str] = Field(default_factory=list)
+    citations: list[GroundedCitation] = Field(default_factory=list)
+    reasoning_path: list[str] = Field(default_factory=list)
+    created_at: str = ""
+    generation_mode: str = "DETERMINISTIC_FALLBACK"  # REAL_LLM | MOCK_LLM_TEST | DETERMINISTIC_FALLBACK
+    lead_type: str | None = None
+    decided_at: str | None = None
+    decided_by: str | None = None
+    decision_note: str | None = None
+
+
+class NexusLeadDecisionRequest(BaseModel):
+    decision: str  # ACCEPT | REJECT
+    decided_by: str = "Investigating Officer"
+    note: str | None = None
+

@@ -26,6 +26,7 @@ from pydantic import BaseModel, Field
 from backend.app.api.dependencies import (
     get_audit_service,
     get_copilot_service,
+    get_lead_service,
     get_principal,
     get_repository,
     get_request_id,
@@ -178,12 +179,17 @@ class NexusLead(BaseModel):
     review_priority: Literal["HIGH", "MEDIUM", "LOW"] = "HIGH"
     priority_factors: dict[str, str] = Field(default_factory=dict)
     why_prioritized: list[str] = Field(default_factory=list)
-    derivation_class: Literal["FACT", "DERIVED", "HYPOTHESIS"]
-    case_ids: list[str]
-    status: Literal["NEW", "ACCEPTED", "REJECTED"]
-    path: NexusLeadPath
-    evidence_ids: list[str]
-    created_at: str
+    derivation_class: Literal["FACT", "DERIVED", "HYPOTHESIS"] = "DERIVED"
+    case_ids: list[str] = Field(default_factory=list)
+    entity_ids: list[str] = Field(default_factory=list)
+    status: Literal["NEW", "ACCEPTED", "REJECTED"] = "NEW"
+    path: NexusLeadPath = Field(default_factory=NexusLeadPath)
+    evidence_ids: list[str] = Field(default_factory=list)
+    citations: list[GroundedCitation] = Field(default_factory=list)
+    reasoning_path: list[str] = Field(default_factory=list)
+    created_at: str = ""
+    generation_mode: Literal["REAL_LLM", "MOCK_LLM_TEST", "DETERMINISTIC_FALLBACK"] = "DETERMINISTIC_FALLBACK"
+    lead_type: str | None = None
     decided_at: str | None = None
     decided_by: str | None = None
     decision_note: str | None = None
@@ -1172,8 +1178,27 @@ def create_nexus_router() -> APIRouter:
     @router.get("/nexus/leads", response_model=list[NexusLead])
     def get_leads(
         principal: Principal = Depends(get_principal),
+        lead_svc: Any = Depends(get_lead_service),
     ) -> list[NexusLead]:
-        return [_demo_state.lead] if _demo_state.is_resolved else []
+        dynamic_leads = lead_svc.get_leads(is_resolved=_demo_state.is_resolved)
+        # Ensure golden demo lead is included if resolved
+        if _demo_state.is_resolved:
+            lead_ids = {item.id for item in dynamic_leads}
+            if _demo_state.lead.id not in lead_ids:
+                return [_demo_state.lead, *dynamic_leads]
+        return dynamic_leads
+
+    @router.post("/nexus/leads/scan", response_model=list[NexusLead])
+    def scan_leads(
+        principal: Principal = Depends(get_principal),
+        lead_svc: Any = Depends(get_lead_service),
+    ) -> list[NexusLead]:
+        dynamic_leads = lead_svc.scan_and_generate_leads(is_resolved=_demo_state.is_resolved, force_refresh=True)
+        if _demo_state.is_resolved:
+            lead_ids = {item.id for item in dynamic_leads}
+            if _demo_state.lead.id not in lead_ids:
+                return [_demo_state.lead, *dynamic_leads]
+        return dynamic_leads
 
     @router.post("/nexus/leads/{lead_id}/decision", response_model=NexusLead)
     def decide_lead(
@@ -1181,24 +1206,33 @@ def create_nexus_router() -> APIRouter:
         body: NexusLeadDecisionRequest,
         principal: Principal = Depends(get_principal),
         audit: AuditService = Depends(get_audit_service),
+        lead_svc: Any = Depends(get_lead_service),
     ) -> NexusLead:
-        if lead_id != _demo_state.lead.id:
+        if lead_id == _demo_state.lead.id:
+            _demo_state.lead.status = "ACCEPTED" if body.decision == "ACCEPT" else "REJECTED"
+            _demo_state.lead.decided_at = datetime.now(timezone.utc).isoformat()
+            _demo_state.lead.decided_by = body.decided_by or principal.user_id
+            _demo_state.lead.decision_note = body.note
+
+            audit.record(
+                event_type=AuditEventType.LEAD_ACTIONED,
+                actor_id=principal.user_id,
+                entity_type="Lead",
+                entity_id=lead_id,
+                details={"decision": body.decision, "note": body.note},
+            )
+            return _demo_state.lead
+
+        try:
+            return lead_svc.decide_lead(
+                lead_id=lead_id,
+                decision=body.decision,
+                decided_by=body.decided_by,
+                note=body.note,
+                actor_id=principal.user_id,
+            )
+        except KeyError:
             raise HTTPException(status_code=404, detail="Lead not found")
-
-        _demo_state.lead.status = "ACCEPTED" if body.decision == "ACCEPT" else "REJECTED"
-        _demo_state.lead.decided_at = datetime.now(timezone.utc).isoformat()
-        _demo_state.lead.decided_by = body.decided_by or principal.user_id
-        _demo_state.lead.decision_note = body.note
-
-        audit.record(
-            event_type=AuditEventType.LEAD_ACTIONED,
-            actor_id=principal.user_id,
-            entity_type="Lead",
-            entity_id=lead_id,
-            details={"decision": body.decision, "note": body.note},
-        )
-
-        return _demo_state.lead
 
     @router.post("/nexus/copilot/query", response_model=NexusCopilotResponse)
     def query_copilot(
