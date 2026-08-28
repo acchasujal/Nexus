@@ -4,6 +4,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def clean_env_for_testing(monkeypatch):
     """Ensure standard tests run in clean deterministic fallback mode without live network calls."""
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("LLM_API_KEY", raising=False)

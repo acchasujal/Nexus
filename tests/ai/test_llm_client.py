@@ -31,6 +31,7 @@ def test_mock_llm_client_generation():
 
 
 def test_get_llm_client_unconfigured_returns_none(monkeypatch):
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     monkeypatch.delenv("LLM_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
@@ -41,8 +42,24 @@ def test_get_llm_client_unconfigured_returns_none(monkeypatch):
     assert client is None
 
 
+def test_get_llm_client_groq_detection(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "gsk-test-key-12345")
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("LLM_BASE_URL", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+
+    client = get_llm_client()
+    assert isinstance(client, RealLLMClient)
+    assert client.provider_name == "groq"
+    assert client.model_name == "openai/gpt-oss-120b"
+    assert client._base_url == "https://api.groq.com/openai/v1"
+
+
 def test_get_llm_client_gemini_detection(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "test-gemini-key-12345")
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("LLM_PROVIDER", raising=False)
     monkeypatch.delenv("LLM_BASE_URL", raising=False)

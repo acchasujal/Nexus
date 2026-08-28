@@ -151,102 +151,98 @@ class AIToolOrchestrator:
         detected_intent = "ai_tool_synthesis"
 
         try:
-            # ── 4. Initial LLM Turn (Tool Selection) ──────────────────────────
-            initial_req = LLMRequest(
-                messages=messages,
-                tools=tool_declarations,
-                temperature=0.0,
-            )
-            response = self._llm_client.generate(initial_req)
-
-            if response.tool_calls:
-                # Ensure every tool call has a consistent unique ID
-                tool_calls_meta = []
-                for i, tc in enumerate(response.tool_calls):
-                    if not tc.call_id:
-                        tc.call_id = f"call_{i}_{tc.name}"
-                    tool_calls_meta.append({
-                        "id": tc.call_id,
-                        "type": "function",
-                        "function": {
-                            "name": tc.name,
-                            "arguments": json.dumps(tc.arguments) if isinstance(tc.arguments, dict) else str(tc.arguments),
-                        },
-                    })
-
-                messages.append(
-                    ChatMessage(
-                        role="assistant",
-                        content=response.content or "",
-                        metadata={"tool_calls": tool_calls_meta},
-                    )
+            # ── 4. Multi-Turn Tool Execution Loop (Up to 3 turns) ─────────────
+            max_turns = 3
+            current_turn = 0
+            while current_turn < max_turns:
+                current_turn += 1
+                # On the final turn, omit tools so model must synthesize final text
+                req_tools = tool_declarations if current_turn < max_turns else None
+                req = LLMRequest(
+                    messages=messages,
+                    tools=req_tools,
+                    temperature=0.0,
                 )
+                response = self._llm_client.generate(req)
 
-                # ── 5. Execute Deterministic Tools ────────────────────────────
-                for tc in response.tool_calls:
-                    call_id = tc.call_id
-                    t_start = time.perf_counter()
-                    tool_result: NEXUSToolResult = self._tools.execute(tc.name, tc.arguments)
-                    t_dur_ms = (time.perf_counter() - t_start) * 1000.0
+                if response.tool_calls:
+                    # Ensure every tool call has a consistent unique ID
+                    tool_calls_meta = []
+                    for i, tc in enumerate(response.tool_calls):
+                        if not tc.call_id:
+                            tc.call_id = f"call_{current_turn}_{i}_{tc.name}"
+                        tool_calls_meta.append({
+                            "id": tc.call_id,
+                            "type": "function",
+                            "function": {
+                                "name": tc.name,
+                                "arguments": json.dumps(tc.arguments) if isinstance(tc.arguments, dict) else str(tc.arguments),
+                            },
+                        })
 
-                    telemetry["tool_calls"].append({
-                        "tool": tc.name,
-                        "arguments": tc.arguments,
-                        "duration_ms": round(t_dur_ms, 2),
-                        "success": tool_result.success,
-                    })
-                    telemetry["tool_duration_ms"] += t_dur_ms
-                    telemetry["retrieved_nodes_count"] += tool_result.nodes_count
-                    telemetry["retrieved_edges_count"] += tool_result.edges_count
-
-                    _TOOL_INTENT_MAP = {
-                        "find_shortest_path": "cross_case_analysis",
-                        "resolve_person_identity": "entity_lookup",
-                        "get_case_dossier": "case_summary",
-                        "detect_bridge_brokers": "bridge_analysis",
-                        "detect_communities": "community_detection",
-                        "detect_financial_layering": "transaction_analysis",
-                        "analyze_cdr_bursts": "communication_analysis",
-                        "get_evidence_provenance": "evidence_query",
-                        "get_cross_case_connections": "cross_case_analysis",
-                    }
-                    detected_intent = _TOOL_INTENT_MAP.get(tc.name, "ai_tool_synthesis")
-
-                    # Extract Authoritative Citations & Lineage from Tool Output
-                    all_citations.extend(tool_result.citations)
-                    all_evidence_ids.extend(tool_result.evidence_ids)
-                    all_reasoning_paths.extend(tool_result.reasoning_path)
-                    all_case_ids.extend(tool_result.case_ids)
-                    all_entity_ids.extend(tool_result.entity_ids)
-
-                    # Append tool result message for LLM synthesis
-                    tool_payload = json.dumps({
-                        "success": tool_result.success,
-                        "data": tool_result.data,
-                        "evidence_ids": tool_result.evidence_ids,
-                        "error": tool_result.error,
-                    })
                     messages.append(
                         ChatMessage(
-                            role="tool",
-                            name=tc.name,
-                            content=tool_payload,
-                            metadata={"tool_call_id": call_id},
+                            role="assistant",
+                            content=response.content or "",
+                            metadata={"tool_calls": tool_calls_meta},
                         )
                     )
 
-                # ── 6. Final LLM Turn (Grounded Synthesis) ────────────────────
-                synthesis_req = LLMRequest(
-                    messages=messages,
-                    temperature=0.0,
-                )
-                synthesis_resp = self._llm_client.generate(synthesis_req)
-                final_answer = synthesis_resp.content or "Completed intelligence tool analysis."
+                    # Execute deterministic tools for this turn
+                    for tc in response.tool_calls:
+                        call_id = tc.call_id
+                        t_start = time.perf_counter()
+                        tool_result: NEXUSToolResult = self._tools.execute(tc.name, tc.arguments)
+                        t_dur_ms = (time.perf_counter() - t_start) * 1000.0
 
-            else:
-                # Direct response without tool calls
-                final_answer = response.content or "NEXUS Intelligence Copilot processed your request."
-                detected_intent = "general_query"
+                        telemetry["tool_calls"].append({
+                            "tool": tc.name,
+                            "arguments": tc.arguments,
+                            "duration_ms": round(t_dur_ms, 2),
+                            "success": tool_result.success,
+                        })
+                        telemetry["tool_duration_ms"] += t_dur_ms
+                        telemetry["retrieved_nodes_count"] += tool_result.nodes_count
+                        telemetry["retrieved_edges_count"] += tool_result.edges_count
+
+                        _TOOL_INTENT_MAP = {
+                            "find_shortest_path": "cross_case_analysis",
+                            "resolve_person_identity": "entity_lookup",
+                            "get_case_dossier": "case_summary",
+                            "detect_bridge_brokers": "bridge_analysis",
+                            "detect_communities": "community_detection",
+                            "detect_financial_layering": "transaction_analysis",
+                            "analyze_cdr_bursts": "communication_analysis",
+                            "get_evidence_provenance": "evidence_query",
+                            "get_cross_case_connections": "cross_case_analysis",
+                        }
+                        detected_intent = _TOOL_INTENT_MAP.get(tc.name, "ai_tool_synthesis")
+
+                        # Extract Authoritative Citations & Lineage from Tool Output
+                        all_citations.extend(tool_result.citations)
+                        all_evidence_ids.extend(tool_result.evidence_ids)
+                        all_reasoning_paths.extend(tool_result.reasoning_path)
+                        all_case_ids.extend(tool_result.case_ids)
+                        all_entity_ids.extend(tool_result.entity_ids)
+
+                        # Append tool result message for LLM synthesis
+                        tool_payload = json.dumps({
+                            "success": tool_result.success,
+                            "data": tool_result.data,
+                            "evidence_ids": tool_result.evidence_ids,
+                            "error": tool_result.error,
+                        })
+                        messages.append(
+                            ChatMessage(
+                                role="tool",
+                                name=tc.name,
+                                content=tool_payload,
+                                metadata={"tool_call_id": call_id},
+                            )
+                        )
+                else:
+                    final_answer = response.content or "NEXUS Intelligence Copilot processed your request."
+                    break
 
             # Clean and deduplicate authoritative citations and IDs
             deduped_evidence_ids = list(dict.fromkeys(all_evidence_ids))

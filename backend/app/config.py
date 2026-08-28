@@ -54,14 +54,15 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_seconds: int = 86400
 
-    # ── AI & Gemini / LLM Provider ───────────────────────────────────────────
+    # ── AI & Groq / LLM Provider ─────────────────────────────────────────────
+    groq_api_key: str = Field(default="", alias="GROQ_API_KEY")
     gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
     llm_api_key: str = Field(default="", alias="LLM_API_KEY")
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
-    llm_provider: str = Field(default="gemini", alias="LLM_PROVIDER")
-    llm_model: str = Field(default="gemini-2.5-flash", alias="LLM_MODEL")
+    llm_provider: str = Field(default="groq", alias="LLM_PROVIDER")
+    llm_model: str = Field(default="openai/gpt-oss-120b", alias="LLM_MODEL")
     llm_base_url: str = Field(
-        default="https://generativelanguage.googleapis.com/v1beta/openai",
+        default="https://api.groq.com/openai/v1",
         alias="LLM_BASE_URL",
     )
     nexus_use_mock_llm: bool = Field(default=False, alias="NEXUS_USE_MOCK_LLM")
