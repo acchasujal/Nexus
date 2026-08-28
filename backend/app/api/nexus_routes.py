@@ -18,9 +18,12 @@ from __future__ import annotations
 import copy
 import re
 from datetime import datetime, timezone
+import os
+import shutil
+import tempfile
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field
 
 from backend.app.api.dependencies import (
@@ -32,6 +35,7 @@ from backend.app.api.dependencies import (
 )
 from backend.app.auth.principal import Principal
 from backend.app.db.in_memory import InMemoryBackendRepository
+from backend.app.db.ingestion.pipeline import CsvIngestionPipeline
 from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.copilot_service import CopilotService
 from shared.contracts.api import CopilotQueryRequest, GroundedCitation, NetworkGraphResponse
@@ -709,25 +713,48 @@ def create_nexus_router() -> APIRouter:
     router = APIRouter(tags=["nexus"])
 
     @router.post("/nexus/ingest", response_model=NexusIngestResponse)
-    def ingest_demo_files(
-        req: NexusIngestRequest | None = None,
+    def ingest_csv_files(
+        files: list[UploadFile] = File(...),
         principal: Principal = Depends(get_principal),
         audit: AuditService = Depends(get_audit_service),
+        repo: InMemoryBackendRepository = Depends(get_repository),
     ) -> NexusIngestResponse:
         _demo_state.reset()
+        if not files:
+            raise HTTPException(status_code=400, detail="No files provided.")
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            for file in files:
+                if file.filename:
+                    file_path = os.path.join(tmp_dir, file.filename)
+                    with open(file_path, "wb") as buffer:
+                        shutil.copyfileobj(file.file, buffer)
+
+            pipeline = CsvIngestionPipeline()
+            bundle = pipeline.ingest_directory(tmp_dir)
+
+        # Persist to repository
+        repo.apply_bundle(bundle)
+        _demo_state.candidates = list(bundle.review_candidates)
+
         audit.record(
             event_type=AuditEventType.INGESTION_COMPLETED,
             actor_id=principal.user_id,
             entity_type="Batch",
-            entity_id="BATCH-2026-08-24",
-            details={"files_count": len(req.files) if req else 3},
+            entity_id=bundle.batch_id,
+            details={"files_count": len(files), "received_count": bundle.summary.received_count},
         )
+
         return NexusIngestResponse(
-            batch_id="BATCH-2026-08-24",
-            source_type="GOLDEN_FUSION",
-            ingested_count=3,
+            batch_id=bundle.batch_id,
+            source_type=bundle.source_type.value,
+            ingested_count=bundle.summary.received_count,
             extraction_summary=ExtractionSummary(
-                persons=6, phones=3, accounts=2, events=1, relationships=10
+                persons=sum(1 for n in bundle.nodes if n.entity_type == "Person"),
+                phones=sum(1 for n in bundle.nodes if n.entity_type == "Phone"),
+                accounts=sum(1 for n in bundle.nodes if n.entity_type == "Account"),
+                events=sum(1 for n in bundle.nodes if n.entity_type in ("Event", "Transaction", "Case")),
+                relationships=len(bundle.relationships)
             ),
             snapshot_id=SNAPSHOT_DIFF.before_snapshot_id,
         )

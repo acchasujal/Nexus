@@ -58,11 +58,11 @@ export default function Worklist() {
   const resetDemo = useResetDemo()
   const [showDemoPanel, setShowDemoPanel] = useState(false)
 
-  const handleIngest = async (sourceType: string, fileName: string) => {
-    setIngestingType(sourceType)
+  const handleIngest = async (files: File[]) => {
+    setIngestingType('UPLOADING')
     setIngestError(null)
     try {
-      const res = await apiClient.nexusIngest([{ source_type: sourceType, file_name: fileName }])
+      const res = await apiClient.nexusIngest(files)
       setIngestResult(res)
     } catch (err) {
       setIngestError(err instanceof Error ? err.message : 'Ingestion failed')
@@ -319,64 +319,33 @@ export default function Worklist() {
               </button>
             </div>
 
-            {/* 3 Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <button
-                onClick={() => handleIngest('FIR', 'fir_141_207_2026.txt')}
-                disabled={ingestingType !== null}
-                className="flex items-center justify-between p-3.5 rounded-lg border border-sky-200 bg-sky-50/50 hover:bg-sky-50 text-left transition-all disabled:opacity-50 shadow-sm"
-              >
-                <div className="flex items-center gap-2.5">
-                  <FileText className="h-5 w-5 text-sky-600 shrink-0" />
-                  <div>
-                    <div className="text-xs font-bold text-sky-950">Load FIR Fixture</div>
-                    <div className="text-[11px] text-neutral-600">FIR 141 &amp; 207 Records</div>
+              <div className="col-span-1 sm:col-span-3">
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-neutral-300 rounded-lg cursor-pointer bg-neutral-50 hover:bg-neutral-100 transition-colors">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="h-8 w-8 text-neutral-400 mb-2" />
+                    <p className="mb-2 text-sm text-neutral-600"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                    <p className="text-xs text-neutral-500">FIR, CDR, Bank, or Intelligence CSVs</p>
                   </div>
-                </div>
-                {ingestingType === 'FIR' ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-sky-600" />
-                ) : (
-                  <ArrowRight className="h-4 w-4 text-sky-600" />
-                )}
-              </button>
-
-              <button
-                onClick={() => handleIngest('CDR', 'cdr_mysuru_bengaluru.csv')}
-                disabled={ingestingType !== null}
-                className="flex items-center justify-between p-3.5 rounded-lg border border-amber-200 bg-amber-50/50 hover:bg-amber-50 text-left transition-all disabled:opacity-50 shadow-sm"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Phone className="h-5 w-5 text-amber-600 shrink-0" />
-                  <div>
-                    <div className="text-xs font-bold text-amber-950">Load CDR Records</div>
-                    <div className="text-[11px] text-neutral-600">Mysuru &amp; BLR Calls</div>
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    multiple 
+                    accept=".csv,.txt"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        handleIngest(Array.from(e.target.files))
+                      }
+                    }} 
+                    disabled={ingestingType !== null}
+                  />
+                </label>
+                {ingestingType === 'UPLOADING' && (
+                  <div className="flex items-center justify-center gap-2 mt-4 text-sm text-blue-600 font-medium">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Processing & Mapping to Graph Schema...
                   </div>
-                </div>
-                {ingestingType === 'CDR' ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-amber-600" />
-                ) : (
-                  <ArrowRight className="h-4 w-4 text-amber-600" />
                 )}
-              </button>
-
-              <button
-                onClick={() => handleIngest('BANK_TXN', 'txns_axis_2026.csv')}
-                disabled={ingestingType !== null}
-                className="flex items-center justify-between p-3.5 rounded-lg border border-purple-200 bg-purple-50/50 hover:bg-purple-50 text-left transition-all disabled:opacity-50 shadow-sm"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Landmark className="h-5 w-5 text-purple-600 shrink-0" />
-                  <div>
-                    <div className="text-xs font-bold text-purple-950">Load Transaction Log</div>
-                    <div className="text-[11px] text-neutral-600">Axis Layering Ledger</div>
-                  </div>
-                </div>
-                {ingestingType === 'BANK_TXN' ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
-                ) : (
-                  <ArrowRight className="h-4 w-4 text-purple-600" />
-                )}
-              </button>
+              </div>
             </div>
 
             {/* Ingest Result Card */}

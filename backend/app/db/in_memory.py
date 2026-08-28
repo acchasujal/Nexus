@@ -120,6 +120,30 @@ class InMemoryBackendRepository:
             self.incident_edges.setdefault(src, []).append(edge)
             self.incident_edges.setdefault(tgt, []).append(edge)
 
+    def apply_bundle(self, bundle: Any) -> None:
+        """Apply an IngestionBundle from the pipeline into the repository."""
+        for node in bundle.nodes:
+            self.nodes[str(node.id)] = {
+                "id": str(node.id),
+                "entity_type": node.entity_type,
+                "properties": dict(node.properties),
+            }
+        
+        for edge in bundle.relationships:
+            self.edges.append({
+                "id": str(edge.id) if getattr(edge, "id", None) else f"{edge.source_id}-{edge.target_id}",
+                "source_id": str(edge.source_id),
+                "target_id": str(edge.target_id),
+                "edge_type": edge.edge_type,
+                "weight": edge.weight,
+                "confidence": getattr(edge, "confidence", 1.0),
+                "provenance": edge.provenance.model_dump() if hasattr(edge, "provenance") and edge.provenance else {},
+                "properties": dict(edge.properties) if getattr(edge, "properties", None) else {},
+            })
+            
+        self._rebuild_indexes()
+        self._save_state()
+
     def to_graph_store(self) -> GraphStore:
         """Export raw repository nodes and edges into an in-memory GraphStore."""
         store = GraphStore()

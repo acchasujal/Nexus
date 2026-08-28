@@ -67,8 +67,10 @@ export async function apiFetch<T>(
     fullUrl = `${fullUrl}${separator}role=${encodeURIComponent(savedRole)}`
   }
 
+  const isFormData = typeof FormData !== 'undefined' && options?.body instanceof FormData
   const headers: Record<string, string> = {
-    ...(isMutating ? { 'Content-Type': 'application/json', 'X-Role': savedRole } : {}),
+    ...(isMutating && !isFormData ? { 'Content-Type': 'application/json' } : {}),
+    ...(isMutating ? { 'X-Role': savedRole } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options?.headers as Record<string, string> | undefined),
   }
@@ -150,10 +152,12 @@ export const apiClient = {
   getAuditLogs: (limit = 50) => apiFetch<Record<string, unknown>[]>(`/api/v1/audit?limit=${limit}`),
 
   // ── NEXUS prototype endpoints (frozen M4 contract) ──────────────────────
-  nexusIngest: (files: { source_type: string; file_name: string }[]) => {
+  nexusIngest: (files: File[]) => {
+    const formData = new FormData()
+    files.forEach(f => formData.append('files', f))
     return apiFetch<NexusIngestResponse>('/api/v1/nexus/ingest', {
       method: 'POST',
-      body: JSON.stringify({ files }),
+      body: formData,
     })
   },
   getResolutionCandidates: () => {
