@@ -47,9 +47,10 @@ describe('Global Network Explorer Landing Experience', () => {
       expect(screen.getByText(/Multi-jurisdictional criminal network topology/i)).toBeInTheDocument()
     })
 
-    // Confirms "No investigation selected" empty workspace banner is visible
-    expect(screen.getByText(/No investigation selected/i)).toBeInTheDocument()
-    expect(screen.getByText(/Select entities or open a case to explore its network/i)).toBeInTheDocument()
+    // Confirms "No investigation selected" empty workspace banner is NOT visible, 
+    // because the global network should render by default.
+    expect(screen.queryByText(/No investigation selected/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Select entities or open a case to explore its network/i)).not.toBeInTheDocument()
 
     // Confirms snapshot graph is NOT rendered automatically
     expect(screen.queryByTestId('snapshot-label')).not.toBeInTheDocument()

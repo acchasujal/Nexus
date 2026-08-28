@@ -342,7 +342,7 @@ export function CsvIngestionPanel() {
               <Users className="h-4 w-4" /> Review Entity Matches
             </Link>
           )}
-          {(graph_ready && nodes_extracted > 0) && (
+          {graph_ready && (
             <Link to={`/network?batch_id=${batch_id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-sm font-semibold transition-colors">
               <Network className="h-4 w-4" /> Open Built Graph
             </Link>

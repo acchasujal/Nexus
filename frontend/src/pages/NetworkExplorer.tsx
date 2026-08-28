@@ -189,7 +189,11 @@ export default function NetworkExplorer() {
 
   const effectiveSourceId = sourceId || nodeIdParam || ''
   const effectiveTargetId = targetId || ''
-  const hasSelection = Boolean(isExplicitDemo || isCaseScoped || isEntityScoped || effectiveSourceId || effectiveTargetId)
+  
+  // If no params are provided, we show the global network
+  const isGlobalNetwork = !isCaseScoped && !isEntityScoped && !batchIdParam && !effectiveSourceId && !effectiveTargetId
+  
+  const hasSelection = Boolean(isGlobalNetwork || batchIdParam || isExplicitDemo || isCaseScoped || isEntityScoped || effectiveSourceId || effectiveTargetId)
 
   // Network queries
   const sourceEntityQuery = useEntityNetwork(
@@ -209,13 +213,13 @@ export default function NetworkExplorer() {
   )
   const demoQuery = useNexusNetwork(
     replay,
-    isExplicitDemo
+    isExplicitDemo || isGlobalNetwork
   )
-  const diff = useSnapshotDiff(replay === 'after' && isExplicitDemo && demoQuery.data?.state === 'after')
+  const diff = useSnapshotDiff(replay === 'after' && (isExplicitDemo || isGlobalNetwork) && demoQuery.data?.state === 'after')
 
   const pathQuery = useNexusPath(sourceId, targetId, maxHops, showPathfinder && Boolean(sourceId && targetId))
 
-  const activeQuery = isExplicitDemo
+  const activeQuery = (isExplicitDemo || isGlobalNetwork)
     ? demoQuery
     : isCaseScoped && !isEntityScoped
     ? caseQuery
@@ -225,7 +229,7 @@ export default function NetworkExplorer() {
     if (batchIdParam) {
       return batchNetwork.data ?? null
     }
-    if (isExplicitDemo) {
+    if (isExplicitDemo || isGlobalNetwork) {
       return demoQuery.data ?? null
     }
     if (isCaseScoped && !isEntityScoped) {
@@ -242,6 +246,7 @@ export default function NetworkExplorer() {
     return null
   }, [
     isExplicitDemo,
+    isGlobalNetwork,
     demoQuery.data,
     isCaseScoped,
     isEntityScoped,
