@@ -9,7 +9,9 @@ as LLM-executable tools with strict machine-readable result contracts.
 from __future__ import annotations
 
 import copy
+import json
 import logging
+import re
 from collections import deque
 from typing import Any
 
@@ -502,7 +504,21 @@ class NEXUSToolRegistry:
         vehicle_number: str | None = None,
         national_id: str | None = None,
     ) -> NEXUSToolResult:
+        nodes_dict, _, _ = self._get_active_graph_elements()
         store = self._repo.to_graph_store()
+        # Merge active demo and repo nodes into store
+        for nid, n_info in nodes_dict.items():
+            if nid not in store.nodes:
+                from backend.app.core.graph.algorithms.utils import NodeRecord
+                props = copy.deepcopy(n_info.get("properties", {}))
+                if "full_name" not in props and n_info.get("entity_type") in ("Person", "PERSON"):
+                    props["full_name"] = re.sub(r"\(.*?\)", "", n_info.get("label", "")).strip()
+                store.nodes[nid] = NodeRecord(
+                    node_id=nid,
+                    entity_type=n_info.get("entity_type", "Person"),
+                    properties=props,
+                )
+
         query_dict = {
             "full_name": full_name or "",
             "phone_number": phone_number,
@@ -642,7 +658,7 @@ class NEXUSToolRegistry:
         return NEXUSToolResult(
             success=True,
             tool_name="get_case_dossier",
-            data=detail.model_dump(),
+            data=detail.model_dump(mode="json"),
             evidence_ids=evidence_ids,
             citations=citations,
             reasoning_path=reasoning_path,

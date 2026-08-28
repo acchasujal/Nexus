@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
+import { MarkdownContent } from '@/components/nexus/MarkdownContent'
 import type { GroundedCitation } from '@shared/contracts/api'
 
 /** Maps canonical source record IDs to the most representative graph edge
@@ -246,7 +247,11 @@ export default function Copilot() {
                 </div>
               )}
 
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.text}</p>
+              {m.role === 'user' ? (
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.text}</p>
+              ) : (
+                <MarkdownContent content={m.text} />
+              )}
 
               {/* Dedicated Case Context Navigation Bar */}
               {m.caseId && (

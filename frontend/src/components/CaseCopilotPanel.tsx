@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Sparkles, Send, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
+import { MarkdownContent } from '@/components/nexus/MarkdownContent'
 import type { CopilotQueryResponse } from '@shared/contracts/api'
 
 interface CaseCopilotPanelProps {
@@ -90,7 +91,7 @@ export function CaseCopilotPanel({ caseId, caseLabel }: CaseCopilotPanelProps) {
               Guardrail Triggered: Autonomous guilt or predictive inference prohibited.
             </div>
           )}
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{response.answer}</p>
+          <MarkdownContent content={response.answer} />
 
           {response.reasoning_path && response.reasoning_path.length > 0 && (
             <div className="rounded-lg bg-white p-2.5 text-xs border border-neutral-200 space-y-1 shadow-xs">

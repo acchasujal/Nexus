@@ -46,6 +46,19 @@ def is_prohibited_query(query: str) -> bool:
     return any(term in normalized for term in _PROHIBITED_TERMS)
 
 
+def _json_safe_default(obj: Any) -> Any:
+    """Generic JSON serializer for datetime, date, UUID, Enum, Pydantic models."""
+    if hasattr(obj, "isoformat"):
+        return obj.isoformat()
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump(mode="json")
+    if hasattr(obj, "dict"):
+        return obj.dict()
+    if hasattr(obj, "value"):
+        return obj.value
+    return str(obj)
+
+
 class AIToolOrchestrator:
     """Orchestrates LLM tool-calling and deterministic evidence synthesis."""
 
@@ -63,7 +76,7 @@ class AIToolOrchestrator:
 
     @property
     def is_active(self) -> bool:
-        """Return True if an LLM client is available for orchestration."""
+        """Return True if an LLM client (real or mock) is active."""
         return self._llm_client is not None
 
     def process_query(
@@ -72,13 +85,10 @@ class AIToolOrchestrator:
         principal: Principal,
         request_id: str | None = None,
     ) -> CopilotQueryResponse | None:
-        """Process query through the AI tool-calling loop.
-        
-        Returns:
-            CopilotQueryResponse on success or safety refusal.
-            None if LLM is unconfigured or failed, signaling to use deterministic fallback.
-        """
+        """Process an investigator query through safety, tool selection, and grounded synthesis."""
         query_text = request.query.strip()
+        if not query_text:
+            return None
 
         # ── 1. Safety & Ethics Refusal Gate ───────────────────────────────────
         if is_prohibited_query(query_text):
@@ -88,15 +98,11 @@ class AIToolOrchestrator:
                     actor_id=principal.user_id,
                     case_id=request.case_id or request.investigation_id,
                     request_id=request_id,
-                    details={
-                        "query": query_text,
-                        "reason": "Prohibited predictive/guilt inference query",
-                        "generation_mode": "SAFETY_GATE",
-                    },
+                    details={"query": query_text, "reason": "Prohibited predictive/guilt inference query"},
                 )
             return CopilotQueryResponse(
                 query=query_text,
-                intent="unsupported_request",
+                intent="safety_refusal",
                 answer=(
                     "I cannot provide opinions, predictions, or legal inferences regarding guilt, culpability, "
                     "or reoffending likelihood. As an evidence-grounded intelligence copilot, I provide only "
@@ -113,8 +119,8 @@ class AIToolOrchestrator:
                 reasoning_path=[],
             )
 
-        # ── 2. Check LLM Availability ─────────────────────────────────────────
-        if self._llm_client is None:
+        # ── 2. Guard: No LLM configured -> Return None for deterministic fallback
+        if not self._llm_client:
             return None
 
         # Determine generation mode
@@ -151,16 +157,14 @@ class AIToolOrchestrator:
         detected_intent = "ai_tool_synthesis"
 
         try:
-            # ── 4. Multi-Turn Tool Execution Loop (Up to 3 turns) ─────────────
-            max_turns = 3
+            # ── 4. Multi-Turn Tool Execution Loop (Up to 4 turns) ─────────────
+            max_turns = 4
             current_turn = 0
             while current_turn < max_turns:
                 current_turn += 1
-                # On the final turn, omit tools so model must synthesize final text
-                req_tools = tool_declarations if current_turn < max_turns else None
                 req = LLMRequest(
                     messages=messages,
-                    tools=req_tools,
+                    tools=tool_declarations,
                     temperature=0.0,
                 )
                 response = self._llm_client.generate(req)
@@ -176,7 +180,7 @@ class AIToolOrchestrator:
                             "type": "function",
                             "function": {
                                 "name": tc.name,
-                                "arguments": json.dumps(tc.arguments) if isinstance(tc.arguments, dict) else str(tc.arguments),
+                                "arguments": json.dumps(tc.arguments, default=_json_safe_default) if isinstance(tc.arguments, dict) else str(tc.arguments),
                             },
                         })
 
@@ -231,7 +235,7 @@ class AIToolOrchestrator:
                             "data": tool_result.data,
                             "evidence_ids": tool_result.evidence_ids,
                             "error": tool_result.error,
-                        })
+                        }, default=_json_safe_default)
                         messages.append(
                             ChatMessage(
                                 role="tool",

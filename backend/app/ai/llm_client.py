@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import time
 import urllib.error
 import urllib.request
@@ -44,15 +45,28 @@ class BaseLLMClient(Protocol):
         ...
 
 
+def _json_safe_default(obj: Any) -> Any:
+    """Generic JSON serializer for datetime, date, UUID, Enum, Pydantic models."""
+    if hasattr(obj, "isoformat"):
+        return obj.isoformat()
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump(mode="json")
+    if hasattr(obj, "dict"):
+        return obj.dict()
+    if hasattr(obj, "value"):
+        return obj.value
+    return str(obj)
+
+
 class RealLLMClient:
-    """Production-grade LLM client for OpenAI, Gemini (via OpenAI compatibility), and Ollama endpoints."""
+    """Production-grade LLM client for OpenAI, Gemini, and Groq OpenAI-compatible endpoints."""
 
     def __init__(
         self,
         api_key: str,
-        base_url: str = "https://api.openai.com/v1",
-        model: str = "gpt-4o-mini",
-        provider_name: str = "openai_compatible",
+        base_url: str = "https://api.groq.com/openai/v1",
+        model: str = "openai/gpt-oss-120b",
+        provider_name: str = "groq",
         timeout_seconds: float = 30.0,
     ) -> None:
         self._api_key = api_key
@@ -100,57 +114,70 @@ class RealLLMClient:
             payload["tools"] = request.tools
             payload["tool_choice"] = "auto"
 
-        data_bytes = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(url, data=data_bytes, headers=headers, method="POST")
+        data_bytes = json.dumps(payload, default=_json_safe_default).encode("utf-8")
+        max_retries = 3
+        resp_data = None
+        for attempt in range(max_retries + 1):
+            req = urllib.request.Request(url, data=data_bytes, headers=headers, method="POST")
+            try:
+                with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+                    resp_data = json.loads(resp.read().decode("utf-8"))
+                break
+            except urllib.error.HTTPError as exc:
+                err_body = exc.read().decode("utf-8", errors="replace")
+                if exc.code == 429 and attempt < max_retries:
+                    wait_sec = 3.0
+                    m_wait = re.search(r"try again in ([0-9\.]+)s", err_body, re.I)
+                    if m_wait:
+                        try:
+                            wait_sec = min(float(m_wait.group(1)) + 0.5, 8.0)
+                        except Exception:
+                            pass
+                    logger.info("Rate limited (429), waiting %.2fs before retry (attempt %d/%d)...", wait_sec, attempt + 1, max_retries)
+                    time.sleep(wait_sec)
+                    continue
+                logger.error("LLM Provider HTTP Error (%s): %s", exc.code, err_body)
+                raise RuntimeError(f"LLM Provider returned HTTP {exc.code}: {err_body}") from exc
+            except Exception as exc:
+                logger.error("LLM Provider connection failed: %s", exc)
+                raise RuntimeError(f"LLM Provider invocation failed: {exc}") from exc
 
-        try:
-            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
-                resp_data = json.loads(resp.read().decode("utf-8"))
+        choice = resp_data.get("choices", [{}])[0]
+        message = choice.get("message", {})
+        finish_reason = choice.get("finish_reason")
 
-            choice = resp_data.get("choices", [{}])[0]
-            message = choice.get("message", {})
-            finish_reason = choice.get("finish_reason")
-
-            tool_calls = []
-            if "tool_calls" in message:
-                for tc in message["tool_calls"]:
-                    fn = tc.get("function", {})
-                    args = {}
-                    try:
-                        args = json.loads(fn.get("arguments", "{}"))
-                    except Exception:
-                        pass
-                    tool_calls.append(
-                        ToolCall(
-                            name=fn.get("name", ""),
-                            arguments=args,
-                            call_id=tc.get("id"),
-                        )
+        tool_calls = []
+        if "tool_calls" in message:
+            for tc in message["tool_calls"]:
+                fn = tc.get("function", {})
+                args = {}
+                try:
+                    args = json.loads(fn.get("arguments", "{}"))
+                except Exception:
+                    pass
+                tool_calls.append(
+                    ToolCall(
+                        name=fn.get("name", ""),
+                        arguments=args,
+                        call_id=tc.get("id"),
                     )
-
-            usage = None
-            if "usage" in resp_data:
-                usage = UsageMetadata(
-                    prompt_tokens=resp_data["usage"].get("prompt_tokens", 0),
-                    completion_tokens=resp_data["usage"].get("completion_tokens", 0),
-                    total_tokens=resp_data["usage"].get("total_tokens", 0),
                 )
 
-            return LLMResponse(
-                content=message.get("content"),
-                tool_calls=tool_calls,
-                usage=usage,
-                finish_reason=finish_reason,
-                raw_metadata={"model": resp_data.get("model")},
+        usage = None
+        if "usage" in resp_data:
+            usage = UsageMetadata(
+                prompt_tokens=resp_data["usage"].get("prompt_tokens", 0),
+                completion_tokens=resp_data["usage"].get("completion_tokens", 0),
+                total_tokens=resp_data["usage"].get("total_tokens", 0),
             )
 
-        except urllib.error.HTTPError as exc:
-            err_body = exc.read().decode("utf-8", errors="replace")
-            logger.error("LLM Provider HTTP Error (%s): %s", exc.code, err_body)
-            raise RuntimeError(f"LLM Provider returned HTTP {exc.code}: {err_body}") from exc
-        except Exception as exc:
-            logger.error("LLM Provider connection failed: %s", exc)
-            raise RuntimeError(f"LLM Provider invocation failed: {exc}") from exc
+        return LLMResponse(
+            content=message.get("content"),
+            tool_calls=tool_calls,
+            usage=usage,
+            finish_reason=finish_reason,
+            raw_metadata={"model": resp_data.get("model")},
+        )
 
 
 class DeterministicMockLLMClient:

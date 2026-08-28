@@ -106,3 +106,95 @@ def test_copilot_service_deterministic_fallback_when_unconfigured(repo, audit_sv
     assert res.is_refusal is False
     assert "connect" in res.answer.lower()
     assert len(res.grounded_citations) > 0
+
+
+def test_orchestrator_datetime_json_serialization(principal, audit_svc):
+    from datetime import datetime, timezone
+    from unittest.mock import MagicMock
+    from backend.app.ai.schemas import LLMResponse, ToolCall
+    from backend.app.ai.tools import NEXUSToolResult
+
+    # Mock tool registry that returns datetime objects in result data
+    mock_tools = MagicMock()
+    mock_tools.get_tool_declarations.return_value = [{"type": "function", "function": {"name": "test_dt_tool", "parameters": {}}}]
+    mock_tools.execute.return_value = NEXUSToolResult(
+        success=True,
+        tool_name="test_dt_tool",
+        data={"timestamp": datetime.now(timezone.utc), "nested": {"created_at": datetime(2026, 1, 1, 10, 0)}},
+        evidence_ids=["EV-DT-01"],
+        citations=[],
+    )
+
+    # Mock LLM client that issues a tool call on turn 1, then synthesizes on turn 2
+    mock_client = MagicMock()
+    mock_client.provider_name = "mock_test"
+    mock_client.model_name = "mock-model"
+    mock_client.generate.side_effect = [
+        LLMResponse(content="", tool_calls=[ToolCall(name="test_dt_tool", arguments={}, call_id="c1")]),
+        LLMResponse(content="Successfully parsed datetime payload", tool_calls=[]),
+    ]
+
+    orchestrator = AIToolOrchestrator(
+        llm_client=mock_client,
+        tool_registry=mock_tools,
+        prompt_manager=PromptManager(),
+        audit_service=audit_svc,
+    )
+
+    req = CopilotQueryRequest(query="Run datetime tool")
+    res = orchestrator.process_query(req, principal=principal)
+    assert res is not None
+    assert res.answer == "Successfully parsed datetime payload"
+    assert "EV-DT-01" in res.evidence_ids
+
+
+def test_orchestrator_preserves_tools_on_multi_turn_calls(principal, audit_svc):
+    from unittest.mock import MagicMock
+    from backend.app.ai.schemas import LLMResponse, ToolCall
+    from backend.app.ai.tools import NEXUSToolResult
+
+    mock_tools = MagicMock()
+    mock_tools.get_tool_declarations.return_value = [
+        {"type": "function", "function": {"name": "tool_a", "parameters": {}}},
+        {"type": "function", "function": {"name": "tool_b", "parameters": {}}},
+    ]
+    mock_tools.execute.side_effect = [
+        NEXUSToolResult(success=True, tool_name="tool_a", data={"res": "a"}, evidence_ids=["EV-A"]),
+        NEXUSToolResult(success=True, tool_name="tool_b", data={"res": "b"}, evidence_ids=["EV-B"]),
+    ]
+
+    captured_requests = []
+
+    def mock_generate(request):
+        captured_requests.append(request)
+        if len(captured_requests) == 1:
+            return LLMResponse(content="", tool_calls=[ToolCall(name="tool_a", arguments={}, call_id="c1")])
+        elif len(captured_requests) == 2:
+            return LLMResponse(content="", tool_calls=[ToolCall(name="tool_b", arguments={}, call_id="c2")])
+        else:
+            return LLMResponse(content="Final synthesis completed", tool_calls=[])
+
+    mock_client = MagicMock()
+    mock_client.provider_name = "mock_test"
+    mock_client.model_name = "mock-model"
+    mock_client.generate.side_effect = mock_generate
+
+    orchestrator = AIToolOrchestrator(
+        llm_client=mock_client,
+        tool_registry=mock_tools,
+        prompt_manager=PromptManager(),
+        audit_service=audit_svc,
+    )
+
+    req = CopilotQueryRequest(query="Run multi turn tools")
+    res = orchestrator.process_query(req, principal=principal)
+
+    assert res is not None
+    assert res.answer == "Final synthesis completed"
+    assert "EV-A" in res.evidence_ids
+    assert "EV-B" in res.evidence_ids
+
+    # Assert that all requests sent to the LLM client retained the tools declaration
+    for i, req in enumerate(captured_requests):
+        assert req.tools is not None, f"Turn {i + 1} omitted tools declaration, which causes Groq 'Tool choice is none' error"
+        assert len(req.tools) == 2
