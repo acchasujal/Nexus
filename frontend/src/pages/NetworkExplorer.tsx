@@ -765,7 +765,10 @@ export default function NetworkExplorer() {
       <EvidenceDrawer relationshipId={edgeId} onClose={() => setEdgeId(null)} />
       <EntityDetailsDrawer
         entityId={selectedEntityId}
-        onClose={() => setSelectedEntityId(null)}
+        onClose={() => {
+          setSelectedEntityId(null)
+          updateNetworkUrl({ node_id: null })
+        }}
         onFocusEntity={(nId) => {
           setSourceId(nId)
           setShowPathfinder(true)

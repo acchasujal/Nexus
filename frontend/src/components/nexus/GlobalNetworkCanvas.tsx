@@ -43,7 +43,6 @@ export function GlobalNetworkCanvas({
   graph,
   diff,
   highlightDelta = false,
-  initialCaseFilter,
   caseFocus,
   initialNodeId,
   pathNodeIds,
@@ -83,29 +82,17 @@ export function GlobalNetworkCanvas({
     if (caseFocus) {
       const exactFocus = caseOptions.find((c) => c.toUpperCase() === caseFocus.toUpperCase())
       if (exactFocus) return exactFocus
-    }
-    if (!initialCaseFilter) return 'ALL'
-    // Direct match
-    if (caseOptions.includes(initialCaseFilter)) return initialCaseFilter
-    // Try case-insensitive match (e.g. 'case-0027' vs 'CASE-0027')
-    const upper = initialCaseFilter.toUpperCase()
-    const match = caseOptions.find((c) => c.toUpperCase() === upper)
-    if (match) return match
-    // Try partial/numeric match: extract digits from filter and match against case IDs
-    const filterDigits = initialCaseFilter.replace(/\D/g, '')
-    if (filterDigits) {
-      const partialMatch = caseOptions.find((c) => c !== 'ALL' && c.replace(/\D/g, '').endsWith(filterDigits))
-      if (partialMatch) return partialMatch
+      return 'ALL'
     }
     return 'ALL'
-  }, [initialCaseFilter, caseFocus, caseOptions])
+  }, [caseFocus, caseOptions])
 
   const [caseFilter, setCaseFilter] = useState<string>(resolvedInitialFilter)
 
   // Sync filter if resolved value changes (e.g. graph data loads after mount)
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    const nextFilter = caseFocus === 'ALL' ? 'ALL' : resolvedInitialFilter
+    const nextFilter = caseFocus?.toUpperCase() === 'ALL' ? 'ALL' : resolvedInitialFilter
     if (caseFilter !== nextFilter) {
       setCaseFilter(nextFilter)
     }

@@ -56,6 +56,31 @@ describe('Global Network Explorer Landing Experience', () => {
     expect(screen.queryByTestId('snapshot-label')).not.toBeInTheDocument()
   })
 
+  it('defaults the Focus selector to All for a case network', async () => {
+    const Wrapper = createWrapper(['/network?case_id=CASE-141'])
+    render(
+      <Wrapper>
+        <NetworkExplorer />
+      </Wrapper>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('snapshot-label')).toBeInTheDocument()
+      expect(screen.getByLabelText('Focus')).toHaveValue('ALL')
+    }, { timeout: 8000 })
+  })
+
+  it('honors an explicit case focus in the URL', async () => {
+    const Wrapper = createWrapper(['/network?case_id=CASE-141&case_focus=CASE-141'])
+    render(
+      <Wrapper>
+        <NetworkExplorer />
+      </Wrapper>
+    )
+
+    await waitFor(() => expect(screen.getByLabelText('Focus')).toHaveValue('CASE-141'), { timeout: 8000 })
+  })
+
   it('allows opening the Pathfinder and selecting entities without pre-selected demo values', async () => {
     const Wrapper = createWrapper(['/network'])
     render(
