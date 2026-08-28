@@ -340,23 +340,62 @@ class GraphRAGContextBuilder:
         if entity_id and entity_id in nodes_dict:
             entities.append(entity_id)
 
-        # Skip stopwords that might collide with labels
-        stopwords = {"who", "the", "and", "what", "is", "are", "summary", "accused", "case", "fir", "why", "flagged"}
+        stopwords = {
+            "who", "the", "and", "what", "is", "are", "summary", "accused", "case", "fir",
+            "why", "flagged", "evidence", "supports", "financial", "connection", "between",
+            "tell", "about", "important", "with", "this", "that", "from", "into", "flow",
+            "path", "link", "records", "exist", "does", "have", "been", "over", "next", "leads"
+        }
         q_lower = query.lower()
+
+        # 1. Check exact clean labels & aliases
         for nid, n in nodes_dict.items():
             etype = n.get("entity_type") or n.get("type") or ""
             if etype in ("Case", "InvestigationCase"):
                 continue
-            lbl = n.get("label", "").lower()
-            if len(lbl) >= 3 and lbl not in stopwords and lbl in q_lower:
+
+            lbl = n.get("label", "")
+            clean_lbl = re.sub(r"\(.*?\)", "", lbl).strip().lower()
+            if len(clean_lbl) >= 3 and clean_lbl not in stopwords and clean_lbl in q_lower:
                 if nid not in entities:
                     entities.append(nid)
+                continue
 
-        # Also check phone numbers or account numbers in text
+            # Check individual name tokens (e.g., "Rafiq", "Deepak", "Vinod")
+            matched_token = False
+            for w in clean_lbl.split():
+                if len(w) >= 4 and w not in stopwords:
+                    if re.search(r"\b" + re.escape(w) + r"\b", q_lower):
+                        if nid not in entities:
+                            entities.append(nid)
+                            matched_token = True
+                            break
+
+            if matched_token:
+                continue
+
+            # Check explicit aliases
+            aliases = n.get("properties", {}).get("aliases", [])
+            if isinstance(aliases, list):
+                for alias in aliases:
+                    alias_clean = str(alias).strip().lower()
+                    if len(alias_clean) >= 3 and alias_clean not in stopwords and alias_clean in q_lower:
+                        if nid not in entities:
+                            entities.append(nid)
+                            break
+
+        # 2. Check phone numbers or account numbers in text
         phone_match = re.findall(r"\b\d{10}\b", query)
         for p in phone_match:
             for nid, n in nodes_dict.items():
                 if p in nid or p in str(n.get("properties", {})):
+                    if nid not in entities:
+                        entities.append(nid)
+
+        account_match = re.findall(r"(?:ACC|ACC-)?(\d{4,12})", query.upper())
+        for acc_num in account_match:
+            for nid, n in nodes_dict.items():
+                if acc_num in nid or acc_num in str(n.get("properties", {})):
                     if nid not in entities:
                         entities.append(nid)
 
@@ -370,6 +409,9 @@ class GraphRAGContextBuilder:
 
         # 1. Multi-Case or Connection Query between 2 endpoints
         if len(cases) >= 2 or (("connect" in q or "path" in q or "link" in q or "between" in q) and (len(cases) + len(entities) >= 2)):
+            # If specifically asking about financial connection between endpoints, route to financial_trace
+            if any(w in q for w in ("money", "financial", "transfer", "transaction", "account", "ledger", "bank")):
+                return "financial_trace", "financial_flow"
             return "cross_case_path", "cross_case_connection"
 
         # 2. Graph Pattern Rules & Syndicates (higher precedence than general financial words)
@@ -452,34 +494,150 @@ class GraphRAGContextBuilder:
         retrieved_evidence: dict[str, EvidenceContext],
         reasoning_steps: list[str],
     ) -> None:
-        """Retrieve financial account nodes, multi-hop transfers, and layering chains."""
-        reasoning_steps.append("Executing deterministic financial subgraph retrieval & layering detection.")
-        tool_res: NEXUSToolResult = self._tools.detect_financial_layering()
-        reasoning_steps.extend(tool_res.reasoning_path)
+        """Retrieve financial account nodes, multi-hop transfers, and layering chains with high precision."""
+        reasoning_steps.append("Executing targeted financial context retrieval and transaction trace.")
 
-        for pat in tool_res.data.get("patterns", []):
-            retrieved_patterns.append(
-                PatternContext(
-                    pattern_id=pat.get("rule_id", "financial_pattern"),
-                    pattern_type=pat.get("rule_id", "circular_repeated_financial_flow"),
-                    severity="high",
-                    description=pat.get("description", ""),
-                    participating_entity_ids=pat.get("entity_ids", []),
-                    evidence_ids=pat.get("evidence_ids", []),
-                )
-            )
+        q = query.lower()
+        is_broad_request = any(
+            w in q for w in ("syndicate", "community", "cluster", "broader financial network", "entire network", "all transactions", "all accounts")
+        )
+        focus_seeds = set(entities + cases)
 
-        # Include all financial transfer relationships
-        for edge in edges_list:
-            etype = edge["edge_type"].upper()
-            if any(k in etype for k in ("TRANSFER", "PAYMENT", "ACCOUNT", "TRANSACTION")):
-                self._add_entity(edge["source_id"], nodes_dict, retrieved_entities)
-                self._add_entity(edge["target_id"], nodes_dict, retrieved_entities)
+        # 1. Targeted Financial Query with Explicit Entities / Cases
+        if focus_seeds and not is_broad_request:
+            # Map focus person/case nodes to their owned accounts and ownership edges
+            person_to_accounts: dict[str, set[str]] = {}
+            account_to_persons: dict[str, set[str]] = {}
+            ownership_edges_map: dict[tuple[str, str], dict[str, Any]] = {}
+
+            for edge in edges_list:
+                etype = edge.get("edge_type", "").upper()
+                src, tgt = edge["source_id"], edge["target_id"]
+                if any(k in etype for k in ("OWN", "ACCOUNT", "LINK", "HOLDER")):
+                    if src in focus_seeds:
+                        person_to_accounts.setdefault(src, set()).add(tgt)
+                        account_to_persons.setdefault(tgt, set()).add(src)
+                        ownership_edges_map[(src, tgt)] = edge
+                    if tgt in focus_seeds:
+                        person_to_accounts.setdefault(tgt, set()).add(src)
+                        account_to_persons.setdefault(src, set()).add(tgt)
+                        ownership_edges_map[(tgt, src)] = edge
+
+            all_focus_accounts = {acc for accs in person_to_accounts.values() for acc in accs}
+
+            # Find transaction/transfer edges
+            cross_seed_tx: list[dict[str, Any]] = []
+            seed_tx: list[dict[str, Any]] = []
+
+            for edge in edges_list:
+                etype = edge.get("edge_type", "").upper()
+                src, tgt = edge["source_id"], edge["target_id"]
+                is_tx = any(k in etype for k in ("TRANSFER", "PAYMENT", "TRANSACTION", "TXN"))
+                if not is_tx:
+                    continue
+
+                # Check if transfer connects accounts owned by different focus persons
+                src_owners = account_to_persons.get(src, set())
+                tgt_owners = account_to_persons.get(tgt, set())
+
+                if src_owners and tgt_owners and (src_owners != tgt_owners):
+                    cross_seed_tx.append(edge)
+                elif src in all_focus_accounts or tgt in all_focus_accounts or src in focus_seeds or tgt in focus_seeds:
+                    seed_tx.append(edge)
+
+            # Prioritize cross-seed transactions if found
+            if cross_seed_tx:
+                active_tx_edges = cross_seed_tx
+            elif seed_tx:
+                active_tx_edges = seed_tx
+            else:
+                active_tx_edges = []
+
+            # If active transactions were found, include participating persons and accounts
+            participating_accounts: set[str] = set()
+            participating_persons: set[str] = set()
+
+            for edge in active_tx_edges:
+                src, tgt = edge["source_id"], edge["target_id"]
+                participating_accounts.add(src)
+                participating_accounts.add(tgt)
+                for p in account_to_persons.get(src, set()):
+                    participating_persons.add(p)
+                for p in account_to_persons.get(tgt, set()):
+                    participating_persons.add(p)
+
+            # If no transactions found among accounts, retain focus seeds and their direct accounts
+            if not participating_persons:
+                participating_persons = focus_seeds
+                participating_accounts = all_focus_accounts
+
+            # Add participating persons and accounts
+            for pid in participating_persons:
+                self._add_entity(pid, nodes_dict, retrieved_entities)
+            for acc in participating_accounts:
+                self._add_entity(acc, nodes_dict, retrieved_entities)
+
+            # Add relevant ownership edges
+            for (p, acc), edge in ownership_edges_map.items():
+                if p in participating_persons and acc in participating_accounts:
+                    self._add_relationship(edge, nodes_dict, retrieved_relationships)
+
+            # Add active transaction edges
+            for edge in active_tx_edges:
                 self._add_relationship(edge, nodes_dict, retrieved_relationships)
 
-        # Include focused query entities
-        for eid in entities + cases:
-            self._add_entity(eid, nodes_dict, retrieved_entities)
+            # Also check direct relationships between participating persons (e.g. COMMUNICATED_WITH, CO_ACCUSED_IN)
+            for edge in edges_list:
+                src, tgt = edge["source_id"], edge["target_id"]
+                if src in participating_persons and tgt in participating_persons:
+                    self._add_relationship(edge, nodes_dict, retrieved_relationships)
+
+            # Patterns involving only retrieved active entities
+            tool_res: NEXUSToolResult = self._tools.detect_financial_layering()
+            fin_findings = tool_res.data.get("findings") or tool_res.data.get("patterns") or []
+            active_ids = set(retrieved_entities.keys())
+            for p in fin_findings:
+                p_eids = set(p.get("entity_ids", []))
+                if p_eids & active_ids:
+                    retrieved_patterns.append(
+                        PatternContext(
+                            pattern_id=p.get("rule_name") or p.get("rule_id", "financial_pattern"),
+                            pattern_type=p.get("rule_name") or p.get("rule_id", "circular_repeated_financial_flow"),
+                            severity="high",
+                            description=p.get("description", ""),
+                            participating_entity_ids=p.get("entity_ids", []),
+                            evidence_ids=p.get("evidence_ids", []),
+                        )
+                    )
+
+        # 2. Broad Financial Network Query (Syndicates / Global Layering)
+        else:
+            tool_res = self._tools.detect_financial_layering()
+            reasoning_steps.extend(tool_res.reasoning_path)
+
+            fin_findings = tool_res.data.get("findings") or tool_res.data.get("patterns") or []
+            for pat in fin_findings:
+                retrieved_patterns.append(
+                    PatternContext(
+                        pattern_id=pat.get("rule_name") or pat.get("rule_id", "financial_pattern"),
+                        pattern_type=pat.get("rule_name") or pat.get("rule_id", "circular_repeated_financial_flow"),
+                        severity="high",
+                        description=pat.get("description", ""),
+                        participating_entity_ids=pat.get("entity_ids", []),
+                        evidence_ids=pat.get("evidence_ids", []),
+                    )
+                )
+
+            # Include all financial transfer relationships
+            for edge in edges_list:
+                etype = edge["edge_type"].upper()
+                if any(k in etype for k in ("TRANSFER", "PAYMENT", "ACCOUNT", "TRANSACTION")):
+                    self._add_entity(edge["source_id"], nodes_dict, retrieved_entities)
+                    self._add_entity(edge["target_id"], nodes_dict, retrieved_entities)
+                    self._add_relationship(edge, nodes_dict, retrieved_relationships)
+
+            for eid in entities + cases:
+                self._add_entity(eid, nodes_dict, retrieved_entities)
 
     def _retrieve_pattern_context(
         self,

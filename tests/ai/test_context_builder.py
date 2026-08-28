@@ -65,7 +65,7 @@ def test_cross_case_path_query(context_builder: GraphRAGContextBuilder):
 
 
 def test_financial_flow_query(context_builder: GraphRAGContextBuilder):
-    """Verify financial transaction subgraph and layering pattern retrieval."""
+    """Verify targeted financial transaction subgraph and precision filtering."""
     query = "What evidence supports the financial connection between Rafiq and Deepak?"
     ctx: InvestigationContext = context_builder.build_context(query)
 
@@ -80,6 +80,12 @@ def test_financial_flow_query(context_builder: GraphRAGContextBuilder):
         for r in ctx.relationships
     )
     assert has_financial_edge
+
+    # Regression check: Targeted query must NOT pull in unrelated community members
+    unrelated_ids = {"person-0015", "person-0016", "person-0026", "person-0027", "person-0028", "person-0029"}
+    retrieved_node_ids = {e.id for e in ctx.entities}
+    assert not (unrelated_ids & retrieved_node_ids), f"Found unrelated community nodes in targeted query: {unrelated_ids & retrieved_node_ids}"
+    assert len(ctx.entities) <= 10, f"Targeted financial query retrieved too many nodes: {len(ctx.entities)}"
 
 
 def test_pattern_investigation_query(context_builder: GraphRAGContextBuilder):
