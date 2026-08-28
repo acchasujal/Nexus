@@ -58,6 +58,24 @@ const SUGGESTED_PROMPTS = [
   { text: 'Find all bridge entities connecting narcotics and hawala syndicates', type: 'bridges' },
 ]
 
+const STORAGE_KEY = 'nexus_copilot_chat_history'
+
+function loadInitialMessages(): Message[] {
+  if (typeof window === 'undefined') return [INITIAL_WELCOME_MESSAGE]
+  try {
+    const saved = sessionStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load copilot chat history from sessionStorage', e)
+  }
+  return [INITIAL_WELCOME_MESSAGE]
+}
+
 function createMessageId(role: 'user' | 'assistant' | 'err'): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return `${role}-${crypto.randomUUID()}`
@@ -67,19 +85,39 @@ function createMessageId(role: 'user' | 'assistant' | 'err'): string {
 
 export default function Copilot() {
   const navigate = useNavigate()
-  const [messages, setMessages] = useState<Message[]>([INITIAL_WELCOME_MESSAGE])
+  const [messages, setMessages] = useState<Message[]>(loadInitialMessages)
   const [inputQuery, setInputQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [selectedRelationshipId, setSelectedRelationshipId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (typeof messagesEndRef.current?.scrollIntoView === 'function') {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Persist chat messages to sessionStorage across in-app navigation
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
+    } catch (e) {
+      console.warn('Failed to persist copilot chat history to sessionStorage', e)
+    }
+  }, [messages])
+
+  const handleResetChat = () => {
+    try {
+      sessionStorage.removeItem(STORAGE_KEY)
+    } catch (e) {
+      // ignore
+    }
+    setMessages([INITIAL_WELCOME_MESSAGE])
+  }
 
   const handleActionClick = (act: string, caseId?: string) => {
     const actLower = act.toLowerCase()
@@ -170,8 +208,8 @@ export default function Copilot() {
           </p>
         </div>
         <button
-          onClick={() => setMessages([INITIAL_WELCOME_MESSAGE])}
-          className="flex items-center gap-1.5 text-xs text-neutral-700 hover:text-neutral-900 border border-neutral-300 bg-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-neutral-50 transition-colors"
+          onClick={handleResetChat}
+          className="flex items-center gap-1.5 text-xs text-neutral-700 hover:text-neutral-900 border border-neutral-300 bg-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-neutral-50 transition-colors cursor-pointer"
         >
           <RotateCcw className="h-3.5 w-3.5" />
           Reset Chat

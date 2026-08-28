@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sparkles, Send, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 import type { CopilotQueryResponse } from '@shared/contracts/api'
@@ -9,9 +9,44 @@ interface CaseCopilotPanelProps {
 }
 
 export function CaseCopilotPanel({ caseId, caseLabel }: CaseCopilotPanelProps) {
-  const [question, setQuestion] = useState('')
-  const [response, setResponse] = useState<CopilotQueryResponse | null>(null)
+  const storageKey = `nexus_case_copilot_${caseId}`
+  const [question, setQuestion] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    try {
+      const saved = sessionStorage.getItem(storageKey)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        return parsed.question || ''
+      }
+    } catch {
+      // ignore
+    }
+    return ''
+  })
+  const [response, setResponse] = useState<CopilotQueryResponse | null>(() => {
+    if (typeof window === 'undefined') return null
+    try {
+      const saved = sessionStorage.getItem(storageKey)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        return parsed.response || null
+      }
+    } catch {
+      // ignore
+    }
+    return null
+  })
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    try {
+      if (response || question) {
+        sessionStorage.setItem(storageKey, JSON.stringify({ question, response }))
+      }
+    } catch {
+      // ignore
+    }
+  }, [question, response, storageKey])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
