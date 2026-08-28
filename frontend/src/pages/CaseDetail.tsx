@@ -277,7 +277,7 @@ export default function CaseDetail() {
         )}
 
         {activeTab === 'copilot' && (
-          <CaseCopilotPanel caseId={caseDetail.id} />
+          <CaseCopilotPanel key={caseDetail.id} caseId={caseDetail.id} />
         )}
       </div>
     </div>

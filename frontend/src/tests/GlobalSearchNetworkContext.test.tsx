@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { setupServer } from 'msw/node'
 import { nexusHandlers } from '@/lib/mocks/nexusHandlers'
 import NetworkExplorer from '@/pages/NetworkExplorer'
@@ -18,6 +18,11 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import React from 'react'
 
 const server = setupServer(...nexusHandlers)
+
+function LocationProbe() {
+  const location = useLocation()
+  return <output data-testid="location-search">{location.search}</output>
+}
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
 afterEach(() => server.resetHandlers())
@@ -84,6 +89,24 @@ describe('Global Search to Network Explorer Context Propagation', () => {
     expect(screen.queryByTestId('snapshot-label')).not.toBeInTheDocument()
     expect(screen.queryByText('SNAP-BEFORE-001')).not.toBeInTheDocument()
   }, 15000)
+
+  it('closes the entity drawer and removes the URL selection', async () => {
+    const Wrapper = createWrapper(['/network?node_id=person-0073'])
+    render(
+      <Wrapper>
+        <LocationProbe />
+        <NetworkExplorer />
+      </Wrapper>
+    )
+
+    await waitFor(() => expect(screen.getByRole('dialog', { name: /Entity intelligence drawer/i })).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: /Close entity drawer/i }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: /Entity intelligence drawer/i })).not.toBeInTheDocument()
+      expect(screen.getByTestId('location-search')).toHaveTextContent('')
+    })
+  })
 
   it('navigates from Header Global Search to Network Explorer and loads entity network', async () => {
     const queryClient = new QueryClient({

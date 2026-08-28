@@ -9,14 +9,28 @@ export function EvidenceDossierActions({ request }: { request: NexusDossierReque
   const [verification, setVerification] = useState<boolean | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const downloadPdf = async (generated: NexusDossierResponse) => {
+    const blob = await apiClient.downloadEvidenceDossier(generated.dossier_id)
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `NEXUS_Evidence_Dossier_${generated.dossier_id}.pdf`
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+  }
+
   const generate = async () => {
     setBusy(true)
     setError(null)
     try {
-      setDossier(await apiClient.generateEvidenceDossier(request))
+      const generated = await apiClient.generateEvidenceDossier(request)
+      await downloadPdf(generated)
+      setDossier(generated)
       setVerification(null)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Dossier generation failed')
+      setError(cause instanceof Error ? cause.message : 'Dossier generation or download failed')
     } finally {
       setBusy(false)
     }
@@ -24,13 +38,15 @@ export function EvidenceDossierActions({ request }: { request: NexusDossierReque
 
   const download = async () => {
     if (!dossier) return
-    const blob = await apiClient.downloadEvidenceDossier(dossier.dossier_id)
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `${dossier.dossier_id}.pdf`
-    anchor.click()
-    URL.revokeObjectURL(url)
+    setBusy(true)
+    setError(null)
+    try {
+      await downloadPdf(dossier)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Dossier download failed')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const verify = async () => {

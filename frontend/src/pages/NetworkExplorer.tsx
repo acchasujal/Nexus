@@ -148,15 +148,39 @@ function mergeNetworkGraphs(
 }
 
 export default function NetworkExplorer() {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const caseIdParam = searchParams.get('case_id')
   const nodeIdParam = searchParams.get('node_id')
   const batchIdParam = searchParams.get('batch_id')
+  const snapshotParam = searchParams.get('snapshot')
+  const focusParam = searchParams.get('focus')
+  const caseFocusParam = searchParams.get('case_focus')
   
-  const [replay, setReplay] = useState<ReplayState>('before')
+  const [replay, setReplay] = useState<ReplayState>(snapshotParam === 'after' ? 'after' : 'before')
   const [edgeId, setEdgeId] = useState<string | null>(null)
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(nodeIdParam || null)
-  const [densityMode, setDensityMode] = useState<'ALL' | '1HOP' | '2HOP' | 'CROSS_CASE'>('ALL')
+  const validFocusModes = ['ALL', '1HOP', '2HOP', 'CROSS_CASE'] as const
+  type FocusMode = (typeof validFocusModes)[number]
+  const parsedFocus = focusParam?.toUpperCase().replace('-', '')
+  const initialFocus = validFocusModes.includes(parsedFocus as FocusMode) ? parsedFocus as FocusMode : 'ALL'
+  const [densityMode, setDensityMode] = useState<FocusMode>(initialFocus)
+
+  const updateNetworkUrl = (updates: Record<string, string | null>) => {
+    const next = new URLSearchParams(searchParams)
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null) next.delete(key)
+      else next.set(key, value)
+    })
+    setSearchParams(next)
+  }
+
+  // URL changes from Back/Forward or external navigation are the only state sync direction.
+  useEffect(() => {
+    setReplay(snapshotParam === 'after' ? 'after' : 'before')
+    const nextFocus = focusParam?.toUpperCase().replace('-', '')
+    setDensityMode(validFocusModes.includes(nextFocus as FocusMode) ? nextFocus as FocusMode : 'ALL')
+    setSelectedEntityId(nodeIdParam)
+  }, [snapshotParam, focusParam, nodeIdParam])
 
   const batchNetwork = useBatchNetwork(batchIdParam, Boolean(batchIdParam))
   // ── Dynamic Pathfinder & Exploration State ──────────────────────────────────
@@ -354,6 +378,7 @@ export default function NetworkExplorer() {
               onClick={() => {
                 setReplay('before')
                 setIsExploring(true)
+                updateNetworkUrl({ snapshot: 'before' })
               }}
               aria-pressed={replay === 'before'}
               className={`rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm transition-colors ${
@@ -368,6 +393,7 @@ export default function NetworkExplorer() {
               onClick={() => {
                 setReplay('after')
                 setIsExploring(true)
+                updateNetworkUrl({ snapshot: 'after' })
               }}
               aria-pressed={replay === 'after'}
               disabled={demoQuery.isLoading && !demoQuery.data}
@@ -683,7 +709,10 @@ export default function NetworkExplorer() {
               ).map(([mode, label]) => (
                 <button
                   key={mode}
-                  onClick={() => setDensityMode(mode)}
+                  onClick={() => {
+                    setDensityMode(mode)
+                    updateNetworkUrl({ focus: mode === 'ALL' ? 'all' : mode.toLowerCase() })
+                  }}
                   title={mode === 'CROSS_CASE' ? 'Show only nodes shared across multiple cases' : mode === '1HOP' ? 'Show direct neighbours of the anchor node' : mode === '2HOP' ? 'Show up to 2-hop neighbours' : 'Show full graph'}
                   className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border transition-colors ${
                     densityMode === mode
@@ -711,6 +740,7 @@ export default function NetworkExplorer() {
             diff={replay === 'after' ? diff.data ?? null : null}
             highlightDelta={replay === 'after'}
             initialCaseFilter={caseIdParam}
+            caseFocus={caseFocusParam}
             initialNodeId={nodeIdParam}
             pathNodeIds={showPathfinder && pathQuery.data?.found ? pathQuery.data.node_ids : null}
             pathEdgeIds={showPathfinder && pathQuery.data?.found ? pathQuery.data.edge_ids : null}
@@ -723,7 +753,15 @@ export default function NetworkExplorer() {
               setShowPathfinder(true)
             }}
             onEdgeSelect={setEdgeId}
+<<<<<<< HEAD
             onOpenDetails={(nId) => setSelectedEntityId(nId)}
+=======
+            onNodeSelect={(nId) => {
+              setSelectedEntityId(nId)
+              if (nId !== nodeIdParam) updateNetworkUrl({ node_id: nId })
+            }}
+            onCaseFocusChange={(caseId) => updateNetworkUrl({ case_focus: caseId })}
+>>>>>>> 0e50591ed8ea694a0803740e7b887c3f6a0fdd92
           />
         </>
       )}
@@ -731,7 +769,10 @@ export default function NetworkExplorer() {
       <EvidenceDrawer relationshipId={edgeId} onClose={() => setEdgeId(null)} />
       <EntityDetailsDrawer
         entityId={selectedEntityId}
-        onClose={() => setSelectedEntityId(null)}
+        onClose={() => {
+          setSelectedEntityId(null)
+          updateNetworkUrl({ node_id: null })
+        }}
         onFocusEntity={(nId) => {
           setSourceId(nId)
           setShowPathfinder(true)
