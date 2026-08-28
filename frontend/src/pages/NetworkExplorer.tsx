@@ -723,7 +723,7 @@ export default function NetworkExplorer() {
               setShowPathfinder(true)
             }}
             onEdgeSelect={setEdgeId}
-            onNodeSelect={(nId) => setSelectedEntityId(nId)}
+            onOpenDetails={(nId) => setSelectedEntityId(nId)}
           />
         </>
       )}

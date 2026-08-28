@@ -228,12 +228,25 @@ export function EntityDetailsDrawer({
                     <dl className="space-y-2 text-xs">
                       {Object.entries(profile.properties)
                         .filter(([k]) => !['badges', 'case_id', 'case_ids', 'source_records'].includes(k))
-                        .map(([k, v]) => (
-                          <div key={k} className="flex justify-between gap-3 border-b border-neutral-100 pb-1.5 last:border-0 last:pb-0">
-                            <dt className="text-neutral-500 capitalize font-medium">{k.replaceAll('_', ' ')}</dt>
-                            <dd className="text-right font-semibold text-neutral-900 break-all">{String(v)}</dd>
-                          </div>
-                        ))}
+                        .map(([k, v]) => {
+                          let formattedValue = ''
+                          if (v !== null && v !== undefined) {
+                            if (Array.isArray(v)) {
+                              formattedValue = v.map(String).join(', ')
+                            } else if (typeof v === 'object') {
+                              try { formattedValue = JSON.stringify(v) } catch { formattedValue = '[Object]' }
+                            } else {
+                              formattedValue = String(v)
+                            }
+                          }
+                          
+                          return (
+                            <div key={k} className="flex justify-between gap-3 border-b border-neutral-100 pb-1.5 last:border-0 last:pb-0">
+                              <dt className="text-neutral-500 capitalize font-medium">{k.replaceAll('_', ' ')}</dt>
+                              <dd className="text-right font-semibold text-neutral-900 break-all">{formattedValue}</dd>
+                            </div>
+                          )
+                        })}
                     </dl>
                   </div>
                 </section>

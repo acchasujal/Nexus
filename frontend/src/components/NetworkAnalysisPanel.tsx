@@ -387,12 +387,14 @@ export function NetworkAnalysisPanel({
               onNodeSelect={(nodeId) => {
                 setInternalEntityId(nodeId)
                 onEntitySelect?.(nodeId)
-                setSelectedEdgeId(null)
+                if (nodeId) setSelectedEdgeId(null)
               }}
               onEdgeSelect={(edgeId) => {
                 setSelectedEdgeId(edgeId)
-                setInternalEntityId(null)
-                onEntitySelect?.(null)
+                if (edgeId) {
+                  setInternalEntityId(null)
+                  onEntitySelect?.(null)
+                }
               }}
               densityMode={layoutDensity}
               enableTemporalScrubber={true}
@@ -574,12 +576,35 @@ export function NetworkAnalysisPanel({
                   <dl className="mt-2 text-small space-y-1 text-neutral-700 bg-neutral-100 p-3 rounded-radius-sm">
                     <div className="flex justify-between">
                       <dt className="text-neutral-500">ID Reference</dt>
-                      <dd className="font-mono">{shortenId(inspectTarget.id)}</dd>
+                      <dd className="font-mono text-right">{shortenId(inspectTarget.id)}</dd>
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-neutral-500">Node Class</dt>
-                      <dd className="capitalize font-semibold">{inspectTarget.type}</dd>
+                      <dd className="capitalize font-semibold text-right">{inspectTarget.type}</dd>
                     </div>
+                    
+                    {inspectTarget.properties && Object.entries(inspectTarget.properties).map(([key, value]) => {
+                      if (value === null || value === undefined || key === 'id' || key === 'type') return null
+                      
+                      let formattedValue = ''
+                      if (Array.isArray(value)) {
+                        formattedValue = value.map(String).join(', ')
+                      } else if (typeof value === 'object') {
+                        try { formattedValue = JSON.stringify(value) } catch { formattedValue = '[Object]' }
+                      } else {
+                        formattedValue = String(value)
+                      }
+                      
+                      // Format the key to be readable (e.g. "first_name" -> "First Name")
+                      const formattedKey = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+                      
+                      return (
+                        <div key={key} className="flex justify-between border-t border-neutral-200 pt-1 mt-1">
+                          <dt className="text-neutral-500">{formattedKey}</dt>
+                          <dd className="font-medium text-right max-w-[60%] break-words">{formattedValue}</dd>
+                        </div>
+                      )
+                    })}
                   </dl>
                 </div>
 

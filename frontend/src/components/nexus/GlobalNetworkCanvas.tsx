@@ -28,6 +28,7 @@ interface GlobalNetworkCanvasProps {
   onNodeSelect?: (nodeId: string) => void
   onSetSource?: (nodeId: string, nodeLabel: string) => void
   onSetTarget?: (nodeId: string, nodeLabel: string) => void
+  onOpenDetails?: (nodeId: string) => void
 }
 
 const NODE_STYLE: Record<string, { icon: typeof User; ring: string; chip: string; bg: string }> = {
@@ -49,6 +50,7 @@ export function GlobalNetworkCanvas({
   onNodeSelect,
   onSetSource,
   onSetTarget,
+  onOpenDetails,
 }: GlobalNetworkCanvasProps) {
   const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set())
   const [selectedNode, setSelectedNode] = useState<string | null>(initialNodeId || null)
@@ -204,6 +206,7 @@ export function GlobalNetworkCanvas({
         pathEdgeIds={pathEdgeIds}
         onSetSource={onSetSource}
         onSetTarget={onSetTarget}
+        onOpenDetails={onOpenDetails}
         onNodeSelect={(nodeId) => {
           setSelectedNode(nodeId)
           if (nodeId) onNodeSelect?.(nodeId)

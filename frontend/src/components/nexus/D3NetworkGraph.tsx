@@ -66,6 +66,7 @@ export interface D3NetworkGraphProps {
   onEdgeSelect?: (edgeId: string | null) => void
   onSetSource?: (nodeId: string, nodeLabel: string) => void
   onSetTarget?: (nodeId: string, nodeLabel: string) => void
+  onOpenDetails?: (nodeId: string) => void
   onNodeDoubleClick?: (nodeId: string) => void
   highlightDelta?: boolean
   enableTemporalScrubber?: boolean
@@ -160,6 +161,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
   onEdgeSelect,
   onSetSource,
   onSetTarget,
+  onOpenDetails,
   onNodeDoubleClick,
   highlightDelta = false,
   enableTemporalScrubber = false,
@@ -1154,12 +1156,25 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
                 <div className="bg-neutral-50 p-2 rounded-lg border border-neutral-100 max-h-36 overflow-y-auto space-y-1 text-[11px]">
                   {Object.entries(activeSelectedNode.properties)
                     .filter(([k]) => !['evidence_ids', 'isDimmed', 'isDelta'].includes(k))
-                    .map(([key, val]) => (
-                      <div key={key} className="flex justify-between gap-2 border-b border-neutral-100/60 pb-0.5 last:border-none">
-                        <span className="text-neutral-500 capitalize">{key.replaceAll('_', ' ')}:</span>
-                        <span className="font-semibold text-neutral-900 truncate max-w-[140px]" title={String(val)}>{String(val)}</span>
-                      </div>
-                    ))}
+                    .map(([key, val]) => {
+                      let formattedValue = ''
+                      if (val !== null && val !== undefined) {
+                        if (Array.isArray(val)) {
+                          formattedValue = val.map(String).join(', ')
+                        } else if (typeof val === 'object') {
+                          try { formattedValue = JSON.stringify(val) } catch { formattedValue = '[Object]' }
+                        } else {
+                          formattedValue = String(val)
+                        }
+                      }
+                      
+                      return (
+                        <div key={key} className="flex justify-between gap-2 border-b border-neutral-100/60 pb-0.5 last:border-none">
+                          <span className="text-neutral-500 capitalize">{key.replaceAll('_', ' ')}:</span>
+                          <span className="font-semibold text-neutral-900 truncate max-w-[140px]" title={formattedValue}>{formattedValue}</span>
+                        </div>
+                      )
+                    })}
                 </div>
               </div>
             )}
@@ -1167,12 +1182,21 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
             {/* Quick Pathfinder Actions */}
             {(onSetSource || onSetTarget) && (
               <div className="pt-2 border-t border-neutral-100 flex gap-2">
+                {onOpenDetails && (
+                  <button
+                    onClick={() => onOpenDetails(activeSelectedNode.id)}
+                    className="flex-1 rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-1.5 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 transition-colors shadow-2xs"
+                    title="View full intelligence record"
+                  >
+                    📖 Full Record
+                  </button>
+                )}
                 {onSetSource && (
                   <button
                     onClick={() => onSetSource(activeSelectedNode.id, String(activeSelectedNode.label || activeSelectedNode.id))}
                     className="flex-1 rounded-lg bg-blue-50 border border-blue-200 px-2 py-1.5 text-[10px] font-bold text-blue-700 hover:bg-blue-100 transition-colors shadow-2xs"
                   >
-                    📍 Set Source
+                    📍 Source
                   </button>
                 )}
                 {onSetTarget && (
@@ -1180,7 +1204,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
                     onClick={() => onSetTarget(activeSelectedNode.id, String(activeSelectedNode.label || activeSelectedNode.id))}
                     className="flex-1 rounded-lg bg-rose-50 border border-rose-200 px-2 py-1.5 text-[10px] font-bold text-rose-700 hover:bg-rose-100 transition-colors shadow-2xs"
                   >
-                    🎯 Set Target
+                    🎯 Target
                   </button>
                 )}
               </div>
