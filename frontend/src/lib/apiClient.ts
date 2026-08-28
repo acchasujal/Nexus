@@ -122,7 +122,16 @@ async function apiFetchBlob(path: string): Promise<Blob> {
   const response = await fetch(`${baseUrl}${path}`, {
     headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), 'X-Role': role },
   })
-  if (!response.ok) throw new ApiError(response.status, response.statusText, response.statusText)
+  if (!response.ok) {
+    let message = response.statusText || 'Dossier download failed'
+    try {
+      const body = await response.json() as { detail?: string; message?: string }
+      message = body.detail ?? body.message ?? message
+    } catch {
+      // The response may be a non-JSON proxy or server error body.
+    }
+    throw new ApiError(response.status, response.statusText, message)
+  }
   return response.blob()
 }
 

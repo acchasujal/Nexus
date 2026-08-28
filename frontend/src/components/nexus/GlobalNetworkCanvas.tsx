@@ -21,6 +21,7 @@ interface GlobalNetworkCanvasProps {
   diff?: SnapshotDiffResponse | null
   highlightDelta?: boolean
   initialCaseFilter?: string | null
+  caseFocus?: string | null
   initialNodeId?: string | null
   pathNodeIds?: string[] | null
   pathEdgeIds?: string[] | null
@@ -28,6 +29,7 @@ interface GlobalNetworkCanvasProps {
   onNodeSelect?: (nodeId: string) => void
   onSetSource?: (nodeId: string, nodeLabel: string) => void
   onSetTarget?: (nodeId: string, nodeLabel: string) => void
+  onCaseFocusChange?: (caseId: string) => void
 }
 
 const NODE_STYLE: Record<string, { icon: typeof User; ring: string; chip: string; bg: string }> = {
@@ -42,6 +44,7 @@ export function GlobalNetworkCanvas({
   diff,
   highlightDelta = false,
   initialCaseFilter,
+  caseFocus,
   initialNodeId,
   pathNodeIds,
   pathEdgeIds,
@@ -49,6 +52,7 @@ export function GlobalNetworkCanvas({
   onNodeSelect,
   onSetSource,
   onSetTarget,
+  onCaseFocusChange,
 }: GlobalNetworkCanvasProps) {
   const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set())
   const [selectedNode, setSelectedNode] = useState<string | null>(initialNodeId || null)
@@ -75,6 +79,11 @@ export function GlobalNetworkCanvas({
 
   // If the initial case filter from URL doesn't match any known case, fall back to ALL
   const resolvedInitialFilter = useMemo(() => {
+    if (caseFocus?.toUpperCase() === 'ALL') return 'ALL'
+    if (caseFocus) {
+      const exactFocus = caseOptions.find((c) => c.toUpperCase() === caseFocus.toUpperCase())
+      if (exactFocus) return exactFocus
+    }
     if (!initialCaseFilter) return 'ALL'
     // Direct match
     if (caseOptions.includes(initialCaseFilter)) return initialCaseFilter
@@ -89,17 +98,18 @@ export function GlobalNetworkCanvas({
       if (partialMatch) return partialMatch
     }
     return 'ALL'
-  }, [initialCaseFilter, caseOptions])
+  }, [initialCaseFilter, caseFocus, caseOptions])
 
   const [caseFilter, setCaseFilter] = useState<string>(resolvedInitialFilter)
 
   // Sync filter if resolved value changes (e.g. graph data loads after mount)
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (resolvedInitialFilter !== 'ALL' && caseFilter !== resolvedInitialFilter) {
-      setCaseFilter(resolvedInitialFilter)
+    const nextFilter = caseFocus === 'ALL' ? 'ALL' : resolvedInitialFilter
+    if (caseFilter !== nextFilter) {
+      setCaseFilter(nextFilter)
     }
-  }, [resolvedInitialFilter, caseFilter])
+  }, [resolvedInitialFilter, caseFocus, caseFilter])
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const toggleType = (t: string) =>
@@ -236,7 +246,11 @@ export function GlobalNetworkCanvas({
             <select
               id="case-focus"
               value={caseFilter}
-              onChange={(e) => setCaseFilter(e.target.value)}
+              onChange={(e) => {
+                const nextFilter = e.target.value
+                setCaseFilter(nextFilter)
+                onCaseFocusChange?.(nextFilter)
+              }}
               className="rounded-md border border-neutral-300 bg-white px-2 py-0.5 text-[11px] sm:text-xs text-neutral-900 focus:border-blue-500 focus:outline-none shadow-2xs"
             >
               {caseOptions.map((c) => (
