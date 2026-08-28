@@ -32,28 +32,23 @@ export function NetworkDeltaSummary({ activeSnapshot }: NetworkDeltaSummaryProps
 
   const confirmedCandidates = (candidatesQuery.data || []).filter((c) => c.status === 'CONFIRMED')
   const confirmedIds = confirmedCandidates.map((c) => c.id)
-  const decisionLabel = confirmedIds.length > 0 ? confirmedIds.join(', ') : 'RC-1'
+  const decisionLabel = confirmedIds.length > 0 ? confirmedIds.join(', ') : 'Verified Resolution'
 
   const bridges = confirmedCandidates.map((c) => {
-    const leftCase = c.left.case_ids[0] || 'Case A'
-    const rightCase = c.right.case_ids[0] || 'Case B'
+    const leftCase = c.left.case_ids[0] || c.left.label || 'Case A'
+    const rightCase = c.right.case_ids[0] || c.right.label || 'Case B'
     return `${leftCase} ↔ ${rightCase}`
   })
   const bridgeLabel = bridges.length > 0
     ? bridges.join('; ')
-    : 'FIR 141/2026 (Mysuru) and FIR 207/2026 (Bengaluru)'
+    : 'Cross-case jurisdictional bridge'
 
-  const hasRc1 = confirmedIds.includes('RC-1') || confirmedIds.length === 0
-  const hasRc2 = confirmedIds.includes('RC-2')
-  const hasRc3 = confirmedIds.includes('RC-3')
-
-  const propagationDetails: string[] = []
-  if (hasRc1) propagationDetails.push('ACC-9914 ➔ ACC-7731 financial flow')
-  if (hasRc2) propagationDetails.push('ACC-4491 ➔ ACC-9914 hawala channel')
-  if (hasRc3) propagationDetails.push('VEH-1001 vehicle logistics link')
+  const propagationDetails: string[] = confirmedCandidates.flatMap((c) =>
+    (c.reasons || []).map((r) => r.detail).filter(Boolean)
+  )
   const propagationLabel = propagationDetails.length > 0
-    ? propagationDetails.join(', ')
-    : 'Downstream communication and financial flow'
+    ? propagationDetails.slice(0, 3).join(', ')
+    : `${addedEdgesCount} evidentiary edge(s) re-anchored`
 
   return (
     <div className="rounded-xl border border-emerald-300 bg-emerald-50/70 p-4 text-xs text-neutral-900 shadow-sm space-y-2.5 animate-in fade-in duration-200">

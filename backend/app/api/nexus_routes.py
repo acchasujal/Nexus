@@ -621,17 +621,6 @@ AFTER_EDGES = [
     make_edge("E-BRIDGE-3", "CASE-501", "CASE-502", "CONNECTS_CASES", "DERIVED", 0.88, "2026-08-24T18:00:00Z", ["CASE-501", "CASE-502"], ["SRC-FIR-501", "SRC-FIR-502"]),
 ]
 
-SNAPSHOT_DIFF = SnapshotDiffResponse(
-    before_snapshot_id="SNAP-BEFORE-001",
-    after_snapshot_id="SNAP-AFTER-001",
-    added_node_ids=["P-RAFIQ", "PH-UNIFIED", "P-VIKRAM", "P-SUNIEL"],
-    removed_node_ids=["P-RAFIQ-K", "P-RAFIQ-A", "PH-A", "PH-B", "P-VIKRAM-S", "P-BIKRAM-S", "P-SUNIEL-S", "P-SUNIL-S"],
-    changed_node_ids=[],
-    added_edge_ids=["E-USEPH-1", "E-USEPH-2", "E-COMM-DK", "E-BRIDGE", "E-BRIDGE-2", "E-BRIDGE-3", "E-ACCUSE-305-A", "E-ACCUSE-412-A", "E-ACCUSE-501-A", "E-ACCUSE-502-A", "E-VEH-UNIFIED"],
-    removed_edge_ids=["E-ACCUSE-141", "E-USEPH-A", "E-ACCUSE-207", "E-USEPH-B", "E-ACCUSE-305", "E-ACCUSE-412", "E-ACCUSE-501", "E-ACCUSE-502", "E-VEH-501", "E-VEH-502"],
-    changed_edge_ids=[],
-)
-
 BRIDGE_LEAD = NexusLead(
     id="LEAD-1",
     title="Cross-case bridge: Rafiq connects FIR 141/2026 with FIR 207/2026",
@@ -1171,8 +1160,8 @@ def create_nexus_router() -> APIRouter:
             return ResolutionDecisionResponse(
                 candidate_id=target_cand.id,
                 status=target_cand.status,
-                affected_node_ids=SNAPSHOT_DIFF.added_node_ids if body.decision == "CONFIRM" else [],
-                new_snapshot_id=SNAPSHOT_DIFF.after_snapshot_id if body.decision == "CONFIRM" else None,
+                affected_node_ids=[target_cand.left.node_id, target_cand.right.node_id] if body.decision == "CONFIRM" else [],
+                new_snapshot_id="SNAP-AFTER-001" if body.decision == "CONFIRM" else None,
             )
 
         new_status = status_map[body.decision]
@@ -1271,7 +1260,21 @@ def create_nexus_router() -> APIRouter:
     def get_snapshot_diff(
         principal: Principal = Depends(get_principal),
     ) -> SnapshotDiffResponse:
-        return SNAPSHOT_DIFF
+        before_nids = {n.id for n in BEFORE_NODES}
+        after_nids = {n.id for n in AFTER_NODES}
+        before_eids = {e.id for e in BEFORE_EDGES}
+        after_eids = {e.id for e in AFTER_EDGES}
+
+        return SnapshotDiffResponse(
+            before_snapshot_id="SNAP-BEFORE-001",
+            after_snapshot_id="SNAP-AFTER-001",
+            added_node_ids=sorted(list(after_nids - before_nids)),
+            removed_node_ids=sorted(list(before_nids - after_nids)),
+            changed_node_ids=[],
+            added_edge_ids=sorted(list(after_eids - before_eids)),
+            removed_edge_ids=sorted(list(before_eids - after_eids)),
+            changed_edge_ids=[],
+        )
 
     @router.get("/nexus/relationships/{rel_id}/evidence", response_model=NexusEdgeEvidenceResponse)
     def get_relationship_evidence(
@@ -1498,59 +1501,6 @@ def create_nexus_router() -> APIRouter:
         resolved_src_id = src_node.id
         resolved_tgt_id = tgt_node.id
 
-        # Golden path special explanations when confirmed
-        if is_after:
-            if (resolved_src_id == "CASE-141" and resolved_tgt_id == "CASE-207") or (resolved_src_id == "CASE-207" and resolved_tgt_id == "CASE-141"):
-                c_rc1 = next((c for c in _demo_state.candidates if c.id == "RC-1"), None)
-                if c_rc1 and c_rc1.status == "CONFIRMED":
-                    return NexusPathResponse(
-                        found=True,
-                        source_id=src_node.id,
-                        target_id=tgt_node.id,
-                        node_ids=["CASE-141", "P-RAFIQ", "CASE-207"],
-                        edge_ids=["E-ACCUSE-141", "E-ACCUSE-207"],
-                        hops=2,
-                        explanation=(
-                            'FIR 141/2026 and FIR 207/2026 are connected through the confirmed entity '
-                            '"Rafiq Khan / Rafiq Ahmed" (candidate RC-1), accused in both cases and reachable on phone +91 98450 11223 in both CDR pulls.'
-                        ),
-                        evidence_ids=["SRC-FIR-141", "SRC-FIR-207", "SRC-CDR-A12", "SRC-CDR-B31"],
-                    )
-
-            if (resolved_src_id == "CASE-305" and resolved_tgt_id == "CASE-412") or (resolved_src_id == "CASE-412" and resolved_tgt_id == "CASE-305"):
-                c_rc2 = next((c for c in _demo_state.candidates if c.id == "RC-2"), None)
-                if c_rc2 and c_rc2.status == "CONFIRMED":
-                    return NexusPathResponse(
-                        found=True,
-                        source_id=src_node.id,
-                        target_id=tgt_node.id,
-                        node_ids=["CASE-305", "P-VIKRAM", "CASE-412"],
-                        edge_ids=["E-ACCUSE-305-A", "E-ACCUSE-412-A"],
-                        hops=2,
-                        explanation=(
-                            'FIR 305/2026 (Cyber Fraud) and FIR 412/2026 (Hawala Syndicate) are connected through the confirmed entity '
-                            '"Vikram Sharma / Bikram Sarma" (candidate RC-2), sharing Aadhaar suffix XXXX-XXXX-4491 and mobile +91 98450 77310 across Bengaluru jurisdictions.'
-                        ),
-                        evidence_ids=["SRC-FIR-305", "SRC-FIR-412"],
-                    )
-
-            if (resolved_src_id == "CASE-501" and resolved_tgt_id == "CASE-502") or (resolved_src_id == "CASE-502" and resolved_tgt_id == "CASE-501"):
-                c_rc3 = next((c for c in _demo_state.candidates if c.id == "RC-3"), None)
-                if c_rc3 and c_rc3.status == "CONFIRMED":
-                    return NexusPathResponse(
-                        found=True,
-                        source_id=src_node.id,
-                        target_id=tgt_node.id,
-                        node_ids=["CASE-501", "P-SUNIEL", "CASE-502"],
-                        edge_ids=["E-ACCUSE-501-A", "E-ACCUSE-502-A"],
-                        hops=2,
-                        explanation=(
-                            'FIR 501/2026 (Narcotics Ring) and FIR 502/2026 (Extortion & Logistics) are connected through the confirmed entity '
-                            '"Suniel Shetty / Sunil Shetty" (candidate RC-3), matching vehicle registration KA-01-AB-1001 and father name R. Shetty across both seizure reports.'
-                        ),
-                        evidence_ids=["SRC-FIR-501", "SRC-FIR-502"],
-                    )
-
         if resolved_src_id == resolved_tgt_id:
             return NexusPathResponse(
                 found=False,
@@ -1610,6 +1560,18 @@ def create_nexus_router() -> APIRouter:
 
             labels = [nodes_by_id[nid].label if nid in nodes_by_id else nid for nid in p_nodes]
             explanation = f"Discovered {hops}-hop evidence connection: {' ➔ '.join(labels)}."
+
+            bridge_details = []
+            for nid in p_nodes:
+                node = nodes_by_id.get(nid)
+                if node and node.properties and node.properties.get("aliases"):
+                    alias_str = " / ".join(node.properties["aliases"])
+                    bridge_details.append(f'confirmed entity "{alias_str}"')
+                elif node and "CROSS_CASE_BRIDGE" in (node.badges or []):
+                    bridge_details.append(f'cross-case bridge "{node.label}"')
+
+            if bridge_details:
+                explanation += f" Connected through {', '.join(bridge_details)}."
 
             audit.record(
                 event_type=AuditEventType.GRAPH_QUERY_EXECUTED,

@@ -15,7 +15,7 @@ import {
   ChevronRight,
   Briefcase,
 } from 'lucide-react'
-import { useNexusNetwork, useSnapshotDiff, useNexusPath, useEntityNetwork, useCaseNetworkData, useBatchNetwork } from '@/hooks/useNexus'
+import { useNexusNetwork, useSnapshotDiff, useNexusPath, useEntityNetwork, useCaseNetworkData, useBatchNetwork, useResolutionCandidates } from '@/hooks/useNexus'
 import { GlobalNetworkCanvas } from '@/components/nexus/GlobalNetworkCanvas'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import { EntityDetailsDrawer } from '@/components/nexus/EntityDetailsDrawer'
@@ -184,6 +184,31 @@ export default function NetworkExplorer() {
   }, [snapshotParam, focusParam, nodeIdParam])
 
   const batchNetwork = useBatchNetwork(batchIdParam, Boolean(batchIdParam))
+  const candidatesQuery = useResolutionCandidates()
+
+  const candidatePresets = useMemo(() => {
+    return (candidatesQuery.data || []).map((c) => {
+      const leftCase = c.left.case_ids?.[0]
+      const rightCase = c.right.case_ids?.[0]
+      if (leftCase && rightCase && leftCase !== rightCase) {
+        const leftName = leftCase.replace(/^CASE-/, 'FIR-')
+        const rightName = rightCase.replace(/^CASE-/, 'FIR-')
+        return {
+          id: c.id,
+          label: `🌟 ${leftName} ↔ ${rightName}`,
+          src: leftCase,
+          tgt: rightCase,
+        }
+      }
+      return {
+        id: c.id,
+        label: `🔍 ${c.left.label || c.left.node_id} ↔ ${c.right.label || c.right.node_id}`,
+        src: c.left.node_id,
+        tgt: c.right.node_id,
+      }
+    })
+  }, [candidatesQuery.data])
+
   // ── Dynamic Pathfinder & Exploration State ──────────────────────────────────
   const [showPathfinder, setShowPathfinder] = useState(false)
   const [sourceId, setSourceId] = useState(caseIdParam || nodeIdParam || '')
@@ -197,16 +222,9 @@ export default function NetworkExplorer() {
       setSourceId(caseIdParam)
       if (targetCaseIdParam) {
         setTargetId(targetCaseIdParam)
-      } else {
-        if (caseIdParam === 'CASE-305') setTargetId('CASE-412')
-        else if (caseIdParam === 'CASE-412') setTargetId('CASE-305')
-        else if (caseIdParam === 'CASE-501') setTargetId('CASE-502')
-        else if (caseIdParam === 'CASE-502') setTargetId('CASE-501')
-        else if (caseIdParam === 'CASE-141') setTargetId('CASE-207')
-        else if (caseIdParam === 'CASE-207') setTargetId('CASE-141')
+        setShowPathfinder(true)
+        setIsExploring(true)
       }
-      setShowPathfinder(true)
-      setIsExploring(true)
     } else if (nodeIdParam) {
       setSourceId(nodeIdParam)
       setShowPathfinder(true)
@@ -218,62 +236,46 @@ export default function NetworkExplorer() {
   const isEntityScoped = Boolean(nodeIdParam)
   const isCaseScoped = Boolean(caseIdParam)
 
-  const DEMO_CASE_IDS = new Set([
-    'CASE-141', 'CASE-207',
-    'CASE-305', 'CASE-412',
-    'CASE-501', 'CASE-502',
-  ])
-
-  const DEMO_ENTITY_IDS = new Set([
-    'P-RAFIQ-K', 'P-RAFIQ-A', 'P-RAFIQ',
-    'P-VIKRAM-S', 'P-BIKRAM-S', 'P-VIKRAM',
-    'P-SUNIEL-S', 'P-SUNIL-S', 'P-SUNIEL',
-    'P-DEEPAK', 'P-MEENA',
-    'ACC-7731', 'ACC-9914', 'ACC-4491',
-    'PH-A', 'PH-B', 'PH-UNIFIED', 'VEH-1001',
-  ])
-
-  const isExplicitDemo = Boolean(
-    (caseIdParam && DEMO_CASE_IDS.has(caseIdParam)) ||
-    (targetCaseIdParam && DEMO_CASE_IDS.has(targetCaseIdParam)) ||
-    (nodeIdParam && DEMO_ENTITY_IDS.has(nodeIdParam)) ||
-    (sourceId && (DEMO_CASE_IDS.has(sourceId) || DEMO_ENTITY_IDS.has(sourceId))) ||
-    (targetId && (DEMO_CASE_IDS.has(targetId) || DEMO_ENTITY_IDS.has(targetId)))
-  )
-
   const effectiveSourceId = sourceId || nodeIdParam || ''
   const effectiveTargetId = targetId || ''
   
   // If no params are provided, we show the global network
   const isGlobalNetwork = !isCaseScoped && !isEntityScoped && !batchIdParam && !effectiveSourceId && !effectiveTargetId
   
-  const hasSelection = Boolean(isGlobalNetwork || batchIdParam || isExplicitDemo || isCaseScoped || isEntityScoped || effectiveSourceId || effectiveTargetId)
+  const isCaseId = (id?: string | null) => Boolean(id && (id.toUpperCase().startsWith('CASE') || id.toUpperCase().startsWith('FIR')))
+  const isCasePath = Boolean(sourceId && targetId && isCaseId(sourceId) && isCaseId(targetId))
+  const isEntityPath = Boolean((effectiveSourceId && !isCaseId(effectiveSourceId)) || (effectiveTargetId && !isCaseId(effectiveTargetId)))
+
+  // Use the unified cross-case network for global view, snapshot diff replays, or case views when not exploring specific non-case entities
+  const useUnifiedNetwork = !isEntityPath && (isGlobalNetwork || Boolean(snapshotParam) || Boolean(isCaseScoped && !isEntityScoped) || isCasePath)
+
+  const hasSelection = Boolean(isGlobalNetwork || batchIdParam || useUnifiedNetwork || isCaseScoped || isEntityScoped || effectiveSourceId || effectiveTargetId)
 
   // Network queries
   const sourceEntityQuery = useEntityNetwork(
     effectiveSourceId,
     2,
-    Boolean(effectiveSourceId && !isExplicitDemo && (!isCaseScoped || isEntityScoped))
+    Boolean(!useUnifiedNetwork && effectiveSourceId && !isCaseId(effectiveSourceId))
   )
   const targetEntityQuery = useEntityNetwork(
     effectiveTargetId,
     2,
-    Boolean(effectiveTargetId && effectiveTargetId !== effectiveSourceId && !isExplicitDemo)
+    Boolean(!useUnifiedNetwork && effectiveTargetId && effectiveTargetId !== effectiveSourceId && !isCaseId(effectiveTargetId))
   )
   const caseQuery = useCaseNetworkData(
     caseIdParam,
     2,
-    Boolean(isCaseScoped && !isExplicitDemo)
+    Boolean(isCaseScoped && !useUnifiedNetwork)
   )
   const demoQuery = useNexusNetwork(
     replay,
-    isExplicitDemo || isGlobalNetwork
+    useUnifiedNetwork
   )
-  const diff = useSnapshotDiff(replay === 'after' && (isExplicitDemo || isGlobalNetwork) && demoQuery.data?.state === 'after')
+  const diff = useSnapshotDiff(replay === 'after' && useUnifiedNetwork && demoQuery.data?.state === 'after')
 
   const pathQuery = useNexusPath(sourceId, targetId, maxHops, showPathfinder && Boolean(sourceId && targetId))
 
-  const activeQuery = (isExplicitDemo || isGlobalNetwork)
+  const activeQuery = useUnifiedNetwork
     ? demoQuery
     : isCaseScoped && !isEntityScoped
     ? caseQuery
@@ -283,7 +285,7 @@ export default function NetworkExplorer() {
     if (batchIdParam) {
       return batchNetwork.data ?? null
     }
-    if (isExplicitDemo || isGlobalNetwork) {
+    if (useUnifiedNetwork) {
       return demoQuery.data ?? null
     }
     if (isCaseScoped && !isEntityScoped) {
@@ -299,7 +301,7 @@ export default function NetworkExplorer() {
     }
     return null
   }, [
-    isExplicitDemo,
+    useUnifiedNetwork,
     isGlobalNetwork,
     demoQuery.data,
     isCaseScoped,
@@ -315,7 +317,7 @@ export default function NetworkExplorer() {
     batchNetwork.data,
   ])
 
-  const afterUnavailable = isExplicitDemo && replay === 'after' && demoQuery.error
+  const afterUnavailable = useUnifiedNetwork && replay === 'after' && demoQuery.error
 
   // Lookups for labels and edges
   const nodesById = useMemo(() => {
@@ -471,18 +473,17 @@ export default function NetworkExplorer() {
               >
                 🌟 FIR-141 ↔ FIR-207
               </button>
-              <button
-                onClick={() => applyPreset('CASE-305', 'CASE-412', 6)}
-                className="rounded-md border border-blue-200 bg-white px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors shadow-2xs"
-              >
-                🌟 FIR-305 ↔ FIR-412
-              </button>
-              <button
-                onClick={() => applyPreset('CASE-501', 'CASE-502', 6)}
-                className="rounded-md border border-blue-200 bg-white px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors shadow-2xs"
-              >
-                🌟 FIR-501 ↔ FIR-502
-              </button>
+              {candidatePresets
+                .filter((p) => !(p.src === 'CASE-141' && p.tgt === 'CASE-207'))
+                .map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => applyPreset(preset.src, preset.tgt, 6)}
+                    className="rounded-md border border-blue-200 bg-white px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors shadow-2xs"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
               <button
                 onClick={() => applyPreset('P-DEEPAK', 'P-RAFIQ-K', 6)}
                 className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors shadow-2xs"
@@ -672,11 +673,11 @@ export default function NetworkExplorer() {
       )}
 
       {hasSelection && activeQuery.isLoading && <LoadingSkeleton layout="detail" />}
-      {hasSelection && activeQuery.isError && isExplicitDemo && !afterUnavailable && (
+      {hasSelection && activeQuery.isError && useUnifiedNetwork && !afterUnavailable && (
         <ErrorState message="Failed to load the investigation network." onRetry={() => void activeQuery.refetch()} />
       )}
 
-      {hasSelection && !isExplicitDemo && !activeQuery.isLoading && !graph && (
+      {hasSelection && !useUnifiedNetwork && !activeQuery.isLoading && !graph && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900 shadow-sm space-y-2">
           <div className="flex items-center gap-2 font-bold text-base text-amber-950">
             <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
