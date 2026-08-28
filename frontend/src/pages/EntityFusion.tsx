@@ -75,7 +75,7 @@ export default function EntityFusion() {
   const submit = async (decision: 'CONFIRM' | 'REJECT' | 'DEFER') => {
     setDecisionError(null)
     try {
-      await decide.mutateAsync({ id: candidate!.id, req: { decision, decided_by: 'IO Demo', note: note || undefined } })
+      await decide.mutateAsync({ id: candidate!.id, req: { decision, decided_by: 'Investigating Officer', note: note || undefined } })
     } catch (e) {
       setDecisionError(e instanceof Error ? e.message : 'Decision failed')
     }

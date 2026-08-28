@@ -186,8 +186,9 @@ export function SimilarityPanel({ caseId, firNumber: _firNumber }: SimilarityPan
                         </p>
                       )}
                     </div>
-                    <span className="text-caption font-mono font-bold bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded-radius-sm border border-blue-200">
-                      Match Score: {Math.round(match.score * 100)}/100
+                    <span className="text-caption font-mono font-bold bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded-radius-sm border border-blue-200" title="Composite similarity score based on shared suspects, phones, addresses, and network overlap. Not a statistical probability.">
+                      Similarity: {Math.round(match.score * 100)}/100
+                      <span className="ml-1 text-[9px] font-normal text-blue-600">(composite)</span>
                     </span>
                   </div>
                   

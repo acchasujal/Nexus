@@ -1161,7 +1161,7 @@ def create_nexus_router() -> APIRouter:
         _demo_state.lead.decision_note = body.note
 
         audit.record(
-            event_type=AuditEventType.ENTITY_RESOLUTION_EXECUTED,
+            event_type=AuditEventType.LEAD_ACTIONED,
             actor_id=principal.user_id,
             entity_type="Lead",
             entity_id=lead_id,

@@ -41,7 +41,7 @@ export default function Evidence() {
             Evidence &amp; Provenance Registry
           </h1>
           <p className="text-sm text-neutral-600 mt-1">
-            Forensic chain-of-custody for seized documents, telecom CDR records, and banking logs with Section 63 BSA provenance.
+            Evidence provenance and source traceability for FIR records, telecom CDR logs, and banking data. Each record includes exact file locators and raw excerpts per Section 63 BSA 2023.
           </p>
         </div>
       </div>

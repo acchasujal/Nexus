@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck, AlertTriangle } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 
 interface AuditLogEntry {
@@ -44,16 +44,16 @@ function formatAuditDetails(details?: Record<string, unknown>): React.ReactNode 
 export default function Audit() {
   const [logs, setLogs] = useState<AuditLogEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   useEffect(() => {
     apiClient.getAuditLogs().then((data) => {
+      setFetchError(null)
       setLogs(Array.isArray(data) ? (data as AuditLogEntry[]) : [])
-    }).catch(() => {
-      setLogs([
-        { id: 'aud-1', user_id: 'dev-io', user_role: 'INVESTIGATOR', action: 'network_explored', entity_id: 'CASE-141', timestamp: '2026-02-15T12:00:00Z', details: { snapshot: 'before', total_nodes: 8, total_edges: 10 } },
-        { id: 'aud-2', user_id: 'dev-io', user_role: 'INVESTIGATOR', action: 'entity_resolution_executed', entity_id: 'RC-1', timestamp: '2026-02-15T12:05:00Z', details: { candidate: 'Rafiq Khan ↔ Rafiq Ahmed', decision: 'CONFIRM' } },
-        { id: 'aud-3', user_id: 'dev-io', user_role: 'INVESTIGATOR', action: 'copilot_answered', entity_id: 'Copilot', timestamp: '2026-02-15T12:10:00Z', details: { query: 'How are the two cases connected?', grounded: true } },
-      ])
+    }).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : 'Unable to load audit records'
+      setFetchError(msg)
+      setLogs([])
     }).finally(() => {
       setIsLoading(false)
     })
@@ -86,6 +86,16 @@ export default function Audit() {
             {isLoading ? (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-neutral-500">Loading audit records...</td>
+              </tr>
+            ) : fetchError ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center">
+                  <div className="flex flex-col items-center gap-2 text-amber-800">
+                    <AlertTriangle className="h-6 w-6 text-amber-500" />
+                    <p className="font-semibold text-sm">Audit log unavailable</p>
+                    <p className="text-xs text-neutral-600 max-w-md">{fetchError}</p>
+                  </div>
+                </td>
               </tr>
             ) : logs.length === 0 ? (
               <tr>

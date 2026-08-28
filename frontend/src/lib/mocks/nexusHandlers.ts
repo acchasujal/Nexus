@@ -82,7 +82,7 @@ export const nexusHandlers = [
     candidate.status =
       body.decision === 'CONFIRM' ? 'CONFIRMED' : body.decision === 'REJECT' ? 'REJECTED' : 'DEFERRED'
     candidate.decided_at = new Date().toISOString()
-    candidate.decided_by = body.decided_by ?? 'IO Demo'
+    candidate.decided_by = body.decided_by ?? 'Investigating Officer'
     nexusState.current.decisionCount += 1
     return HttpResponse.json({
       candidate_id: candidate.id,
@@ -300,7 +300,7 @@ export const nexusHandlers = [
     const body = (await request.json()) as { decision: 'ACCEPT' | 'REJECT'; decided_by?: string; note?: string }
     nexusState.current.lead.status = body.decision === 'ACCEPT' ? 'ACCEPTED' : 'REJECTED'
     nexusState.current.lead.decided_at = new Date().toISOString()
-    nexusState.current.lead.decided_by = body.decided_by ?? 'IO Demo'
+    nexusState.current.lead.decided_by = body.decided_by ?? 'Investigating Officer'
     nexusState.current.lead.decision_note = body.note
     return HttpResponse.json(nexusState.current.lead)
   }),

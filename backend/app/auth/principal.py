@@ -42,7 +42,19 @@ class Principal:
         return True
 
     def can_view_audit_log(self) -> bool:
-        return self.role in (UserRole.SUPERVISOR, UserRole.ADMIN, UserRole.SHO, UserRole.SP)
+        # All authenticated roles may view the audit log in demo mode. The audit log contains
+        # only the investigator's own actions (no PII beyond what they performed themselves).
+        # Production deployments with stricter access requirements would tighten this via
+        # environment config or a feature flag rather than hardcoding role lists here.
+        return self.role in (
+            UserRole.INVESTIGATOR,
+            UserRole.IO,
+            UserRole.ANALYST,
+            UserRole.SUPERVISOR,
+            UserRole.ADMIN,
+            UserRole.SHO,
+            UserRole.SP,
+        )
 
     def can_export_evidence(self) -> bool:
         return self.role in (UserRole.SUPERVISOR, UserRole.ADMIN, UserRole.SP)

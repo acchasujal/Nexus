@@ -75,12 +75,16 @@ export function InvestigationTimeline({ caseDetail, selectedEntityId, onEntitySe
     }
 
     // 3. CDR Telephony Records Ingested
+    const isCanonicalCase = caseDetail.id === 'CASE-141' ||
+      (caseDetail.fir_number || '').includes('141')
     list.push({
-      id: 'cdr-mysuru',
+      id: 'cdr-telemetry',
       type: 'cdr',
       timestamp: '14 Feb 2026',
       title: 'CDR Tower & Call Log Telemetry Acquired',
-      description: 'Call Detail Record logs for primary mobile +91 98450 11223 acquired and parsed (cell 4701-Hootagalli).',
+      description: isCanonicalCase
+        ? 'Call Detail Record logs for primary mobile +91 98450 11223 acquired and parsed (cell 4701-Hootagalli). [Demo fixture data]'
+        : 'Call Detail Record logs acquired and processed for registered contact numbers in this case. Exact records subject to CDR analysis attachment.',
       status: 'verified',
       milestone: false,
     })
@@ -91,7 +95,9 @@ export function InvestigationTimeline({ caseDetail, selectedEntityId, onEntitySe
       type: 'transaction',
       timestamp: '09 Mar 2026',
       title: 'Bank Wire Transfer Ledger Corroborated',
-      description: 'Layered IMPS/NEFT fund transfers parsed from ACC-9914 to ACC-7731 (₹4,80,000).',
+      description: isCanonicalCase
+        ? 'Layered IMPS/NEFT fund transfers parsed from ACC-9914 to ACC-7731 (₹4,80,000). [Demo fixture data]'
+        : 'Financial transaction records acquired for accused accounts in this case. Layering analysis pending.',
       status: 'verified',
       milestone: false,
     })
@@ -102,7 +108,9 @@ export function InvestigationTimeline({ caseDetail, selectedEntityId, onEntitySe
       type: 'resolution',
       timestamp: '24 Aug 2026',
       title: 'Cross-Case Entity Resolution Generated',
-      description: 'Candidate match RC-1 identified across FIR 141/2026 (Mysuru) and FIR 207/2026 (Bengaluru) based on shared mobile & father name.',
+      description: isCanonicalCase
+        ? 'Candidate match RC-1 identified across FIR 141/2026 (Mysuru) and FIR 207/2026 (Bengaluru) based on shared mobile & father name.'
+        : 'Entity disambiguation analysis completed for accused records across district cases. Review Entity Fusion Workbench for pending candidates.',
       status: 'resolved',
       milestone: true,
     })
