@@ -18,6 +18,7 @@ import { useNexusNetwork, useSnapshotDiff, useNexusPath } from '@/hooks/useNexus
 import { GlobalNetworkCanvas } from '@/components/nexus/GlobalNetworkCanvas'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import { DerivationBadge } from '@/components/nexus/DerivationBadge'
+import { PathfinderEntitySelector } from '@/components/nexus/PathfinderEntitySelector'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -55,18 +56,6 @@ export default function NetworkExplorer() {
   const pathQuery = useNexusPath(sourceId, targetId, maxHops, showPathfinder)
 
   const afterUnavailable = replay === 'after' && after.error
-
-  // Node options from active graph snapshot
-  const nodeOptions = useMemo(() => {
-    if (!graph?.nodes) return []
-    return graph.nodes
-      .map((n) => ({
-        id: n.id,
-        label: n.label || n.id,
-        type: String(n.entity_type || 'Entity'),
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label))
-  }, [graph?.nodes])
 
   // Lookups for labels and edges
   const nodesById = useMemo(() => {
@@ -197,26 +186,20 @@ export default function NetworkExplorer() {
 
           {/* Form Selectors */}
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-end">
-            {/* Source Entity */}
+            {/* Source Entity Selector */}
             <div className="sm:col-span-4">
-              <label className="block text-xs font-bold text-neutral-700 mb-1 flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-blue-600" /> Source Entity / Case
-              </label>
-              <select
-                value={sourceId}
-                onChange={(e) => setSourceId(e.target.value)}
-                className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-neutral-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all shadow-xs"
-              >
-                {nodeOptions.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    [{opt.type}] {opt.label} ({opt.id})
-                  </option>
-                ))}
-              </select>
+              <PathfinderEntitySelector
+                label="Source Entity / Case"
+                dotColor="blue"
+                selectedId={sourceId}
+                onSelect={setSourceId}
+                activeGraphNodes={graph?.nodes}
+                testId="pathfinder-source-select"
+              />
             </div>
 
             {/* Swap Button */}
-            <div className="flex justify-center sm:col-span-1">
+            <div className="flex justify-center sm:col-span-1 pb-1">
               <button
                 onClick={handleSwap}
                 title="Swap source and target"
@@ -226,26 +209,20 @@ export default function NetworkExplorer() {
               </button>
             </div>
 
-            {/* Target Entity */}
+            {/* Target Entity Selector */}
             <div className="sm:col-span-4">
-              <label className="block text-xs font-bold text-neutral-700 mb-1 flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-rose-600" /> Target Entity / Case
-              </label>
-              <select
-                value={targetId}
-                onChange={(e) => setTargetId(e.target.value)}
-                className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-neutral-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all shadow-xs"
-              >
-                {nodeOptions.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    [{opt.type}] {opt.label} ({opt.id})
-                  </option>
-                ))}
-              </select>
+              <PathfinderEntitySelector
+                label="Target Entity / Case"
+                dotColor="rose"
+                selectedId={targetId}
+                onSelect={setTargetId}
+                activeGraphNodes={graph?.nodes}
+                testId="pathfinder-target-select"
+              />
             </div>
 
             {/* Max Hops Slider */}
-            <div className="sm:col-span-3">
+            <div className="sm:col-span-3 pb-1">
               <div className="flex justify-between items-center mb-1">
                 <label className="text-xs font-bold text-neutral-700">Max Search Depth</label>
                 <span className="text-xs font-bold text-blue-700">{maxHops} Hops</span>

@@ -4,9 +4,8 @@
 - **Project:** NEXUS — Evidence-Grounded Criminal Network Intelligence System
 - **Event / Problem Statement:** SIH 2026 PS 26189 (Ministry of Home Affairs / NCRB — Women Safety Division)
 - **Permanent Branch:** `main` (Production, Integration & Demo Base)
-- **Current Phase:** Phase 2 (Multi-Source Ingestion, Graph Schema V2 & Evidence Hardened)
 - **Integration Status:** Person 1 (Graph Intelligence), Person 2 (Data & Entity Resolution), Person 3 (Backend/Evidence/Copilot), Person 5 (Research/Validation), and Person 6 (Integration/Demo) fully integrated into `main` with Person 4 frontend preserved and running.
-- **Test Suite Status:** 524 Pytest unit/integration tests passing (100%), Ground Truth ER benchmark passing (100% Precision/Recall), 47 Vitest frontend tests passing (100%), Frontend production build clean.
+- **Test Suite Status:** 528 Pytest unit/integration tests passing (100%), Ground Truth ER benchmark passing (100% Precision/Recall), 52 Vitest frontend tests passing (100%), Frontend production build clean.
 - **Lint Status:** 0 errors across backend, shared, and tests (`ruff check` clean).
 - **Last Updated:** 2026-08-28
 
@@ -36,7 +35,7 @@ All data ingestion pipelines (FIR, CDR, Bank transactions, Intel reports), Schem
 ## 1. Feature Inventory & Current Status
 
 | ID | Area | Feature / Capability | Status | Implemented | Tested | Benchmarked | Visible | Files Owned |
-| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| :--- | :--- | :--- | :---: | :---: | :--- | :---: | :---: | :--- |
 | **DS-01** | Data | Deterministic Synthetic Dataset Generator | ✅ COMPLETE | Yes | Yes | Yes | Yes | `synthetic_data/nexus_generator.py` |
 | **DS-02** | Data | Ground-Truth Dataset & Association Seeding | ✅ COMPLETE | Yes | Yes | Yes | Yes | `artifacts/nexus_graph/ground_truth.json` |
 | **DS-03** | Data | Multi-Source File Parsers (CDR, Bank, FIR, Intel) | ✅ COMPLETE | Yes | Yes | Yes | Yes | `backend/app/db/ingestion/` |
@@ -80,13 +79,14 @@ All data ingestion pipelines (FIR, CDR, Bank transactions, Intel reports), Schem
 - **Status:** ✅ COMPLETE
 - **Delivered:** 
   - 3 Core "Wow-Factor" Screens: Global Network Explorer (`/network`) with Before/After 2-state snapshot replay, Entity Fusion Workbench (`/fusion`) with side-by-side evidence comparison, and Lead Inbox & Pathfinder (`/leads`) with grounded graph path reasoning.
+  - Full-Graph Interactive Pathfinder: Searchable autocomplete combobox across all 445+ nodes (cases, persons, phones, accounts, vehicles, evidence, intelligence reports), preset 1-click toggles, step-by-step breadcrumb evidence drawer integration, and D3 glowing path highlights.
   - Interactive React Flow Canvas: Louvain community cluster ring styling (FE-04), layer toggles, case focus selector, delta highlight glows.
   - Evidence Drawer: Fail-closed click-any-link provenance inspector with raw forensic excerpts, file locators, and derivation chains.
   - Hero Demo Ingestion Panel: 1-click synthetic FIR, CDR, and Bank Txn loaders on Investigation Overview (`/worklist`).
   - Section 63 BSA Dossier Export Button (FE-05): 1-click evidence package generation on Case Detail (`/cases/:caseId`).
   - Live Header Search & Demo Reset: Multi-entity instant search dropdown with keyboard shortcuts (`/` and `?`) and demo state reset across all views.
   - Evidence & Temporal Intelligence: Source-derived chronology (`/timeline`) and raw evidence registry (`/evidence`).
-  - Test Suite: 45/45 Vitest unit and integration tests passing (`src/tests/nexus.test.tsx`), 0 TypeScript build errors.
+  - Test Suite: 52/52 Vitest unit and integration tests passing, 0 TypeScript build errors.
 
 ### Person 5 — Research / Validation
 - **Status:** ✅ COMPLETE
@@ -105,15 +105,16 @@ All data ingestion pipelines (FIR, CDR, Bank transactions, Intel reports), Schem
 | **Graph Intelligence Engine** | Person 1 | ✅ INTEGRATED | `main` | `97a1c24` | Low (Fully validated) |
 | **CSV Ingestion & Entity Resolution** | Person 2 | ✅ INTEGRATED | `main` | `97a1c24` | Low (100% Ground Truth pass) |
 | **Backend, Evidence & Copilot** | Person 3 | ✅ INTEGRATED | `main` | `97a1c24` | Low (100% refusal reliability) |
-| **Frontend Workspace UI** | Person 4 | ✅ COMPLETE | `main` | Working Tree | Low (45 Vitest tests pass, builds clean) |
+| **Frontend Workspace UI** | Person 4 | ✅ COMPLETE | `main` | Working Tree | Low (52 Vitest tests pass, builds clean) |
 | **Ground Truth Benchmarking** | Person 5 | ✅ INTEGRATED | `main` | `97a1c24` | Low (Evaluator passing) |
-| **Integration & Release** | Person 6 | ✅ INTEGRATED | `main` | `97a1c24` | Low (All 493 tests pass) |
+| **Integration & Release** | Person 6 | ✅ INTEGRATED | `main` | `97a1c24` | Low (All 528 tests pass) |
 
 ---
 
 ## 4. Recent Engineering Updates
 
-- **2026-08-28 [Lead / Feature #1]:** Delivered Interactive Investigative Pathfinder (P0 feature #1): Arbitrary entity/case BFS traversal with bounded max depth (1-10 hops), live swap controls, quick investigation presets, interactive step-by-step breadcrumbs with clickable Evidence Drawer links, D3 canvas path glowing/dimming, 10 backend tests (524 total), and 47 passing Vitest tests.
+- **2026-08-28 [Lead / Pathfinder Enhancement]:** Enabled Full Graph Entity Selection across all 445+ nodes (cases, suspects, phones, accounts, vehicles, evidence, intelligence reports) in Pathfinder. Built `PathfinderEntitySelector` with universal search combobox, rich type badges, ID disambiguation, and keyboard navigation. Extended `/api/v1/nexus/path` to traverse both active demo snapshot and authoritative repository graphs. Added 4 backend tests (14 total, 528 overall) and 5 Vitest tests (52 total).
+- **2026-08-28 [Lead / Feature #1]:** Delivered Interactive Investigative Pathfinder (P0 feature #1): Arbitrary entity/case BFS traversal with bounded max depth (1-10 hops), live swap controls, quick investigation presets, interactive step-by-step breadcrumbs with clickable Evidence Drawer links, D3 canvas path glowing/dimming, 10 backend tests, and 47 passing Vitest tests.
 - **2026-08-25 [Person 4 / Ram]:** Completed 100% of M4 Frontend scope: Global Network Explorer with Before/After replay, Entity Fusion Workbench, Lead Inbox & Pathfinder, Louvain community ring colors (FE-04), Section 63 BSA Dossier download (FE-05), Live Search header, Demo Ingestion Hero on Worklist, Evidence & Timeline registries, and 45 passing Vitest tests.
 - **2026-08-25 [Release Lead]:** Integrated Person 1's Schema V2, Louvain community detection, bridge scoring, cross-case analysis, pattern rules, and snapshot diffing into `main`.
 - **2026-08-25 [Release Lead]:** Merged Person 2's CSV ingestion pipeline and entity resolution registry into `main`.

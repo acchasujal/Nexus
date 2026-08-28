@@ -867,6 +867,7 @@ def create_nexus_router() -> APIRouter:
         target: str = Query("", description="Target node or case identifier"),
         max_depth: int = Query(6, ge=1, le=10, description="Maximum BFS traversal depth"),
         principal: Principal = Depends(get_principal),
+        repo: InMemoryBackendRepository = Depends(get_repository),
         audit: AuditService = Depends(get_audit_service),
     ) -> NexusPathResponse:
         src = (source or "").strip()
@@ -896,8 +897,87 @@ def create_nexus_router() -> APIRouter:
                 evidence_ids=[],
             )
 
-        current_nodes = AFTER_NODES if _demo_state.is_resolved else BEFORE_NODES
-        current_edges = AFTER_EDGES if _demo_state.is_resolved else BEFORE_EDGES
+        # Merge active demo snapshot nodes with authoritative repository nodes
+        current_nodes: list[NexusGraphNode] = []
+        seen_node_ids: set[str] = set()
+
+        demo_nodes = AFTER_NODES if _demo_state.is_resolved else BEFORE_NODES
+        for n in demo_nodes:
+            if n.id not in seen_node_ids:
+                seen_node_ids.add(n.id)
+                current_nodes.append(n)
+
+        graph_store = repo.to_graph_store()
+        for nid, node_rec in graph_store.nodes.items():
+            if nid in seen_node_ids:
+                continue
+            seen_node_ids.add(nid)
+            props = node_rec.properties or {}
+            etype = node_rec.entity_type
+            if etype == "Case":
+                label = str(props.get("fir_number") or props.get("title") or nid)
+            elif etype == "Person":
+                label = str(props.get("full_name") or nid)
+            elif etype == "Phone":
+                label = str(props.get("phone_number") or props.get("number") or nid)
+            elif etype == "Account":
+                label = str(props.get("account_number") or props.get("bank") or nid)
+            elif etype == "Vehicle":
+                label = str(props.get("vehicle_number") or props.get("registration") or nid)
+            elif etype == "Location":
+                label = str(props.get("address_text") or props.get("district") or nid)
+            elif etype == "Evidence":
+                label = str(props.get("evidence_number") or props.get("description") or nid)
+            elif etype == "IntelligenceReport":
+                label = str(props.get("report_id") or props.get("title") or nid)
+            else:
+                label = str(props.get("full_name") or props.get("title") or props.get("name") or props.get("label") or nid)
+
+            case_ids_list = [str(props["case_id"])] if "case_id" in props and props["case_id"] else []
+            current_nodes.append(
+                NexusGraphNode(
+                    id=nid,
+                    entity_type=etype,
+                    label=label,
+                    case_ids=case_ids_list,
+                    properties=props,
+                )
+            )
+
+        # Merge active demo snapshot edges with authoritative repository edges
+        current_edges: list[NexusGraphEdge] = []
+        seen_edge_ids: set[str] = set()
+
+        demo_edges = AFTER_EDGES if _demo_state.is_resolved else BEFORE_EDGES
+        for e in demo_edges:
+            if e.id not in seen_edge_ids:
+                seen_edge_ids.add(e.id)
+                current_edges.append(e)
+
+        for edge_rec in repo.edges:
+            eid = edge_rec.get("id") or f"edge-{edge_rec['source_id']}-{edge_rec['target_id']}"
+            if eid in seen_edge_ids:
+                continue
+            seen_edge_ids.add(eid)
+            src_id = edge_rec["source_id"]
+            tgt_id = edge_rec["target_id"]
+            e_type = edge_rec.get("edge_type", "CONNECTED_TO")
+            e_props = edge_rec.get("properties", {})
+            current_edges.append(
+                NexusGraphEdge(
+                    id=eid,
+                    source_id=src_id,
+                    target_id=tgt_id,
+                    edge_type=e_type,
+                    weight=float(edge_rec.get("weight", 1.0)),
+                    confidence=float(edge_rec.get("confidence", 1.0)),
+                    derivation_class="FACT",
+                    recorded_at=datetime.now(timezone.utc).isoformat(),
+                    case_ids=[],
+                    properties=e_props,
+                )
+            )
+
         nodes_by_id = {n.id: n for n in current_nodes}
 
         # Case-insensitive / label fallback lookup

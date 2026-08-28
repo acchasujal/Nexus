@@ -104,27 +104,108 @@ def generate_nexus_synthetic_dataset(
     p_planted_2 = persons[1]
     p_planted_2["properties"]["full_name"] = "Bikram Sarma"  # Phonetic variation
     p_planted_2["properties"]["aliases"] = ["Vicky"]
-    p_planted_2["properties"]["phone_number"] = "9845012345"  # Same phone
-    p_planted_2["properties"]["vehicle_number"] = "KA01AB1001"  # Same vehicle
+    p_planted_2["properties"]["phone_number"] = "9845012345"
+    p_planted_2["properties"]["vehicle_number"] = "KA01AB1001"
 
     p_planted_3 = persons[2]
     p_planted_3["properties"]["full_name"] = "V. Sharma"
     p_planted_3["properties"]["aliases"] = ["Doctor"]
     p_planted_3["properties"]["address_text"] = p_planted_1["properties"]["address_text"]
 
+    # Preserve test fixtures for global search and copilot isolation
+    p_sanjay = persons[119]
+    p_sanjay["properties"]["full_name"] = "Sanjay Patel"
+    p_sanjay["properties"]["phone_number"] = "9820298660"
+
+    p_praveen = persons[77]
+    p_praveen["properties"]["full_name"] = "Praveen Malhotra"
+
+    p_naveen = persons[73]
+    p_naveen["properties"]["full_name"] = "Naveen Patel"
+
+    p_girish = persons[83]
+    p_girish["properties"]["full_name"] = "Girish Shetty"
+
     planted_resolved_pairs = [
         (persons[0]["id"], persons[1]["id"]),
         (persons[0]["id"], persons[2]["id"]),
     ]
 
-    # ── 3. Create Case Nodes & FIR Evidence ──────────────────────────────────
+    # ── Cluster Population Pools ─────────────────────────────────────────────
+    comm_alpha_members = [persons[k]["id"] for k in range(10, 20)]
+    alpha_core = [persons[k] for k in range(10, 20)]
+    alpha_pool = [persons[k] for k in range(10, 25)]
+
+    # Include Praveen Malhotra in alpha syndicate associates
+    if p_praveen not in alpha_pool:
+        alpha_pool.append(p_praveen)
+
+    comm_beta_members = [persons[k]["id"] for k in range(25, 36)]
+    beta_core = [persons[k] for k in range(25, 36)]
+    beta_pool = [persons[k] for k in range(25, 41)]
+
+    er_pool = [persons[0], persons[1], persons[2], persons[3]]
+    delta_pool = [persons[k] for k in range(41, 50)]
+
+    p_bridge = persons[50]
+    p_bridge["properties"]["full_name"] = "Ramesh Hegde"
+    p_bridge["properties"]["aliases"] = ["The Broker", "Connector"]
+    planted_bridge_node_id = p_bridge["id"]
+
+    isolated_pool = [persons[k] for k in range(51, num_persons) if persons[k] not in (p_sanjay, p_praveen, p_naveen, p_girish)]
+
+    # ── 3. Create Case Nodes & FIR Evidence (Modular Scoping) ────────────────
     cases: list[dict[str, Any]] = []
+    iso_idx = 0
+
     for i in range(num_cases):
         cid = f"case-{i+1:04d}"
         fir_no = f"FIR-{2026}-{rng.randint(100, 999)}"
-        district = rng.choice(districts)
-        station = rng.choice(stations)
-        category = rng.choice(crime_categories)
+
+        if i == 0:
+            # Case 1: Coastal Narcotics Syndicate case with Praveen Malhotra
+            district = "Mangaluru"
+            category = "Narcotics & Drug Trafficking"
+            station = "Central Crime Branch"
+            accused_sample = [alpha_core[0], p_praveen]
+        elif i < 8:
+            district = rng.choice(["Mangaluru", "Mysuru"])
+            category = "Narcotics & Drug Trafficking"
+            station = rng.choice(["Central Crime Branch", "Koramangala PS", "Ulsoor PS"])
+            num_acc = rng.randint(2, 3)
+            accused_sample = rng.sample(alpha_pool, num_acc)
+        elif i < 16:
+            district = rng.choice(["Bengaluru Urban", "Bengaluru Rural"])
+            category = "Cyber Financial Fraud & Phishing" if i % 2 == 0 else "Hawala & Money Laundering"
+            station = "Cyber Crime PS" if i % 2 == 0 else "Indiranagar PS"
+            num_acc = rng.randint(2, 3)
+            accused_sample = rng.sample(beta_pool, num_acc)
+        elif i < 20:
+            district = "Bengaluru Urban"
+            category = "Organized Extortion & Protection Racketeering"
+            station = "Jayanagar PS"
+            accused_sample = [er_pool[i - 16]]
+        elif i < 26:
+            district = rng.choice(["Hubballi-Dharwad", "Belagavi"])
+            category = "Illegal Arms Trafficking"
+            station = "Central Crime Branch"
+            num_acc = rng.randint(2, 3)
+            accused_sample = rng.sample(delta_pool, num_acc)
+        elif i == 48:
+            # Case 49: Specific case fixture for Copilot tests
+            fir_no = "FIR-2026-984"
+            district = "Hubballi-Dharwad"
+            category = "Organized Extortion & Protection Racketeering"
+            station = "Indiranagar PS"
+            accused_sample = [p_sanjay, p_naveen, p_girish]
+        else:
+            district = rng.choice(districts)
+            category = rng.choice(crime_categories)
+            station = rng.choice(stations)
+            num_acc = 1 if iso_idx + 2 >= len(isolated_pool) else rng.randint(1, 2)
+            accused_sample = isolated_pool[iso_idx : iso_idx + num_acc]
+            iso_idx += num_acc
+
         days_offset = rng.randint(5, 120)
         incident_date = (base_time - timedelta(days=days_offset)).isoformat()
 
@@ -147,9 +228,6 @@ def generate_nexus_synthetic_dataset(
         cases.append(c_node)
         node_id_map[cid] = fir_no
 
-        # Attach accused persons to case
-        num_accused = rng.randint(1, 4)
-        accused_sample = rng.sample(persons, num_accused)
         for acc in accused_sample:
             edges.append({
                 "id": f"edge-acc-{cid}-{acc['id']}",
@@ -167,7 +245,6 @@ def generate_nexus_synthetic_dataset(
                 },
             })
 
-        # Create Evidence node
         ev_id = f"evidence-{i+1:04d}"
         ev_node = {
             "id": ev_id,
@@ -197,7 +274,7 @@ def generate_nexus_synthetic_dataset(
             },
         })
 
-    # ── 4. Create Phone Nodes & CDR Connections ──────────────────────────────
+    # ── 4. Create Phone Nodes & Tiered CDR Connections ───────────────────────
     phones: list[dict[str, Any]] = []
     for i in range(num_phones):
         ph_id = f"phone-{i+1:04d}"
@@ -214,8 +291,11 @@ def generate_nexus_synthetic_dataset(
         nodes.append(ph_node)
         phones.append(ph_node)
 
-        # Link to person
-        p_owner = rng.choice(persons)
+        if i < num_persons:
+            p_owner = persons[i]
+        else:
+            p_owner = rng.choice(alpha_pool + beta_pool)
+
         edges.append({
             "id": f"edge-ph-{p_owner['id']}-{ph_id}",
             "source_id": p_owner["id"],
@@ -232,12 +312,11 @@ def generate_nexus_synthetic_dataset(
             },
         })
 
-    # CDR Call Links between persons
-    for _ in range(80):
-        p1, p2 = rng.sample(persons, 2)
+    for k in range(25):
+        p1, p2 = rng.sample(alpha_pool, 2)
         call_count = rng.randint(3, 45)
         edges.append({
-            "id": f"edge-call-{p1['id']}-{p2['id']}",
+            "id": f"edge-call-alpha-{k+1}",
             "source_id": p1["id"],
             "target_id": p2["id"],
             "edge_type": GraphRelationshipType.CONNECTED_TO.value,
@@ -253,7 +332,47 @@ def generate_nexus_synthetic_dataset(
             },
         })
 
-    # ── 5. Create Bank Accounts & Financial Transaction Chains ───────────────
+    for k in range(25):
+        p1, p2 = rng.sample(beta_pool, 2)
+        call_count = rng.randint(3, 45)
+        edges.append({
+            "id": f"edge-call-beta-{k+1}",
+            "source_id": p1["id"],
+            "target_id": p2["id"],
+            "edge_type": GraphRelationshipType.CONNECTED_TO.value,
+            "weight": min(1.0, call_count / 10.0),
+            "properties": {"call_count": call_count, "channel": "VOICE_CALL"},
+            "provenance": {
+                "source_type": "CDR",
+                "source_id": f"CDR-SWEEP-{rng.randint(100, 999)}",
+                "timestamp": base_time.isoformat(),
+                "extracted_fact": f"{call_count} telecommunication interactions logged",
+                "derivation_method": "CALL_RECORD",
+                "confidence": 0.90,
+            },
+        })
+
+    for k in range(10):
+        p1, p2 = rng.sample(delta_pool, 2)
+        call_count = rng.randint(3, 45)
+        edges.append({
+            "id": f"edge-call-delta-{k+1}",
+            "source_id": p1["id"],
+            "target_id": p2["id"],
+            "edge_type": GraphRelationshipType.CONNECTED_TO.value,
+            "weight": min(1.0, call_count / 10.0),
+            "properties": {"call_count": call_count, "channel": "VOICE_CALL"},
+            "provenance": {
+                "source_type": "CDR",
+                "source_id": f"CDR-SWEEP-{rng.randint(100, 999)}",
+                "timestamp": base_time.isoformat(),
+                "extracted_fact": f"{call_count} telecommunication interactions logged",
+                "derivation_method": "CALL_RECORD",
+                "confidence": 0.90,
+            },
+        })
+
+    # ── 5. Bank Accounts & Financial Transaction Chains ───────────────
     accounts: list[dict[str, Any]] = []
     for i in range(num_accounts):
         acc_id = f"account-{i+1:04d}"
@@ -270,8 +389,15 @@ def generate_nexus_synthetic_dataset(
         nodes.append(acc_node)
         accounts.append(acc_node)
 
-        # Link to person owner
-        p_acc_owner = rng.choice(persons)
+        if i < 4:
+            p_acc_owner = beta_core[i]
+        elif i < 25:
+            p_acc_owner = alpha_pool[i % len(alpha_pool)]
+        elif i < 45:
+            p_acc_owner = beta_pool[(i - 25) % len(beta_pool)]
+        else:
+            p_acc_owner = delta_pool[(i - 45) % len(delta_pool)]
+
         edges.append({
             "id": f"edge-accowner-{p_acc_owner['id']}-{acc_id}",
             "source_id": p_acc_owner["id"],
@@ -288,8 +414,6 @@ def generate_nexus_synthetic_dataset(
             },
         })
 
-    # Planted 4-Hop Money Laundering Transaction Chain
-    # Account 0 -> Account 1 -> Account 2 -> Account 3
     planted_txn_chain = [accounts[0]["id"], accounts[1]["id"], accounts[2]["id"], accounts[3]["id"]]
     for j in range(len(planted_txn_chain) - 1):
         edges.append({
@@ -303,15 +427,13 @@ def generate_nexus_synthetic_dataset(
                 "source_type": "BANK_TXN",
                 "source_id": f"TXN-PLANTED-{j+1}",
                 "timestamp": (base_time - timedelta(days=j)).isoformat(),
-                "extracted_fact": f"High-value structured transfer of INR 25,00,000",
+                "extracted_fact": "High-value structured transfer of INR 25,00,000",
                 "derivation_method": "FINANCIAL_LEDGER",
                 "confidence": 1.0,
             },
         })
 
     # ── 6. Planted Communities & Bridge Brokers ──────────────────────────────
-    # Community Alpha (Narcotics Gang): Persons 10 to 19
-    comm_alpha_members = [persons[k]["id"] for k in range(10, 20)]
     for a in range(len(comm_alpha_members)):
         for b in range(a + 1, min(a + 3, len(comm_alpha_members))):
             edges.append({
@@ -330,8 +452,6 @@ def generate_nexus_synthetic_dataset(
                 },
             })
 
-    # Community Beta (Hawala & Cyber Syndicate): Persons 25 to 35
-    comm_beta_members = [persons[k]["id"] for k in range(25, 36)]
     for a in range(len(comm_beta_members)):
         for b in range(a + 1, min(a + 3, len(comm_beta_members))):
             edges.append({
@@ -350,13 +470,6 @@ def generate_nexus_synthetic_dataset(
                 },
             })
 
-    # Planted Bridge Node: Person 50 ("Ramesh 'Broker' Hegde") connecting Alpha and Beta
-    p_bridge = persons[50]
-    p_bridge["properties"]["full_name"] = "Ramesh Hegde"
-    p_bridge["properties"]["aliases"] = ["The Broker", "Connector"]
-    planted_bridge_node_id = p_bridge["id"]
-
-    # Bridge links to top member of Alpha and top member of Beta
     edges.append({
         "id": f"edge-bridge-alpha-{p_bridge['id']}",
         "source_id": p_bridge["id"],
@@ -403,8 +516,8 @@ def generate_nexus_synthetic_dataset(
             },
         }
         nodes.append(ir_node)
-        # Mention persons
-        target_persons = rng.sample(persons, 2)
+        target_pool = alpha_pool if i < 7 else beta_pool if i < 13 else delta_pool
+        target_persons = rng.sample(target_pool, 2)
         for tp in target_persons:
             edges.append({
                 "id": f"edge-intel-{tp['id']}-{ir_id}",
@@ -416,7 +529,7 @@ def generate_nexus_synthetic_dataset(
                     "source_type": "INTEL_REPORT",
                     "source_id": ir_node["properties"]["report_id"],
                     "timestamp": base_time.isoformat(),
-                    "extracted_fact": f"Subject flagged in intelligence memo",
+                    "extracted_fact": "Subject flagged in intelligence memo",
                     "derivation_method": "DIRECT_RECORD",
                     "confidence": 0.88,
                 },

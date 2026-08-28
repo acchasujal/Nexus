@@ -146,3 +146,45 @@ def test_pathfinder_max_depth_exceeded(client: TestClient) -> None:
     data = res.json()
     assert data["found"] is False
     assert data["hops"] == 0
+
+
+def test_pathfinder_non_golden_intra_cluster_path(client: TestClient) -> None:
+    # case-0001 -> case-0002 within Coastal Narcotics Syndicate
+    res = client.get("/api/v1/nexus/path?source=case-0001&target=case-0002&max_depth=6")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["found"] is True
+    assert data["hops"] >= 1
+    assert data["node_ids"][0] == "case-0001"
+    assert data["node_ids"][-1] == "case-0002"
+    assert "Discovered" in data["explanation"]
+
+
+def test_pathfinder_non_golden_cross_cluster_broker_path(client: TestClient) -> None:
+    # case-0001 (Alpha) -> case-0010 (Beta) via Ramesh Hegde (The Broker, person-0051)
+    res = client.get("/api/v1/nexus/path?source=case-0001&target=case-0010&max_depth=8")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["found"] is True
+    assert "person-0051" in data["node_ids"]
+
+
+def test_pathfinder_non_golden_disconnected_isolated_cases(client: TestClient) -> None:
+    # case-0030 -> case-0035 (two isolated independent cases)
+    res = client.get("/api/v1/nexus/path?source=case-0030&target=case-0035&max_depth=6")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["found"] is False
+    assert data["hops"] == 0
+    assert "No connection found" in data["explanation"]
+
+
+def test_pathfinder_arbitrary_person_to_case_path(client: TestClient) -> None:
+    # person-0074 -> case-0049 (direct accused link)
+    res = client.get("/api/v1/nexus/path?source=person-0074&target=case-0049&max_depth=4")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["found"] is True
+    assert data["hops"] == 1
+    assert data["node_ids"] == ["person-0074", "case-0049"]
+
