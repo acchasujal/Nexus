@@ -59,6 +59,8 @@ def client() -> TestClient:
     repo._rebuild_indexes()
 
     app = create_app(repository=repo)
+    from backend.app.api.nexus_routes import _demo_state
+    _demo_state.reset()
     return TestClient(app)
 
 

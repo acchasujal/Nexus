@@ -229,7 +229,7 @@ export default function EntityFusion() {
             </div>
             {candidate.status === 'CONFIRMED' && (
               <Link
-                to={`/network?case_id=${encodeURIComponent(candidate.left.case_ids[0] || 'CASE-141')}&snapshot=after`}
+                to={`/network?case_id=${encodeURIComponent(candidate.left.case_ids[0] || 'CASE-141')}&target_case_id=${encodeURIComponent(candidate.right.case_ids[0] || '')}&snapshot=after`}
                 className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-700 shadow-sm"
               >
                 <Network className="h-4 w-4" /> Replay Before → After

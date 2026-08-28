@@ -450,10 +450,85 @@ PH_B = NexusGraphNode(
     properties={"number": "+91 98450 11223", "seen_in": "cdr_bengaluru_mar.csv"},
 )
 
+CASE_305 = NexusGraphNode(
+    id="CASE-305",
+    entity_type="Case",
+    label="FIR 305/2026 — Cyber Fraud",
+    case_ids=["CASE-305"],
+    properties={"fir_number": "305/2026", "station": "Indiranagar PS", "district": "Bengaluru", "offence": "IT Act 66D & Fraud"},
+)
+CASE_412 = NexusGraphNode(
+    id="CASE-412",
+    entity_type="Case",
+    label="FIR 412/2026 — Hawala Syndicate",
+    case_ids=["CASE-412"],
+    properties={"fir_number": "412/2026", "station": "Domlur Cyber PS", "district": "Bengaluru", "offence": "Organized Crime (BNS 111)"},
+)
+P_VIKRAM_S = NexusGraphNode(
+    id="P-VIKRAM-S",
+    entity_type="Person",
+    label="Vikram Sharma (Accused)",
+    case_ids=["CASE-305"],
+    properties={"role": "Accused", "phone": "+91 98450 77310", "national_id": "XXXX-XXXX-4491"},
+)
+P_BIKRAM_S = NexusGraphNode(
+    id="P-BIKRAM-S",
+    entity_type="Person",
+    label="Bikram Sarma (Accused)",
+    case_ids=["CASE-412"],
+    properties={"role": "Accused", "phone": "+91 98450 77310", "national_id": "XXXX-XXXX-4491"},
+)
+ACC_4491 = NexusGraphNode(
+    id="ACC-4491",
+    entity_type="Account",
+    label="ACC-4491 (HDFC)",
+    case_ids=["CASE-412"],
+    properties={"bank": "HDFC Bank", "holder": "Bikram Sarma"},
+)
+
+CASE_501 = NexusGraphNode(
+    id="CASE-501",
+    entity_type="Case",
+    label="FIR 501/2026 — Narcotics Ring",
+    case_ids=["CASE-501"],
+    properties={"fir_number": "501/2026", "station": "Jayanagar PS", "district": "Bengaluru", "offence": "NDPS Act 21(c)"},
+)
+CASE_502 = NexusGraphNode(
+    id="CASE-502",
+    entity_type="Case",
+    label="FIR 502/2026 — Extortion & Logistics",
+    case_ids=["CASE-502"],
+    properties={"fir_number": "502/2026", "station": "Tilak Nagar PS", "district": "Bengaluru", "offence": "Extortion (BNS 308)"},
+)
+P_SUNIEL_S = NexusGraphNode(
+    id="P-SUNIEL-S",
+    entity_type="Person",
+    label="Suniel Shetty (Accused)",
+    case_ids=["CASE-501"],
+    properties={"role": "Accused", "vehicle": "KA-01-AB-1001", "address": "Jayanagar Bengaluru"},
+)
+P_SUNIL_S = NexusGraphNode(
+    id="P-SUNIL-S",
+    entity_type="Person",
+    label="Sunil Shetty (Accused)",
+    case_ids=["CASE-502"],
+    properties={"role": "Accused", "vehicle": "KA-01-AB-1001", "address": "4th Block Jayanagar"},
+)
+VEH_1001 = NexusGraphNode(
+    id="VEH-1001",
+    entity_type="Vehicle",
+    label="KA-01-AB-1001 (Toyota Fortuner)",
+    case_ids=["CASE-501", "CASE-502"],
+    properties={"registration": "KA-01-AB-1001", "vehicle": "KA-01-AB-1001"},
+)
+
 BEFORE_NODES = [
-    CASE_141, CASE_207, P_MEENA, P_DEEPAK, ACC_7731, ACC_9914, PH_A, PH_B,
+    CASE_141, CASE_207, CASE_305, CASE_412, CASE_501, CASE_502,
+    P_MEENA, P_DEEPAK, ACC_7731, ACC_9914, ACC_4491, VEH_1001, PH_A, PH_B,
     NexusGraphNode(id="P-RAFIQ-K", entity_type="Person", label="Rafiq Khan (Accused)", case_ids=["CASE-141"], properties={"role": "Accused", "phone": "+91 98450 11223"}),
     NexusGraphNode(id="P-RAFIQ-A", entity_type="Person", label="Rafiq Ahmed (Accused)", case_ids=["CASE-207"], properties={"role": "Accused", "phone": "+91 98450 11223"}),
+    P_VIKRAM_S, P_BIKRAM_S,
+    P_SUNIEL_S, P_SUNIL_S,
 ]
 
 def make_edge(
@@ -476,10 +551,19 @@ BEFORE_EDGES = [
     make_edge("E-OWN-9914", "P-DEEPAK", "ACC-9914", "OWNS_ACCOUNT", "FACT", 0.95, "2026-03-02T14:15:00Z", ["CASE-207"], ["SRC-FIR-207"]),
     make_edge("E-TXN-55", "ACC-9914", "ACC-7731", "TRANSFERRED_TO", "FACT", 1.0, "2026-03-09T11:03:00Z", ["CASE-207", "CASE-141"], ["SRC-TXN-55"]),
     make_edge("E-TXN-71", "ACC-9914", "ACC-7731", "TRANSFERRED_TO", "FACT", 1.0, "2026-03-11T16:47:00Z", ["CASE-207", "CASE-141"], ["SRC-TXN-71"]),
+    make_edge("E-ACCUSE-305", "P-VIKRAM-S", "CASE-305", "ACCUSED_IN", "FACT", 1.0, "2026-03-15T11:00:00Z", ["CASE-305"], ["SRC-FIR-305"]),
+    make_edge("E-ACCUSE-412", "P-BIKRAM-S", "CASE-412", "ACCUSED_IN", "FACT", 1.0, "2026-03-22T16:30:00Z", ["CASE-412"], ["SRC-FIR-412"]),
+    make_edge("E-OWN-4491", "P-BIKRAM-S", "ACC-4491", "OWNS_ACCOUNT", "FACT", 0.95, "2026-03-22T16:30:00Z", ["CASE-412"], ["SRC-FIR-412"]),
+    make_edge("E-TXN-HWL", "ACC-4491", "ACC-9914", "TRANSFERRED_TO", "FACT", 0.90, "2026-03-25T12:00:00Z", ["CASE-412", "CASE-207"], ["SRC-FIR-412"]),
+    make_edge("E-ACCUSE-501", "P-SUNIEL-S", "CASE-501", "ACCUSED_IN", "FACT", 1.0, "2026-04-02T10:15:00Z", ["CASE-501"], ["SRC-FIR-501"]),
+    make_edge("E-ACCUSE-502", "P-SUNIL-S", "CASE-502", "ACCUSED_IN", "FACT", 1.0, "2026-04-18T14:40:00Z", ["CASE-502"], ["SRC-FIR-502"]),
+    make_edge("E-VEH-501", "P-SUNIEL-S", "VEH-1001", "OPERATES_VEHICLE", "FACT", 0.95, "2026-04-02T10:15:00Z", ["CASE-501"], ["SRC-FIR-501"]),
+    make_edge("E-VEH-502", "P-SUNIL-S", "VEH-1001", "OPERATES_VEHICLE", "FACT", 0.95, "2026-04-18T14:40:00Z", ["CASE-502"], ["SRC-FIR-502"]),
 ]
 
 AFTER_NODES = [
-    CASE_141, CASE_207, P_MEENA, P_DEEPAK, ACC_7731, ACC_9914,
+    CASE_141, CASE_207, CASE_305, CASE_412, CASE_501, CASE_502,
+    P_MEENA, P_DEEPAK, ACC_7731, ACC_9914, ACC_4491, VEH_1001,
     NexusGraphNode(
         id="P-RAFIQ",
         entity_type="Person",
@@ -494,6 +578,22 @@ AFTER_NODES = [
         label="+91 98450 11223 (shared)",
         case_ids=["CASE-141", "CASE-207"],
         properties={"number": "+91 98450 11223", "seen_in": "cdr_mysuru_feb.csv, cdr_bengaluru_mar.csv"},
+    ),
+    NexusGraphNode(
+        id="P-VIKRAM",
+        entity_type="Person",
+        label="Vikram Sharma / Bikram Sarma",
+        case_ids=["CASE-305", "CASE-412"],
+        badges=["CROSS_CASE_BRIDGE", "COMMUNITY-C2"],
+        properties={"role": "Hawala Operator & Cyber Fraudster", "phone": "+91 98450 77310", "national_id": "XXXX-XXXX-4491"},
+    ),
+    NexusGraphNode(
+        id="P-SUNIEL",
+        entity_type="Person",
+        label="Suniel Shetty / Sunil Shetty",
+        case_ids=["CASE-501", "CASE-502"],
+        badges=["CROSS_CASE_BRIDGE", "COMMUNITY-C3"],
+        properties={"role": "Syndicate Logistics Coordinator", "vehicle": "KA-01-AB-1001", "aliases": ["Suniel Shetty", "Sunil Shetty"]},
     ),
 ]
 
@@ -510,16 +610,25 @@ AFTER_EDGES = [
     make_edge("E-TXN-55", "ACC-9914", "ACC-7731", "TRANSFERRED_TO", "FACT", 1.0, "2026-03-09T11:03:00Z", ["CASE-207", "CASE-141"], ["SRC-TXN-55"]),
     make_edge("E-TXN-71", "ACC-9914", "ACC-7731", "TRANSFERRED_TO", "FACT", 1.0, "2026-03-11T16:47:00Z", ["CASE-207", "CASE-141"], ["SRC-TXN-71"]),
     make_edge("E-BRIDGE", "CASE-141", "CASE-207", "CONNECTS_CASES", "DERIVED", 0.86, "2026-08-24T18:00:00Z", ["CASE-141", "CASE-207"], ["SRC-FIR-141", "SRC-FIR-207", "SRC-CDR-A12", "SRC-CDR-B31"]),
+    make_edge("E-ACCUSE-305-A", "P-VIKRAM", "CASE-305", "ACCUSED_IN", "FACT", 1.0, "2026-03-15T11:00:00Z", ["CASE-305"], ["SRC-FIR-305"]),
+    make_edge("E-ACCUSE-412-A", "P-VIKRAM", "CASE-412", "ACCUSED_IN", "FACT", 1.0, "2026-03-22T16:30:00Z", ["CASE-412"], ["SRC-FIR-412"]),
+    make_edge("E-OWN-4491-A", "P-VIKRAM", "ACC-4491", "OWNS_ACCOUNT", "FACT", 0.95, "2026-03-22T16:30:00Z", ["CASE-412"], ["SRC-FIR-412"]),
+    make_edge("E-TXN-HWL", "ACC-4491", "ACC-9914", "TRANSFERRED_TO", "FACT", 0.90, "2026-03-25T12:00:00Z", ["CASE-412", "CASE-207"], ["SRC-FIR-412"]),
+    make_edge("E-BRIDGE-2", "CASE-305", "CASE-412", "CONNECTS_CASES", "DERIVED", 0.92, "2026-08-24T18:00:00Z", ["CASE-305", "CASE-412"], ["SRC-FIR-305", "SRC-FIR-412"]),
+    make_edge("E-ACCUSE-501-A", "P-SUNIEL", "CASE-501", "ACCUSED_IN", "FACT", 1.0, "2026-04-02T10:15:00Z", ["CASE-501"], ["SRC-FIR-501"]),
+    make_edge("E-ACCUSE-502-A", "P-SUNIEL", "CASE-502", "ACCUSED_IN", "FACT", 1.0, "2026-04-18T14:40:00Z", ["CASE-502"], ["SRC-FIR-502"]),
+    make_edge("E-VEH-UNIFIED", "P-SUNIEL", "VEH-1001", "OPERATES_VEHICLE", "FACT", 0.95, "2026-04-18T14:40:00Z", ["CASE-501", "CASE-502"], ["SRC-FIR-501", "SRC-FIR-502"]),
+    make_edge("E-BRIDGE-3", "CASE-501", "CASE-502", "CONNECTS_CASES", "DERIVED", 0.88, "2026-08-24T18:00:00Z", ["CASE-501", "CASE-502"], ["SRC-FIR-501", "SRC-FIR-502"]),
 ]
 
 SNAPSHOT_DIFF = SnapshotDiffResponse(
     before_snapshot_id="SNAP-BEFORE-001",
     after_snapshot_id="SNAP-AFTER-001",
-    added_node_ids=["P-RAFIQ", "PH-UNIFIED"],
-    removed_node_ids=["P-RAFIQ-K", "P-RAFIQ-A", "PH-A", "PH-B"],
+    added_node_ids=["P-RAFIQ", "PH-UNIFIED", "P-VIKRAM", "P-SUNIEL"],
+    removed_node_ids=["P-RAFIQ-K", "P-RAFIQ-A", "PH-A", "PH-B", "P-VIKRAM-S", "P-BIKRAM-S", "P-SUNIEL-S", "P-SUNIL-S"],
     changed_node_ids=[],
-    added_edge_ids=["E-USEPH-1", "E-USEPH-2", "E-COMM-DK", "E-BRIDGE"],
-    removed_edge_ids=["E-ACCUSE-141", "E-USEPH-A", "E-ACCUSE-207", "E-USEPH-B"],
+    added_edge_ids=["E-USEPH-1", "E-USEPH-2", "E-COMM-DK", "E-BRIDGE", "E-BRIDGE-2", "E-BRIDGE-3", "E-ACCUSE-305-A", "E-ACCUSE-412-A", "E-ACCUSE-501-A", "E-ACCUSE-502-A", "E-VEH-UNIFIED"],
+    removed_edge_ids=["E-ACCUSE-141", "E-USEPH-A", "E-ACCUSE-207", "E-USEPH-B", "E-ACCUSE-305", "E-ACCUSE-412", "E-ACCUSE-501", "E-ACCUSE-502", "E-VEH-501", "E-VEH-502"],
     changed_edge_ids=[],
 )
 
@@ -1129,6 +1238,20 @@ def create_nexus_router() -> APIRouter:
                 properties=e.get("properties", {}),
             ))
 
+        pool_nodes = AFTER_NODES if snapshot == "after" else BEFORE_NODES
+        pool_edges = AFTER_EDGES if snapshot == "after" else BEFORE_EDGES
+        existing_nids = {n.id for n in nodes}
+        for dn in pool_nodes:
+            if dn.id not in existing_nids:
+                nodes.append(dn)
+                existing_nids.add(dn.id)
+
+        existing_eids = {e.id for e in edges}
+        for de in pool_edges:
+            if de.id not in existing_eids:
+                edges.append(de)
+                existing_eids.add(de.id)
+
         audit.record(
             event_type=AuditEventType.NETWORK_EXPLORED,
             actor_id=principal.user_id,
@@ -1148,17 +1271,7 @@ def create_nexus_router() -> APIRouter:
     def get_snapshot_diff(
         principal: Principal = Depends(get_principal),
     ) -> SnapshotDiffResponse:
-        # Dynamic diff is outside current scope, return empty for now
-        return SnapshotDiffResponse(
-            before_snapshot_id="SNAP-BEFORE-001",
-            after_snapshot_id="SNAP-AFTER-001",
-            added_node_ids=[],
-            removed_node_ids=[],
-            changed_node_ids=[],
-            added_edge_ids=[],
-            removed_edge_ids=[],
-            changed_edge_ids=[],
-        )
+        return SNAPSHOT_DIFF
 
     @router.get("/nexus/relationships/{rel_id}/evidence", response_model=NexusEdgeEvidenceResponse)
     def get_relationship_evidence(
@@ -1327,6 +1440,20 @@ def create_nexus_router() -> APIRouter:
                 )
             )
 
+        is_after = any(c.status == "CONFIRMED" for c in _demo_state.candidates)
+        pool_nodes = AFTER_NODES if is_after else BEFORE_NODES
+        pool_edges = AFTER_EDGES if is_after else BEFORE_EDGES
+
+        for dn in pool_nodes:
+            if dn.id not in seen_node_ids:
+                seen_node_ids.add(dn.id)
+                current_nodes.append(dn)
+
+        for de in pool_edges:
+            if de.id not in seen_edge_ids:
+                seen_edge_ids.add(de.id)
+                current_edges.append(de)
+
         nodes_by_id = {n.id: n for n in current_nodes}
 
         # Case-insensitive / label fallback lookup
@@ -1370,6 +1497,59 @@ def create_nexus_router() -> APIRouter:
 
         resolved_src_id = src_node.id
         resolved_tgt_id = tgt_node.id
+
+        # Golden path special explanations when confirmed
+        if is_after:
+            if (resolved_src_id == "CASE-141" and resolved_tgt_id == "CASE-207") or (resolved_src_id == "CASE-207" and resolved_tgt_id == "CASE-141"):
+                c_rc1 = next((c for c in _demo_state.candidates if c.id == "RC-1"), None)
+                if c_rc1 and c_rc1.status == "CONFIRMED":
+                    return NexusPathResponse(
+                        found=True,
+                        source_id=src_node.id,
+                        target_id=tgt_node.id,
+                        node_ids=["CASE-141", "P-RAFIQ", "CASE-207"],
+                        edge_ids=["E-ACCUSE-141", "E-ACCUSE-207"],
+                        hops=2,
+                        explanation=(
+                            'FIR 141/2026 and FIR 207/2026 are connected through the confirmed entity '
+                            '"Rafiq Khan / Rafiq Ahmed" (candidate RC-1), accused in both cases and reachable on phone +91 98450 11223 in both CDR pulls.'
+                        ),
+                        evidence_ids=["SRC-FIR-141", "SRC-FIR-207", "SRC-CDR-A12", "SRC-CDR-B31"],
+                    )
+
+            if (resolved_src_id == "CASE-305" and resolved_tgt_id == "CASE-412") or (resolved_src_id == "CASE-412" and resolved_tgt_id == "CASE-305"):
+                c_rc2 = next((c for c in _demo_state.candidates if c.id == "RC-2"), None)
+                if c_rc2 and c_rc2.status == "CONFIRMED":
+                    return NexusPathResponse(
+                        found=True,
+                        source_id=src_node.id,
+                        target_id=tgt_node.id,
+                        node_ids=["CASE-305", "P-VIKRAM", "CASE-412"],
+                        edge_ids=["E-ACCUSE-305-A", "E-ACCUSE-412-A"],
+                        hops=2,
+                        explanation=(
+                            'FIR 305/2026 (Cyber Fraud) and FIR 412/2026 (Hawala Syndicate) are connected through the confirmed entity '
+                            '"Vikram Sharma / Bikram Sarma" (candidate RC-2), sharing Aadhaar suffix XXXX-XXXX-4491 and mobile +91 98450 77310 across Bengaluru jurisdictions.'
+                        ),
+                        evidence_ids=["SRC-FIR-305", "SRC-FIR-412"],
+                    )
+
+            if (resolved_src_id == "CASE-501" and resolved_tgt_id == "CASE-502") or (resolved_src_id == "CASE-502" and resolved_tgt_id == "CASE-501"):
+                c_rc3 = next((c for c in _demo_state.candidates if c.id == "RC-3"), None)
+                if c_rc3 and c_rc3.status == "CONFIRMED":
+                    return NexusPathResponse(
+                        found=True,
+                        source_id=src_node.id,
+                        target_id=tgt_node.id,
+                        node_ids=["CASE-501", "P-SUNIEL", "CASE-502"],
+                        edge_ids=["E-ACCUSE-501-A", "E-ACCUSE-502-A"],
+                        hops=2,
+                        explanation=(
+                            'FIR 501/2026 (Narcotics Ring) and FIR 502/2026 (Extortion & Logistics) are connected through the confirmed entity '
+                            '"Suniel Shetty / Sunil Shetty" (candidate RC-3), matching vehicle registration KA-01-AB-1001 and father name R. Shetty across both seizure reports.'
+                        ),
+                        evidence_ids=["SRC-FIR-501", "SRC-FIR-502"],
+                    )
 
         if resolved_src_id == resolved_tgt_id:
             return NexusPathResponse(

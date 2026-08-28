@@ -150,6 +150,7 @@ function mergeNetworkGraphs(
 export default function NetworkExplorer() {
   const [searchParams, setSearchParams] = useSearchParams()
   const caseIdParam = searchParams.get('case_id')
+  const targetCaseIdParam = searchParams.get('target_case_id')
   const nodeIdParam = searchParams.get('node_id')
   const batchIdParam = searchParams.get('batch_id')
   const snapshotParam = searchParams.get('snapshot')
@@ -194,6 +195,16 @@ export default function NetworkExplorer() {
   useEffect(() => {
     if (caseIdParam) {
       setSourceId(caseIdParam)
+      if (targetCaseIdParam) {
+        setTargetId(targetCaseIdParam)
+      } else {
+        if (caseIdParam === 'CASE-305') setTargetId('CASE-412')
+        else if (caseIdParam === 'CASE-412') setTargetId('CASE-305')
+        else if (caseIdParam === 'CASE-501') setTargetId('CASE-502')
+        else if (caseIdParam === 'CASE-502') setTargetId('CASE-501')
+        else if (caseIdParam === 'CASE-141') setTargetId('CASE-207')
+        else if (caseIdParam === 'CASE-207') setTargetId('CASE-141')
+      }
       setShowPathfinder(true)
       setIsExploring(true)
     } else if (nodeIdParam) {
@@ -201,15 +212,34 @@ export default function NetworkExplorer() {
       setShowPathfinder(true)
       setIsExploring(true)
     }
-  }, [caseIdParam, nodeIdParam])
+  }, [caseIdParam, targetCaseIdParam, nodeIdParam])
 
   // Context classification
   const isEntityScoped = Boolean(nodeIdParam)
   const isCaseScoped = Boolean(caseIdParam)
-  const isExplicitDemo =
-    (caseIdParam === 'CASE-141' || caseIdParam === 'CASE-207') ||
-    (sourceId === 'CASE-141' && targetId === 'CASE-207') ||
-    (sourceId === 'CASE-207' && targetId === 'CASE-141')
+
+  const DEMO_CASE_IDS = new Set([
+    'CASE-141', 'CASE-207',
+    'CASE-305', 'CASE-412',
+    'CASE-501', 'CASE-502',
+  ])
+
+  const DEMO_ENTITY_IDS = new Set([
+    'P-RAFIQ-K', 'P-RAFIQ-A', 'P-RAFIQ',
+    'P-VIKRAM-S', 'P-BIKRAM-S', 'P-VIKRAM',
+    'P-SUNIEL-S', 'P-SUNIL-S', 'P-SUNIEL',
+    'P-DEEPAK', 'P-MEENA',
+    'ACC-7731', 'ACC-9914', 'ACC-4491',
+    'PH-A', 'PH-B', 'PH-UNIFIED', 'VEH-1001',
+  ])
+
+  const isExplicitDemo = Boolean(
+    (caseIdParam && DEMO_CASE_IDS.has(caseIdParam)) ||
+    (targetCaseIdParam && DEMO_CASE_IDS.has(targetCaseIdParam)) ||
+    (nodeIdParam && DEMO_ENTITY_IDS.has(nodeIdParam)) ||
+    (sourceId && (DEMO_CASE_IDS.has(sourceId) || DEMO_ENTITY_IDS.has(sourceId))) ||
+    (targetId && (DEMO_CASE_IDS.has(targetId) || DEMO_ENTITY_IDS.has(targetId)))
+  )
 
   const effectiveSourceId = sourceId || nodeIdParam || ''
   const effectiveTargetId = targetId || ''
@@ -440,6 +470,18 @@ export default function NetworkExplorer() {
                 className="rounded-md border border-blue-200 bg-white px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors shadow-2xs"
               >
                 🌟 FIR-141 ↔ FIR-207
+              </button>
+              <button
+                onClick={() => applyPreset('CASE-305', 'CASE-412', 6)}
+                className="rounded-md border border-blue-200 bg-white px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors shadow-2xs"
+              >
+                🌟 FIR-305 ↔ FIR-412
+              </button>
+              <button
+                onClick={() => applyPreset('CASE-501', 'CASE-502', 6)}
+                className="rounded-md border border-blue-200 bg-white px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors shadow-2xs"
+              >
+                🌟 FIR-501 ↔ FIR-502
               </button>
               <button
                 onClick={() => applyPreset('P-DEEPAK', 'P-RAFIQ-K', 6)}

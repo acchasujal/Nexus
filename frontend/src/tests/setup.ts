@@ -1,5 +1,38 @@
 import '@testing-library/jest-dom'
 
+const storageMap = new Map<string, string>()
+const mockLocalStorage = {
+  getItem: (key: string) => storageMap.get(key) ?? null,
+  setItem: (key: string, value: string) => { storageMap.set(key, String(value)) },
+  removeItem: (key: string) => { storageMap.delete(key) },
+  clear: () => { storageMap.clear() },
+  get length() { return storageMap.size },
+  key: (index: number) => Array.from(storageMap.keys())[index] ?? null,
+}
+
+if (typeof window !== 'undefined') {
+  try {
+    Object.defineProperty(window, 'localStorage', {
+      value: mockLocalStorage,
+      writable: true,
+      configurable: true,
+    })
+  } catch {
+    // ignore
+  }
+}
+if (typeof globalThis !== 'undefined') {
+  try {
+    Object.defineProperty(globalThis, 'localStorage', {
+      value: mockLocalStorage,
+      writable: true,
+      configurable: true,
+    })
+  } catch {
+    // ignore
+  }
+}
+
 class ResizeObserverMock {
   observe() {}
   unobserve() {}
@@ -8,8 +41,9 @@ class ResizeObserverMock {
 
 if (typeof window !== 'undefined') {
   window.ResizeObserver = window.ResizeObserver || ResizeObserverMock
-  if (window.SVGElement && !window.SVGElement.prototype.getBBox) {
-    window.SVGElement.prototype.getBBox = () => ({
+  const svgProto = window.SVGElement?.prototype as (SVGElement & { getBBox?: () => unknown }) | undefined
+  if (svgProto && typeof svgProto.getBBox !== 'function') {
+    svgProto.getBBox = () => ({
       x: 0,
       y: 0,
       width: 100,
@@ -57,7 +91,7 @@ if (typeof window !== 'undefined') {
   }
 }
 if (typeof global !== 'undefined') {
-  // @ts-expect-error test polyfill
-  global.ResizeObserver = global.ResizeObserver || ResizeObserverMock
+  const g = global as typeof globalThis & { ResizeObserver?: typeof ResizeObserverMock }
+  g.ResizeObserver = g.ResizeObserver || ResizeObserverMock
 }
 

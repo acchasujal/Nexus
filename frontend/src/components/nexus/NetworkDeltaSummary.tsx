@@ -1,5 +1,5 @@
-import { GitMerge, ArrowRight, Layers, ShieldCheck } from 'lucide-react'
-import { useSnapshotDiff } from '@/hooks/useNexus'
+import { GitMerge } from 'lucide-react'
+import { useSnapshotDiff, useResolutionCandidates } from '@/hooks/useNexus'
 
 interface NetworkDeltaSummaryProps {
   activeSnapshot: 'before' | 'after'
@@ -7,6 +7,7 @@ interface NetworkDeltaSummaryProps {
 
 export function NetworkDeltaSummary({ activeSnapshot }: NetworkDeltaSummaryProps) {
   const diffQuery = useSnapshotDiff(activeSnapshot === 'after')
+  const candidatesQuery = useResolutionCandidates()
 
   if (activeSnapshot !== 'after') {
     return null
@@ -28,6 +29,31 @@ export function NetworkDeltaSummary({ activeSnapshot }: NetworkDeltaSummaryProps
   const removedNodesCount = diff.removed_node_ids?.length || 0
   const addedEdgesCount = diff.added_edge_ids?.length || 0
   const removedEdgesCount = diff.removed_edge_ids?.length || 0
+
+  const confirmedCandidates = (candidatesQuery.data || []).filter((c) => c.status === 'CONFIRMED')
+  const confirmedIds = confirmedCandidates.map((c) => c.id)
+  const decisionLabel = confirmedIds.length > 0 ? confirmedIds.join(', ') : 'RC-1'
+
+  const bridges = confirmedCandidates.map((c) => {
+    const leftCase = c.left.case_ids[0] || 'Case A'
+    const rightCase = c.right.case_ids[0] || 'Case B'
+    return `${leftCase} ↔ ${rightCase}`
+  })
+  const bridgeLabel = bridges.length > 0
+    ? bridges.join('; ')
+    : 'FIR 141/2026 (Mysuru) and FIR 207/2026 (Bengaluru)'
+
+  const hasRc1 = confirmedIds.includes('RC-1') || confirmedIds.length === 0
+  const hasRc2 = confirmedIds.includes('RC-2')
+  const hasRc3 = confirmedIds.includes('RC-3')
+
+  const propagationDetails: string[] = []
+  if (hasRc1) propagationDetails.push('ACC-9914 ➔ ACC-7731 financial flow')
+  if (hasRc2) propagationDetails.push('ACC-4491 ➔ ACC-9914 hawala channel')
+  if (hasRc3) propagationDetails.push('VEH-1001 vehicle logistics link')
+  const propagationLabel = propagationDetails.length > 0
+    ? propagationDetails.join(', ')
+    : 'Downstream communication and financial flow'
 
   return (
     <div className="rounded-xl border border-emerald-300 bg-emerald-50/70 p-4 text-xs text-neutral-900 shadow-sm space-y-2.5 animate-in fade-in duration-200">
@@ -53,7 +79,7 @@ export function NetworkDeltaSummary({ activeSnapshot }: NetworkDeltaSummaryProps
             Entities Merged &amp; Unified
           </div>
           <p className="text-[11px] text-neutral-600">
-            {removedNodesCount} alias records unified into <strong>{addedNodesCount} canonical entity node(s)</strong> based on verified RC-1 decision.
+            {removedNodesCount} alias records unified into <strong>{addedNodesCount} canonical entity node(s)</strong> based on verified {decisionLabel} decision{confirmedIds.length > 1 ? 's' : ''}.
           </p>
         </div>
 
@@ -63,7 +89,7 @@ export function NetworkDeltaSummary({ activeSnapshot }: NetworkDeltaSummaryProps
             Cross-Case Bridge Formed
           </div>
           <p className="text-[11px] text-neutral-600">
-            Unified suspect node bridges <strong>FIR 141/2026 (Mysuru)</strong> and <strong>FIR 207/2026 (Bengaluru)</strong>.
+            Unified suspect node bridges <strong>{bridgeLabel}</strong>.
           </p>
         </div>
 
@@ -73,7 +99,7 @@ export function NetworkDeltaSummary({ activeSnapshot }: NetworkDeltaSummaryProps
             Evidentiary Propagation
           </div>
           <p className="text-[11px] text-neutral-600">
-            Downstream communication and financial edges (ACC-9914 ➔ ACC-7731) re-anchored to the canonical entity.
+            Downstream edges ({propagationLabel}) re-anchored to the canonical entity.
           </p>
         </div>
       </div>

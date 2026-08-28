@@ -28,18 +28,120 @@ const freshState = (): NexusDemoState => ({
 
 export const nexusState: { current: NexusDemoState } = { current: freshState() }
 
-const isResolved = () => nexusState.current.candidates.some(c => c.status === 'CONFIRMED')
+export const isResolved = () => nexusState.current.candidates.some(c => c.status === 'CONFIRMED')
+
+const CANDIDATE_DELTAS: Record<string, {
+  beforeNodeIds: string[]
+  afterNodeIds: string[]
+  beforeEdgeIds: string[]
+  afterEdgeIds: string[]
+}> = {
+  'RC-1': {
+    beforeNodeIds: ['P-RAFIQ-K', 'P-RAFIQ-A', 'PH-A', 'PH-B'],
+    afterNodeIds: ['P-RAFIQ', 'PH-UNIFIED'],
+    beforeEdgeIds: ['E-USEPH-A', 'E-USEPH-B'],
+    afterEdgeIds: ['E-USEPH-1', 'E-USEPH-2', 'E-COMM-DK', 'E-BRIDGE'],
+  },
+  'RC-2': {
+    beforeNodeIds: ['P-VIKRAM-S', 'P-BIKRAM-S'],
+    afterNodeIds: ['P-VIKRAM'],
+    beforeEdgeIds: ['E-ACCUSE-305', 'E-ACCUSE-412', 'E-OWN-4491'],
+    afterEdgeIds: ['E-ACCUSE-305-A', 'E-ACCUSE-412-A', 'E-OWN-4491-A', 'E-BRIDGE-2'],
+  },
+  'RC-3': {
+    beforeNodeIds: ['P-SUNIEL-S', 'P-SUNIL-S'],
+    afterNodeIds: ['P-SUNIEL'],
+    beforeEdgeIds: ['E-ACCUSE-501', 'E-ACCUSE-502', 'E-VEH-501', 'E-VEH-502'],
+    afterEdgeIds: ['E-ACCUSE-501-A', 'E-ACCUSE-502-A', 'E-VEH-UNIFIED', 'E-BRIDGE-3'],
+  },
+}
+
+export function getDynamicDiff(): SnapshotDiffResponse {
+  const confirmed = nexusState.current.candidates.filter(c => c.status === 'CONFIRMED')
+  const addedNodes: string[] = []
+  const removedNodes: string[] = []
+  const addedEdges: string[] = []
+  const removedEdges: string[] = []
+
+  for (const c of confirmed) {
+    const delta = CANDIDATE_DELTAS[c.id]
+    if (delta) {
+      addedNodes.push(...delta.afterNodeIds)
+      removedNodes.push(...delta.beforeNodeIds)
+      addedEdges.push(...delta.afterEdgeIds)
+      removedEdges.push(...delta.beforeEdgeIds)
+    }
+  }
+
+  if (confirmed.length === 0) {
+    return SNAPSHOT_DIFF
+  }
+
+  return {
+    before_snapshot_id: 'SNAP-BEFORE-001',
+    after_snapshot_id: `SNAP-AFTER-${confirmed.map(c => c.id).join('-')}`,
+    added_node_ids: Array.from(new Set(addedNodes)),
+    removed_node_ids: Array.from(new Set(removedNodes)),
+    changed_node_ids: [],
+    added_edge_ids: Array.from(new Set(addedEdges)),
+    removed_edge_ids: Array.from(new Set(removedEdges)),
+    changed_edge_ids: [],
+  }
+}
 
 const networkFor = (snapshot: 'before' | 'after') => {
   const resolved = isResolved()
   const useAfter = snapshot === 'after' && resolved
+
+  if (!useAfter) {
+    return {
+      snapshot_id: SNAPSHOT_DIFF.before_snapshot_id,
+      state: 'before' as const,
+      nodes: BEFORE_NODES,
+      edges: BEFORE_EDGES,
+      total_nodes: BEFORE_NODES.length,
+      total_edges: BEFORE_EDGES.length,
+    }
+  }
+
+  const diff = getDynamicDiff()
+  const removedNodeSet = new Set(diff.removed_node_ids)
+  const removedEdgeSet = new Set(diff.removed_edge_ids)
+  const addedNodeSet = new Set(diff.added_node_ids)
+  const addedEdgeSet = new Set(diff.added_edge_ids)
+
+  // Start with before nodes, remove merged nodes, and add unified nodes
+  const nodes = [
+    ...BEFORE_NODES.filter(n => !removedNodeSet.has(n.id)),
+    ...AFTER_NODES.filter(n => addedNodeSet.has(n.id)),
+  ]
+
+  // For edges: remove old edges, and include relevant after edges
+  const edges = [
+    ...BEFORE_EDGES.filter(e => !removedEdgeSet.has(e.id)),
+    ...AFTER_EDGES.filter(e => addedEdgeSet.has(e.id)),
+  ]
+
+  // Also rewire edges for confirmed candidates (e.g. E-ACCUSE-141 to P-RAFIQ)
+  const isRc1Confirmed = nexusState.current.candidates.find(c => c.id === 'RC-1')?.status === 'CONFIRMED'
+  if (isRc1Confirmed) {
+    for (let i = 0; i < edges.length; i++) {
+      if (edges[i].id === 'E-ACCUSE-141' || edges[i].id === 'E-OWN-7731') {
+        edges[i] = { ...edges[i], source_id: 'P-RAFIQ' }
+      }
+      if (edges[i].id === 'E-ACCUSE-207') {
+        edges[i] = { ...edges[i], source_id: 'P-RAFIQ' }
+      }
+    }
+  }
+
   return {
-    snapshot_id: useAfter ? SNAPSHOT_DIFF.after_snapshot_id : SNAPSHOT_DIFF.before_snapshot_id,
-    state: useAfter ? ('after' as const) : ('before' as const),
-    nodes: useAfter ? AFTER_NODES : BEFORE_NODES,
-    edges: useAfter ? AFTER_EDGES : BEFORE_EDGES,
-    total_nodes: (useAfter ? AFTER_NODES : BEFORE_NODES).length,
-    total_edges: (useAfter ? AFTER_EDGES : BEFORE_EDGES).length,
+    snapshot_id: diff.after_snapshot_id,
+    state: 'after' as const,
+    nodes,
+    edges,
+    total_nodes: nodes.length,
+    total_edges: edges.length,
   }
 }
 
@@ -84,11 +186,12 @@ export const nexusHandlers = [
     candidate.decided_at = new Date().toISOString()
     candidate.decided_by = body.decided_by ?? 'Investigating Officer'
     nexusState.current.decisionCount += 1
+    const diff = getDynamicDiff()
     return HttpResponse.json({
       candidate_id: candidate.id,
       status: candidate.status,
-      affected_node_ids: body.decision === 'CONFIRM' ? SNAPSHOT_DIFF.added_node_ids : [],
-      new_snapshot_id: body.decision === 'CONFIRM' ? SNAPSHOT_DIFF.after_snapshot_id : undefined,
+      affected_node_ids: body.decision === 'CONFIRM' ? (CANDIDATE_DELTAS[id]?.afterNodeIds ?? diff.added_node_ids) : [],
+      new_snapshot_id: body.decision === 'CONFIRM' ? diff.after_snapshot_id : undefined,
     })
   }),
 
@@ -100,7 +203,7 @@ export const nexusHandlers = [
         { status: 409 },
       )
     }
-    return HttpResponse.json(SNAPSHOT_DIFF)
+    return HttpResponse.json(getDynamicDiff())
   }),
 
   http.get(/\/api\/v1\/nexus\/network/, async ({ request }) => {
@@ -227,18 +330,57 @@ export const nexusHandlers = [
 
     // Golden path special explanation
     if (isResolved() && ((srcNode.id === 'CASE-141' && tgtNode.id === 'CASE-207') || (srcNode.id === 'CASE-207' && tgtNode.id === 'CASE-141'))) {
-      return HttpResponse.json({
-        found: true,
-        source_id: srcNode.id,
-        target_id: tgtNode.id,
-        node_ids: ['CASE-141', 'P-RAFIQ', 'CASE-207'],
-        edge_ids: ['E-ACCUSE-141', 'E-ACCUSE-207'],
-        hops: 2,
-        explanation:
-          'FIR 141/2026 and FIR 207/2026 are connected through the confirmed entity ' +
-          '"Rafiq Khan / Rafiq Ahmed" (candidate RC-1), accused in both cases and reachable on phone +91 98450 11223 in both CDR pulls.',
-        evidence_ids: ['SRC-FIR-141', 'SRC-FIR-207', 'SRC-CDR-A12', 'SRC-CDR-B31'],
-      })
+      const isCandidateConfirmed = nexusState.current.candidates.find(c => c.id === 'RC-1')?.status === 'CONFIRMED'
+      if (isCandidateConfirmed) {
+        return HttpResponse.json({
+          found: true,
+          source_id: srcNode.id,
+          target_id: tgtNode.id,
+          node_ids: ['CASE-141', 'P-RAFIQ', 'CASE-207'],
+          edge_ids: ['E-ACCUSE-141', 'E-ACCUSE-207'],
+          hops: 2,
+          explanation:
+            'FIR 141/2026 and FIR 207/2026 are connected through the confirmed entity ' +
+            '"Rafiq Khan / Rafiq Ahmed" (candidate RC-1), accused in both cases and reachable on phone +91 98450 11223 in both CDR pulls.',
+          evidence_ids: ['SRC-FIR-141', 'SRC-FIR-207', 'SRC-CDR-A12', 'SRC-CDR-B31'],
+        })
+      }
+    }
+
+    if (isResolved() && ((srcNode.id === 'CASE-305' && tgtNode.id === 'CASE-412') || (srcNode.id === 'CASE-412' && tgtNode.id === 'CASE-305'))) {
+      const isCandidateConfirmed = nexusState.current.candidates.find(c => c.id === 'RC-2')?.status === 'CONFIRMED'
+      if (isCandidateConfirmed) {
+        return HttpResponse.json({
+          found: true,
+          source_id: srcNode.id,
+          target_id: tgtNode.id,
+          node_ids: ['CASE-305', 'P-VIKRAM', 'CASE-412'],
+          edge_ids: ['E-ACCUSE-305-A', 'E-ACCUSE-412-A'],
+          hops: 2,
+          explanation:
+            'FIR 305/2026 (Cyber Fraud) and FIR 412/2026 (Hawala Syndicate) are connected through the confirmed entity ' +
+            '"Vikram Sharma / Bikram Sarma" (candidate RC-2), sharing Aadhaar suffix XXXX-XXXX-4491 and mobile +91 98450 77310 across Bengaluru jurisdictions.',
+          evidence_ids: ['SRC-FIR-305', 'SRC-FIR-412'],
+        })
+      }
+    }
+
+    if (isResolved() && ((srcNode.id === 'CASE-501' && tgtNode.id === 'CASE-502') || (srcNode.id === 'CASE-502' && tgtNode.id === 'CASE-501'))) {
+      const isCandidateConfirmed = nexusState.current.candidates.find(c => c.id === 'RC-3')?.status === 'CONFIRMED'
+      if (isCandidateConfirmed) {
+        return HttpResponse.json({
+          found: true,
+          source_id: srcNode.id,
+          target_id: tgtNode.id,
+          node_ids: ['CASE-501', 'P-SUNIEL', 'CASE-502'],
+          edge_ids: ['E-ACCUSE-501-A', 'E-ACCUSE-502-A'],
+          hops: 2,
+          explanation:
+            'FIR 501/2026 (Narcotics Ring) and FIR 502/2026 (Extortion & Logistics) are connected through the confirmed entity ' +
+            '"Suniel Shetty / Sunil Shetty" (candidate RC-3), matching vehicle registration KA-01-AB-1001 and father name R. Shetty across both seizure reports.',
+          evidence_ids: ['SRC-FIR-501', 'SRC-FIR-502'],
+        })
+      }
     }
 
     // Bidirectional Adjacency

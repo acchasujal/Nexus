@@ -258,13 +258,38 @@ const ACC_4491: NexusGraphNode = {
   case_ids: ['CASE-412'], properties: { bank: 'HDFC Bank', holder: 'Bikram Sarma' },
 }
 
+const CASE_501: NexusGraphNode = {
+  id: 'CASE-501', entity_type: 'Case', label: 'FIR 501/2026 — Narcotics Ring',
+  case_ids: ['CASE-501'],
+  properties: { fir_number: '501/2026', station: 'Jayanagar PS', district: 'Bengaluru', offence: 'NDPS Act 21(c)' },
+}
+const CASE_502: NexusGraphNode = {
+  id: 'CASE-502', entity_type: 'Case', label: 'FIR 502/2026 — Extortion & Logistics',
+  case_ids: ['CASE-502'],
+  properties: { fir_number: '502/2026', station: 'Tilak Nagar PS', district: 'Bengaluru', offence: 'Extortion (BNS 308)' },
+}
+const P_SUNIEL_S: NexusGraphNode = {
+  id: 'P-SUNIEL-S', entity_type: 'Person', label: 'Suniel Shetty (Accused)',
+  case_ids: ['CASE-501'], properties: { role: 'Accused', vehicle: 'KA-01-AB-1001', address: 'Jayanagar Bengaluru' },
+}
+const P_SUNIL_S: NexusGraphNode = {
+  id: 'P-SUNIL-S', entity_type: 'Person', label: 'Sunil Shetty (Accused)',
+  case_ids: ['CASE-502'], properties: { role: 'Accused', vehicle: 'KA-01-AB-1001', address: '4th Block Jayanagar' },
+}
+const VEH_1001: NexusGraphNode = {
+  id: 'VEH-1001', entity_type: 'Vehicle', label: 'KA-01-AB-1001 (Toyota Fortuner)',
+  case_ids: ['CASE-501', 'CASE-502'], properties: { registration: 'KA-01-AB-1001', vehicle: 'KA-01-AB-1001' },
+}
+
 export const BEFORE_NODES: NexusGraphNode[] = [
-  CASE_141, CASE_207, CASE_305, CASE_412, P_MEENA, P_DEEPAK, ACC_7731, ACC_9914, ACC_4491, PH_A, PH_B,
+  CASE_141, CASE_207, CASE_305, CASE_412, CASE_501, CASE_502,
+  P_MEENA, P_DEEPAK, ACC_7731, ACC_9914, ACC_4491, VEH_1001, PH_A, PH_B,
   { id: 'P-RAFIQ-K', entity_type: 'Person', label: 'Rafiq Khan (Accused)', case_ids: ['CASE-141'],
     properties: { role: 'Accused', phone: '+91 98450 11223' } },
   { id: 'P-RAFIQ-A', entity_type: 'Person', label: 'Rafiq Ahmed (Accused)', case_ids: ['CASE-207'],
     properties: { role: 'Accused', phone: '+91 98450 11223' } },
   P_VIKRAM_S, P_BIKRAM_S,
+  P_SUNIEL_S, P_SUNIL_S,
 ]
 
 export const BEFORE_EDGES: NexusGraphEdge[] = [
@@ -282,10 +307,15 @@ export const BEFORE_EDGES: NexusGraphEdge[] = [
   E('E-ACCUSE-412', 'P-BIKRAM-S', 'CASE-412', 'ACCUSED_IN', 'FACT', 1.0, '2026-03-22T16:30:00Z', ['CASE-412'], ['SRC-FIR-412']),
   E('E-OWN-4491', 'P-BIKRAM-S', 'ACC-4491', 'OWNS_ACCOUNT', 'FACT', 0.95, '2026-03-22T16:30:00Z', ['CASE-412'], ['SRC-FIR-412']),
   E('E-TXN-HWL', 'ACC-4491', 'ACC-9914', 'TRANSFERRED_TO', 'FACT', 0.90, '2026-03-25T12:00:00Z', ['CASE-412', 'CASE-207'], ['SRC-FIR-412']),
+  E('E-ACCUSE-501', 'P-SUNIEL-S', 'CASE-501', 'ACCUSED_IN', 'FACT', 1.0, '2026-04-02T10:15:00Z', ['CASE-501'], ['SRC-FIR-501']),
+  E('E-ACCUSE-502', 'P-SUNIL-S', 'CASE-502', 'ACCUSED_IN', 'FACT', 1.0, '2026-04-18T14:40:00Z', ['CASE-502'], ['SRC-FIR-502']),
+  E('E-VEH-501', 'P-SUNIEL-S', 'VEH-1001', 'OPERATES_VEHICLE', 'FACT', 0.95, '2026-04-02T10:15:00Z', ['CASE-501'], ['SRC-FIR-501']),
+  E('E-VEH-502', 'P-SUNIL-S', 'VEH-1001', 'OPERATES_VEHICLE', 'FACT', 0.95, '2026-04-18T14:40:00Z', ['CASE-502'], ['SRC-FIR-502']),
 ]
 
 export const AFTER_NODES: NexusGraphNode[] = [
-  CASE_141, CASE_207, CASE_305, CASE_412, P_MEENA, P_DEEPAK, ACC_7731, ACC_9914, ACC_4491,
+  CASE_141, CASE_207, CASE_305, CASE_412, CASE_501, CASE_502,
+  P_MEENA, P_DEEPAK, ACC_7731, ACC_9914, ACC_4491, VEH_1001,
   { id: 'P-RAFIQ', entity_type: 'Person', label: 'Rafiq Khan / Rafiq Ahmed',
     case_ids: ['CASE-141', 'CASE-207'], badges: ['CROSS_CASE_BRIDGE', 'COMMUNITY-C1'],
     properties: { role: 'Accused in both FIRs', phone: '+91 98450 11223', aliases: ['Rafiq Khan', 'Rafiq Ahmed'] } },
@@ -295,6 +325,9 @@ export const AFTER_NODES: NexusGraphNode[] = [
   { id: 'P-VIKRAM', entity_type: 'Person', label: 'Vikram Sharma / Bikram Sarma',
     case_ids: ['CASE-305', 'CASE-412'], badges: ['CROSS_CASE_BRIDGE', 'COMMUNITY-C2'],
     properties: { role: 'Hawala Operator & Cyber Fraudster', phone: '+91 98450 77310', national_id: 'XXXX-XXXX-4491' } },
+  { id: 'P-SUNIEL', entity_type: 'Person', label: 'Suniel Shetty / Sunil Shetty',
+    case_ids: ['CASE-501', 'CASE-502'], badges: ['CROSS_CASE_BRIDGE', 'COMMUNITY-C3'],
+    properties: { role: 'Syndicate Logistics Coordinator', vehicle: 'KA-01-AB-1001', aliases: ['Suniel Shetty', 'Sunil Shetty'] } },
 ]
 
 export const AFTER_EDGES: NexusGraphEdge[] = [
@@ -311,22 +344,26 @@ export const AFTER_EDGES: NexusGraphEdge[] = [
   E('E-TXN-71', 'ACC-9914', 'ACC-7731', 'TRANSFERRED_TO', 'FACT', 1.0, '2026-03-11T16:47:00Z', ['CASE-207', 'CASE-141'], ['SRC-TXN-71']),
   E('E-BRIDGE', 'CASE-141', 'CASE-207', 'CONNECTS_CASES', 'DERIVED', 0.86, '2026-08-24T18:00:00Z', ['CASE-141', 'CASE-207'],
     ['SRC-FIR-141', 'SRC-FIR-207', 'SRC-CDR-A12', 'SRC-CDR-B31']),
-  E('E-ACCUSE-305', 'P-VIKRAM', 'CASE-305', 'ACCUSED_IN', 'FACT', 1.0, '2026-03-15T11:00:00Z', ['CASE-305'], ['SRC-FIR-305']),
-  E('E-ACCUSE-412', 'P-VIKRAM', 'CASE-412', 'ACCUSED_IN', 'FACT', 1.0, '2026-03-22T16:30:00Z', ['CASE-412'], ['SRC-FIR-412']),
-  E('E-OWN-4491', 'P-VIKRAM', 'ACC-4491', 'OWNS_ACCOUNT', 'FACT', 0.95, '2026-03-22T16:30:00Z', ['CASE-412'], ['SRC-FIR-412']),
+  E('E-ACCUSE-305-A', 'P-VIKRAM', 'CASE-305', 'ACCUSED_IN', 'FACT', 1.0, '2026-03-15T11:00:00Z', ['CASE-305'], ['SRC-FIR-305']),
+  E('E-ACCUSE-412-A', 'P-VIKRAM', 'CASE-412', 'ACCUSED_IN', 'FACT', 1.0, '2026-03-22T16:30:00Z', ['CASE-412'], ['SRC-FIR-412']),
+  E('E-OWN-4491-A', 'P-VIKRAM', 'ACC-4491', 'OWNS_ACCOUNT', 'FACT', 0.95, '2026-03-22T16:30:00Z', ['CASE-412'], ['SRC-FIR-412']),
   E('E-TXN-HWL', 'ACC-4491', 'ACC-9914', 'TRANSFERRED_TO', 'FACT', 0.90, '2026-03-25T12:00:00Z', ['CASE-412', 'CASE-207'], ['SRC-FIR-412']),
   E('E-BRIDGE-2', 'CASE-305', 'CASE-412', 'CONNECTS_CASES', 'DERIVED', 0.92, '2026-08-24T18:00:00Z', ['CASE-305', 'CASE-412'],
     ['SRC-FIR-305', 'SRC-FIR-412']),
+  E('E-ACCUSE-501-A', 'P-SUNIEL', 'CASE-501', 'ACCUSED_IN', 'FACT', 1.0, '2026-04-02T10:15:00Z', ['CASE-501'], ['SRC-FIR-501']),
+  E('E-ACCUSE-502-A', 'P-SUNIEL', 'CASE-502', 'ACCUSED_IN', 'FACT', 1.0, '2026-04-18T14:40:00Z', ['CASE-502'], ['SRC-FIR-502']),
+  E('E-VEH-UNIFIED', 'P-SUNIEL', 'VEH-1001', 'OPERATES_VEHICLE', 'FACT', 0.95, '2026-04-18T14:40:00Z', ['CASE-501', 'CASE-502'], ['SRC-FIR-501', 'SRC-FIR-502']),
+  E('E-BRIDGE-3', 'CASE-501', 'CASE-502', 'CONNECTS_CASES', 'DERIVED', 0.88, '2026-08-24T18:00:00Z', ['CASE-501', 'CASE-502'], ['SRC-FIR-501', 'SRC-FIR-502']),
 ]
 
 export const SNAPSHOT_DIFF: SnapshotDiffResponse = {
   before_snapshot_id: 'SNAP-BEFORE-001',
   after_snapshot_id: 'SNAP-AFTER-001',
-  added_node_ids: ['P-RAFIQ', 'PH-UNIFIED'],
-  removed_node_ids: ['P-RAFIQ-K', 'P-RAFIQ-A', 'PH-A', 'PH-B'],
+  added_node_ids: ['P-RAFIQ', 'PH-UNIFIED', 'P-VIKRAM', 'P-SUNIEL'],
+  removed_node_ids: ['P-RAFIQ-K', 'P-RAFIQ-A', 'PH-A', 'PH-B', 'P-VIKRAM-S', 'P-BIKRAM-S', 'P-SUNIEL-S', 'P-SUNIL-S'],
   changed_node_ids: [],
-  added_edge_ids: ['E-USEPH-1', 'E-USEPH-2', 'E-COMM-DK', 'E-BRIDGE'],
-  removed_edge_ids: ['E-ACCUSE-141', 'E-USEPH-A', 'E-ACCUSE-207', 'E-USEPH-B'],
+  added_edge_ids: ['E-USEPH-1', 'E-USEPH-2', 'E-COMM-DK', 'E-BRIDGE', 'E-BRIDGE-2', 'E-BRIDGE-3', 'E-ACCUSE-305-A', 'E-ACCUSE-412-A', 'E-ACCUSE-501-A', 'E-ACCUSE-502-A', 'E-VEH-UNIFIED'],
+  removed_edge_ids: ['E-ACCUSE-141', 'E-USEPH-A', 'E-ACCUSE-207', 'E-USEPH-B', 'E-ACCUSE-305', 'E-ACCUSE-412', 'E-ACCUSE-501', 'E-ACCUSE-502', 'E-VEH-501', 'E-VEH-502'],
   changed_edge_ids: [],
 }
 

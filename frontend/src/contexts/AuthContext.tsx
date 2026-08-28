@@ -20,27 +20,69 @@ function createSessionToken(role: UserRole): string {
   return btoa(JSON.stringify(payload))
 }
 
+function getStoredRole(): UserRole | null {
+  try {
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      return (window.localStorage.getItem('nexus_role') as UserRole) || null
+    }
+  } catch {
+    // Ignore storage errors in test or sandbox environments
+  }
+  return null
+}
+
+function getStoredToken(): string | null {
+  try {
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      return window.localStorage.getItem('nexus_token')
+    }
+  } catch {
+    // Ignore storage errors
+  }
+  return null
+}
+
+function safeSetStorage(key: string, value: string): void {
+  try {
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      window.localStorage.setItem(key, value)
+    }
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function safeRemoveStorage(key: string): void {
+  try {
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      window.localStorage.removeItem(key)
+    }
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<UserRole | null>(() => {
-    const saved = localStorage.getItem('nexus_role')
-    if (saved && !localStorage.getItem('nexus_token')) {
-      const token = createSessionToken(saved as UserRole)
-      localStorage.setItem('nexus_token', token)
+    const saved = getStoredRole()
+    if (saved && !getStoredToken()) {
+      const token = createSessionToken(saved)
+      safeSetStorage('nexus_token', token)
     }
-    return (saved as UserRole) || null
+    return saved
   })
 
   const login = (newRole: UserRole) => {
     setRole(newRole)
     const token = createSessionToken(newRole)
-    localStorage.setItem('nexus_role', newRole)
-    localStorage.setItem('nexus_token', token)
+    safeSetStorage('nexus_role', newRole)
+    safeSetStorage('nexus_token', token)
   }
 
   const logout = () => {
     setRole(null)
-    localStorage.removeItem('nexus_role')
-    localStorage.removeItem('nexus_token')
+    safeRemoveStorage('nexus_role')
+    safeRemoveStorage('nexus_token')
   }
 
   return (
