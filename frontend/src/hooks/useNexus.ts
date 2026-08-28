@@ -34,6 +34,15 @@ export function useNexusNetwork(snapshot: 'before' | 'after', enabled: boolean =
   })
 }
 
+export function useBatchNetwork(batchId: string | null, enabled: boolean = true) {
+  return useQuery({
+    queryKey: ['nexus', 'batchNetwork', batchId],
+    queryFn: () => apiClient.getBatchNetwork(batchId!),
+    enabled: Boolean(enabled && batchId),
+    retry: false,
+  })
+}
+
 export function useSnapshotDiff(enabled: boolean) {
   return useQuery({
     queryKey: ['nexus', 'diff'],

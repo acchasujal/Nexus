@@ -154,3 +154,48 @@ def test_summary_counts() -> None:
     )
     assert summary.source_record_count == summary.accepted_count
     assert summary.review_required_count == 1
+
+from shared.contracts.api import (
+    BatchStatus,
+    IngestionFileSummary,
+    IngestionFileResult,
+    IngestionParseIssue,
+    IngestionBatchResponse,
+)
+
+def test_ingestion_batch_response_defaults() -> None:
+    resp = IngestionBatchResponse(
+        batch_id="b1",
+        status=BatchStatus.COMPLETED
+    )
+    assert resp.batch_id == "b1"
+    assert resp.status == BatchStatus.COMPLETED
+    assert resp.files_processed == []
+    assert resp.summary.received == 0
+    assert resp.parse_issues == []
+    assert resp.review_candidates == []
+    assert resp.graph_updated is False
+
+def test_ingestion_batch_response_serialization() -> None:
+    resp = IngestionBatchResponse(
+        batch_id="b2",
+        status=BatchStatus.COMPLETED_WITH_WARNINGS,
+        graph_updated=True,
+        summary=IngestionFileSummary(received=10, accepted=9, warnings=1),
+        parse_issues=[
+            IngestionParseIssue(
+                source_type="FIR",
+                file_name="fir.csv",
+                code="WARN_1",
+                message="Missing field",
+                severity="WARNING"
+            )
+        ]
+    )
+    serialized = resp.model_dump(mode="json")
+    assert serialized["batch_id"] == "b2"
+    assert serialized["status"] == "COMPLETED_WITH_WARNINGS"
+    assert serialized["graph_updated"] is True
+    assert serialized["summary"]["received"] == 10
+    assert len(serialized["parse_issues"]) == 1
+    assert serialized["parse_issues"][0]["code"] == "WARN_1"

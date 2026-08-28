@@ -394,14 +394,14 @@ class NexusDossierVerificationResponse(BaseModel):
 # ── File Ingestion ────────────────────────────────────────────────────────────
 
 class IngestRequest(BaseModel):
-    """Multi-source ingestion request body for POST /ingest."""
+    """[DEPRECATED] Multi-source ingestion request body for POST /ingest."""
     source_type: str  # CDR | BANK_TXN | FIR | INTEL_REPORT
     file_name: str
     records: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class IngestResponse(BaseModel):
-    """Response from POST /ingest."""
+    """[DEPRECATED] Response from POST /ingest."""
     ingested_count: int = 0
     skipped_count: int = 0
     error_count: int = 0
@@ -445,3 +445,51 @@ class NexusLeadDecisionRequest(BaseModel):
     decided_by: str = "Investigating Officer"
     note: str | None = None
 
+# ── Real Ingestion API ────────────────────────────────────────────────────────
+
+class BatchStatus(str, Enum):
+    COMPLETED = "COMPLETED"
+    COMPLETED_WITH_WARNINGS = "COMPLETED_WITH_WARNINGS"
+    FAILED = "FAILED"
+
+
+class IngestionFileSummary(BaseModel):
+    received: int = 0
+    accepted: int = 0
+    rejected: int = 0
+    duplicates: int = 0
+    conflicts: int = 0
+    warnings: int = 0
+    source_records: int = 0
+    nodes_created: int = 0
+    nodes_reused: int = 0
+    relationships_created: int = 0
+    review_required: int = 0
+
+
+class IngestionFileResult(BaseModel):
+    source_type: str
+    file_name: str
+    size_bytes: int = 0
+    summary: IngestionFileSummary = Field(default_factory=IngestionFileSummary)
+
+
+class IngestionParseIssue(BaseModel):
+    source_type: str
+    file_name: str
+    row_number: int | None = None
+    record_id: str | None = None
+    field: str | None = None
+    code: str
+    message: str
+    severity: str
+
+
+class IngestionBatchResponse(BaseModel):
+    batch_id: str
+    status: BatchStatus
+    files_processed: list[IngestionFileResult] = Field(default_factory=list)
+    summary: IngestionFileSummary = Field(default_factory=IngestionFileSummary)
+    parse_issues: list[IngestionParseIssue] = Field(default_factory=list)
+    review_candidates: list[dict[str, Any]] = Field(default_factory=list)
+    graph_updated: bool = False

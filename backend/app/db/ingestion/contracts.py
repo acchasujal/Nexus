@@ -62,6 +62,7 @@ class IngestionSummary(BaseModel):
     received_count: int = 0
     accepted_count: int = 0
     duplicate_count: int = 0
+    conflict_count: int = 0
     rejected_count: int = 0
     warning_count: int = 0
     source_record_count: int = 0
@@ -96,3 +97,11 @@ class IngestionBundle(BaseModel):
     review_candidates: list[EntityReviewCandidate] = Field(default_factory=list)
     issues: list[ParseIssue] = Field(default_factory=list)
     summary: IngestionSummary = Field(default_factory=IngestionSummary)
+
+
+class UploadedSource(BaseModel):
+    """Represents a byte-oriented source to be ingested in a batch."""
+    
+    source_type: SourceType
+    file_name: str
+    data: bytes

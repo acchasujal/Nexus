@@ -134,7 +134,7 @@ const COMMUNITY_STROKES: Record<string, string> = {
   'COMMUNITY-C4': '#ec4899',
 }
 
-const EDGE_STROKES: Record<string, string> = {
+export const EDGE_STROKES: Record<string, string> = {
   ACCUSED_IN: '#e11d48',
   CO_ACCUSED_IN: '#f43f5e',
   VICTIM_IN: '#0284c7',

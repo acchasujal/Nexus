@@ -15,7 +15,7 @@ import {
   ChevronRight,
   Briefcase,
 } from 'lucide-react'
-import { useNexusNetwork, useSnapshotDiff, useNexusPath, useEntityNetwork, useCaseNetworkData } from '@/hooks/useNexus'
+import { useNexusNetwork, useSnapshotDiff, useNexusPath, useEntityNetwork, useCaseNetworkData, useBatchNetwork } from '@/hooks/useNexus'
 import { GlobalNetworkCanvas } from '@/components/nexus/GlobalNetworkCanvas'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import { EntityDetailsDrawer } from '@/components/nexus/EntityDetailsDrawer'
@@ -151,11 +151,14 @@ export default function NetworkExplorer() {
   const [searchParams] = useSearchParams()
   const caseIdParam = searchParams.get('case_id')
   const nodeIdParam = searchParams.get('node_id')
+  const batchIdParam = searchParams.get('batch_id')
+  
   const [replay, setReplay] = useState<ReplayState>('before')
   const [edgeId, setEdgeId] = useState<string | null>(null)
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(nodeIdParam || null)
   const [densityMode, setDensityMode] = useState<'ALL' | '1HOP' | '2HOP' | 'CROSS_CASE'>('ALL')
 
+  const batchNetwork = useBatchNetwork(batchIdParam, Boolean(batchIdParam))
   // ── Dynamic Pathfinder & Exploration State ──────────────────────────────────
   const [showPathfinder, setShowPathfinder] = useState(false)
   const [sourceId, setSourceId] = useState(caseIdParam || nodeIdParam || '')
@@ -219,6 +222,9 @@ export default function NetworkExplorer() {
     : sourceEntityQuery
 
   const graph: NexusNetworkResponse | null = useMemo(() => {
+    if (batchIdParam) {
+      return batchNetwork.data ?? null
+    }
     if (isExplicitDemo) {
       return demoQuery.data ?? null
     }
@@ -246,6 +252,8 @@ export default function NetworkExplorer() {
     sourceEntityQuery.data,
     targetEntityQuery.data,
     pathQuery.data,
+    batchIdParam,
+    batchNetwork.data,
   ])
 
   const afterUnavailable = isExplicitDemo && replay === 'after' && demoQuery.error

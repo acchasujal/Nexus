@@ -49,12 +49,12 @@ def _issue(row: Mapping[str, str], row_number: int, field_name: str, code: str, 
     )
 
 
-def _source_record(row: Mapping[str, str], batch_id: str, occurred_at: datetime) -> SourceRecord:
+def _source_record(row: Mapping[str, str], batch_id: str, occurred_at: datetime, file_name: str) -> SourceRecord:
     return SourceRecord(
         id=make_source_record_id(SourceType.CDR.value, row),
         batch_id=batch_id,
         source_type=SourceType.CDR.value,
-        locator=f"cdr_records.csv:{row.get('record_id', '')}",
+        locator=f"{file_name}:{row.get('record_id', '')}",
         raw_excerpt=canonicalize_csv_row(row),
         hash=hashlib.sha256(canonicalize_csv_row(row).encode("utf-8")).hexdigest(),
         occurred_at=occurred_at,
@@ -84,7 +84,7 @@ def _parse_rows(result: CsvParseResult, batch_id: str, file_name: str) -> Parsed
             if not row["call_type"].strip():
                 raise CsvValidationError("call_type must not be empty")
 
-            source_record = _source_record(row, batch_id, start_time)
+            source_record = _source_record(row, batch_id, start_time, file_name)
             source_records[source_record.id] = source_record
 
             parsed_rows.append({
@@ -110,11 +110,19 @@ def _parse_rows(result: CsvParseResult, batch_id: str, file_name: str) -> Parsed
             issues.append(_issue(row, row_number, field_name, "INVALID_CDR_ROW", str(exc), file_name))
 
     accepted = len(source_records)
+    rejected_rows = {
+        (issue.file_name, issue.row_number)
+        for issue in issues
+        if issue.severity is IssueSeverity.ERROR
+        and issue.code not in {"MISSING_HEADER", "MISSING_REQUIRED_COLUMN", "INVALID_HEADER", "DUPLICATE_HEADER"}
+        and issue.row_number is not None
+    }
     summary = IngestionSummary(
         received_count=len(result.rows) + len(result.quarantined_rows),
         accepted_count=accepted,
         duplicate_count=result.summary.duplicate_count,
-        rejected_count=sum(1 for issue in issues if issue.severity is IssueSeverity.ERROR),
+        conflict_count=result.summary.conflict_count,
+        rejected_count=len(rejected_rows),
         warning_count=sum(1 for issue in issues if issue.severity is IssueSeverity.WARNING),
         source_record_count=accepted,
     )
@@ -132,6 +140,13 @@ def _parse_rows(result: CsvParseResult, batch_id: str, file_name: str) -> Parsed
 def parse_cdr_source(text: str, *, batch_id: str = "batch_cdr", file_name: str = "cdr_records.csv") -> ParsedSourceBundle:
     """Parse CDR CSV text into validated source records (no graph mapping)."""
     result = parse_csv_text(text, source_type=SourceType.CDR, file_name=file_name, required_columns=REQUIRED_COLUMNS)
+    return _parse_rows(result, batch_id, file_name)
+
+
+def parse_cdr_source_bytes(data: bytes, *, batch_id: str = "batch_cdr", file_name: str = "cdr_records.csv") -> ParsedSourceBundle:
+    """Parse CDR CSV bytes into validated source records."""
+    from ..csv_reader import read_csv_bytes
+    result = read_csv_bytes(data, source_type=SourceType.CDR, file_name=file_name, required_columns=REQUIRED_COLUMNS)
     return _parse_rows(result, batch_id, file_name)
 
 
@@ -156,4 +171,4 @@ def parse_cdr_csv(path: str | Path, *, batch_id: str = "batch_cdr") -> Ingestion
     return map_cdr_bundle(parsed)
 
 
-__all__ = ["OPTIONAL_COLUMNS", "REQUIRED_COLUMNS", "parse_cdr_csv", "parse_cdr_source", "parse_cdr_source_file", "parse_cdr_text"]
+__all__ = ["OPTIONAL_COLUMNS", "REQUIRED_COLUMNS", "parse_cdr_csv", "parse_cdr_source", "parse_cdr_source_bytes", "parse_cdr_source_file", "parse_cdr_text"]

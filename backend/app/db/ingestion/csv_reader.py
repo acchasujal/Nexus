@@ -102,6 +102,7 @@ def parse_csv_text(
             return result
 
         canonical_hashes: set[str] = set()
+        seen_record_ids: dict[str, str] = {}
         for row_number, values in enumerate(reader, start=2):
             if row_number > max_rows + 1:
                 result.quarantined_rows.append({"row_number": row_number, "raw": values})
@@ -122,11 +123,21 @@ def parse_csv_text(
                 result.issues.append(_issue(source_type, file_name, row_number, "FIELD_TOO_LARGE", "CSV field exceeds the configured length limit", IssueSeverity.ERROR, oversized[0], _record_id(row, row_number)))
                 continue
             row_hash = hashlib.sha256(canonicalize_csv_row(row).encode("utf-8")).hexdigest()
+            explicit_id = row.get("record_id", "").strip()
+            
             if row_hash in canonical_hashes:
                 result.duplicate_hashes.add(row_hash)
                 result.quarantined_rows.append({"row_number": row_number, "raw": values})
                 result.issues.append(_issue(source_type, file_name, row_number, "DUPLICATE_ROW", "Duplicate CSV row ignored", IssueSeverity.WARNING, record_id=_record_id(row, row_number)))
                 continue
+                
+            if explicit_id:
+                if explicit_id in seen_record_ids and seen_record_ids[explicit_id] != row_hash:
+                    result.quarantined_rows.append({"row_number": row_number, "raw": values})
+                    result.issues.append(_issue(source_type, file_name, row_number, "CONFLICTING_RECORD", "Record ID already exists with different content", IssueSeverity.ERROR, record_id=explicit_id))
+                    continue
+                seen_record_ids[explicit_id] = row_hash
+                
             canonical_hashes.add(row_hash)
             result.rows.append(row)
     except csv.Error:

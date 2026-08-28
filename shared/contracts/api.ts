@@ -516,10 +516,81 @@ export interface NexusSearchResponse {
   entities: { id: string; label: string; entity_type: string; case_ids: string[]; score: number; subtext?: string }[]
 }
 
-export interface NexusIngestResponse {
-  batch_id: string
+/** @deprecated Prototype Request */
+export interface IngestRequest {
   source_type: string
+  file_name: string
+  records: Record<string, any>[]
+}
+
+/** @deprecated Prototype Response */
+export interface IngestResponse {
   ingested_count: number
-  extraction_summary: { persons: number; phones: number; accounts: number; events: number; relationships: number }
-  snapshot_id: string
+  skipped_count: number
+  error_count: number
+  audit_event_id: string
+}
+
+// ── Real Ingestion API ────────────────────────────────────────────────────────
+
+export type BatchStatus = 'COMPLETED' | 'COMPLETED_WITH_WARNINGS' | 'FAILED'
+
+export interface IngestionFileSummary {
+  received: number
+  accepted: number
+  rejected: number
+  duplicates: number
+  conflicts: number
+  warnings: number
+  source_records: number
+  nodes_created: number
+  nodes_reused: number
+  relationships_created: number
+  review_required: number
+}
+
+export interface IngestionFileResult {
+  source_type: string
+  file_name: string
+  size_bytes: number
+  summary: IngestionFileSummary
+}
+
+export interface IngestionParseIssue {
+  source_type: string
+  file_name: string
+  row_number?: number
+  record_id?: string
+  field?: string
+  code: string
+  message: string
+  severity: string
+}
+
+export interface IngestionBatchResponse {
+  batch_id: string
+  status: BatchStatus
+  files_processed: IngestionFileResult[]
+  summary: IngestionFileSummary
+  parse_issues: IngestionParseIssue[]
+  review_candidates: Record<string, any>[]
+  graph_updated: boolean
+}
+
+export interface NexusIngestResponse {
+  status: string
+  batch_id: string
+  files_processed: string[]
+  received_rows: number
+  accepted_rows: number
+  rejected_rows: number
+  duplicates: number
+  conflicts: number
+  warnings: number
+  nodes_extracted: number
+  relations_formed: number
+  source_records: number
+  review_required: number
+  provenance_completeness: number
+  graph_ready: boolean
 }

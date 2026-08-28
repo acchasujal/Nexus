@@ -56,6 +56,10 @@ class GraphRepository:
             self.load_from_db(self._db_session)
         return self._store
 
+    def replace_store(self, store: GraphStore) -> None:
+        """Safely replace the underlying graph store."""
+        self._store = store
+
     def get_case(self, case_id: str) -> NodeRecord | None:
         """Fetch a single case node by ID."""
         return self._store.nodes.get(case_id)
@@ -111,7 +115,6 @@ class GraphRepository:
 
             if match:
                 matching_cases.append(node)
-
         return matching_cases
 
 
@@ -130,7 +133,6 @@ def _match_filter(prop_val: Any, filter_val: str) -> bool:
     if f_norm in p_norm:
         return True
     return False
-
 
 
     # ── Internal helpers (for Dev 1 to extend) ─────────────────────────────
@@ -153,3 +155,4 @@ def _match_filter(prop_val: Any, filter_val: str) -> bool:
         )
         self._store.edge_index.setdefault(edge_type, []).append(edge)
         self._store.adj.setdefault(source_id, []).append(edge)
+        self._store.radj.setdefault(target_id, []).append(edge)

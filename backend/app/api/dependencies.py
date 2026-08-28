@@ -19,6 +19,7 @@ from backend.app.services.copilot_service import CopilotService
 from backend.app.services.entity_service import EntityService
 from backend.app.services.evidence_service import EvidenceService
 from backend.app.services.export_service import ExportService
+from backend.app.services.ingestion_service import IngestionService
 
 
 def get_settings_dep(request: Request) -> Settings:
@@ -123,3 +124,11 @@ def get_evidence_dossier_service(
 
 
 
+def get_ingestion_service(request: Request) -> IngestionService:
+    """Return the application-level shared IngestionService instance."""
+    return request.app.state.ingestion_service  # type: ignore[no-any-return]
+
+
+def get_graph_repository(request: Request):
+    from backend.app.core.graph.repositories.graph_repository import GraphRepository
+    return request.app.state.graph_repo  # type: ignore[no-any-return]

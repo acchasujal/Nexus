@@ -43,7 +43,10 @@ def _get_prov(edge: Any) -> dict:
     Returns empty dict if not present.
     """
     props = getattr(edge, "properties", {}) or {}
-    return props.get("provenance") or {}
+    prov = props.get("provenance") or {}
+    if not prov.get("source_id") and getattr(edge, "source_record_id", None):
+        prov = {"source_id": edge.source_record_id}
+    return prov
 
 
 def _make_evidence_id(source_id: str, edge_source: str, edge_target: str, edge_type: str) -> str:

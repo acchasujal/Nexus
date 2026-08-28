@@ -101,41 +101,20 @@ class CopilotService:
     ) -> tuple[dict[str, Any], list[dict[str, Any]], bool]:
         """Build the merged active graph nodes, edges, and resolution state."""
         is_resolved = False
-        try:
-            from backend.app.api.nexus_routes import (
-                AFTER_EDGES,
-                AFTER_NODES,
-                BEFORE_EDGES,
-                BEFORE_NODES,
-                _demo_state,
-            )
-            is_resolved = _demo_state.is_resolved if is_resolved_override is None else is_resolved_override
-            demo_nodes = AFTER_NODES if is_resolved else BEFORE_NODES
-            demo_edges = AFTER_EDGES if is_resolved else BEFORE_EDGES
-        except Exception:
-            demo_nodes = []
-            demo_edges = []
-            if is_resolved_override is not None:
-                is_resolved = is_resolved_override
+        if is_resolved_override is not None:
+            is_resolved = is_resolved_override
+        else:
+            # Mark resolved if any candidate is CONFIRMED
+            for cdata in getattr(self._repo, "review_candidates", {}).values():
+                if isinstance(cdata, dict) and cdata.get("status") == "CONFIRMED":
+                    is_resolved = True
+                    break
 
         nodes_dict: dict[str, dict[str, Any]] = {}
-        for n in demo_nodes:
-            nid = getattr(n, "id", None) or _get_val(n, "id")
-            etype = getattr(n, "entity_type", None) or _get_val(n, "entity_type", "Entity")
-            label = getattr(n, "label", None) or _get_val(n, "label", nid)
-            props = getattr(n, "properties", None) or _get_val(n, "properties", {})
-            nodes_dict[str(nid)] = {
-                "id": str(nid),
-                "entity_type": etype,
-                "label": str(label),
-                "properties": copy.deepcopy(props) if isinstance(props, dict) else {},
-            }
 
         # Merge repository graph store nodes
         store = self._repo.to_graph_store()
         for nid, node_rec in store.nodes.items():
-            if nid in nodes_dict:
-                continue
             props = node_rec.properties or {}
             etype = node_rec.entity_type
             if etype == "Case":
@@ -167,21 +146,6 @@ class CopilotService:
         # Build edges list
         edges_list: list[dict[str, Any]] = []
         seen_edges: set[str] = set()
-        for e in demo_edges:
-            eid = getattr(e, "id", None) or _get_val(e, "id")
-            src = getattr(e, "source_id", None) or _get_val(e, "source_id")
-            tgt = getattr(e, "target_id", None) or _get_val(e, "target_id")
-            etype = getattr(e, "edge_type", None) or _get_val(e, "edge_type", "CONNECTED_TO")
-            props = getattr(e, "properties", None) or _get_val(e, "properties", {})
-            if eid and str(eid) not in seen_edges:
-                seen_edges.add(str(eid))
-                edges_list.append({
-                    "id": str(eid),
-                    "source_id": str(src),
-                    "target_id": str(tgt),
-                    "edge_type": str(etype),
-                    "properties": copy.deepcopy(props) if isinstance(props, dict) else {},
-                })
 
         for edge_rec in getattr(self._repo, "edges", []):
             eid = edge_rec.get("id") or f"edge-{edge_rec['source_id']}-{edge_rec['target_id']}"
