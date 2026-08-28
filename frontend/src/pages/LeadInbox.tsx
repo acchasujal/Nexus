@@ -16,6 +16,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import { MarkdownContent } from '@/components/nexus/MarkdownContent'
+import { EvidenceDossierActions } from '@/components/EvidenceDossierActions'
 
 /** Maps canonical source record IDs to the most representative graph edge
  *  that carries them in its evidence_ids. Derived from NEXUS golden fixture. */
@@ -232,6 +233,7 @@ export default function LeadInbox() {
                 )}
               </div>
               <h2 className="mt-3 text-lg font-bold text-neutral-900">{lead.title}</h2>
+              <div className="mt-3"><EvidenceDossierActions request={{ lead_id: lead.id }} /></div>
               
               {/* Rich Markdown Explanation */}
               <div className="mt-3 rounded-lg border border-neutral-100 bg-neutral-50/50 p-3.5">

@@ -20,12 +20,13 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 
 from backend.app.api.dependencies import (
     get_audit_service,
     get_copilot_service,
+    get_evidence_dossier_service,
     get_lead_service,
     get_principal,
     get_repository,
@@ -35,7 +36,16 @@ from backend.app.auth.principal import Principal
 from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.copilot_service import CopilotService
-from shared.contracts.api import CopilotQueryRequest, GroundedCitation, NetworkGraphResponse
+from shared.contracts.api import (
+    CopilotQueryRequest,
+    EvidenceBatchVerifyRequest,
+    EvidenceBatchVerifyResponse,
+    GroundedCitation,
+    NetworkGraphResponse,
+    NexusDossierRequest,
+    NexusDossierResponse,
+    NexusDossierVerificationResponse,
+)
 
 # ── Pydantic Models ────────────────────────────────────────────────────────────
 
@@ -730,6 +740,62 @@ _demo_state = DemoState()
 
 def create_nexus_router() -> APIRouter:
     router = APIRouter(tags=["nexus"])
+
+    @router.post("/nexus/evidence/dossier", response_model=NexusDossierResponse)
+    def generate_evidence_dossier(
+        req: NexusDossierRequest,
+        principal: Principal = Depends(get_principal),
+        dossier_svc: Any = Depends(get_evidence_dossier_service),
+        request_id: str = Depends(get_request_id),
+    ) -> NexusDossierResponse:
+        if sum(bool(value) for value in (req.case_id, req.lead_id, bool(req.evidence_ids))) != 1:
+            raise HTTPException(status_code=422, detail="Provide exactly one of case_id, lead_id, or evidence_ids.")
+        try:
+            _, metadata = dossier_svc.generate_dossier(req, actor_id=principal.user_id, request_id=request_id)
+            return metadata
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc).strip("'")) from exc
+
+    @router.get("/nexus/evidence/dossier/{dossier_id}/download")
+    def download_evidence_dossier(
+        dossier_id: str,
+        principal: Principal = Depends(get_principal),
+        dossier_svc: Any = Depends(get_evidence_dossier_service),
+    ) -> Response:
+        dossier = dossier_svc.get_dossier_pdf(dossier_id)
+        if dossier is None:
+            raise HTTPException(status_code=404, detail=f"Dossier '{dossier_id}' not found.")
+        pdf_bytes, metadata = dossier
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="NEXUS_Evidence_Dossier_{dossier_id}.pdf"',
+                "X-Dossier-SHA256": metadata.pdf_sha256,
+            },
+        )
+
+    @router.post("/nexus/evidence/verify", response_model=EvidenceBatchVerifyResponse)
+    def verify_evidence_dossier_records(
+        req: EvidenceBatchVerifyRequest,
+        principal: Principal = Depends(get_principal),
+        dossier_svc: Any = Depends(get_evidence_dossier_service),
+    ) -> EvidenceBatchVerifyResponse:
+        try:
+            return dossier_svc.verify_batch_evidence(req.evidence_ids, dossier_id=req.dossier_id, actor_id=principal.user_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc).strip("'")) from exc
+
+    @router.post("/nexus/evidence/dossier/{dossier_id}/verify", response_model=NexusDossierVerificationResponse)
+    def verify_evidence_dossier_pdf(
+        dossier_id: str,
+        principal: Principal = Depends(get_principal),
+        dossier_svc: Any = Depends(get_evidence_dossier_service),
+    ) -> NexusDossierVerificationResponse:
+        try:
+            return dossier_svc.verify_dossier_integrity(dossier_id, actor_id=principal.user_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc).strip("'")) from exc
 
     @router.post("/nexus/ingest", response_model=NexusIngestResponse)
     def ingest_demo_files(

@@ -105,3 +105,21 @@ def get_lead_service(
     return lead_svc
 
 
+def get_evidence_dossier_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> Any:
+    dossier_svc = getattr(request.app.state, "evidence_dossier_service", None)
+    if dossier_svc is not None:
+        return dossier_svc
+
+    from backend.app.services.evidence_dossier_service import EvidenceDossierService
+    evidence_svc = EvidenceService(repo, audit_svc)
+    lead_svc = get_lead_service(request, repo, audit_svc)
+    dossier_svc = EvidenceDossierService(repo, audit_svc, evidence_service=evidence_svc, lead_service=lead_svc)
+    request.app.state.evidence_dossier_service = dossier_svc
+    return dossier_svc
+
+
+

@@ -24,6 +24,10 @@ import type {
   ResolutionDecisionRequest,
   ResolutionDecisionResponse,
   SnapshotDiffResponse,
+  EvidenceBatchVerifyResponse,
+  NexusDossierRequest,
+  NexusDossierResponse,
+  NexusDossierVerificationResponse,
 } from '@shared/contracts/api'
 
 export class ApiError extends Error {
@@ -99,6 +103,19 @@ export async function apiFetch<T>(
   }
 
   return response.json() as Promise<T>
+}
+
+async function apiFetchBlob(path: string): Promise<Blob> {
+  const origin = typeof window !== 'undefined' && window.location?.origin && window.location.origin !== 'null' ? window.location.origin : 'http://localhost'
+  const rawBase = (import.meta.env.VITE_API_BASE_URL || origin).trim()
+  const baseUrl = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase
+  const token = typeof window !== 'undefined' ? window.localStorage.getItem('nexus_token') : null
+  const role = typeof window !== 'undefined' ? window.localStorage.getItem('nexus_role') || 'INVESTIGATOR' : 'INVESTIGATOR'
+  const response = await fetch(`${baseUrl}${path}`, {
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), 'X-Role': role },
+  })
+  if (!response.ok) throw new ApiError(response.status, response.statusText, response.statusText)
+  return response.blob()
 }
 
 export const apiClient = {
@@ -213,4 +230,14 @@ export const apiClient = {
     return apiFetch<NexusSourceRecord>(`/api/v1/nexus/sources/${encodeURIComponent(sourceId)}`)
   },
   resetDemo: () => apiFetch<{ status: string }>('/api/v1/nexus/demo/reset', { method: 'POST' }),
+  generateEvidenceDossier: (request: NexusDossierRequest) => apiFetch<NexusDossierResponse>('/api/v1/nexus/evidence/dossier', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  }),
+  downloadEvidenceDossier: (dossierId: string) => apiFetchBlob(`/api/v1/nexus/evidence/dossier/${encodeURIComponent(dossierId)}/download`),
+  verifyEvidence: (request: { evidence_ids: string[]; dossier_id?: string }) => apiFetch<EvidenceBatchVerifyResponse>('/api/v1/nexus/evidence/verify', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  }),
+  verifyEvidenceDossier: (dossierId: string) => apiFetch<NexusDossierVerificationResponse>(`/api/v1/nexus/evidence/dossier/${encodeURIComponent(dossierId)}/verify`, { method: 'POST' }),
 }

@@ -316,7 +316,7 @@ class EvidenceVerifyRequest(BaseModel):
 # ── BSA Dossier Export (BE-05) ────────────────────────────────────────────────
 
 class DossierExportRequest(BaseModel):
-    """Request body for POST /export/dossier (Section 63 BSA 2023)."""
+    """Request body for POST /export/dossier (Section 63 BSA 2023 workflow)."""
     case_id: str
     include_network: bool = True
     include_evidence: bool = True
@@ -330,6 +330,65 @@ class DossierExportResponse(BaseModel):
     generated_at: datetime = Field(default_factory=_utcnow)
     page_count: int = 0
     file_size_bytes: int = 0
+
+
+class NexusDossierRequest(BaseModel):
+    """Request for generating an evidence dossier from a case, lead, or evidence list."""
+    case_id: str | None = None
+    lead_id: str | None = None
+    evidence_ids: list[str] = Field(default_factory=list)
+    include_network: bool = True
+    include_evidence: bool = True
+    include_hash_chain: bool = True
+
+
+class NexusDossierResponse(BaseModel):
+    """Metadata for a generated evidence dossier with SHA-256 signatures."""
+    dossier_id: str
+    case_id: str | None = None
+    case_ids: list[str] = Field(default_factory=list)
+    lead_id: str | None = None
+    pdf_sha256: str
+    chain_hash: str
+    evidence_ids: list[str] = Field(default_factory=list)
+    evidence_hashes: dict[str, str] = Field(default_factory=dict)
+    generated_at: str = ""
+    page_count: int = 1
+    file_size_bytes: int = 0
+    download_url: str = ""
+
+
+class EvidenceIntegrityCheckResult(BaseModel):
+    """Integrity verification outcome for an individual evidence artifact."""
+    evidence_id: str
+    expected_hash: str
+    computed_hash: str
+    verified: bool
+    verification_timestamp: str = ""
+    failure_reason: str | None = None
+
+
+class EvidenceBatchVerifyRequest(BaseModel):
+    """Request for verifying the SHA-256 integrity of evidence items."""
+    evidence_ids: list[str] = Field(default_factory=list)
+    dossier_id: str | None = None
+
+
+class EvidenceBatchVerifyResponse(BaseModel):
+    """Batch integrity verification response for evidence artifacts and hash chains."""
+    results: list[EvidenceIntegrityCheckResult] = Field(default_factory=list)
+    overall_verified: bool = True
+    chain_hash: str = ""
+    verified_at: str = ""
+
+
+class NexusDossierVerificationResponse(BaseModel):
+    dossier_id: str
+    expected_hash: str
+    computed_hash: str
+    verified: bool
+    verification_timestamp: str
+
 
 
 # ── File Ingestion ────────────────────────────────────────────────────────────

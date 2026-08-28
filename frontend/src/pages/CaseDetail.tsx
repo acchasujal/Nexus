@@ -9,6 +9,7 @@ import { NetworkAnalysisPanel } from '@/components/NetworkAnalysisPanel'
 import { SimilarityPanel } from '@/components/SimilarityPanel'
 import { InvestigationTimeline } from '@/components/InvestigationTimeline'
 import { CaseCopilotPanel } from '@/components/CaseCopilotPanel'
+import { EvidenceDossierActions } from '@/components/EvidenceDossierActions'
 
 const tabs = [
   { id: 'overview', label: 'Investigation Overview', icon: FileText },
@@ -93,23 +94,7 @@ export default function CaseDetail() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                const dossierData = `NEXUS Case Evidence Dossier\nSection 63 BSA 2023 Compliant\nFIR: ${caseDetail.fir_number}\nStation: ${caseDetail.station_name}\nCategory: ${caseDetail.offence_category}\nGenerated: ${new Date().toISOString()}\nIntegrity Hash: SHA256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
-                const blob = new Blob([dossierData], { type: 'text/plain;charset=utf-8' })
-                const url = URL.createObjectURL(blob)
-                const a = document.createElement('a')
-                a.href = url
-                a.download = `dossier_${caseDetail.fir_number.replace(/[^a-zA-Z0-9]/g, '_')}_sec63_bsa.txt`
-                a.click()
-                URL.revokeObjectURL(url)
-              }}
-              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-bold transition-colors shadow-sm"
-              title="Generate Section 63 BSA 2023 Evidence Certificate & Dossier"
-            >
-              <FileText className="h-4 w-4 text-white" />
-              Download Section 63 BSA Dossier
-            </button>
+            <EvidenceDossierActions request={{ case_id: effectiveId }} />
           </div>
         </div>
       </div>

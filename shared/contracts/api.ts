@@ -269,7 +269,7 @@ export interface EvidenceVerifyRequest {
 
 // ── BSA Dossier Export (BE-05) ───────────────────────────────────────────────
 
-/** Request body for POST /export/dossier (Section 63 BSA 2023). */
+/** Request body for POST /export/dossier (Section 63 BSA 2023 workflow). */
 export interface DossierExportRequest {
   case_id: string
   include_network: boolean
@@ -284,6 +284,60 @@ export interface DossierExportResponse {
   page_count: number
   file_size_bytes: number
 }
+
+export interface NexusDossierRequest {
+  case_id?: string
+  lead_id?: string
+  evidence_ids?: string[]
+  include_network?: boolean
+  include_evidence?: boolean
+  include_hash_chain?: boolean
+}
+
+export interface NexusDossierResponse {
+  dossier_id: string
+  case_id?: string
+  case_ids: string[]
+  lead_id?: string
+  pdf_sha256: string
+  chain_hash: string
+  evidence_ids: string[]
+  evidence_hashes: Record<string, string>
+  generated_at: string
+  page_count: number
+  file_size_bytes: number
+  download_url: string
+}
+
+export interface EvidenceIntegrityCheckResult {
+  evidence_id: string
+  expected_hash: string
+  computed_hash: string
+  verified: boolean
+  verification_timestamp?: string
+  failure_reason?: string
+}
+
+export interface EvidenceBatchVerifyRequest {
+  evidence_ids?: string[]
+  dossier_id?: string
+}
+
+export interface EvidenceBatchVerifyResponse {
+  results: EvidenceIntegrityCheckResult[]
+  overall_verified: boolean
+  chain_hash: string
+  verified_at: string
+}
+
+export interface NexusDossierVerificationResponse {
+  dossier_id: string
+  expected_hash: string
+  computed_hash: string
+  verified: boolean
+  verification_timestamp: string
+}
+
 
 // ── File Ingestion ─────────────────────────────────────────────────────────────
 
