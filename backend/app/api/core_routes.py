@@ -18,7 +18,7 @@ from __future__ import annotations
 from typing import Any
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, File, UploadFile
 
 from backend.app.api.dependencies import (
     get_audit_service,
@@ -26,7 +26,9 @@ from backend.app.api.dependencies import (
     get_copilot_service,
     get_entity_service,
     get_evidence_service,
+    get_evidence_service,
     get_export_service,
+    get_ingestion_service,
     get_principal,
     get_repository,
     get_request_id,
@@ -50,6 +52,8 @@ from backend.app.services.copilot_service import CopilotService
 from backend.app.services.entity_service import EntityService
 from backend.app.services.evidence_service import EvidenceService
 from backend.app.services.export_service import ExportService
+from backend.app.services.ingestion_service import IngestionService
+from backend.app.db.ingestion.contracts import UploadedSource, SourceType
 from shared.contracts.api import (
     AuditLogEntry,
     AuthLoginRequest,
@@ -64,6 +68,7 @@ from shared.contracts.api import (
     EntityResolutionMatchResponse,
     EntityResolutionQuery,
     EntityResolutionResponse,
+    IngestionBatchResponse,
     EvidenceItemResponse,
     EvidenceVerificationResponse,
     EvidenceVerifyRequest,
@@ -543,39 +548,59 @@ def create_core_router() -> APIRouter:
 
     # ── File Ingestion Stub (Phase 6) ───────────────────────────────────────
 
-    @router.post("/ingest", response_model=IngestResponse)
-    def ingest_records(
-        req: IngestRequest,
+    @router.post("/ingest", response_model=IngestionBatchResponse)
+    async def ingest_files_api(
+        fir: UploadFile | None = File(None),
+        cdr: UploadFile | None = File(None),
+        bank: UploadFile | None = File(None),
+        intelligence: UploadFile | None = File(None),
         principal: Principal = Depends(get_principal),
-        audit: AuditService = Depends(get_audit_service),
+        ingestion_service: IngestionService = Depends(get_ingestion_service),
         request_id: str = Depends(get_request_id),
-    ) -> IngestResponse:
-        """Ingest structured records from FIR, CDR, BANK_TXN, or INTEL_REPORT sources.
+    ) -> IngestionBatchResponse:
+        """Ingest CSV files for different source types."""
+        if principal.role not in (UserRole.SP, UserRole.SUPERVISOR):
+            raise HTTPException(status_code=403, detail="Forbidden: SP or SUPERVISOR role required for ingestion.")
 
-        Stub: validates source_type and logs audit event.
-        Full implementation depends on Person 2 DATA-02 parsers.
-        """
-        allowed_types = {"CDR", "BANK_TXN", "FIR", "INTEL_REPORT"}
-        if req.source_type not in allowed_types:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Invalid source_type '{req.source_type}'. Must be one of: {sorted(allowed_types)}",
+        sources: list[UploadedSource] = []
+        
+        async def _read_file(uf: UploadFile | None, stype: SourceType) -> None:
+            if not uf:
+                return
+            if not uf.filename or not uf.filename.lower().endswith(".csv"):
+                raise HTTPException(status_code=415, detail=f"File {uf.filename} must be a .csv file.")
+            
+            content = await uf.read()
+            if len(content) > 5 * 1024 * 1024:
+                raise HTTPException(status_code=413, detail=f"File {uf.filename} exceeds 5MB limit.")
+            if not content:
+                raise HTTPException(status_code=400, detail=f"File {uf.filename} is empty.")
+                
+            sources.append(UploadedSource(
+                source_type=stype,
+                file_name=uf.filename,
+                data=content
+            ))
+
+        await _read_file(fir, SourceType.FIR)
+        await _read_file(cdr, SourceType.CDR)
+        await _read_file(bank, SourceType.BANK_TXN)
+        await _read_file(intelligence, SourceType.INTEL_REPORT)
+
+        if not sources:
+            raise HTTPException(status_code=400, detail="At least one file must be provided.")
+
+        try:
+            resp = await ingestion_service.ingest_files(
+                user_id=principal.user_id,
+                user_role=principal.role.value if hasattr(principal.role, 'value') else str(principal.role),
+                sources=sources
             )
-        if not principal.can_view_audit_log():  # reuse SUPERVISOR+ check as ADMIN gate
-            raise HTTPException(status_code=403, detail="Forbidden: ADMIN role required for ingestion.")
-        audit.record(
-            AuditEventType.INGESTION_STARTED,
-            actor_id=principal.user_id,
-            request_id=request_id,
-            details={"source_type": req.source_type, "file_name": req.file_name, "record_count": len(req.records)},
-        )
-        # Stub response until Person 2 DATA-02 is complete
-        return IngestResponse(
-            ingested_count=0,
-            skipped_count=0,
-            error_count=0,
-            audit_event_id=request_id or "",
-        )
+            if resp.status.value == "FAILED":
+                raise HTTPException(status_code=422, detail="Fatal validation error during ingestion.")
+            return resp
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
     # ── Dossier Export (Phase 5 / BE-05) ────────────────────────────────────
 

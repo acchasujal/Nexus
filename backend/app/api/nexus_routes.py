@@ -29,6 +29,7 @@ from pydantic import BaseModel, Field
 from backend.app.api.dependencies import (
     get_audit_service,
     get_copilot_service,
+    get_ingestion_service,
     get_principal,
     get_repository,
     get_request_id,
@@ -38,6 +39,8 @@ from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.db.ingestion.pipeline import CsvIngestionPipeline
 from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.copilot_service import CopilotService
+from backend.app.services.ingestion_service import IngestionService
+from backend.app.db.ingestion.contracts import UploadedSource, SourceType
 from shared.contracts.api import CopilotQueryRequest, GroundedCitation, NetworkGraphResponse
 
 # ── Pydantic Models ────────────────────────────────────────────────────────────
@@ -713,48 +716,67 @@ def create_nexus_router() -> APIRouter:
     router = APIRouter(tags=["nexus"])
 
     @router.post("/nexus/ingest", response_model=NexusIngestResponse)
-    def ingest_csv_files(
+    async def ingest_csv_files(
         files: list[UploadFile] = File(...),
         principal: Principal = Depends(get_principal),
-        audit: AuditService = Depends(get_audit_service),
-        repo: InMemoryBackendRepository = Depends(get_repository),
+        ingestion_service: IngestionService = Depends(get_ingestion_service),
     ) -> NexusIngestResponse:
-        _demo_state.reset()
         if not files:
             raise HTTPException(status_code=400, detail="No files provided.")
 
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            for file in files:
-                if file.filename:
-                    file_path = os.path.join(tmp_dir, file.filename)
-                    with open(file_path, "wb") as buffer:
-                        shutil.copyfileobj(file.file, buffer)
+        sources: list[UploadedSource] = []
+        for uf in files:
+            if not uf.filename or not uf.filename.lower().endswith(".csv"):
+                raise HTTPException(status_code=415, detail=f"File {uf.filename} must be a .csv file.")
+            
+            # Infer source type for legacy endpoint by looking at filename
+            fname = uf.filename.lower()
+            if "fir" in fname:
+                stype = SourceType.FIR
+            elif "cdr" in fname:
+                stype = SourceType.CDR
+            elif "bank" in fname:
+                stype = SourceType.BANK_TXN
+            else:
+                stype = SourceType.INTEL_REPORT
+                
+            content = await uf.read()
+            if len(content) > 5 * 1024 * 1024:
+                raise HTTPException(status_code=413, detail=f"File {uf.filename} exceeds 5MB limit.")
+            if not content:
+                raise HTTPException(status_code=400, detail=f"File {uf.filename} is empty.")
+                
+            sources.append(UploadedSource(
+                source_type=stype,
+                file_name=uf.filename,
+                data=content
+            ))
 
-            pipeline = CsvIngestionPipeline()
-            bundle = pipeline.ingest_directory(tmp_dir)
+        try:
+            resp = await ingestion_service.ingest_files(
+                user_id=principal.user_id,
+                user_role=principal.role.value if hasattr(principal.role, 'value') else str(principal.role),
+                sources=sources
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+            
+        if resp.status.value == "FAILED":
+            raise HTTPException(status_code=422, detail="Fatal validation error during ingestion.")
 
-        # Persist to repository
-        repo.apply_bundle(bundle)
-        _demo_state.candidates = list(bundle.review_candidates)
-
-        audit.record(
-            event_type=AuditEventType.INGESTION_COMPLETED,
-            actor_id=principal.user_id,
-            entity_type="Batch",
-            entity_id=bundle.batch_id,
-            details={"files_count": len(files), "received_count": bundle.summary.received_count},
-        )
+        # Update demo state candidates
+        _demo_state.candidates = list(resp.review_candidates)
 
         return NexusIngestResponse(
-            batch_id=bundle.batch_id,
-            source_type=bundle.source_type.value,
-            ingested_count=bundle.summary.received_count,
+            batch_id=resp.batch_id,
+            source_type=sources[0].source_type.value,
+            ingested_count=resp.summary.received,
             extraction_summary=ExtractionSummary(
-                persons=sum(1 for n in bundle.nodes if n.entity_type == "Person"),
-                phones=sum(1 for n in bundle.nodes if n.entity_type == "Phone"),
-                accounts=sum(1 for n in bundle.nodes if n.entity_type == "Account"),
-                events=sum(1 for n in bundle.nodes if n.entity_type in ("Event", "Transaction", "Case")),
-                relationships=len(bundle.relationships)
+                persons=resp.summary.nodes_created,  # Using total nodes created as rough fallback
+                phones=0,
+                accounts=0,
+                events=0,
+                relationships=resp.summary.relationships_created
             ),
             snapshot_id=SNAPSHOT_DIFF.before_snapshot_id,
         )
