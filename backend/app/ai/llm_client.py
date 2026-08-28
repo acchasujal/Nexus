@@ -272,9 +272,9 @@ def get_llm_client(force_mock_for_test: bool = False) -> BaseLLMClient | None:
     
     Resolution order:
       1. force_mock_for_test or NEXUS_USE_MOCK_LLM=true -> DeterministicMockLLMClient (Test only).
-      2. Check GROQ_API_KEY, GEMINI_API_KEY, LLM_API_KEY, NEXUS_LLM_API_KEY, OPENAI_API_KEY.
-      3. If no key -> returns None (triggering immediate deterministic Copilot fallback).
-      4. Configures Groq / Gemini / OpenAI OpenAI-compatible endpoint with configurable model.
+      2. Consult Environment (os.environ) first, then fallback to Settings.
+      3. If no API key found -> returns None (triggering immediate deterministic Copilot fallback).
+      4. Auto-detect provider if not explicitly provided.
     """
     if force_mock_for_test or os.environ.get("NEXUS_USE_MOCK_LLM", "").lower() in ("true", "1"):
         return DeterministicMockLLMClient()
@@ -284,45 +284,85 @@ def get_llm_client(force_mock_for_test: bool = False) -> BaseLLMClient | None:
     openai_key = os.environ.get("OPENAI_API_KEY")
     generic_key = os.environ.get("LLM_API_KEY") or os.environ.get("NEXUS_LLM_API_KEY")
 
-    api_key = groq_key or generic_key or gemini_key or openai_key
+    # If os.environ has explicit keys or is empty, check settings only if env not found
+    if not (groq_key or gemini_key or openai_key or generic_key):
+        if "PYTEST_CURRENT_TEST" in os.environ:
+            return None
+        try:
+            from backend.app.config import get_settings
+            settings = get_settings()
+            groq_key = settings.groq_api_key
+            gemini_key = settings.gemini_api_key
+            openai_key = settings.openai_api_key
+            generic_key = settings.llm_api_key
+        except Exception:
+            pass
+
+    api_key = generic_key or groq_key or gemini_key or openai_key
     if not api_key:
         return None
 
-    provider = (os.environ.get("LLM_PROVIDER") or os.environ.get("NEXUS_LLM_PROVIDER", "")).lower()
+    explicit_provider = (os.environ.get("LLM_PROVIDER") or os.environ.get("NEXUS_LLM_PROVIDER") or "").lower()
 
-    # Determine base_url, model, and provider_name
-    if provider == "groq" or (groq_key and not generic_key and not gemini_key and not openai_key and not provider):
+    if explicit_provider:
+        provider = explicit_provider
+    elif groq_key:
+        provider = "groq"
+    elif gemini_key:
+        provider = "gemini"
+    elif openai_key:
+        provider = "openai"
+    else:
+        provider = "groq"
+
+    if provider == "groq":
+        key = groq_key or generic_key or api_key
         base_url = (
             os.environ.get("LLM_BASE_URL")
             or os.environ.get("NEXUS_LLM_BASE_URL")
             or "https://api.groq.com/openai/v1"
         )
-        model = os.environ.get("LLM_MODEL") or os.environ.get("NEXUS_LLM_MODEL") or "openai/gpt-oss-120b"
-        provider_name = "groq"
-    elif provider == "openai" or (openai_key and not gemini_key and not groq_key and not provider):
-        base_url = os.environ.get("LLM_BASE_URL") or os.environ.get("NEXUS_LLM_BASE_URL") or "https://api.openai.com/v1"
-        model = os.environ.get("LLM_MODEL") or os.environ.get("NEXUS_LLM_MODEL") or "gpt-4o-mini"
-        provider_name = "openai"
-    elif provider == "gemini" or (gemini_key and not groq_key and not provider):
+        model = (
+            os.environ.get("LLM_MODEL")
+            or os.environ.get("NEXUS_LLM_MODEL")
+            or "openai/gpt-oss-120b"
+        )
+        return RealLLMClient(api_key=key, base_url=base_url, model=model, provider_name="groq")
+    elif provider == "openai":
+        key = openai_key or generic_key or api_key
+        base_url = (
+            os.environ.get("LLM_BASE_URL")
+            or os.environ.get("NEXUS_LLM_BASE_URL")
+            or "https://api.openai.com/v1"
+        )
+        model = (
+            os.environ.get("LLM_MODEL")
+            or os.environ.get("NEXUS_LLM_MODEL")
+            or "gpt-4o-mini"
+        )
+        return RealLLMClient(api_key=key, base_url=base_url, model=model, provider_name="openai")
+    elif provider == "gemini":
+        key = gemini_key or generic_key or api_key
         base_url = (
             os.environ.get("LLM_BASE_URL")
             or os.environ.get("NEXUS_LLM_BASE_URL")
             or "https://generativelanguage.googleapis.com/v1beta/openai"
         )
-        model = os.environ.get("LLM_MODEL") or os.environ.get("NEXUS_LLM_MODEL") or "gemini-2.5-flash"
-        provider_name = "gemini"
+        model = (
+            os.environ.get("LLM_MODEL")
+            or os.environ.get("NEXUS_LLM_MODEL")
+            or "gemini-2.5-flash"
+        )
+        return RealLLMClient(api_key=key, base_url=base_url, model=model, provider_name="gemini")
     else:
         base_url = (
             os.environ.get("LLM_BASE_URL")
             or os.environ.get("NEXUS_LLM_BASE_URL")
             or "https://api.groq.com/openai/v1"
         )
-        model = os.environ.get("LLM_MODEL") or os.environ.get("NEXUS_LLM_MODEL") or "openai/gpt-oss-120b"
-        provider_name = provider or "groq"
-
-    return RealLLMClient(
-        api_key=api_key,
-        base_url=base_url,
-        model=model,
-        provider_name=provider_name,
-    )
+        model = (
+            os.environ.get("LLM_MODEL")
+            or os.environ.get("NEXUS_LLM_MODEL")
+            or "openai/gpt-oss-120b"
+        )
+        return RealLLMClient(api_key=api_key, base_url=base_url, model=model, provider_name=provider)
