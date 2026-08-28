@@ -72,6 +72,7 @@ export interface D3NetworkGraphProps {
   height?: number | string
   className?: string
   densityMode?: 'compact' | 'normal' | 'spacious' | 'extra-spacious'
+  customHeaderControls?: React.ReactNode
 }
 
 // ── Color Schemes & Styling ────────────────────────────────────────────────
@@ -165,6 +166,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
   height = '100%',
   className = '',
   densityMode = 'normal',
+  customHeaderControls,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -1078,6 +1080,13 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
               <Sliders className="h-3.5 w-3.5" />
               <span>Timeline Scrubber</span>
             </button>
+          </>
+        )}
+
+        {customHeaderControls && (
+          <>
+            <div className="w-px bg-neutral-200 mx-1 h-4" />
+            {customHeaderControls}
           </>
         )}
       </div>

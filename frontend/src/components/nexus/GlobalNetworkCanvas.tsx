@@ -153,41 +153,6 @@ export function GlobalNetworkCanvas({
 
   return (
     <div className="relative h-[500px] sm:h-[560px] md:h-[620px] w-full overflow-hidden rounded-xl border border-neutral-200 bg-slate-50 shadow-sm flex flex-col">
-      {/* Top Filter Bar */}
-      <div className="absolute left-2 sm:left-3 top-2 sm:top-3 z-10 flex flex-wrap items-center gap-1.5 sm:gap-2 rounded-lg border border-neutral-200 bg-white/95 backdrop-blur px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs shadow-md max-w-[calc(100%-16px)] sm:max-w-none">
-        <span className="inline-flex items-center gap-1 font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded text-[9px] border border-emerald-200">
-          <Sparkles className="h-3 w-3 text-emerald-600" /> D3 Force Engine
-        </span>
-        <span className="mx-0.5 h-3 sm:h-4 w-px bg-neutral-200" />
-        <span className="font-bold uppercase tracking-wider text-neutral-600 text-[10px] sm:text-xs">Layers</span>
-        {typeOptions.map((t) => (
-          <button
-            key={t}
-            onClick={() => toggleType(t)}
-            aria-pressed={!hiddenTypes.has(t)}
-            className={`rounded-md border px-2 sm:px-2.5 py-0.5 sm:py-1 text-[11px] sm:text-xs font-semibold transition-colors ${
-              hiddenTypes.has(t)
-                ? 'border-neutral-200 bg-neutral-100 text-neutral-400'
-                : `${NODE_STYLE[t]?.ring ?? 'border-neutral-300'} bg-white text-neutral-900 shadow-xs`
-            }`}
-          >
-            {t}
-          </button>
-        ))}
-        <span className="mx-0.5 sm:mx-1 h-3 sm:h-4 w-px bg-neutral-200" />
-        <label htmlFor="case-focus" className="font-bold uppercase tracking-wider text-neutral-600 text-[10px] sm:text-xs">Focus</label>
-        <select
-          id="case-focus"
-          value={caseFilter}
-          onChange={(e) => setCaseFilter(e.target.value)}
-          className="rounded-md border border-neutral-300 bg-white px-2 py-0.5 sm:py-1 text-[11px] sm:text-xs text-neutral-900 focus:border-blue-500 focus:outline-none shadow-xs"
-        >
-          {caseOptions.map((c) => (
-            <option key={c} value={c}>{c === 'ALL' ? 'All' : c}</option>
-          ))}
-        </select>
-      </div>
-
       {/* Delta indicator */}
       {highlightDelta && (
         <div className="absolute right-2 sm:right-3 top-2 sm:top-3 z-10 rounded-lg border border-emerald-200 bg-emerald-50 px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-bold text-emerald-900 shadow-md">
@@ -244,6 +209,37 @@ export function GlobalNetworkCanvas({
         }}
         highlightDelta={highlightDelta}
         enableTemporalScrubber={true}
+        customHeaderControls={
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs">
+            <span className="font-bold uppercase tracking-wider text-neutral-600 text-[10px] sm:text-xs shrink-0">Layers</span>
+            {typeOptions.map((t) => (
+              <button
+                key={t}
+                onClick={() => toggleType(t)}
+                aria-pressed={!hiddenTypes.has(t)}
+                className={`rounded-md border px-2 sm:px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold transition-colors ${
+                  hiddenTypes.has(t)
+                    ? 'border-neutral-200 bg-neutral-100 text-neutral-400'
+                    : `${NODE_STYLE[t]?.ring ?? 'border-neutral-300'} bg-white text-neutral-900 shadow-2xs`
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+            <span className="mx-0.5 h-3 sm:h-4 w-px bg-neutral-200 shrink-0" />
+            <label htmlFor="case-focus" className="font-bold uppercase tracking-wider text-neutral-600 text-[10px] sm:text-xs shrink-0">Focus</label>
+            <select
+              id="case-focus"
+              value={caseFilter}
+              onChange={(e) => setCaseFilter(e.target.value)}
+              className="rounded-md border border-neutral-300 bg-white px-2 py-0.5 text-[11px] sm:text-xs text-neutral-900 focus:border-blue-500 focus:outline-none shadow-2xs"
+            >
+              {caseOptions.map((c) => (
+                <option key={c} value={c}>{c === 'ALL' ? 'All' : c}</option>
+              ))}
+            </select>
+          </div>
+        }
         className="flex-1 min-h-0"
       />
     </div>

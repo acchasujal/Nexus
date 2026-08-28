@@ -349,33 +349,6 @@ export function NetworkAnalysisPanel({
           {/* D3 Graph View (Left 75% or Full) */}
           <div className="lg:col-span-3 rounded-radius-md border border-neutral-200 bg-neutral-50 h-full relative flex flex-col min-w-0">
             
-            {/* Top-Left Layer Filter Bar (Matches GlobalNetworkCanvas) */}
-            {typeOptions.length > 0 && (
-              <div className="absolute left-3 top-3 z-20 flex flex-wrap items-center gap-1.5 rounded-lg border border-neutral-200 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 text-xs shadow-sm max-w-[calc(100%-220px)] overflow-x-auto">
-                <span className="font-bold uppercase tracking-wider text-neutral-600 text-[10px] flex items-center gap-1 mr-1">
-                  <Layers className="h-3 w-3 text-blue-600" /> Layers
-                </span>
-                {typeOptions.map((t) => {
-                  const isHidden = hiddenTypes.has(t)
-                  const cfg = LAYER_CONFIG[t.toLowerCase()]
-                  return (
-                    <button
-                      key={t}
-                      onClick={() => toggleType(t)}
-                      aria-pressed={!isHidden}
-                      className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold transition-colors capitalize ${
-                        isHidden
-                          ? 'border-neutral-200 bg-neutral-100 text-neutral-400'
-                          : `${cfg?.ring ?? 'border-neutral-300 text-neutral-900'} bg-white shadow-2xs font-bold`
-                      }`}
-                    >
-                      {cfg?.label ?? t}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-
             {/* Top-Right Toolbar Controls */}
             <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-white/95 backdrop-blur-sm p-1 rounded-radius-md border border-neutral-200 shadow-sm">
               <button 
@@ -423,6 +396,33 @@ export function NetworkAnalysisPanel({
               }}
               densityMode={layoutDensity}
               enableTemporalScrubber={true}
+              customHeaderControls={
+                typeOptions.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                    <span className="font-bold uppercase tracking-wider text-neutral-600 text-[10px] flex items-center gap-1 mr-1 shrink-0">
+                      <Layers className="h-3 w-3 text-blue-600" /> Layers
+                    </span>
+                    {typeOptions.map((t) => {
+                      const isHidden = hiddenTypes.has(t)
+                      const cfg = LAYER_CONFIG[t.toLowerCase()]
+                      return (
+                        <button
+                          key={t}
+                          onClick={() => toggleType(t)}
+                          aria-pressed={!isHidden}
+                          className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold transition-colors capitalize ${
+                            isHidden
+                              ? 'border-neutral-200 bg-neutral-100 text-neutral-400'
+                              : `${cfg?.ring ?? 'border-neutral-300 text-neutral-900'} bg-white shadow-2xs font-bold`
+                          }`}
+                        >
+                          {cfg?.label ?? t}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : undefined
+              }
               className="flex-grow min-h-0"
             />
 
