@@ -195,6 +195,7 @@ export interface CopilotQueryRequest {
   /** Entity-centric query parameters (used by Copilot structured dispatch) */
   entity_id?: string
   max_hops?: number
+  is_resolved?: boolean
 }
 
 export interface CopilotQueryResponse {
@@ -206,6 +207,8 @@ export interface CopilotQueryResponse {
   grounded_citations: GroundedCitation[]
   suggested_actions: string[]
   graph_context?: NetworkGraphResponse
+  evidence_ids?: string[]
+  reasoning_path?: string[]
 }
 
 export interface AuditLogEntry {
@@ -437,6 +440,10 @@ export interface NexusCopilotResponse {
   refusal_reason?: string
   evidence_ids: string[]
   reasoning_path: string[]
+  intent?: string
+  grounded_citations?: GroundedCitation[]
+  suggested_actions?: string[]
+  graph_context?: NetworkGraphResponse
 }
 
 export interface NexusSearchResponse {

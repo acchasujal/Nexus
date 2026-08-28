@@ -238,6 +238,7 @@ class CopilotQueryRequest(BaseModel):
     # Entity-centric query parameters (used by Copilot structured dispatch)
     entity_id: str | None = None
     max_hops: int = 2
+    is_resolved: bool | None = None
 
 
 class CopilotQueryResponse(BaseModel):
@@ -249,6 +250,8 @@ class CopilotQueryResponse(BaseModel):
     grounded_citations: list[GroundedCitation] = Field(default_factory=list)
     suggested_actions: list[str] = Field(default_factory=list)
     graph_context: NetworkGraphResponse | None = None
+    evidence_ids: list[str] = Field(default_factory=list)
+    reasoning_path: list[str] = Field(default_factory=list)
 
 
 # ── Audit & Auth ──────────────────────────────────────────────────────────────

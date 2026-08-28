@@ -317,6 +317,8 @@ export const nexusHandlers = [
         refusal_reason: 'Deterministic refusal gate: predictive guilt scoring is prohibited.',
         evidence_ids: [],
         reasoning_path: [],
+        suggested_actions: ['View confirmed phone call logs', 'Examine bank transfer chains'],
+        grounded_citations: [],
       })
     }
     if (/(connect|link|bridge|relat)/.test(q)) {
@@ -338,6 +340,11 @@ export const nexusHandlers = [
               'ACC-9914 —TRANSFERRED_TO→ ACC-7731 (2 transactions)',
             ]
           : ['Resolution candidate RC-1 status: PENDING'],
+        grounded_citations: [
+          { source_type: 'FIR', source_id: 'SRC-FIR-141', fact: 'FIR 141/2026 record', confidence: 1.0 },
+          { source_type: 'FIR', source_id: 'SRC-FIR-207', fact: 'FIR 207/2026 record', confidence: 1.0 },
+        ],
+        suggested_actions: ['Expand 2-hop neighborhood', 'Inspect telephone call logs'],
       })
     }
     return HttpResponse.json({
@@ -346,6 +353,8 @@ export const nexusHandlers = [
       is_refusal: false,
       evidence_ids: [],
       reasoning_path: ['Intent: general_info — no specific graph claim to ground'],
+      grounded_citations: [],
+      suggested_actions: ['Ask about suspect connections', 'Trace financial flows'],
     })
   }),
 

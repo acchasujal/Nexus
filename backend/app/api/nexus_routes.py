@@ -23,10 +23,18 @@ from typing import Any, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from backend.app.api.dependencies import get_audit_service, get_principal, get_repository
+from backend.app.api.dependencies import (
+    get_audit_service,
+    get_copilot_service,
+    get_principal,
+    get_repository,
+    get_request_id,
+)
 from backend.app.auth.principal import Principal
 from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.services.audit_service import AuditEventType, AuditService
+from backend.app.services.copilot_service import CopilotService
+from shared.contracts.api import CopilotQueryRequest, GroundedCitation, NetworkGraphResponse
 
 # ── Pydantic Models ────────────────────────────────────────────────────────────
 
@@ -189,8 +197,12 @@ class NexusCopilotResponse(BaseModel):
     answer: str
     is_refusal: bool
     refusal_reason: str | None = None
-    evidence_ids: list[str]
-    reasoning_path: list[str]
+    evidence_ids: list[str] = Field(default_factory=list)
+    reasoning_path: list[str] = Field(default_factory=list)
+    intent: str | None = None
+    grounded_citations: list[GroundedCitation] = Field(default_factory=list)
+    suggested_actions: list[str] = Field(default_factory=list)
+    graph_context: NetworkGraphResponse | None = None
 
 
 class SearchCaseItem(BaseModel):
@@ -1174,70 +1186,34 @@ def create_nexus_router() -> APIRouter:
     def query_copilot(
         body: dict[str, Any],
         principal: Principal = Depends(get_principal),
-        audit: AuditService = Depends(get_audit_service),
+        copilot_svc: CopilotService = Depends(get_copilot_service),
+        request_id: str = Depends(get_request_id),
     ) -> NexusCopilotResponse:
-        q = (body.get("query") or "").lower()
+        query_str = str(body.get("query") or "")
+        case_id = body.get("case_id") or body.get("investigation_id")
+        entity_id = body.get("entity_id")
+        max_hops = int(body.get("max_hops", 2))
 
-        # Refusal Gate Check
-        if re.search(r"(guilt|guilty|criminal|mastermind|convict|punish)", q):
-            audit.record(
-                event_type=AuditEventType.COPILOT_REFUSED,
-                actor_id=principal.user_id,
-                details={"query": body.get("query"), "reason": "Guilt prediction prohibited"},
-            )
-            return NexusCopilotResponse(
-                query=body.get("query", ""),
-                answer="I cannot infer guilt, innocence, or risk of reoffending. These are matters of judicial determination.",
-                is_refusal=True,
-                refusal_reason="Deterministic refusal gate: predictive guilt scoring is prohibited.",
-                evidence_ids=[],
-                reasoning_path=[],
-            )
-
-        # Connection Explanation Intent
-        if re.search(r"(connect|link|bridge|relat)", q):
-            if _demo_state.is_resolved:
-                ans = (
-                    "FIR 141/2026 and FIR 207/2026 connect through the confirmed alias 'Rafiq Khan / Rafiq Ahmed': "
-                    "same phone +91 98450 11223 in both CDR pulls, same father's name in both FIRs, and repeated transfers "
-                    "from ACC-9914 (Deepak Rao) into ACC-7731 held by Rafiq."
-                )
-                ev_ids = ["SRC-FIR-141", "SRC-FIR-207", "SRC-CDR-A12", "SRC-CDR-B31", "SRC-TXN-55"]
-                rpath = [
-                    "Entity resolution RC-1 CONFIRMED → person unified (P-RAFIQ)",
-                    "P-RAFIQ —ACCUSED_IN→ CASE-141 and CASE-207",
-                    "ACC-9914 —TRANSFERRED_TO→ ACC-7731 (2 transactions)",
-                ]
-            else:
-                ans = "No connection is currently visible. There is one pending entity-resolution candidate (RC-1) that, if confirmed, may link the two cases."
-                ev_ids = ["SRC-FIR-141", "SRC-FIR-207"]
-                rpath = ["Resolution candidate RC-1 status: PENDING"]
-
-            audit.record(
-                event_type=AuditEventType.COPILOT_ANSWERED,
-                actor_id=principal.user_id,
-                details={"query": body.get("query"), "resolved": _demo_state.is_resolved},
-            )
-            return NexusCopilotResponse(
-                query=body.get("query", ""),
-                answer=ans,
-                is_refusal=False,
-                evidence_ids=ev_ids,
-                reasoning_path=rpath,
-            )
-
-        # General Intent
-        audit.record(
-            event_type=AuditEventType.COPILOT_ANSWERED,
-            actor_id=principal.user_id,
-            details={"query": body.get("query")},
+        req = CopilotQueryRequest(
+            query=query_str,
+            case_id=case_id,
+            investigation_id=case_id,
+            entity_id=entity_id,
+            max_hops=max_hops,
+            is_resolved=_demo_state.is_resolved,
         )
+        res = copilot_svc.handle_query(req, principal=principal, request_id=request_id)
         return NexusCopilotResponse(
-            query=body.get("query", ""),
-            answer="This query was parsed against the investigation graph. Ask 'How are the two cases connected?' for the grounded connection explanation.",
-            is_refusal=False,
-            evidence_ids=[],
-            reasoning_path=["Intent: general_info — no specific graph claim to ground"],
+            query=res.query,
+            answer=res.answer,
+            is_refusal=res.is_refusal,
+            refusal_reason=res.refusal_reason,
+            evidence_ids=res.evidence_ids,
+            reasoning_path=res.reasoning_path,
+            intent=res.intent,
+            grounded_citations=res.grounded_citations,
+            suggested_actions=res.suggested_actions,
+            graph_context=res.graph_context,
         )
 
     @router.get("/nexus/search", response_model=NexusSearchResponse)

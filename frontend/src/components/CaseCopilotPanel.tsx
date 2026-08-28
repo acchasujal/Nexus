@@ -57,6 +57,19 @@ export function CaseCopilotPanel({ caseId, caseLabel }: CaseCopilotPanelProps) {
           )}
           <p className="text-sm leading-relaxed whitespace-pre-wrap">{response.answer}</p>
 
+          {response.reasoning_path && response.reasoning_path.length > 0 && (
+            <div className="rounded-lg bg-white p-2.5 text-xs border border-neutral-200 space-y-1 shadow-xs">
+              <div className="font-bold text-neutral-700 text-[11px] uppercase tracking-wider">
+                Reasoning Lineage:
+              </div>
+              <ul className="space-y-1 pl-3 list-disc text-neutral-700 text-[11px]">
+                {response.reasoning_path.map((step, sIdx) => (
+                  <li key={sIdx}>{step}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {response.grounded_citations && response.grounded_citations.length > 0 && (
             <div className="rounded-lg bg-white p-2.5 text-xs border border-neutral-200 space-y-1.5 shadow-xs">
               <div className="font-bold text-neutral-800 flex items-center gap-1.5">

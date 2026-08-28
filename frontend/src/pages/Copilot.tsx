@@ -101,8 +101,10 @@ export default function Copilot() {
         text: response.answer,
         isRefusal: response.is_refusal,
         refusalReason: response.refusal_reason || undefined,
+        citations: response.grounded_citations,
         evidenceIds: response.evidence_ids,
         reasoningPath: response.reasoning_path,
+        suggestedActions: response.suggested_actions,
         timestamp: responseTimeIso,
       }
 
@@ -248,9 +250,13 @@ export default function Copilot() {
                   <span className="text-[11px] font-semibold text-neutral-600">Suggested Next Steps:</span>
                   <div className="flex flex-wrap gap-1.5">
                     {m.suggestedActions.map((act, aIdx) => (
-                      <span key={aIdx} className="text-xs bg-neutral-100 text-neutral-800 px-2.5 py-1 rounded-lg border border-neutral-200">
+                      <button
+                        key={aIdx}
+                        onClick={() => handleSend(act)}
+                        className="text-xs bg-neutral-100 hover:bg-blue-50 hover:text-blue-800 hover:border-blue-300 text-neutral-800 px-2.5 py-1 rounded-lg border border-neutral-200 transition-colors cursor-pointer text-left"
+                      >
                         {act}
-                      </span>
+                      </button>
                     ))}
                   </div>
                 </div>

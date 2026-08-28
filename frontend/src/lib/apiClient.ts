@@ -191,10 +191,12 @@ export const apiClient = {
       body: JSON.stringify(req),
     })
   },
-  queryNexusCopilot: (query: string, entityId?: string) => {
+  queryNexusCopilot: (query: string, entityIdOrOptions?: string | { entityId?: string; caseId?: string }) => {
+    const entityId = typeof entityIdOrOptions === 'string' ? entityIdOrOptions : entityIdOrOptions?.entityId
+    const caseId = typeof entityIdOrOptions === 'object' ? entityIdOrOptions?.caseId : undefined
     return apiFetch<NexusCopilotResponse>('/api/v1/nexus/copilot/query', {
       method: 'POST',
-      body: JSON.stringify({ query, entity_id: entityId }),
+      body: JSON.stringify({ query, entity_id: entityId, case_id: caseId }),
     })
   },
   nexusSearch: (q: string) => {
