@@ -13,6 +13,7 @@ from backend.app.auth.principal import Principal
 from backend.app.auth.verifier import make_verifier
 from backend.app.config import Settings, get_settings
 from backend.app.db.in_memory import InMemoryBackendRepository
+from backend.app.db.postgres import PostgresBackendRepository
 from backend.app.services.audit_service import AuditService
 from backend.app.services.case_service import InvestigationService
 from backend.app.services.copilot_service import CopilotService
@@ -20,6 +21,8 @@ from backend.app.services.entity_service import EntityService
 from backend.app.services.evidence_service import EvidenceService
 from backend.app.services.export_service import ExportService
 from backend.app.services.ingestion_service import IngestionService
+
+RepositoryType = InMemoryBackendRepository | PostgresBackendRepository | Any
 
 
 def get_settings_dep(request: Request) -> Settings:
@@ -29,7 +32,7 @@ def get_settings_dep(request: Request) -> Settings:
     return get_settings()
 
 
-def get_repository(request: Request) -> InMemoryBackendRepository:
+def get_repository(request: Request) -> RepositoryType:
     return request.app.state.repository  # type: ignore[no-any-return]
 
 
@@ -44,34 +47,34 @@ def get_request_id(request: Request) -> str:
 
 
 def get_audit_service(
-    repo: InMemoryBackendRepository = Depends(get_repository),
+    repo: RepositoryType = Depends(get_repository),
 ) -> AuditService:
     return AuditService(repo)
 
 
 def get_case_service(
-    repo: InMemoryBackendRepository = Depends(get_repository),
+    repo: RepositoryType = Depends(get_repository),
     audit_svc: AuditService = Depends(get_audit_service),
 ) -> InvestigationService:
     return InvestigationService(repo, audit_svc)
 
 
 def get_copilot_service(
-    repo: InMemoryBackendRepository = Depends(get_repository),
+    repo: RepositoryType = Depends(get_repository),
     audit_svc: AuditService = Depends(get_audit_service),
 ) -> CopilotService:
     return CopilotService(repo, audit_svc)
 
 
 def get_evidence_service(
-    repo: InMemoryBackendRepository = Depends(get_repository),
+    repo: RepositoryType = Depends(get_repository),
     audit_svc: AuditService = Depends(get_audit_service),
 ) -> EvidenceService:
     return EvidenceService(repo, audit_svc)
 
 
 def get_entity_service(
-    repo: InMemoryBackendRepository = Depends(get_repository),
+    repo: RepositoryType = Depends(get_repository),
     audit_svc: AuditService = Depends(get_audit_service),
 ) -> EntityService:
     evidence_svc = EvidenceService(repo, audit_svc)
@@ -79,7 +82,7 @@ def get_entity_service(
 
 
 def get_export_service(
-    repo: InMemoryBackendRepository = Depends(get_repository),
+    repo: RepositoryType = Depends(get_repository),
     audit_svc: AuditService = Depends(get_audit_service),
 ) -> ExportService:
     evidence_svc = EvidenceService(repo, audit_svc)
@@ -88,7 +91,7 @@ def get_export_service(
 
 def get_lead_service(
     request: Request,
-    repo: InMemoryBackendRepository = Depends(get_repository),
+    repo: RepositoryType = Depends(get_repository),
     audit_svc: AuditService = Depends(get_audit_service),
 ) -> Any:
     lead_svc = getattr(request.app.state, "lead_service", None)
