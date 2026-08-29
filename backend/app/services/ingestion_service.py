@@ -78,7 +78,7 @@ class IngestionService:
 
                 existing_source_ids = set(self._repo.source_records)
                 existing_source_hashes = {
-                    (record.get("source_type"), str(record.get("locator", "")).split(":", 1)[-1]): record.get("hash")
+                    (record.get("source_type"), str(record.get("locator", "")).split(":", 1)[-1]): record.get("content_hash")
                     for record in self._repo.source_records.values()
                     if record.get("locator")
                 }
@@ -87,7 +87,7 @@ class IngestionService:
                     1
                     for record in bundle.source_records
                     if (record.source_type, record.locator.split(":", 1)[-1]) in existing_source_hashes
-                    and existing_source_hashes[(record.source_type, record.locator.split(":", 1)[-1])] != record.hash
+                    and existing_source_hashes[(record.source_type, record.locator.split(":", 1)[-1])] != record.content_hash
                 )
 
                 # Apply to in-memory repository (Atomic operation)

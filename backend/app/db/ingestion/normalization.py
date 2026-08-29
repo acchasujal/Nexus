@@ -108,7 +108,7 @@ def canonicalize_csv_row(row: Mapping[str, Any]) -> str:
     try:
         return json.dumps(
             {str(key): row[key] for key in sorted(row, key=lambda item: str(item))},
-            ensure_ascii=True,
+            ensure_ascii=False,
             sort_keys=True,
             separators=(",", ":"),
             default=str,

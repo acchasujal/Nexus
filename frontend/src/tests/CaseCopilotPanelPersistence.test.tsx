@@ -5,10 +5,10 @@ import { apiClient } from '@/lib/apiClient'
 
 vi.mock('@/lib/apiClient', async () => {
   const actual = await vi.importActual<typeof import('@/lib/apiClient')>('@/lib/apiClient')
-  return { ...actual, apiClient: { ...actual.apiClient, queryCopilot: vi.fn() } }
+  return { ...actual, apiClient: { ...actual.apiClient, queryNexusCopilot: vi.fn() } }
 })
 
-const queryCopilot = vi.mocked(apiClient.queryCopilot)
+const queryNexusCopilot = vi.mocked(apiClient.queryNexusCopilot)
 
 function response(query: string, evidenceId: string) {
   return {
@@ -26,8 +26,8 @@ function response(query: string, evidenceId: string) {
 describe('Case Copilot transcript persistence', () => {
   beforeEach(() => {
     sessionStorage.clear()
-    queryCopilot.mockReset()
-    queryCopilot.mockImplementation(async ({ query }) => response(query, `EV-${query}`))
+    queryNexusCopilot.mockReset()
+    queryNexusCopilot.mockImplementation(async (query) => response(query, `EV-${query}`))
   })
 
   it('appends exchanges and persists citations across remount', async () => {

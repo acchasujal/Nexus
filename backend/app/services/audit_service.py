@@ -43,6 +43,8 @@ class AuditEventType(str, Enum):
     EVIDENCE_VIEWED = "evidence_viewed"
     EVIDENCE_HASH_COMPUTED = "evidence_hash_computed"
     EVIDENCE_VERIFIED = "evidence_verified"
+    EVIDENCE_INTEGRITY_VERIFIED = "evidence_integrity_verified"
+    EVIDENCE_INTEGRITY_MISMATCH = "evidence_integrity_mismatch"
     TIMELINE_VIEWED = "timeline_viewed"
 
     # Copilot

@@ -40,7 +40,7 @@ def _issue(row: Mapping[str, str], row_number: int, field_name: str, code: str, 
 
 def _source_record(row: Mapping[str, str], batch_id: str, occurred_at: datetime, file_name: str) -> SourceRecord:
     canonical = canonicalize_csv_row(row)
-    return SourceRecord(id=make_source_record_id(SourceType.INTEL_REPORT.value, row), batch_id=batch_id, source_type=SourceType.INTEL_REPORT.value, locator=f"{file_name}:{row.get('record_id', '')}", raw_excerpt=canonical, hash=hashlib.sha256(canonical.encode("utf-8")).hexdigest(), occurred_at=occurred_at, created_at=occurred_at, updated_at=occurred_at)
+    return SourceRecord(id=make_source_record_id(SourceType.INTEL_REPORT.value, row), batch_id=batch_id, source_type=SourceType.INTEL_REPORT.value, locator=f"{file_name}:{row.get('record_id', '')}", raw_excerpt=canonical, hash_algorithm="SHA-256", content_hash=hashlib.sha256(canonical.encode("utf-8")).hexdigest(), hash_version="v1", hashed_at=occurred_at, occurred_at=occurred_at, created_at=occurred_at, updated_at=occurred_at)
 
 
 def _parse_rows(result: CsvParseResult, batch_id: str, file_name: str) -> ParsedSourceBundle:

@@ -29,6 +29,9 @@ export function EvidenceDrawer({ relationshipId, evidenceId, onClose }: Evidence
   const [sourceError, setSourceError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
 
+  const [verifyStatus, setVerifyStatus] = useState<'IDLE' | 'VERIFYING' | 'VERIFIED' | 'MISMATCH'>('IDLE')
+  const [verifyReason, setVerifyReason] = useState<string | null>(null)
+
   useEffect(() => {
     if (!activeEvidenceId) {
       setSourceData(null)
@@ -71,6 +74,24 @@ export function EvidenceDrawer({ relationshipId, evidenceId, onClose }: Evidence
       setTimeout(() => setCopied(null), 1500)
     } catch {
       /* clipboard unavailable */
+    }
+  }
+
+  const handleVerify = async () => {
+    if (!activeEvidenceId) return
+    setVerifyStatus('VERIFYING')
+    setVerifyReason(null)
+    try {
+      const res = await apiClient.verifySourceRecord(activeEvidenceId)
+      if (res.verified) {
+        setVerifyStatus('VERIFIED')
+      } else {
+        setVerifyStatus('MISMATCH')
+        setVerifyReason(res.failure_reason || 'Hash mismatch')
+      }
+    } catch (e: any) {
+      setVerifyStatus('MISMATCH')
+      setVerifyReason(e.message || 'Verification failed')
     }
   }
 
@@ -153,6 +174,58 @@ export function EvidenceDrawer({ relationshipId, evidenceId, onClose }: Evidence
                     <span>Associated Cases:</span>
                     <span className="font-bold text-blue-700">{sourceData.case_ids.join(', ')}</span>
                   </div>
+                )}
+              </section>
+
+              <section className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 shadow-xs space-y-3">
+                <h3 className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                  Evidence Integrity
+                </h3>
+                
+                {sourceData.content_hash ? (
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-[10px] uppercase text-neutral-400 font-bold mb-1">
+                        {sourceData.hash_algorithm || 'SHA-256'} Hash
+                      </p>
+                      <p className="font-mono text-[10px] text-neutral-700 break-all bg-white border border-neutral-200 p-2 rounded">
+                        {sourceData.content_hash}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-neutral-200 pt-3">
+                      <div className="flex items-center gap-2">
+                        {verifyStatus === 'IDLE' && <span className="text-xs text-neutral-500 font-medium">Pending verification</span>}
+                        {verifyStatus === 'VERIFYING' && <span className="text-xs text-blue-600 font-medium animate-pulse">Verifying...</span>}
+                        {verifyStatus === 'VERIFIED' && (
+                          <>
+                            <Check className="h-4 w-4 text-emerald-600" />
+                            <span className="text-xs font-bold text-emerald-700">Integrity verified</span>
+                          </>
+                        )}
+                        {verifyStatus === 'MISMATCH' && (
+                          <>
+                            <ShieldQuestion className="h-4 w-4 text-red-600" />
+                            <span className="text-xs font-bold text-red-700">Integrity Mismatch</span>
+                          </>
+                        )}
+                      </div>
+                      <button
+                        onClick={handleVerify}
+                        disabled={verifyStatus === 'VERIFYING'}
+                        className="rounded bg-white border border-neutral-300 px-3 py-1 text-xs font-bold text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 disabled:opacity-50 transition-colors shadow-sm"
+                      >
+                        Verify Integrity
+                      </button>
+                    </div>
+                    {verifyStatus === 'MISMATCH' && verifyReason && (
+                      <p className="text-[10px] text-red-600 mt-2 bg-red-50 p-2 rounded border border-red-100">
+                        {verifyReason}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-neutral-500 italic">Hash not available for this legacy record.</p>
                 )}
               </section>
             </div>
