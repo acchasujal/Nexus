@@ -91,7 +91,7 @@ describe('Global Search to Network Explorer Context Propagation', () => {
   }, 15000)
 
   it('closes the entity drawer and removes the URL selection', async () => {
-    const Wrapper = createWrapper(['/network?node_id=person-0073'])
+    const Wrapper = createWrapper(['/network?node_id=person-0073&drawer=true'])
     render(
       <Wrapper>
         <LocationProbe />

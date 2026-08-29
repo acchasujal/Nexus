@@ -158,9 +158,10 @@ export default function NetworkExplorer() {
   const focusParam = searchParams.get('focus')
   const caseFocusParam = searchParams.get('case_focus')
   
+  const drawerParam = searchParams.get('drawer') === 'true'
   const [replay, setReplay] = useState<ReplayState>(snapshotParam === 'after' ? 'after' : 'before')
   const [edgeId, setEdgeId] = useState<string | null>(null)
-  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(nodeIdParam || null)
+  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(drawerParam ? nodeIdParam : null)
   const validFocusModes = ['ALL', '1HOP', '2HOP', 'CROSS_CASE'] as const
   type FocusMode = (typeof validFocusModes)[number]
   const parsedFocus = focusParam?.toUpperCase().replace('-', '')
@@ -181,8 +182,12 @@ export default function NetworkExplorer() {
     setReplay(snapshotParam === 'after' ? 'after' : 'before')
     const nextFocus = focusParam?.toUpperCase().replace('-', '')
     setDensityMode(validFocusModes.includes(nextFocus as FocusMode) ? nextFocus as FocusMode : 'ALL')
-    setSelectedEntityId(nodeIdParam)
-  }, [snapshotParam, focusParam, nodeIdParam])
+    if (drawerParam) {
+      setSelectedEntityId(nodeIdParam)
+    } else {
+      setSelectedEntityId(null)
+    }
+  }, [snapshotParam, focusParam, nodeIdParam, drawerParam])
 
   const batchNetwork = useBatchNetwork(batchIdParam, Boolean(batchIdParam))
   const candidatesQuery = useResolutionCandidates()
@@ -796,7 +801,7 @@ export default function NetworkExplorer() {
             onEdgeSelect={setEdgeId}
             onOpenDetails={(nId) => {
               setSelectedEntityId(nId)
-              if (nId !== nodeIdParam) updateNetworkUrl({ node_id: nId })
+              updateNetworkUrl({ node_id: nId, drawer: 'true' })
             }}
             onCaseFocusChange={(caseId) => updateNetworkUrl({ case_focus: caseId })}
           />
@@ -808,7 +813,7 @@ export default function NetworkExplorer() {
         entityId={selectedEntityId}
         onClose={() => {
           setSelectedEntityId(null)
-          updateNetworkUrl({ node_id: null })
+          updateNetworkUrl({ node_id: null, drawer: null })
         }}
         onFocusEntity={(nId) => {
           setSourceId(nId)
