@@ -230,43 +230,47 @@ export default function LeadInbox() {
               </div>
 
               {/* Breadcrumb path visualization */}
-              <div className="rounded-xl border border-neutral-200/80 bg-neutral-50/50 p-4 space-y-2">
-                <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-neutral-700">
-                  <Route className="h-4 w-4 text-blue-600" /> Grounded Evidence Graph Path
-                </h4>
-                <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto py-1">
-                  {lead.path_node_ids.map((id, idx) => (
-                    <div key={id} className="flex items-center gap-1.5 shrink-0">
-                      {idx > 0 && <span className="text-xs text-neutral-400 font-bold">→</span>}
-                      <Link
-                        to={`/network?node_id=${encodeURIComponent(id)}`}
-                        className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors shadow-2xs"
-                      >
-                        {nodeLabel(id)}
-                      </Link>
-                    </div>
-                  ))}
+              {((lead as any).path_node_ids || lead.path?.node_ids || lead.entity_ids)?.length > 0 && (
+                <div className="rounded-xl border border-neutral-200/80 bg-neutral-50/50 p-4 space-y-2">
+                  <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-neutral-700">
+                    <Route className="h-4 w-4 text-blue-600" /> Grounded Evidence Graph Path
+                  </h4>
+                  <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto py-1">
+                    {(((lead as any).path_node_ids || lead.path?.node_ids || lead.entity_ids) as string[]).map((id, idx) => (
+                      <div key={id} className="flex items-center gap-1.5 shrink-0">
+                        {idx > 0 && <span className="text-xs text-neutral-400 font-bold">→</span>}
+                        <Link
+                          to={`/network?node_id=${encodeURIComponent(id)}`}
+                          className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors shadow-2xs"
+                        >
+                          {nodeLabel(id)}
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Evidentiary Citations */}
-              <div className="border-t border-neutral-100 pt-3">
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-                  Authoritative Evidence Citations ({lead.supporting_evidence_ids.length})
-                </h4>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {lead.supporting_evidence_ids.map((evId) => (
-                    <button
-                      key={evId}
-                      onClick={() => openEvidence(evId)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-xs font-mono font-medium text-neutral-800 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer"
-                    >
-                      <FileText className="h-3 w-3 text-neutral-500" />
-                      {evId}
-                    </button>
-                  ))}
+              {((lead as any).supporting_evidence_ids || lead.evidence_ids)?.length > 0 && (
+                <div className="border-t border-neutral-100 pt-3">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+                    Authoritative Evidence Citations ({(((lead as any).supporting_evidence_ids || lead.evidence_ids) as string[]).length})
+                  </h4>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {(((lead as any).supporting_evidence_ids || lead.evidence_ids) as string[]).map((evId) => (
+                      <button
+                        key={evId}
+                        onClick={() => openEvidence(evId)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-xs font-mono font-medium text-neutral-800 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer"
+                      >
+                        <FileText className="h-3 w-3 text-neutral-500" />
+                        {evId}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Officer Decision Bar */}

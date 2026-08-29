@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from '@/components/AppShell'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { RoleGuard } from '@/components/RoleGuard'
+import { RouteErrorBoundary } from '@/components/RouteErrorBoundary'
 import type { UserRole } from '@shared/contracts/api'
 
 // Eager-loaded Shell pages
@@ -30,12 +31,14 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Login />,
+    errorElement: <RouteErrorBoundary />,
   },
 
   // Protected Intelligence Workspace Routes
   {
     path: '/',
     element: <AppShell />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         index: true,
