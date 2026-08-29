@@ -41,6 +41,56 @@ const NODE_STYLE: Record<string, { icon: typeof User; ring: string; chip: string
   Vehicle: { icon: Car, ring: 'border-slate-500', chip: 'text-slate-900 bg-slate-50 border border-slate-200', bg: 'bg-slate-500' },
 }
 
+export function buildRegionSubgraph(graph: NexusNetworkResponse, region: string): NexusNetworkResponse {
+  if (!graph || region === 'ALL' || !region?.trim()) {
+    return graph
+  }
+
+  const normalizedRegion = region.trim().toLowerCase()
+  const regionCaseIds = new Set<string>()
+  const knownRegions = new Set<string>()
+
+  graph.nodes.forEach((node) => {
+    const district = typeof node.properties?.district === 'string' ? node.properties.district.trim() : ''
+    if (district) {
+      knownRegions.add(district.toLowerCase())
+    }
+    if (node.entity_type === 'Case' && district.toLowerCase() === normalizedRegion) {
+      node.case_ids.forEach((caseId) => regionCaseIds.add(caseId))
+    }
+  })
+
+  if (!knownRegions.has(normalizedRegion) || regionCaseIds.size === 0) {
+    return {
+      ...graph,
+      nodes: [],
+      edges: [],
+      total_nodes: 0,
+      total_edges: 0,
+    }
+  }
+
+  const relevantNodeIds = new Set<string>()
+  graph.nodes.forEach((node) => {
+    if ((node.case_ids ?? []).some((caseId) => regionCaseIds.has(caseId))) {
+      relevantNodeIds.add(node.id)
+    }
+  })
+
+  const relevantEdges = graph.edges.filter(
+    (edge) => relevantNodeIds.has(edge.source_id) && relevantNodeIds.has(edge.target_id),
+  )
+  const relevantNodes = graph.nodes.filter((node) => relevantNodeIds.has(node.id))
+
+  return {
+    ...graph,
+    nodes: relevantNodes,
+    edges: relevantEdges,
+    total_nodes: relevantNodes.length,
+    total_edges: relevantEdges.length,
+  }
+}
+
 export function GlobalNetworkCanvas({
   graph,
   diff,
@@ -93,6 +143,7 @@ export function GlobalNetworkCanvas({
   }, [caseFocus, caseOptions])
 
   const [caseFilter, setCaseFilter] = useState<string>(resolvedInitialFilter)
+  const [selectedRegion, setSelectedRegion] = useState<string>('ALL')
 
   // Sync filter if resolved value changes (e.g. graph data loads after mount)
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -104,6 +155,36 @@ export function GlobalNetworkCanvas({
   }, [resolvedInitialFilter, caseFocus, caseFilter])
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  const regionOptions = useMemo(() => {
+    const districts = new Set<string>()
+    graph.nodes.forEach((node) => {
+      const rawDistrict = node.properties?.district
+      const districtName = typeof rawDistrict === 'string' ? rawDistrict.trim() : ''
+      if (districtName) districts.add(districtName)
+    })
+    return ['ALL', ...Array.from(districts).sort((a, b) => a.localeCompare(b))]
+  }, [graph.nodes])
+
+  const effectiveRegionOptions = useMemo(() => {
+    if (selectedRegion && selectedRegion !== 'ALL' && !regionOptions.includes(selectedRegion)) {
+      return [...regionOptions, selectedRegion]
+    }
+    return regionOptions
+  }, [regionOptions, selectedRegion])
+
+  const regionNodeIds = useMemo(() => {
+    if (selectedRegion === 'ALL') return new Set<string>()
+
+    const ids = new Set<string>()
+    graph.nodes.forEach((node) => {
+      const districtName = typeof node.properties?.district === 'string' ? node.properties.district.trim() : ''
+      if (node.entity_type === 'Case' && districtName.toLowerCase() === selectedRegion.toLowerCase()) {
+        ids.add(node.id)
+      }
+    })
+    return ids
+  }, [graph.nodes, selectedRegion])
+
   const toggleType = (t: string) =>
     setHiddenTypes((prev) => {
       const next = new Set(prev)
@@ -112,9 +193,13 @@ export function GlobalNetworkCanvas({
       return next
     })
 
+  const regionGraph = useMemo(() => buildRegionSubgraph(graph, selectedRegion), [graph, selectedRegion])
+
   const visibleRawNodes = useMemo(
-    () => graph.nodes.filter((n) => !hiddenTypes.has(n.entity_type) && (caseFilter === 'ALL' || n.case_ids.includes(caseFilter) || n.id === selectedNode)),
-    [graph, hiddenTypes, caseFilter, selectedNode],
+    () => regionGraph.nodes.filter(
+      (n) => !hiddenTypes.has(n.entity_type) && (caseFilter === 'ALL' || n.case_ids.includes(caseFilter) || n.id === selectedNode),
+    ),
+    [regionGraph, hiddenTypes, caseFilter, selectedNode],
   )
 
   const visibleIds = useMemo(() => new Set(visibleRawNodes.map((n) => n.id)), [visibleRawNodes])
@@ -136,7 +221,7 @@ export function GlobalNetworkCanvas({
 
   // Transform edges for D3
   const d3Edges = useMemo<D3GraphEdge[]>(() => {
-    return graph.edges
+    return regionGraph.edges
       .filter((e) => visibleIds.has(e.source_id) && visibleIds.has(e.target_id))
       .map((e) => ({
         id: e.id,
@@ -149,7 +234,7 @@ export function GlobalNetworkCanvas({
         properties: e.properties,
         timestamp: e.recorded_at,
       }))
-  }, [graph.edges, visibleIds])
+  }, [regionGraph.edges, visibleIds])
 
   const typeOptions = [...new Set(graph.nodes.map((n) => n.entity_type))]
   const edgeTypeOptions = [...new Set(graph.edges.map((e) => e.edge_type))]
@@ -160,6 +245,20 @@ export function GlobalNetworkCanvas({
       {highlightDelta && (
         <div className="absolute right-2 sm:right-3 top-2 sm:top-3 z-10 rounded-lg border border-emerald-200 bg-emerald-50 px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-bold text-emerald-900 shadow-md">
           {addedNodes.size} nodes / {addedEdges.size} links unified
+        </div>
+      )}
+
+      {selectedRegion !== 'ALL' && (
+        <div className="absolute left-2 sm:left-3 top-2 sm:top-3 z-10 rounded-lg border border-violet-200 bg-violet-50 px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-bold text-violet-900 shadow-md">
+          {regionGraph.total_nodes === 0 ? `No cases found for region: ${selectedRegion}` : `Showing region: ${selectedRegion}`}
+        </div>
+      )}
+
+      {selectedRegion !== 'ALL' && regionGraph.total_nodes === 0 && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-[1px]">
+          <div className="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold text-neutral-700 shadow-sm">
+            No cases found for region: {selectedRegion}
+          </div>
         </div>
       )}
 
@@ -235,6 +334,19 @@ export function GlobalNetworkCanvas({
               </button>
             ))}
             <span className="mx-0.5 h-3 sm:h-4 w-px bg-neutral-200 shrink-0" />
+            <label htmlFor="region-focus" className="font-bold uppercase tracking-wider text-neutral-600 text-[10px] sm:text-xs shrink-0">Region</label>
+            <select
+              id="region-focus"
+              aria-label="Region"
+              value={selectedRegion}
+              onChange={(e) => setSelectedRegion(e.target.value)}
+              className="rounded-md border border-neutral-300 bg-white px-2 py-0.5 text-[11px] sm:text-xs text-neutral-900 focus:border-violet-500 focus:outline-none shadow-2xs"
+            >
+              {effectiveRegionOptions.map((region) => (
+                <option key={region} value={region}>{region === 'ALL' ? 'All Regions' : region}</option>
+              ))}
+            </select>
+            <span className="mx-0.5 h-3 sm:h-4 w-px bg-neutral-200 shrink-0" />
             <label htmlFor="case-focus" className="font-bold uppercase tracking-wider text-neutral-600 text-[10px] sm:text-xs shrink-0">Focus</label>
             <select
               id="case-focus"
@@ -252,6 +364,8 @@ export function GlobalNetworkCanvas({
             </select>
           </div>
         }
+        selectedRegion={selectedRegion}
+        regionNodeIds={regionNodeIds}
         className="flex-1 min-h-0"
       />
     </div>

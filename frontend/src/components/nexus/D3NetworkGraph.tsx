@@ -62,6 +62,8 @@ export interface D3NetworkGraphProps {
   selectedEdgeId?: string | null
   pathNodeIds?: string[] | null
   pathEdgeIds?: string[] | null
+  selectedRegion?: string | null
+  regionNodeIds?: Set<string> | null
   onNodeSelect?: (nodeId: string | null) => void
   onEdgeSelect?: (edgeId: string | null) => void
   onSetSource?: (nodeId: string, nodeLabel: string) => void
@@ -161,6 +163,8 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
   selectedEdgeId,
   pathNodeIds,
   pathEdgeIds,
+  selectedRegion,
+  regionNodeIds,
   onNodeSelect,
   onEdgeSelect,
   onSetSource,
@@ -195,7 +199,9 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
   // Pathfinder active sets
   const pathNodeSet = useMemo(() => new Set(pathNodeIds ?? []), [pathNodeIds])
   const pathEdgeSet = useMemo(() => new Set(pathEdgeIds ?? []), [pathEdgeIds])
+  const regionNodeSet = useMemo(() => regionNodeIds ?? new Set<string>(), [regionNodeIds])
   const isPathActive = pathNodeSet.size > 0
+  const isRegionActive = Boolean(selectedRegion && selectedRegion !== 'ALL')
 
   const handleSelectNode = useCallback((nodeId: string | null) => {
     setInternalNodeId(nodeId)
@@ -496,6 +502,11 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
         return 2
       })
       .attr('opacity', (d) => {
+        if (isRegionActive) {
+          const src = typeof d.source === 'object' ? (d.source as D3GraphNode).id : d.source
+          const tgt = typeof d.target === 'object' ? (d.target as D3GraphNode).id : d.target
+          return regionNodeSet.has(src) || regionNodeSet.has(tgt) ? 1.0 : 0.12
+        }
         if (!activeNodeId) return 0.85
         const src = typeof d.source === 'object' ? (d.source as D3GraphNode).id : d.source
         const tgt = typeof d.target === 'object' ? (d.target as D3GraphNode).id : d.target
@@ -530,6 +541,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
         })
         .attr('stroke-width', (d) => (activeNodeId === d.id || (highlightDelta && d.isDelta) ? 4.5 : neighborhood?.has(d.id) ? 3.0 : 2.0))
         .attr('opacity', (d) => {
+          if (isRegionActive) return regionNodeSet.has(d.id) ? 1.0 : 0.2
           if (!activeNodeId) return 1.0
           if (activeNodeId === d.id) return 1.0
           return neighborhood?.has(d.id) ? 0.9 : 0.08
@@ -547,6 +559,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       })
       .attr('opacity', (d) => {
         const node = d as D3GraphNode
+        if (isRegionActive) return regionNodeSet.has(node.id) ? 1.0 : 0.2
         if (!activeNodeId) return 1.0
         if (node.id === activeNodeId) return 1.0
         return neighborhood?.has(node.id) ? 1.0 : 0.12
@@ -562,6 +575,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       .select('text')
       .attr('opacity', (d) => {
         const node = d as D3GraphNode
+        if (isRegionActive) return regionNodeSet.has(node.id) ? 1.0 : 0.2
         if (!activeNodeId) return 1.0
         if (node.id === activeNodeId) return 1.0
         return neighborhood?.has(node.id) ? 1.0 : 0.15
@@ -571,12 +585,13 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       .select('.node-label-group')
       .attr('opacity', (d) => {
         const node = d as D3GraphNode
+        if (isRegionActive) return regionNodeSet.has(node.id) ? 1.0 : 0.2
         if (!activeNodeId) return 1.0
         if (node.id === activeNodeId) return 1.0
         return neighborhood?.has(node.id) ? 1.0 : 0.12
       })
 
-  }, [activeNodeId, activeEdgeId, neighborhood, highlightDelta])
+  }, [activeNodeId, activeEdgeId, neighborhood, highlightDelta, isRegionActive, regionNodeSet])
 
   // Dedicated Effect: Live Timeline Scrubber Filtering
   useEffect(() => {
@@ -799,6 +814,11 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       })
       .attr('stroke-dasharray', (d) => (d.derivation_class === 'DERIVED' || String(d.label).includes('DEPENDENCY') ? '5,4' : null))
       .attr('opacity', (d) => {
+        if (isRegionActive) {
+          const src = (d.source as D3GraphNode).id
+          const tgt = (d.target as D3GraphNode).id
+          return regionNodeSet.has(src) || regionNodeSet.has(tgt) ? 1.0 : 0.12
+        }
         if (isPathActive) {
           return pathEdgeSet.has(d.id) ? 1.0 : 0.12
         }
@@ -991,6 +1011,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       })
       .attr('filter', (d) => (isPathActive && pathNodeSet.has(d.id) ? 'drop-shadow(0 0 8px rgba(37,99,235,0.7))' : 'drop-shadow(0 2px 5px rgba(0,0,0,0.12))'))
       .attr('opacity', (d) => {
+        if (isRegionActive) return regionNodeSet.has(d.id) ? 1.0 : 0.2
         if (isPathActive) {
           return pathNodeSet.has(d.id) ? 1.0 : 0.18
         }

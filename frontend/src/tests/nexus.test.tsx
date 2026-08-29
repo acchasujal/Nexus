@@ -16,9 +16,11 @@ import { setupServer } from 'msw/node'
 import { nexusHandlers, nexusState } from '@/lib/mocks/nexusHandlers'
 import { DerivationBadge } from '@/components/nexus/DerivationBadge'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
+import { buildRegionSubgraph } from '@/components/nexus/GlobalNetworkCanvas'
 import EntityFusion from '@/pages/EntityFusion'
 import NetworkExplorer from '@/pages/NetworkExplorer'
 import LeadInbox from '@/pages/LeadInbox'
+import { BEFORE_NODES, BEFORE_EDGES } from '@/lib/mocks/nexusFixture'
 
 const server = setupServer(...nexusHandlers)
 
@@ -154,6 +156,46 @@ describe('NEXUS Frontend Prototype Suite', () => {
   })
 
   describe('NetworkExplorer', () => {
+    it('filters the graph to the selected region subgraph at the data layer', () => {
+      const graph = {
+        snapshot_id: 'test-region',
+        state: 'before',
+        nodes: BEFORE_NODES,
+        edges: BEFORE_EDGES,
+        total_nodes: BEFORE_NODES.length,
+        total_edges: BEFORE_EDGES.length,
+      }
+
+      const mysuruGraph = buildRegionSubgraph(graph, 'Mysuru')
+
+      expect(mysuruGraph.nodes.map((node) => node.id)).toEqual(
+        expect.arrayContaining(['CASE-141', 'P-RAFIQ-K', 'ACC-7731', 'PH-A'])
+      )
+      expect(mysuruGraph.nodes.map((node) => node.id)).not.toContain('CASE-207')
+      expect(mysuruGraph.edges.map((edge) => edge.id)).not.toContain('E-TXN-55')
+      expect(mysuruGraph.edges.map((edge) => edge.id)).not.toContain('E-TXN-71')
+    })
+
+    it('restores the full graph when selecting All Regions and returns an empty subgraph for unknown regions', () => {
+      const graph = {
+        snapshot_id: 'test-region',
+        state: 'before',
+        nodes: BEFORE_NODES,
+        edges: BEFORE_EDGES,
+        total_nodes: BEFORE_NODES.length,
+        total_edges: BEFORE_EDGES.length,
+      }
+
+      expect(buildRegionSubgraph(graph, 'ALL')).toMatchObject({
+        total_nodes: BEFORE_NODES.length,
+        total_edges: BEFORE_EDGES.length,
+      })
+
+      const emptyGraph = buildRegionSubgraph(graph, 'Unknown District')
+      expect(emptyGraph.nodes).toHaveLength(0)
+      expect(emptyGraph.edges).toHaveLength(0)
+    })
+
     it('renders snapshot replay controls and Before resolution graph', async () => {
       render(<NetworkExplorer />, { wrapper: createWrapper() })
 
@@ -187,6 +229,22 @@ describe('NEXUS Frontend Prototype Suite', () => {
       await waitFor(() => {
         expect(screen.getByText(/Connected in/i)).toBeInTheDocument()
         expect(screen.getByText(/Investigative Chain Steps/i)).toBeInTheDocument()
+      })
+    })
+
+    it('renders a region selector and shows the selected district in the explorer header', async () => {
+      render(<NetworkExplorer />, { wrapper: createWrapper() })
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/Region/i)).toBeInTheDocument()
+      })
+
+      fireEvent.change(screen.getByLabelText(/Region/i), {
+        target: { value: 'Bengaluru' },
+      })
+
+      await waitFor(() => {
+        expect(screen.getByText(/Showing region: Bengaluru/i)).toBeInTheDocument()
       })
     })
   })

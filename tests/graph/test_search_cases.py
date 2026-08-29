@@ -123,6 +123,13 @@ def test_search_cases_by_district(graph_service: GraphService) -> None:
     assert res["cases"][0]["node_id"] == "c2"
 
 
+def test_search_cases_by_district_empty_result(graph_service: GraphService) -> None:
+    res = graph_service.search_cases(district="Unknown District")
+    assert res["count"] == 0
+    assert res["returned"] == 0
+    assert res["cases"] == []
+
+
 def test_search_cases_combined_filters(graph_service: GraphService) -> None:
     # Vehicle theft in Belagavi
     res = graph_service.search_cases(offence_category="vehicle_theft", district="Belagavi")
