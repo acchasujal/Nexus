@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import { useSearchParams, useLocation } from 'react-router-dom'
-import { Users, CheckCircle2, HelpCircle, AlertTriangle, XCircle, ShieldCheck, Search, ArrowRight } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams, useLocation, Link } from 'react-router-dom'
+import { Users, CheckCircle2, HelpCircle, AlertTriangle, XCircle, Search, ArrowRight, ShieldAlert, Phone, MapPin, Tag } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
@@ -28,6 +28,30 @@ export default function Entities() {
   const [matches, setMatches] = useState<EntityResolutionMatchResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const initialResolvedRef = useRef(false)
+
+  const executeResolve = useCallback(async (params: { name?: string; phone?: string; vehicle?: string; address?: string }) => {
+    const { name, phone, vehicle, address } = params
+    if (!name && !phone && !vehicle && !address) return
+
+    setIsLoading(true)
+    setHasSearched(true)
+    try {
+      const response = await apiClient.resolveEntities({
+        full_name: name || undefined,
+        phone_number: phone || undefined,
+        vehicle_number: vehicle || undefined,
+        address_text: address || undefined,
+        confidence_threshold: 0.45,
+      })
+      setMatches(response.matches || [])
+    } catch (err) {
+      console.error('Entity resolution failed:', err)
+      setMatches([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     const name = searchParams.get('name') ?? searchParams.get('full_name') ?? (location.state as any)?.name ?? (location.state as any)?.full_name ?? ''
@@ -40,48 +64,45 @@ export default function Entities() {
       setPhoneQuery(phone)
       setVehicleQuery(vehicle)
       setAddressQuery(address)
+
+      if (!initialResolvedRef.current) {
+        initialResolvedRef.current = true
+        executeResolve({ name, phone, vehicle, address })
+      }
     }
-  }, [searchParams, location.state])
+  }, [searchParams, location.state, executeResolve])
 
   const handleResolve = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-    setHasSearched(true)
-    try {
-      const response = await apiClient.resolveEntities({
-        full_name: nameQuery,
-        phone_number: phoneQuery,
-        vehicle_number: vehicleQuery,
-        address_text: addressQuery,
-        confidence_threshold: 0.45,
-      })
-      setMatches(response.matches || [])
-    } catch (err) {
-      console.error('Entity resolution failed:', err)
-      setMatches([])
-    } finally {
-      setIsLoading(false)
-    }
+    executeResolve({
+      name: nameQuery,
+      phone: phoneQuery,
+      vehicle: vehicleQuery,
+      address: addressQuery,
+    })
   }
 
-  const getStatusBadge = (status: string, confidence: number) => {
-    switch (status) {
+  const getStatusBadge = (status?: string, confidence?: number) => {
+    const safeConfidence = typeof confidence === 'number' ? Math.round(confidence * 100) : 100
+    const safeStatus = String(status || 'MATCHED').toUpperCase()
+
+    switch (safeStatus) {
       case 'MATCHED':
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-200 shadow-2xs">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> MATCHED ({Math.round(confidence * 100)}%)
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> MATCHED ({safeConfidence}%)
           </span>
         )
       case 'PROBABLE_MATCH':
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-900 border border-amber-200 shadow-2xs">
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-600" /> PROBABLE MATCH ({Math.round(confidence * 100)}%)
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-600" /> PROBABLE MATCH ({safeConfidence}%)
           </span>
         )
       case 'REVIEW_REQUIRED':
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-800 border border-blue-200 shadow-2xs">
-            <HelpCircle className="h-3.5 w-3.5 text-blue-600" /> REVIEW REQUIRED ({Math.round(confidence * 100)}%)
+            <HelpCircle className="h-3.5 w-3.5 text-blue-600" /> REVIEW REQUIRED ({safeConfidence}%)
           </span>
         )
       default:
@@ -98,7 +119,7 @@ export default function Entities() {
       {/* Header */}
       <PageHeader
         icon={Users}
-        title="Entity Resolution &amp; Cross-Source Matching"
+        title="Entity Resolution & Cross-Source Matching"
         subtitle="Indian phonetic disambiguation, normalized phone MSISDNs, and deterministic corroboration engine."
       />
 
@@ -194,47 +215,90 @@ export default function Entities() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {matches.map((m) => (
-                <div
-                  key={m.entity_id}
-                  className="rounded-xl border border-neutral-200/90 bg-white p-5 shadow-xs space-y-4 hover:border-neutral-300 transition-all"
-                >
-                  <div className="flex items-start justify-between gap-2 border-b border-neutral-100 pb-3">
-                    <div>
-                      <h3 className="text-base font-bold text-neutral-900">{m.canonical_name}</h3>
-                      <div className="text-xs text-neutral-500 font-mono mt-0.5">{m.entity_id}</div>
-                    </div>
-                    {getStatusBadge(m.match_status, m.confidence_score)}
-                  </div>
+              {matches.map((m, idx) => {
+                const nodeId = m.matched_node_id || (m as any).entity_id || `match-${idx}`
+                const canonicalName = m.properties?.full_name || m.properties?.name || (m as any).canonical_name || (m as any).label || nodeId
+                const status = m.status || (m as any).match_status || 'MATCHED'
+                const confidence = typeof m.confidence === 'number' ? m.confidence : typeof (m as any).confidence_score === 'number' ? (m as any).confidence_score : 1.0
+                const matchedFields = ((m.matched_fields || (m as any).matched_attributes || (m as any).matched_properties || []) as string[])
+                const reason = m.reason || 'Corroborated cross-case entity match based on shared demographic and telephony attributes.'
+                const properties = m.properties || {}
 
-                  <div className="space-y-2 text-xs">
-                    <div className="text-neutral-700">
-                      <strong>Match Decision Basis:</strong> {m.reason}
-                    </div>
-                    {m.matched_attributes.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {m.matched_attributes.map((attr) => (
-                          <span
-                            key={attr}
-                            className="rounded-md bg-blue-50 border border-blue-200 px-2 py-0.5 text-[11px] font-semibold text-blue-800"
-                          >
-                            ✓ {attr.replaceAll('_', ' ')}
-                          </span>
-                        ))}
+                return (
+                  <div
+                    key={nodeId}
+                    className="rounded-xl border border-neutral-200/90 bg-white p-5 shadow-xs space-y-4 hover:border-neutral-300 transition-all"
+                  >
+                    <div className="flex items-start justify-between gap-2 border-b border-neutral-100 pb-3">
+                      <div>
+                        <h3 className="text-base font-bold text-neutral-900">{canonicalName}</h3>
+                        <div className="text-xs text-neutral-500 font-mono mt-0.5">{nodeId}</div>
                       </div>
-                    )}
-                  </div>
+                      {getStatusBadge(status, confidence)}
+                    </div>
 
-                  <div className="pt-2 border-t border-neutral-100 flex justify-end">
-                    <a
-                      href={`/network?node_id=${encodeURIComponent(m.entity_id)}`}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-900"
-                    >
-                      View in Graph Explorer <ArrowRight className="h-3.5 w-3.5" />
-                    </a>
+                    <div className="space-y-2 text-xs">
+                      <div className="text-neutral-700 leading-relaxed">
+                        <strong className="text-neutral-900">Match Decision Basis:</strong> {reason}
+                      </div>
+
+                      {matchedFields.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                          <span className="text-[11px] font-bold text-neutral-500 mr-1 flex items-center gap-1">
+                            <Tag className="h-3 w-3" /> Corroborated:
+                          </span>
+                          {matchedFields.map((attr) => (
+                            <span
+                              key={attr}
+                              className="rounded-md bg-blue-50 border border-blue-200 px-2 py-0.5 text-[11px] font-semibold text-blue-800"
+                            >
+                              ✓ {String(attr).replaceAll('_', ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Display key properties if present */}
+                      {Object.keys(properties).length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-neutral-100 text-[11px] text-neutral-600">
+                          {properties.phone_number && (
+                            <div className="flex items-center gap-1.5 text-neutral-700">
+                              <Phone className="h-3 w-3 text-neutral-400" />
+                              <span>{String(properties.phone_number)}</span>
+                            </div>
+                          )}
+                          {properties.district && (
+                            <div className="flex items-center gap-1.5 text-neutral-700">
+                              <MapPin className="h-3 w-3 text-neutral-400" />
+                              <span>{String(properties.district)}</span>
+                            </div>
+                          )}
+                          {properties.role && (
+                            <div className="flex items-center gap-1.5 text-neutral-700">
+                              <ShieldAlert className="h-3 w-3 text-amber-500" />
+                              <span>Role: {String(properties.role)}</span>
+                            </div>
+                          )}
+                          {Array.isArray(properties.aliases) && properties.aliases.length > 0 && (
+                            <div className="col-span-full text-neutral-600">
+                              <span className="font-semibold text-neutral-500">Aliases:</span> {properties.aliases.join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-3 border-t border-neutral-100 flex justify-end">
+                      <Link
+                        to={`/network?node_id=${encodeURIComponent(nodeId)}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors cursor-pointer shadow-2xs"
+                      >
+                        Inspect on Canvas <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
