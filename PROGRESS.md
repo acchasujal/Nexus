@@ -5,7 +5,7 @@
 - **Event / Problem Statement:** SIH 2026 PS 26189 (Ministry of Home Affairs / NCRB — Women Safety Division)
 - **Permanent Branch:** `main` (Production, Integration & Demo Base)
 - **Integration Status:** Person 1 (Graph Intelligence), Person 2 (Data & Entity Resolution), Person 3 (Backend/Evidence/Copilot), Person 5 (Research/Validation), and Person 6 (Integration/Demo) fully integrated into `main` with Person 4 frontend preserved and running.
-- **Test Suite Status:** 626 Pytest unit/integration tests passing (100%), 101 Vitest frontend tests passing (100%), Ground Truth ER benchmark passing (100% Precision/Recall), Frontend production build clean (0 TypeScript errors).
+- **Test Suite Status:** 626 Pytest unit/integration tests passing (100%), 105 Vitest frontend tests passing (100%), Ground Truth ER benchmark passing (100% Precision/Recall), Frontend production build clean (0 TypeScript errors).
 - **Lint Status:** 0 errors across backend, shared, and tests (`ruff check` clean).
 - **Last Updated:** 2026-08-29
 

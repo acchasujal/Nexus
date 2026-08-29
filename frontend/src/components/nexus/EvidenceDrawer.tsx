@@ -83,8 +83,9 @@ export function EvidenceDrawer({ relationshipId, evidenceId, onClose }: Evidence
   return (
     <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-label="Relationship evidence drawer">
       <div className="absolute inset-0 bg-neutral-950/40 backdrop-blur-xs" onClick={onClose} />
-      <aside className="relative flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-neutral-200 bg-white text-neutral-900 shadow-2xl">
+      <aside className="relative flex h-full w-full max-w-full sm:max-w-md md:max-w-lg flex-col overflow-y-auto border-l border-neutral-200 bg-white text-neutral-900 shadow-2xl">
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-5 py-4 backdrop-blur shadow-xs">
+
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-blue-700">
               {activeEvidenceId ? 'Source Evidence Record' : 'Relationship Evidence Chain'}

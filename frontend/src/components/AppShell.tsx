@@ -90,12 +90,14 @@ export function AppShell() {
       {/* Sidebar Navigation */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* Main Layout Area */}
+      {/* Main Layout Area - 0 left padding on mobile/tablet, responsive on desktop */}
       <div
-        className="flex-1 flex flex-col min-w-0 transition-all duration-200"
-        style={{ paddingLeft: `${sidebarCollapsed ? 56 : 240}px` }}
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-200 pl-0 ${
+          sidebarCollapsed ? 'lg:pl-14' : 'lg:pl-60'
+        }`}
       >
         <Header onMenuToggle={() => setSidebarOpen(true)} />
+
 
         {/* Offline Banner */}
         {!isOnline && (

@@ -122,8 +122,9 @@ export function EntityDetailsDrawer({
       />
 
       {/* Drawer Body */}
-      <aside className="relative flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-neutral-200 bg-white text-neutral-900 shadow-2xl z-10 animate-in slide-in-from-right duration-200">
+      <aside className="relative flex h-full w-full max-w-full sm:max-w-md md:max-w-lg flex-col overflow-y-auto border-l border-neutral-200 bg-white text-neutral-900 shadow-2xl z-10 animate-in slide-in-from-right duration-200">
         {/* Sticky Header */}
+
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-5 py-4 backdrop-blur shadow-xs">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-100 border border-neutral-200 shadow-2xs">

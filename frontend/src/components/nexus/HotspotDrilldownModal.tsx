@@ -34,7 +34,7 @@ export function HotspotDrilldownModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
       aria-labelledby="drilldown-title"
@@ -42,20 +42,20 @@ export function HotspotDrilldownModal({
         if (e.key === 'Escape') onClose()
       }}
     >
-      <div className="relative flex max-h-[90vh] w-full max-w-4xl flex-col rounded-2xl border border-neutral-200 bg-white shadow-2xl overflow-hidden">
+      <div className="relative flex max-h-[95vh] sm:max-h-[90vh] w-full max-w-4xl flex-col rounded-2xl border border-neutral-200 bg-white shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-neutral-200 bg-neutral-50 px-6 py-5">
+        <div className="flex items-start justify-between border-b border-neutral-200 bg-neutral-50 px-4 sm:px-6 py-4 sm:py-5">
           <div className="space-y-1">
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-900 border border-red-200">
                 <AlertTriangle className="h-3.5 w-3.5 text-red-600" />
                 RED FLAG HOTSPOT
               </span>
-              <h2 id="drilldown-title" className="text-xl font-bold text-neutral-900">
+              <h2 id="drilldown-title" className="text-lg sm:text-xl font-bold text-neutral-900">
                 District: {district}
               </h2>
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-600">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-neutral-600">
               <span>
                 <strong>Cases:</strong> {drilldown?.case_count ?? '...'} registered
               </span>
@@ -77,7 +77,7 @@ export function HotspotDrilldownModal({
 
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-700 transition-colors cursor-pointer"
+            className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-700 transition-colors cursor-pointer shrink-0 ml-2"
             aria-label="Close modal"
           >
             <X className="h-5 w-5" />
@@ -85,10 +85,10 @@ export function HotspotDrilldownModal({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-neutral-200 bg-white px-6">
+        <div className="flex border-b border-neutral-200 bg-white px-3 sm:px-6 overflow-x-auto whitespace-nowrap">
           <button
             onClick={() => setActiveTab('cases')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'cases'
                 ? 'border-blue-600 text-blue-700'
                 : 'border-transparent text-neutral-600 hover:text-neutral-900'
@@ -99,7 +99,7 @@ export function HotspotDrilldownModal({
           </button>
           <button
             onClick={() => setActiveTab('entities')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'entities'
                 ? 'border-blue-600 text-blue-700'
                 : 'border-transparent text-neutral-600 hover:text-neutral-900'
@@ -110,7 +110,7 @@ export function HotspotDrilldownModal({
           </button>
           <button
             onClick={() => setActiveTab('offenders')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'offenders'
                 ? 'border-blue-600 text-blue-700'
                 : 'border-transparent text-neutral-600 hover:text-neutral-900'
@@ -121,7 +121,7 @@ export function HotspotDrilldownModal({
           </button>
           <button
             onClick={() => setActiveTab('links')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'links'
                 ? 'border-blue-600 text-blue-700'
                 : 'border-transparent text-neutral-600 hover:text-neutral-900'
@@ -132,7 +132,7 @@ export function HotspotDrilldownModal({
           </button>
           <button
             onClick={() => setActiveTab('evidence')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'evidence'
                 ? 'border-blue-600 text-blue-700'
                 : 'border-transparent text-neutral-600 hover:text-neutral-900'
@@ -144,7 +144,8 @@ export function HotspotDrilldownModal({
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+
           {isLoading ? (
             <LoadingSkeleton layout="detail" />
           ) : error ? (

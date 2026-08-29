@@ -151,10 +151,10 @@ export default function Patterns() {
       </div>
 
       {/* Primary Tab Navigation */}
-      <div className="flex flex-wrap items-center border-b border-neutral-200 gap-1">
+      <div className="flex items-center border-b border-neutral-200 gap-1 overflow-x-auto whitespace-nowrap sm:flex-wrap">
         <button
           onClick={() => setActiveTab('hotspots')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+          className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === 'hotspots'
               ? 'border-red-600 text-red-700 bg-red-50/50'
               : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
@@ -166,7 +166,7 @@ export default function Patterns() {
 
         <button
           onClick={() => setActiveTab('radar')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+          className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === 'radar'
               ? 'border-amber-600 text-amber-800 bg-amber-50/50'
               : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
@@ -178,7 +178,7 @@ export default function Patterns() {
 
         <button
           onClick={() => setActiveTab('combined')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+          className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === 'combined'
               ? 'border-purple-600 text-purple-800 bg-purple-50/50'
               : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
@@ -190,7 +190,7 @@ export default function Patterns() {
 
         <button
           onClick={() => setActiveTab('communities')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+          className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === 'communities'
               ? 'border-blue-600 text-blue-800 bg-blue-50/50'
               : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'

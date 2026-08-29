@@ -247,12 +247,13 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
           {/* Search Dropdown */}
           {showResults && (
-            <div className="absolute left-0 right-0 top-full mt-1.5 max-h-80 overflow-y-auto rounded-lg border border-neutral-200 bg-white shadow-2xl z-50 p-2 space-y-2">
+            <div className="absolute -left-10 sm:left-0 w-[calc(100vw-5rem)] sm:w-full max-w-lg top-full mt-1.5 max-h-80 overflow-y-auto rounded-xl border border-neutral-200 bg-white shadow-2xl z-50 p-2 space-y-2">
               {isSearching && (
                 <div className="flex items-center gap-2 p-3 text-xs text-neutral-600">
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" /> Searching intelligence graph…
                 </div>
               )}
+
 
               {isError && (
                 <div className="p-3 text-center text-xs text-rose-600">
