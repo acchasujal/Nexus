@@ -8,7 +8,7 @@ import { useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   Inbox, Route, ThumbsUp, ThumbsDown, ShieldCheck, ShieldQuestion,
-  MessageSquareCode, FileText, AlertOctagon, ChevronRight, RefreshCw, Sparkles,
+  MessageSquareCode, FileText, AlertOctagon, ChevronRight, RefreshCw, Sparkles, CheckCircle2, XCircle,
 } from 'lucide-react'
 import { useLeads, useScanLeads, useDecideLead, useNexusCopilot, useNexusNetwork } from '@/hooks/useNexus'
 import { DerivationBadge } from '@/components/nexus/DerivationBadge'
@@ -17,6 +17,9 @@ import { ErrorState } from '@/components/ErrorState'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import { MarkdownContent } from '@/components/nexus/MarkdownContent'
 import { EvidenceDossierActions } from '@/components/EvidenceDossierActions'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { FilterPills, type FilterPillOption } from '@/components/ui/FilterPills'
+import { SectionCard } from '@/components/ui/SectionCard'
 
 /** Maps canonical source record IDs to the most representative graph edge
  *  that carries them in its evidence_ids. Derived from NEXUS golden fixture. */
@@ -30,9 +33,9 @@ const SOURCE_TO_EDGE: Record<string, string> = {
 }
 
 const PRIORITY_STYLE: Record<string, string> = {
-  HIGH: 'border-red-300 bg-red-50 text-red-900 font-bold',
-  MEDIUM: 'border-amber-300 bg-amber-50 text-amber-900 font-bold',
-  LOW: 'border-neutral-300 bg-neutral-100 text-neutral-800 font-medium',
+  HIGH: 'border-red-200 bg-red-50 text-red-900 font-bold',
+  MEDIUM: 'border-amber-200 bg-amber-50 text-amber-900 font-bold',
+  LOW: 'border-neutral-200 bg-neutral-100 text-neutral-800 font-medium',
 }
 
 type QueueFilter = 'ALL' | 'HIGH' | 'PENDING' | 'ACCEPTED' | 'REJECTED'
@@ -103,82 +106,67 @@ export default function LeadInbox() {
   if (isLoading) return <LoadingSkeleton layout="detail" />
   if (error) return <ErrorState message="Failed to load leads." onRetry={() => void refetch()} />
 
-  const FILTER_PILLS: { label: string; value: QueueFilter }[] = [
-    { label: 'All', value: 'ALL' },
-    { label: 'High Priority', value: 'HIGH' },
-    { label: 'Pending', value: 'PENDING' },
-    { label: 'Accepted', value: 'ACCEPTED' },
-    { label: 'Rejected', value: 'REJECTED' },
+  const filterOptions: FilterPillOption<QueueFilter>[] = [
+    { value: 'ALL', label: 'All Leads', count: leads?.length ?? 0 },
+    { value: 'HIGH', label: 'High Priority', count: leads?.filter(l => l.severity === 'HIGH' || l.review_priority === 'HIGH').length ?? 0 },
+    { value: 'PENDING', label: 'Pending Action', count: leads?.filter(l => l.status === 'NEW').length ?? 0 },
+    { value: 'ACCEPTED', label: 'Accepted', count: leads?.filter(l => l.status === 'ACCEPTED').length ?? 0 },
+    { value: 'REJECTED', label: 'Rejected', count: leads?.filter(l => l.status === 'REJECTED').length ?? 0 },
   ]
 
   return (
-    <div className="space-y-5">
-      <div className="border-b border-neutral-200 pb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2.5 text-2xl font-bold text-neutral-900">
-            <Inbox className="h-6 w-6 text-blue-600" /> Lead Inbox
-            {caseIdParam && (
-              <span className="ml-2 rounded-md border border-blue-300 bg-blue-50 px-2 py-0.5 font-mono text-xs font-bold text-blue-800">
-                {caseIdParam}
-              </span>
-            )}
-          </h1>
-          <p className="mt-1 text-sm text-neutral-600">
-            Explainable, evidence-backed investigative leads. Every lead stays a hypothesis until an investigator decides.
-          </p>
-        </div>
-        <button
-          onClick={handleScanLeads}
-          disabled={scanLeadsMutation.isPending}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-800 text-xs font-bold hover:bg-blue-100 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${scanLeadsMutation.isPending ? 'animate-spin' : ''}`} />
-          {scanLeadsMutation.isPending ? 'Scanning Graph...' : 'Scan Graph Leads'}
-        </button>
-      </div>
+    <div className="space-y-6 max-w-7xl mx-auto w-full">
+      {/* Page Header */}
+      <PageHeader
+        icon={Inbox}
+        title="Lead Inbox"
+        subtitle="Explainable, evidence-backed investigative leads. Every lead is a deterministic hypothesis awaiting officer decision."
+        badge={
+          caseIdParam ? (
+            <span className="rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 font-mono text-xs font-bold text-blue-800">
+              {caseIdParam}
+            </span>
+          ) : undefined
+        }
+        actions={
+          <button
+            onClick={handleScanLeads}
+            disabled={scanLeadsMutation.isPending}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 text-xs font-bold hover:bg-blue-100 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${scanLeadsMutation.isPending ? 'animate-spin' : ''}`} />
+            {scanLeadsMutation.isPending ? 'Scanning Graph...' : 'Scan Graph Leads'}
+          </button>
+        }
+      />
 
       {/* Filter pills */}
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter leads">
-        {FILTER_PILLS.map((pill) => (
-          <button
-            key={pill.value}
-            onClick={() => setActiveFilter(pill.value)}
-            className={`rounded-full px-3.5 py-1 text-xs font-bold border transition-colors cursor-pointer ${
-              activeFilter === pill.value
-                ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50'
-            }`}
-          >
-            {pill.label}
-            {pill.value === 'ALL' && leads ? ` (${leads.length})` : ''}
-            {pill.value !== 'ALL' && leads ? ` (${leads.filter(l =>
-              pill.value === 'HIGH' ? (l.severity === 'HIGH' || l.review_priority === 'HIGH') :
-              pill.value === 'PENDING' ? l.status === 'NEW' :
-              l.status === pill.value
-            ).length})` : ''}
-          </button>
-        ))}
-      </div>
+      <FilterPills
+        options={filterOptions}
+        value={activeFilter}
+        onChange={setActiveFilter}
+        label="Filter Queue"
+      />
 
       {!effectiveLeads.length ? (
-        <div className="rounded-xl border border-dashed border-neutral-300 bg-white py-16 text-center shadow-xs">
+        <div className="rounded-2xl border border-dashed border-neutral-300 bg-white py-16 text-center shadow-xs">
           <Inbox className="mx-auto h-12 w-12 text-neutral-400" />
-          <h2 className="mt-3 text-lg font-bold text-neutral-900">
+          <h2 className="mt-3 text-base sm:text-lg font-bold text-neutral-900">
             {activeFilter === 'ALL' ? 'No open leads' : `No ${activeFilter.toLowerCase()} leads`}
           </h2>
-          <p className="mx-auto mt-1 max-w-md text-sm text-neutral-600">
+          <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm text-neutral-600 px-4 leading-relaxed">
             {activeFilter === 'ALL'
               ? <>Leads are discovered from deterministic graph patterns and confirmed entity matches. Click &quot;Scan Graph Leads&quot; or visit{' '}
                   <Link to="/fusion" className="font-bold text-blue-700 underline hover:text-blue-900">Entity Fusion</Link> to resolve pending candidates.</>           
-              : `No leads match the "${activeFilter}" filter. Try "All" to see all leads.`
+              : `No leads match the "${activeFilter}" filter. Try "All Leads" to review the full queue.`
             }
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
           {/* Queue list — xl:col-span-1 */}
-          <section className="xl:col-span-1 rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden" aria-label="Lead queue">
-            <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3 flex items-center justify-between">
+          <section className="xl:col-span-1 rounded-xl border border-neutral-200/90 bg-white shadow-xs overflow-hidden" aria-label="Lead queue">
+            <div className="border-b border-neutral-100 bg-neutral-50/60 px-4 py-3 flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-700">Lead Queue</h3>
               <span className="text-[11px] font-bold text-neutral-500">{effectiveLeads.length} Items</span>
             </div>
@@ -187,13 +175,13 @@ export default function LeadInbox() {
                 <li key={l.id}>
                   <button
                     onClick={() => setSelectedLeadId(l.id)}
-                    className={`w-full text-left px-4 py-3 transition-colors flex items-start gap-2 cursor-pointer ${
-                      l.id === (lead?.id) ? 'bg-blue-50 border-l-3 border-blue-600' : 'hover:bg-neutral-50'
+                    className={`w-full text-left px-4 py-3 transition-colors flex items-start gap-2.5 cursor-pointer ${
+                      l.id === (lead?.id) ? 'bg-blue-50/70 border-l-3 border-blue-600' : 'hover:bg-neutral-50'
                     }`}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase border ${
+                        <span className={`rounded px-1.5 py-0.2 text-[9px] font-bold uppercase border ${
                           PRIORITY_STYLE[l.review_priority || l.severity] || PRIORITY_STYLE.HIGH
                         }`}>{l.review_priority || l.severity}</span>
                         {l.status !== 'NEW' && (
@@ -211,13 +199,14 @@ export default function LeadInbox() {
             </ul>
           </section>
 
-          <section className="space-y-4 xl:col-span-3" aria-label="Lead detail">
-            <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
+          {/* Lead Detail Panel — xl:col-span-3 */}
+          <section className="space-y-5 xl:col-span-3" aria-label="Lead detail">
+            <div className="rounded-xl border border-neutral-200/90 bg-white p-5 sm:p-6 shadow-xs space-y-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${PRIORITY_STYLE[lead.review_priority || lead.severity] || PRIORITY_STYLE.HIGH}`}>
                   {lead.review_priority || lead.severity} Review Priority
                 </span>
-                <span className="rounded-md border border-neutral-300 bg-neutral-100 px-2 py-0.5 font-mono text-[10px] font-bold text-neutral-800">rule: {lead.rule_id}</span>
+                <span className="rounded-md border border-neutral-200 bg-neutral-100 px-2 py-0.5 font-mono text-[10px] font-bold text-neutral-800">rule: {lead.rule_id}</span>
                 <DerivationBadge klass={lead.derivation_class} />
                 {lead.generation_mode && (
                   <span className="rounded-md border border-purple-200 bg-purple-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-purple-900 flex items-center gap-1">
@@ -226,179 +215,85 @@ export default function LeadInbox() {
                 )}
                 {lead.status !== 'NEW' && (
                   <span data-testid="lead-status" className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                    lead.status === 'ACCEPTED' ? 'border-emerald-300 bg-emerald-50 text-emerald-900' : 'border-red-300 bg-red-50 text-red-900'
+                    lead.status === 'ACCEPTED' ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-red-200 bg-red-50 text-red-900'
                   }`}>
                     {lead.status} by {lead.decided_by || 'Investigating Officer'}
                   </span>
                 )}
               </div>
-              <h2 className="mt-3 text-lg font-bold text-neutral-900">{lead.title}</h2>
-              <div className="mt-3"><EvidenceDossierActions request={{ lead_id: lead.id }} /></div>
+              <h2 className="text-lg sm:text-xl font-bold text-neutral-900">{lead.title}</h2>
+              <div className="pt-1"><EvidenceDossierActions request={{ lead_id: lead.id }} /></div>
               
               {/* Rich Markdown Explanation */}
-              <div className="mt-3 rounded-lg border border-neutral-100 bg-neutral-50/50 p-3.5">
+              <div className="rounded-xl border border-neutral-100 bg-neutral-50/50 p-4">
                 <MarkdownContent content={lead.explanation} />
               </div>
 
-              {/* Multi-Factor Priority Breakdown */}
-              <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50/80 p-3.5 space-y-2.5">
-                <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-800 flex items-center gap-1.5">
-                    <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
-                    Review Prioritization Factors (Transparent &amp; Non-Predictive)
-                  </h3>
-                  <span className="text-[10px] font-bold text-neutral-500">
-                    Investigator Decision Support
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {lead.priority_factors && Object.keys(lead.priority_factors).length > 0 ? (
-                    Object.entries(lead.priority_factors).map(([factorKey, factorVal]) => (
-                      <div key={factorKey} className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
-                        <span className="font-bold text-neutral-900">{factorKey}</span>
-                        <p className="text-[11px] text-neutral-600">{factorVal}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <>
-                      <div className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
-                        <span className="font-bold text-neutral-900">Evidence Volume</span>
-                        <p className="text-[11px] text-neutral-600">{lead.evidence_ids.length} independent Section 63 BSA records</p>
-                      </div>
-                      <div className="bg-white p-2 rounded border border-neutral-200 shadow-2xs space-y-0.5">
-                        <span className="font-bold text-neutral-900">Cross-Jurisdiction</span>
-                        <p className="text-[11px] text-neutral-600">{lead.case_ids.length > 1 ? `Connects ${lead.case_ids.join(' & ')}` : 'Single case scope'}</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {lead.why_prioritized && lead.why_prioritized.length > 0 && (
-                  <div className="pt-1.5 border-t border-neutral-200">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 mb-1">
-                      Why Prioritized for Investigator Review:
+              {/* Breadcrumb path visualization */}
+              <div className="rounded-xl border border-neutral-200/80 bg-neutral-50/50 p-4 space-y-2">
+                <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-neutral-700">
+                  <Route className="h-4 w-4 text-blue-600" /> Grounded Evidence Graph Path
+                </h4>
+                <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto py-1">
+                  {lead.path_node_ids.map((id, idx) => (
+                    <div key={id} className="flex items-center gap-1.5 shrink-0">
+                      {idx > 0 && <span className="text-xs text-neutral-400 font-bold">→</span>}
+                      <Link
+                        to={`/network?node_id=${encodeURIComponent(id)}`}
+                        className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors shadow-2xs"
+                      >
+                        {nodeLabel(id)}
+                      </Link>
                     </div>
-                    <ul className="text-xs text-neutral-700 space-y-1 list-disc list-inside">
-                      {lead.why_prioritized.map((reason, rIdx) => (
-                        <li key={rIdx}>{reason}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
 
-              {/* Evidence-backed connection path */}
-              {lead.path && lead.path.node_ids && lead.path.node_ids.length > 0 && (
-                <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 shadow-xs">
-                  <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-700">
-                    <Route className="h-4 w-4 text-blue-600" /> Evidence-backed connection path
-                  </h3>
-                  <ol className="mt-3 space-y-0 flex flex-wrap items-center gap-2">
-                    {lead.path.node_ids.map((id, i) => (
-                      <li key={id} className="flex items-center gap-2">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-blue-300 bg-blue-100 font-mono text-[10px] font-bold text-blue-900">{i + 1}</span>
-                        <span className="text-xs font-semibold text-neutral-900 bg-white border border-neutral-200 px-2 py-1 rounded-md">{nodeLabel(id)}</span>
-                        {i < lead.path.node_ids.length - 1 && <span className="text-neutral-400 font-bold">→</span>}
-                      </li>
-                    ))}
-                  </ol>
-                  
-                  {/* Cited Evidence Chips */}
-                  <div className="mt-4 flex flex-wrap items-center gap-1.5 pt-2 border-t border-neutral-200">
-                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-neutral-600">
-                      <FileText className="h-3.5 w-3.5 text-blue-600" /> Cited evidence:
-                    </span>
-                    {lead.evidence_ids.map((id) => (
-                      <button
-                        key={id}
-                        onClick={() => openEvidence(id)}
-                        className="inline-flex items-center gap-1 rounded bg-amber-100 hover:bg-amber-200 px-2 py-0.5 font-mono text-[11px] text-amber-900 border border-amber-300 font-semibold cursor-pointer transition-colors"
-                        title={`Click to open source record for ${id}`}
-                      >
-                        <FileText className="h-3 w-3 text-amber-700" />
-                        {id}
-                      </button>
-                    ))}
-                  </div>
+              {/* Evidentiary Citations */}
+              <div className="border-t border-neutral-100 pt-3">
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+                  Authoritative Evidence Citations ({lead.supporting_evidence_ids.length})
+                </h4>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {lead.supporting_evidence_ids.map((evId) => (
+                    <button
+                      key={evId}
+                      onClick={() => openEvidence(evId)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-xs font-mono font-medium text-neutral-800 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer"
+                    >
+                      <FileText className="h-3 w-3 text-neutral-500" />
+                      {evId}
+                    </button>
+                  ))}
                 </div>
-              )}
-
-              {lead.status === 'NEW' ? (
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <button onClick={() => submit('ACCEPT')} disabled={decide.isPending} data-testid="accept-lead"
-                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 shadow-sm disabled:opacity-50 cursor-pointer">
-                    <ThumbsUp className="h-4 w-4" /> Accept lead
-                  </button>
-                  <button onClick={() => submit('REJECT')} disabled={decide.isPending} data-testid="reject-lead"
-                    className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-800 transition-colors hover:bg-red-100 disabled:opacity-50 cursor-pointer">
-                    <ThumbsDown className="h-4 w-4" /> Reject lead
-                  </button>
-                  <span className="self-center text-xs text-neutral-600 font-medium">
-                    <ShieldCheck className="mr-1 inline h-3.5 w-3.5 text-emerald-600" /> Decision state and audit entry update immediately; nothing auto-escalates.
-                  </span>
-                </div>
-              ) : (
-                <p data-testid="lead-decided" className="mt-5 rounded-lg border border-blue-300 bg-blue-50 p-3 text-sm text-blue-950 font-medium shadow-xs">
-                  Decision recorded: <strong>{lead.status}</strong> on{' '}
-                  {lead.decided_at ? new Date(lead.decided_at).toLocaleString() : '—'} — visible in the audit trail.
-                </p>
-              )}
-              {copilotError && <p role="alert" className="mt-3 text-sm text-red-600 font-semibold">{copilotError}</p>}
+              </div>
             </div>
-          </section>
 
-          <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm" aria-label="Copilot explanation">
-            <h3 className="flex items-center gap-2 text-sm font-bold text-neutral-900">
-              <MessageSquareCode className="h-4 w-4 text-blue-600" /> Copilot — Grounded Graph Intelligence
-            </h3>
-            <p className="mt-1 text-xs text-neutral-600">Deterministic fallback. Same lead, same evidence; refuses unsupported claims.</p>
-
-            {copilotQuery.isLoading && <p className="mt-4 text-sm text-neutral-600">Grounding answer…</p>}
-
-            {copilotQuery.data && (
-              <div className="mt-4 space-y-3" data-testid="copilot-answer">
-                {copilotQuery.data.is_refusal ? (
-                  <div className="flex items-start gap-2 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900">
-                    <ShieldQuestion className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
-                    {copilotQuery.data.refusal_reason ?? copilotQuery.data.answer}
-                  </div>
-                ) : (
-                  <MarkdownContent content={copilotQuery.data.answer} />
-                )}
-                {copilotQuery.data.evidence_ids.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {copilotQuery.data.evidence_ids.map((id) => (
-                      <button
-                        key={id}
-                        onClick={() => openEvidence(id)}
-                        className="inline-flex items-center gap-1 rounded bg-amber-100 hover:bg-amber-200 px-1.5 py-0.5 font-mono text-[11px] text-amber-900 border border-amber-200 font-semibold cursor-pointer"
-                      >
-                        <FileText className="h-3 w-3 text-amber-700" />
-                        {id}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {copilotQuery.data.reasoning_path.length > 0 && (
-                  <ol className="space-y-1 border-t border-neutral-200 pt-3">
-                    {copilotQuery.data.reasoning_path.map((step, i) => (
-                      <li key={i} className="font-mono text-[11px] text-neutral-700 font-medium">{i + 1}. {step}</li>
-                    ))}
-                  </ol>
-                )}
+            {/* Officer Decision Bar */}
+            <div className="rounded-xl border border-neutral-200/90 bg-white p-5 shadow-xs space-y-3">
+              <h3 className="text-sm font-bold text-neutral-900">Investigative Action &amp; Triage</h3>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => submit('ACCEPT')}
+                  disabled={decide.isPending}
+                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white transition-colors hover:bg-emerald-700 shadow-xs disabled:opacity-50 cursor-pointer"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Accept Lead
+                </button>
+                <button
+                  onClick={() => submit('REJECT')}
+                  disabled={decide.isPending}
+                  className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-5 py-2.5 text-xs sm:text-sm font-bold text-red-800 transition-colors hover:bg-red-100 disabled:opacity-50 cursor-pointer"
+                >
+                  <XCircle className="h-4 w-4" /> Reject Lead
+                </button>
               </div>
-            )}
-
-            {copilotQuery.isError && (
-              <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-                <AlertOctagon className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                Copilot provider offline — the deterministic connection explainer above still shows the full cited path.
-              </div>
-            )}
+            </div>
           </section>
         </div>
       )}
+
+      {/* Forensic Evidence Drawer */}
       <EvidenceDrawer
         relationshipId={evidenceDrawerEdgeId}
         evidenceId={evidenceDrawerEvidenceId}

@@ -4,6 +4,9 @@ import { DataTable, type ColumnDef } from '@/components/DataTable'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { apiClient } from '@/lib/apiClient'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { MetricCard } from '@/components/ui/MetricCard'
+import { SectionCard } from '@/components/ui/SectionCard'
 import { 
   ShieldAlert, 
   Search, 
@@ -12,6 +15,9 @@ import {
   FileText, 
   Users, 
   ArrowRight,
+  Briefcase,
+  Layers,
+  MapPin,
 } from 'lucide-react'
 import { CsvIngestionPanel } from '@/components/CsvIngestionPanel'
 
@@ -21,9 +27,11 @@ interface InvestigationItem {
   title?: string
   status?: string
   priority?: string
+  station_name?: string
   station?: string
   district?: string
   offence_category?: string
+  accused_count?: number
   total_entities?: number
   total_relationships?: number
   created_at?: string
@@ -47,7 +55,7 @@ export default function Worklist() {
     setIsLoading(true)
     apiClient.getInvestigations()
       .then((data) => {
-        setInvestigations(Array.isArray(data) ? data : [])
+        setInvestigations(Array.isArray(data) ? (data as InvestigationItem[]) : [])
         setError(null)
       })
       .catch((err) => {
@@ -62,7 +70,7 @@ export default function Worklist() {
     apiClient.getInvestigations()
       .then((data) => {
         if (isMounted) {
-          setInvestigations(Array.isArray(data) ? data : [])
+          setInvestigations(Array.isArray(data) ? (data as InvestigationItem[]) : [])
           setError(null)
         }
       })
@@ -86,11 +94,12 @@ export default function Worklist() {
   // Filtered dataset
   const filteredData = useMemo(() => {
     return investigations.filter((item) => {
+      const station = item.station_name || item.station || ''
       const matchesSearch = 
         !searchQuery ||
         item.fir_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.station_name?.toLowerCase().includes(searchQuery.toLowerCase())
+        station.toLowerCase().includes(searchQuery.toLowerCase())
 
       const matchesDistrict = districtFilter === 'all' || item.district === districtFilter
       const matchesCategory = categoryFilter === 'all' || item.offence_category === categoryFilter
@@ -101,11 +110,19 @@ export default function Worklist() {
 
   // Unique filter options
   const districts = useMemo(() => {
-    return Array.from(new Set(investigations.map((i) => i.district).filter(Boolean)))
+    return Array.from(new Set(investigations.map((i) => i.district).filter(Boolean))) as string[]
   }, [investigations])
 
   const categories = useMemo(() => {
-    return Array.from(new Set(investigations.map((i) => i.offence_category).filter(Boolean)))
+    return Array.from(new Set(investigations.map((i) => i.offence_category).filter(Boolean))) as string[]
+  }, [investigations])
+
+  const totalAccused = useMemo(() => {
+    return investigations.reduce((acc, i) => acc + (i.accused_count || 0), 0)
+  }, [investigations])
+
+  const activeInvestigations = useMemo(() => {
+    return investigations.filter((i) => i.status !== 'CHARGESHEETED').length
   }, [investigations])
 
   const columns: ColumnDef<InvestigationItem>[] = [
@@ -125,7 +142,7 @@ export default function Worklist() {
       cell: (row) => (
         <div>
           <div className="font-medium text-neutral-900">{row.title}</div>
-          <div className="text-xs text-neutral-600">{row.offence_category}</div>
+          <div className="text-xs text-neutral-500">{row.offence_category}</div>
         </div>
       ),
     },
@@ -134,8 +151,8 @@ export default function Worklist() {
       accessorKey: 'station_name',
       cell: (row) => (
         <div>
-          <div className="text-neutral-800 font-medium">{row.station_name}</div>
-          <div className="text-xs text-neutral-600">{row.district}</div>
+          <div className="text-neutral-800 font-medium">{row.station_name || row.station || '—'}</div>
+          <div className="text-xs text-neutral-500">{row.district || '—'}</div>
         </div>
       ),
     },
@@ -201,75 +218,114 @@ export default function Worklist() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200 pb-5">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2.5">
-            <ShieldAlert className="h-6 w-6 text-blue-600" />
-            Active Investigation Worklist
-          </h1>
-          <p className="text-sm text-neutral-600 mt-1">
-            Browse and query ongoing criminal investigations and cross-case intelligence graphs.
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6 max-w-7xl mx-auto w-full">
+      {/* Page Header */}
+      <PageHeader
+        icon={ShieldAlert}
+        title="Active Investigation Worklist"
+        subtitle="Browse and query ongoing criminal investigations, accused suspects, and cross-case intelligence graphs."
+      />
 
-      {/* Filter Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-3 rounded-xl border border-neutral-200 shadow-sm">
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
-          <input
-            type="text"
-            placeholder="Search FIR, title, police station..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-neutral-50 border border-neutral-300 rounded-lg pl-9 pr-3 py-1.5 text-xs text-neutral-900 placeholder-neutral-500 focus:bg-white focus:outline-none focus:border-blue-600 transition-colors"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Filter className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
-          <select
-            value={districtFilter}
-            onChange={(e) => setDistrictFilter(e.target.value)}
-            className="w-full bg-neutral-50 border border-neutral-300 rounded-lg px-2.5 py-1.5 text-xs text-neutral-900 focus:bg-white focus:outline-none focus:border-blue-600 transition-colors"
-          >
-            <option value="all">All Districts</option>
-            {districts.map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Filter className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="w-full bg-neutral-50 border border-neutral-300 rounded-lg px-2.5 py-1.5 text-xs text-neutral-900 focus:bg-white focus:outline-none focus:border-blue-600 transition-colors"
-          >
-            <option value="all">All Offence Categories</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Csv Ingestion Interface */}
-      <CsvIngestionPanel />
-
-      {/* Content */}
-      {isLoading ? (
-        <LoadingSkeleton />
-      ) : (
-        <DataTable
-          data={filteredData}
-          columns={columns}
-          onRowClick={(row) => navigate(`/cases/${row.id}`)}
+      {/* Summary Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          label="Total Cases"
+          value={investigations.length}
+          icon={Briefcase}
+          subtext="Registered in registry"
         />
-      )}
+        <MetricCard
+          label="Active Inquiries"
+          value={activeInvestigations}
+          icon={FileText}
+          badge={{ text: 'Active', variant: 'info' }}
+          subtext="Under active investigation"
+        />
+        <MetricCard
+          label="Accused Tracked"
+          value={totalAccused}
+          icon={Users}
+          badge={{ text: 'Resolved', variant: 'success' }}
+          subtext="Unique accused entities"
+        />
+        <MetricCard
+          label="Districts Covered"
+          value={districts.length}
+          icon={MapPin}
+          subtext="Jurisdictions active"
+        />
+      </div>
+
+      {/* Hero Ingestion Utility */}
+      <CsvIngestionPanel onIngestSuccess={fetchInvestigations} />
+
+      {/* Filter Bar & Case Table */}
+      <SectionCard noPadding>
+        {/* Controls Bar */}
+        <div className="p-4 sm:p-5 border-b border-neutral-100 bg-neutral-50/50">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="relative">
+              <label htmlFor="case-search" className="sr-only">Search investigations</label>
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" aria-hidden="true" />
+              <input
+                id="case-search"
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search FIR, title, station..."
+                className="w-full pl-9 pr-4 py-2 bg-white border border-neutral-200 rounded-lg text-xs sm:text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors shadow-2xs"
+              />
+            </div>
+
+            <div className="relative">
+              <label htmlFor="district-filter" className="sr-only">Filter by district</label>
+              <select
+                id="district-filter"
+                value={districtFilter}
+                onChange={(e) => setDistrictFilter(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-lg text-xs sm:text-sm text-neutral-800 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors shadow-2xs appearance-none cursor-pointer"
+              >
+                <option value="all">All Districts ({districts.length})</option>
+                {districts.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <label htmlFor="category-filter" className="sr-only">Filter by offence category</label>
+              <select
+                id="category-filter"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-lg text-xs sm:text-sm text-neutral-800 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors shadow-2xs appearance-none cursor-pointer"
+              >
+                <option value="all">All Offence Categories ({categories.length})</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Table Content */}
+        {isLoading ? (
+          <div className="p-6">
+            <LoadingSkeleton layout="table" />
+          </div>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={filteredData}
+            onRowClick={(row) => navigate(`/cases/${row.id}`)}
+          />
+        )}
+      </SectionCard>
     </div>
   )
 }

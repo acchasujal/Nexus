@@ -24,6 +24,7 @@ import { PathfinderEntitySelector } from '@/components/nexus/PathfinderEntitySel
 import { NetworkDeltaSummary } from '@/components/nexus/NetworkDeltaSummary'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { Link, useSearchParams } from 'react-router-dom'
 import type { NetworkGraphResponse, NexusNetworkResponse } from '@shared/contracts/api'
 
@@ -377,69 +378,66 @@ export default function NetworkExplorer() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 max-w-7xl mx-auto w-full">
       {/* Header & Controls */}
-      <div className="flex flex-col justify-between gap-4 border-b border-neutral-200 pb-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="flex items-center gap-2.5 text-2xl font-bold text-neutral-900">
-            <Network className="h-6 w-6 text-blue-600" /> Global Network Explorer
-          </h1>
-          <p className="mt-1 text-sm text-neutral-600">
-            Multi-jurisdictional criminal network topology. Discover entity bridges, flow paths, and evidentiary provenance.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <button
-            onClick={() => setShowPathfinder((v) => !v)}
-            className={`inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold transition-all shadow-xs ${
-              showPathfinder
-                ? 'border-blue-600 bg-blue-50 text-blue-800 ring-2 ring-blue-500/20'
-                : 'border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
-            }`}
-            aria-expanded={showPathfinder}
-          >
-            <Route className="h-4 w-4 text-blue-600" />
-            Investigative Pathfinder
-          </button>
-          <div
-            role="group"
-            aria-label="Network snapshot replay"
-            className="flex items-center rounded-lg border border-neutral-300 bg-neutral-100 p-0.5 sm:p-1 text-xs sm:text-sm font-semibold shadow-inner"
-          >
+      <PageHeader
+        icon={Network}
+        title="Global Network Explorer"
+        subtitle="Multi-jurisdictional criminal network topology. Discover entity bridges, flow paths, and evidentiary provenance."
+        actions={
+          <>
             <button
-              onClick={() => {
-                setReplay('before')
-                setIsExploring(true)
-                updateNetworkUrl({ snapshot: 'before' })
-              }}
-              aria-pressed={replay === 'before'}
-              className={`rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm transition-colors ${
-                replay === 'before'
-                  ? 'bg-white text-neutral-900 shadow-sm font-bold'
-                  : 'text-neutral-600 hover:text-neutral-900'
+              onClick={() => setShowPathfinder((v) => !v)}
+              className={`inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer ${
+                showPathfinder
+                  ? 'border-blue-600 bg-blue-50 text-blue-800 ring-2 ring-blue-500/20'
+                  : 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
               }`}
+              aria-expanded={showPathfinder}
             >
-              Before resolution
+              <Route className="h-4 w-4 text-blue-600" />
+              Investigative Pathfinder
             </button>
-            <button
-              onClick={() => {
-                setReplay('after')
-                setIsExploring(true)
-                updateNetworkUrl({ snapshot: 'after' })
-              }}
-              aria-pressed={replay === 'after'}
-              disabled={demoQuery.isLoading && !demoQuery.data}
-              className={`rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm transition-colors disabled:opacity-40 ${
-                replay === 'after'
-                  ? 'bg-emerald-600 text-white shadow-sm font-bold'
-                  : 'text-neutral-600 hover:text-neutral-900'
-              }`}
+            <div
+              role="group"
+              aria-label="Network snapshot replay"
+              className="flex items-center rounded-lg border border-neutral-200 bg-neutral-100/80 p-0.5 sm:p-1 text-xs sm:text-sm font-semibold shadow-2xs"
             >
-              After resolution
-            </button>
-          </div>
-        </div>
-      </div>
+              <button
+                onClick={() => {
+                  setReplay('before')
+                  setIsExploring(true)
+                  updateNetworkUrl({ snapshot: 'before' })
+                }}
+                aria-pressed={replay === 'before'}
+                className={`rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm transition-colors cursor-pointer ${
+                  replay === 'before'
+                    ? 'bg-white text-neutral-900 shadow-xs font-bold'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                Before resolution
+              </button>
+              <button
+                onClick={() => {
+                  setReplay('after')
+                  setIsExploring(true)
+                  updateNetworkUrl({ snapshot: 'after' })
+                }}
+                aria-pressed={replay === 'after'}
+                disabled={demoQuery.isLoading && !demoQuery.data}
+                className={`rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm transition-colors disabled:opacity-40 cursor-pointer ${
+                  replay === 'after'
+                    ? 'bg-emerald-600 text-white shadow-xs font-bold'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                After resolution
+              </button>
+            </div>
+          </>
+        }
+      />
 
       {/* ── Network Delta (What Changed) Component ───────────────────────────── */}
       <NetworkDeltaSummary activeSnapshot={replay} />

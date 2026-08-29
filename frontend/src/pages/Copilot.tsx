@@ -18,6 +18,7 @@ import {
 import { apiClient } from '@/lib/apiClient'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import { MarkdownContent } from '@/components/nexus/MarkdownContent'
+import { PageHeader } from '@/components/ui/PageHeader'
 import type { GroundedCitation } from '@shared/contracts/api'
 
 /** Maps canonical source record IDs to the most representative graph edge
@@ -196,26 +197,22 @@ export default function Copilot() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
+    <div className="flex flex-col h-[calc(100vh-8rem)] space-y-4 max-w-7xl mx-auto w-full">
       {/* Header */}
-      <div className="border-b border-neutral-200 pb-4 flex items-center justify-between shrink-0">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2.5">
-            <Sparkles className="h-6 w-6 text-blue-600" />
-            NEXUS Investigator Copilot
-          </h1>
-          <p className="text-xs text-neutral-600 mt-0.5">
-            Evidence-grounded assistant • Strict refusal gate against autonomous guilt / predictive inference
-          </p>
-        </div>
-        <button
-          onClick={handleResetChat}
-          className="flex items-center gap-1.5 text-xs text-neutral-700 hover:text-neutral-900 border border-neutral-300 bg-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-neutral-50 transition-colors cursor-pointer"
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          Reset Chat
-        </button>
-      </div>
+      <PageHeader
+        icon={Sparkles}
+        title="NEXUS Investigator Copilot"
+        subtitle="Evidence-grounded assistant with strict refusal gate against autonomous guilt or predictive inference."
+        actions={
+          <button
+            onClick={handleResetChat}
+            className="inline-flex items-center gap-1.5 text-xs text-neutral-700 hover:text-neutral-900 border border-neutral-200 bg-white px-3.5 py-2 rounded-lg shadow-2xs hover:bg-neutral-50 transition-colors cursor-pointer font-semibold"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset Chat
+          </button>
+        }
+      />
 
       {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-2">

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { ShieldCheck, AlertTriangle } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { SectionCard } from '@/components/ui/SectionCard'
 
 interface AuditLogEntry {
   id: string
@@ -60,76 +62,77 @@ export default function Audit() {
   }, [])
 
   return (
-    <div className="space-y-6">
-      <div className="border-b border-neutral-200 pb-5">
-        <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2.5">
-          <ShieldCheck className="h-6 w-6 text-blue-600" />
-          Immutable Audit Trail & Compliance Log
-        </h1>
-        <p className="text-sm text-neutral-600 mt-1">
-          Cryptographically recorded actions, candidate decisions, search queries, copilot responses, and evidence accesses by investigator principals.
-        </p>
-      </div>
+    <div className="space-y-6 max-w-7xl mx-auto w-full">
+      {/* Header */}
+      <PageHeader
+        icon={ShieldCheck}
+        title="Immutable Audit Trail &amp; Compliance Log"
+        subtitle="Cryptographically recorded actions, candidate decisions, search queries, copilot responses, and evidence accesses by investigator principals."
+      />
 
-      <div className="rounded-xl border border-neutral-200 bg-white overflow-x-auto shadow-sm">
-        <table className="w-full text-left text-sm text-neutral-800 min-w-[700px]">
-          <thead className="bg-neutral-50 text-xs font-bold uppercase tracking-wider text-neutral-700 border-b border-neutral-200">
-            <tr>
-              <th className="px-4 py-3">Timestamp</th>
-              <th className="px-4 py-3">Actor / Role</th>
-              <th className="px-4 py-3">Action Executed</th>
-              <th className="px-4 py-3">Target Entity</th>
-              <th className="px-4 py-3">Audit Context Details</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-200">
-            {isLoading ? (
+      {/* Audit Log Table Container */}
+      <SectionCard noPadding>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs sm:text-sm text-neutral-800 min-w-[700px]">
+            <thead className="bg-neutral-50/80 text-[11px] font-bold uppercase tracking-wider text-neutral-700 border-b border-neutral-200/80">
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-neutral-500">Loading audit records...</td>
+                <th className="px-4 py-3.5">Timestamp</th>
+                <th className="px-4 py-3.5">Actor / Role</th>
+                <th className="px-4 py-3.5">Action Executed</th>
+                <th className="px-4 py-3.5">Target Entity</th>
+                <th className="px-4 py-3.5">Audit Context Details</th>
               </tr>
-            ) : fetchError ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center">
-                  <div className="flex flex-col items-center gap-2 text-amber-800">
-                    <AlertTriangle className="h-6 w-6 text-amber-500" />
-                    <p className="font-semibold text-sm">Audit log unavailable</p>
-                    <p className="text-xs text-neutral-600 max-w-md">{fetchError}</p>
-                  </div>
-                </td>
-              </tr>
-            ) : logs.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-neutral-500">No audit records found.</td>
-              </tr>
-            ) : (
-              logs.map((log, idx) => (
-                <tr key={log.id || idx} className="hover:bg-neutral-50/80 transition-colors">
-                  <td className="px-4 py-3 text-xs text-neutral-600 whitespace-nowrap font-medium">
-                    {new Date(log.timestamp).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="font-bold text-neutral-900">{log.user_id}</span>
-                    <span className="ml-2 text-[10px] font-bold bg-neutral-100 px-1.5 py-0.5 rounded text-neutral-800 border border-neutral-200">
-                      {log.user_role}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <code className="text-xs font-mono font-bold text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                      {log.action.replaceAll('_', ' ')}
-                    </code>
-                  </td>
-                  <td className="px-4 py-3 text-xs font-semibold text-neutral-900">
-                    {log.entity_id || log.case_id || 'System / Batch'}
-                  </td>
-                  <td className="px-4 py-3 text-xs">
-                    {formatAuditDetails(log.details)}
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-neutral-500">Loading audit records...</td>
+                </tr>
+              ) : fetchError ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center">
+                    <div className="flex flex-col items-center gap-2 text-amber-800">
+                      <AlertTriangle className="h-6 w-6 text-amber-500" />
+                      <p className="font-semibold text-sm">Audit log unavailable</p>
+                      <p className="text-xs text-neutral-600 max-w-md">{fetchError}</p>
+                    </div>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : logs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-neutral-500">No audit events recorded yet.</td>
+                </tr>
+              ) : (
+                logs.map((log) => (
+                  <tr key={log.id} className="hover:bg-neutral-50/70 transition-colors">
+                    <td className="px-4 py-3 text-xs text-neutral-500 font-mono tabular-nums whitespace-nowrap">
+                      {new Date(log.timestamp).toLocaleString('en-IN', {
+                        dateStyle: 'short',
+                        timeStyle: 'medium',
+                      })}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="font-semibold text-neutral-900">{log.user_id}</div>
+                      <div className="text-[11px] text-blue-700 font-bold">{log.user_role}</div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono font-bold bg-neutral-100 border border-neutral-200 text-neutral-800">
+                        {log.action}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap font-mono text-xs text-neutral-700">
+                      {log.entity_id || log.case_id || '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {formatAuditDetails(log.details)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
     </div>
   )
 }

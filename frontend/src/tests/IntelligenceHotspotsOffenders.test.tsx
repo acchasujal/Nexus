@@ -79,17 +79,18 @@ describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
     // Verify modal elements
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /District: Mumbai Central/i })).toBeInTheDocument()
+      expect(screen.getByText(/Underlying Cases/i)).toBeInTheDocument()
+      expect(screen.getByText('FIR-2026-141')).toBeInTheDocument()
+      expect(screen.getByText('FIR-2026-142')).toBeInTheDocument()
     })
-
-    expect(screen.getByText(/Underlying Cases/i)).toBeInTheDocument()
-    expect(screen.getByText('FIR-2026-141')).toBeInTheDocument()
-    expect(screen.getByText('FIR-2026-142')).toBeInTheDocument()
 
     // Switch to Accused & Entities tab in modal
     const entitiesTab = screen.getByRole('button', { name: /Accused & Entities/i })
     fireEvent.click(entitiesTab)
-    expect(screen.getByText('Ramesh Hegde')).toBeInTheDocument()
-    expect(screen.getByText('Sunil Gupta')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Ramesh Hegde')).toBeInTheDocument()
+      expect(screen.getByText('Sunil Gupta')).toBeInTheDocument()
+    })
 
     // Close modal
     const closeBtn = screen.getByRole('button', { name: /Close Drilldown/i })

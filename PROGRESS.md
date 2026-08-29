@@ -27,8 +27,8 @@ Judge Demo Readiness:   100% [████████████████�
 ---
 
 ## Current Release Goal
-**Milestone v1.3.0 — High-Signal Crime Hotspots & Repeat Offender Radar Intelligence Hub:**
-Dynamic graph-wide crime concentration density, dominant offence category profiling, interactive multi-jurisdictional district drill-down, entity-resolved repeat offender radar, cross-district syndicate bridge detection, and 100% explainable non-predictive constitutional governance.
+**Milestone v1.4.0 — Production-Grade Design System & Complete Responsive UI Refactor:**
+Modern, clean, minimal, production-quality UI inspired by Launch UI & Untitled UI design standards. Harmonized typography hierarchy, standard `PageHeader`, `MetricCard`, `SectionCard`, and `FilterPills` primitives, zero horizontal overflow across 320px–1440px+ screens, 100% test coverage across all 18 frontend suites and 626 backend tests.
 
 ---
 
