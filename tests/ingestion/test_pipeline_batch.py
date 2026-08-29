@@ -93,7 +93,17 @@ def test_conflicting_national_ids() -> None:
     s1 = UploadedSource(source_type=SourceType.FIR, file_name="f1.csv", data=(FIR_HEADER + "r1,F1,2026,S1,D1,2026-01-01T10:00:00Z,Theft,379,Alice Smith,ACCUSED,9999999999,NID1\n").encode("utf-8"))
     s2 = UploadedSource(source_type=SourceType.FIR, file_name="f2.csv", data=(FIR_HEADER + "r2,F2,2026,S1,D1,2026-01-01T10:00:00Z,Theft,379,Alice Smith,ACCUSED,9999999999,NID2\n").encode("utf-8"))
     bundle = pipeline.ingest_batch([s1, s2])
-    assert any("national_id" in c.conflicting_fields for c in bundle.review_candidates)
+    # Conflicting national IDs are hard negatives (NOT_MATCHED), so they are not review candidates
+    assert not bundle.review_candidates
+    person_nodes = [n for n in bundle.nodes if n.entity_type.value == "Person"]
+    assert len(person_nodes) == 2
+
+def test_conflicting_phone_with_matching_nid_requires_review() -> None:
+    pipeline = CsvIngestionPipeline()
+    s1 = UploadedSource(source_type=SourceType.FIR, file_name="f1.csv", data=(FIR_HEADER + "r1,F1,2026,S1,D1,2026-01-01T10:00:00Z,Theft,379,Alice Smith,ACCUSED,9999999991,NID1\n").encode("utf-8"))
+    s2 = UploadedSource(source_type=SourceType.FIR, file_name="f2.csv", data=(FIR_HEADER + "r2,F2,2026,S1,D1,2026-01-01T10:00:00Z,Theft,379,Alice Smith,ACCUSED,9999999992,NID1\n").encode("utf-8"))
+    bundle = pipeline.ingest_batch([s1, s2])
+    assert any("phone_number" in c.conflicting_fields for c in bundle.review_candidates)
 
 def test_deterministic_repeated_upload() -> None:
     pipeline = CsvIngestionPipeline()

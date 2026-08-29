@@ -1106,10 +1106,20 @@ def create_nexus_router() -> APIRouter:
             return _demo_state.candidates
         results = []
         for c_id, c_data in repo.review_candidates.items():
+            # Defense-in-depth: never surface NOT_MATCHED entries in the Fusion UI.
+            # The pipeline already filters them out at ingestion time, but old state
+            # files or edge cases could still contain them.
+            stored_status = c_data.get("status", "")
+            if stored_status == "NOT_MATCHED":
+                continue
+
+            # Also skip candidates that have already been decided post-ingestion
+            # via update_candidate_status (CONFIRMED / REJECTED / DEFERRED are kept
+            # so the UI can show their final state).
             left_node_id = c_data["incoming_record_id"]
             right_node_id = c_data["candidate_node_id"]
             source_ids = c_data.get("source_record_ids", [])
-            
+
             def make_rec(nid: str, sids: list[str]) -> ResolutionCandidateRecord:
                 node = repo.nodes.get(nid, {})
                 props = node.get("properties", {})
@@ -1121,21 +1131,29 @@ def create_nexus_router() -> APIRouter:
                     properties=props,
                     source_records=[NexusSourceRecord(**repo.source_records[rid]) for rid in sids if rid in repo.source_records]
                 )
-                
+
             reasons = [CandidateReason(field=f, detail=f"Matched on {f}", weight=1.0) for f in c_data.get("matched_fields", [])]
             if c_data.get("reason"):
                 reasons.append(CandidateReason(field="general", detail=c_data["reason"], weight=1.0))
-                
+
             conflicts = [CandidateConflict(field=f, left_value="Incoming", right_value="Existing") for f in c_data.get("conflicting_fields", [])]
+
+            # Map internal resolution statuses to the UI-facing statuses:
+            # MATCHED / PROBABLE_MATCH / REVIEW_REQUIRED → PENDING (awaits investigator)
+            # CONFIRMED / REJECTED / DEFERRED → pass through (already decided)
+            ui_pending_statuses = {"MATCHED", "PROBABLE_MATCH", "REVIEW_REQUIRED"}
+            ui_status = "PENDING" if stored_status in ui_pending_statuses else stored_status or "PENDING"
 
             results.append(ResolutionCandidate(
                 id=c_id,
                 score=c_data.get("confidence", 0.0),
-                status="PENDING" if c_data.get("status") in ("MATCHED", "PROBABLE_MATCH", "REVIEW_REQUIRED", "NOT_MATCHED") else c_data.get("status", "PENDING"),
+                status=ui_status,
                 left=make_rec(left_node_id, source_ids),
                 right=make_rec(right_node_id, []),
                 reasons=reasons,
                 conflicts=conflicts,
+                decided_at=c_data.get("decided_at"),
+                decided_by=c_data.get("decided_by"),
             ))
         return results
 

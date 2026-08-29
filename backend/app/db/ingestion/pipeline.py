@@ -31,6 +31,7 @@ from .parsers.fir import parse_fir_source_file
 from .parsers.intelligence import parse_intelligence_source_file
 from .resolution.matcher import IdentityClaim, decide_candidates
 from .resolution.registry import IdentityRegistry
+from backend.app.core.graph.enums import ResolutionStatus
 
 
 class CsvIngestionPipeline:
@@ -229,6 +230,11 @@ class CsvIngestionPipeline:
             provisional_id = make_provisional_person_id(claim.record_id, claim.source_type.value)
             
             for decision in decisions:
+                # Only store candidates that require human review or are matched.
+                # NOT_MATCHED decisions mean the algorithm is confident these are
+                # different people — they must never appear in the Fusion queue.
+                if decision.status is ResolutionStatus.NOT_MATCHED:
+                    continue
                 reviews.append(EntityReviewCandidate(
                     incoming_record_id=provisional_id,
                     candidate_node_id=decision.candidate_person_id,
