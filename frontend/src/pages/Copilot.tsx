@@ -19,7 +19,8 @@ import { apiClient } from '@/lib/apiClient'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import { MarkdownContent } from '@/components/nexus/MarkdownContent'
 import { PageHeader } from '@/components/ui/PageHeader'
-import type { GroundedCitation } from '@shared/contracts/api'
+import { DataTable } from '@/components/DataTable'
+import type { CaseCollectionItem, GroundedCitation } from '@shared/contracts/api'
 
 /** Maps canonical source record IDs to the most representative graph edge
  *  that carries them in its evidence_ids. Derived from NEXUS golden fixture. */
@@ -43,6 +44,7 @@ interface Message {
   reasoningPath?: string[]
   suggestedActions?: string[]
   caseId?: string
+  collectionResults?: CaseCollectionItem[]
   timestamp: string
 }
 
@@ -176,6 +178,7 @@ export default function Copilot() {
         reasoningPath: response.reasoning_path,
         suggestedActions: response.suggested_actions,
         caseId: response.case_id,
+        collectionResults: response.collection_results || [],
         timestamp: responseTimeIso,
       }
 
@@ -248,6 +251,29 @@ export default function Copilot() {
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.text}</p>
               ) : (
                 <MarkdownContent content={m.text} />
+              )}
+
+              {m.collectionResults && m.collectionResults.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.12em] text-neutral-600">
+                    <span>Matching Cases</span>
+                    <span>{m.collectionResults.length} results</span>
+                  </div>
+                  <DataTable
+                    columns={[
+                      { header: 'FIR', accessorKey: 'fir_number' },
+                      { header: 'Title', accessorKey: 'title' },
+                      { header: 'Category', accessorKey: 'offence_category' },
+                      { header: 'District', accessorKey: 'district' },
+                      { header: 'Status', accessorKey: 'status' },
+                    ]}
+                    data={m.collectionResults.map((item) => ({ id: item.case_id, ...item }))}
+                    isLoading={false}
+                    onRowClick={(row) => navigate(`/cases/${row.case_id}`)}
+                    emptyMessage="No matching cases found."
+                    ariaLabel="Matching case collection results"
+                  />
+                </div>
               )}
 
               {/* Dedicated Case Context Navigation Bar */}

@@ -230,6 +230,18 @@ class GroundedCitation(BaseModel):
     confidence: float
 
 
+class CaseCollectionItem(BaseModel):
+    case_id: str
+    fir_number: str
+    title: str
+    offence_category: str
+    district: str
+    station_name: str
+    status: str
+    updated_at: datetime | None = None
+    summary: str | None = None
+
+
 class CopilotQueryRequest(BaseModel):
     query: str
     case_id: str | None = None
@@ -253,6 +265,9 @@ class CopilotQueryResponse(BaseModel):
     evidence_ids: list[str] = Field(default_factory=list)
     reasoning_path: list[str] = Field(default_factory=list)
     case_id: str | None = None
+    collection_results: list[CaseCollectionItem] = Field(default_factory=list)
+    total_count: int = 0
+    query_type: str | None = None
 
 
 # ── Audit & Auth ──────────────────────────────────────────────────────────────

@@ -31,6 +31,7 @@ from backend.app.core.graph.algorithms.clustering import (
 from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.evidence_service import EvidenceService
 from shared.contracts.api import (
+    CaseCollectionItem,
     CopilotQueryRequest,
     CopilotQueryResponse,
     EvidenceItemResponse,
@@ -384,6 +385,54 @@ class CopilotService:
                     return orchestrated_res
             except Exception as exc:
                 logger.warning("AI Orchestrator encountered error, proceeding to deterministic fallback: %s", exc)
+
+        def _extract_collection_response(offence_filter: str | None = None) -> CopilotQueryResponse:
+            tool_res = self._tool_registry.execute("list_cases", {"offence_type": offence_filter} if offence_filter else {})
+            items = tool_res.data.get("cases", []) if isinstance(tool_res.data, dict) else []
+            collection = [CaseCollectionItem.model_validate(item) for item in items if isinstance(item, dict)]
+            total_count = int(tool_res.data.get("total_count", len(collection))) if isinstance(tool_res.data, dict) else len(collection)
+            if offence_filter:
+                summary = f"I found {total_count} {offence_filter.lower()} case(s) in the repository."
+            else:
+                summary = f"I found {total_count} case(s) in the repository."
+            return CopilotQueryResponse(
+                query=query_text,
+                intent="collection_query",
+                answer=summary,
+                is_refusal=False,
+                grounded_citations=[
+                    GroundedCitation(
+                        source_type="CASE",
+                        source_id=str(item.case_id),
+                        fact=f"Repository case record: {item.fir_number} — {item.offence_category}",
+                        confidence=1.0,
+                    )
+                    for item in collection[:5]
+                ],
+                evidence_ids=[item.case_id for item in collection[:10]],
+                reasoning_path=[f"Repository-backed collection query filtered by {offence_filter or 'all cases'}"],
+                suggested_actions=["Open Case Details", "Inspect Network", "Review Evidence"],
+                collection_results=collection,
+                total_count=total_count,
+                query_type="collection_query",
+            )
+
+        collection_filter = None
+        if any(token in norm_query for token in ["show all", "list all", "all cases", "how many", "count"]) or "cases" in norm_query:
+            for token, label in [
+                ("fraud", "fraud"),
+                ("cyber fraud", "fraud"),
+                ("trafficking", "trafficking"),
+                ("narcotics", "trafficking"),
+                ("money laundering", "money laundering"),
+                ("laundering", "money laundering"),
+            ]:
+                if token in norm_query:
+                    collection_filter = label
+                    break
+
+        if collection_filter or ("cases" in norm_query and any(kw in norm_query for kw in ["show", "list", "how many", "count"])):
+            return _extract_collection_response(collection_filter)
 
         citations: list[GroundedCitation] = []
         evidence_ids: list[str] = []

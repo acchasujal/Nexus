@@ -147,6 +147,35 @@ class NEXUSToolRegistry:
             {
                 "type": "function",
                 "function": {
+                    "name": "list_cases",
+                    "description": "Return authoritative case summaries filtered by offence type, district, status, or other investigator query criteria.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "offence_type": {
+                                "type": "string",
+                                "description": "Optional offence category to match, such as 'fraud', 'trafficking', 'cyber fraud', or 'narcotics'.",
+                            },
+                            "district": {
+                                "type": "string",
+                                "description": "Optional district filter.",
+                            },
+                            "status": {
+                                "type": "string",
+                                "description": "Optional case status filter (OPEN, CLOSED, etc.).",
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Maximum number of results to return.",
+                                "default": 25,
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
                     "name": "detect_bridge_brokers",
                     "description": "Calculate betweenness centrality to identify cut-vertex bridge nodes and kingpin brokers connecting disparate network clusters.",
                     "parameters": {
@@ -273,6 +302,13 @@ class NEXUSToolRegistry:
                 )
             elif tool_name == "get_case_dossier":
                 return self.get_case_dossier(case_id=str(arguments.get("case_id", "")))
+            elif tool_name == "list_cases":
+                return self.list_cases(
+                    offence_type=arguments.get("offence_type"),
+                    district=arguments.get("district"),
+                    status=arguments.get("status"),
+                    limit=int(arguments.get("limit", 25) or 25),
+                )
             elif tool_name == "detect_bridge_brokers":
                 return self.detect_bridge_brokers(case_id=arguments.get("case_id"))
             elif tool_name == "detect_communities":
@@ -569,6 +605,95 @@ class NEXUSToolRegistry:
             nodes_count=len(matched_data),
             edges_count=0,
         )
+
+    def list_cases(
+        self,
+        offence_type: str | None = None,
+        district: str | None = None,
+        status: str | None = None,
+        limit: int = 25,
+    ) -> NEXUSToolResult:
+        try:
+            query_filter = (offence_type or "").strip()
+            cases: list[dict[str, Any]] = []
+
+            for node_id, node in getattr(self._repo, "nodes", {}).items():
+                if node.get("entity_type") not in ("Case", "CASE"):
+                    continue
+                props = node.get("properties", {})
+                case_record = {
+                    "case_id": str(node_id),
+                    "fir_number": str(props.get("fir_number") or f"FIR-{node_id}"),
+                    "title": str(props.get("title") or f"Investigation {node_id}"),
+                    "offence_category": str(props.get("offence_category") or "General Crime"),
+                    "district": str(props.get("district") or "Bengaluru"),
+                    "station_name": str(props.get("station_name") or "Central Police Station"),
+                    "status": str(props.get("status") or "OPEN"),
+                    "updated_at": props.get("updated_at"),
+                    "summary": str(props.get("summary") or ""),
+                }
+
+                match = True
+                if query_filter:
+                    lowered = query_filter.lower()
+                    category_text = f"{case_record['offence_category']} {case_record['title']} {case_record['fir_number']}".lower()
+                    if lowered in {"fraud", "cyber fraud", "financial fraud"}:
+                        match = "fraud" in category_text or "extortion" in category_text
+                    elif lowered in {"trafficking", "narcotics trafficking", "trafficking cases"}:
+                        match = "trafficking" in category_text or "narcotic" in category_text
+                    elif lowered in {"money laundering", "laundering"}:
+                        match = "money laundering" in category_text or "laundering" in category_text
+                    else:
+                        match = lowered in category_text
+
+                if district and case_record["district"].lower() != district.lower():
+                    match = False
+                if status and case_record["status"].lower() != str(status).lower():
+                    match = False
+
+                if match:
+                    cases.append(case_record)
+
+            cases.sort(key=lambda item: (str(item["status"]).lower() != "open", str(item["updated_at"] or "")), reverse=True)
+            limited = cases[: max(0, int(limit or 25))]
+            total_count = len(limited)
+
+            citations = [
+                GroundedCitation(
+                    source_type="CASE",
+                    source_id=str(item["case_id"]),
+                    fact=f"Authoritative case found in repository: {item['fir_number']} — {item['offence_category']}",
+                    confidence=1.0,
+                )
+                for item in limited
+            ]
+            reasoning_path = [f"Repository query returned {total_count} case(s) matching the supplied filters."]
+
+            return NEXUSToolResult(
+                success=True,
+                tool_name="list_cases",
+                data={
+                    "cases": limited,
+                    "count": len(limited),
+                    "total_count": total_count,
+                    "offence_type": query_filter,
+                },
+                evidence_ids=[str(item["case_id"]) for item in limited],
+                citations=citations,
+                reasoning_path=reasoning_path,
+                case_ids=[str(item["case_id"]) for item in limited],
+                entity_ids=[str(item["case_id"]) for item in limited],
+                nodes_count=len(limited),
+                edges_count=0,
+            )
+        except Exception as exc:  # pragma: no cover - defensive guard
+            logger.exception("Error listing cases with filters: %s", exc)
+            return NEXUSToolResult(
+                success=False,
+                tool_name="list_cases",
+                error=f"Case listing failed: {exc}",
+                data={"cases": [], "count": 0, "total_count": 0},
+            )
 
     def get_case_dossier(self, case_id: str) -> NEXUSToolResult:
         nodes_dict, _, _ = self._get_active_graph_elements()

@@ -407,14 +407,18 @@ class GraphRAGContextBuilder:
         """Determine optimal retrieval strategy based on query structure and semantics."""
         q = query.lower()
 
-        # 1. Multi-Case or Connection Query between 2 endpoints
+        # 1. Broad case collection queries such as 'show all fraud cases'
+        if "case" in q and any(w in q for w in ("show all", "list all", "all cases", "how many", "count")):
+            return "case_collection", "case_collection"
+
+        # 2. Multi-Case or Connection Query between 2 endpoints
         if len(cases) >= 2 or (("connect" in q or "path" in q or "link" in q or "between" in q) and (len(cases) + len(entities) >= 2)):
             # If specifically asking about financial connection between endpoints, route to financial_trace
             if any(w in q for w in ("money", "financial", "transfer", "transaction", "account", "ledger", "bank")):
                 return "financial_trace", "financial_flow"
             return "cross_case_path", "cross_case_connection"
 
-        # 2. Graph Pattern Rules & Syndicates (higher precedence than general financial words)
+        # 3. Graph Pattern Rules & Syndicates (higher precedence than general financial words)
         if any(w in q for w in ("pattern", "circular", "burst", "flagged", "syndicate", "suspicious", "rule", "co-location")):
             return "pattern_investigation", "pattern_investigation"
 

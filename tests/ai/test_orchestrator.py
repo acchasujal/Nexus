@@ -198,3 +198,81 @@ def test_orchestrator_preserves_tools_on_multi_turn_calls(principal, audit_svc):
     for i, req in enumerate(captured_requests):
         assert req.tools is not None, f"Turn {i + 1} omitted tools declaration, which causes Groq 'Tool choice is none' error"
         assert len(req.tools) == 2
+
+
+def test_list_cases_tool_returns_fraud_collection(repo, audit_svc):
+    tool_registry = NEXUSToolRegistry(repo, audit_svc)
+    result = tool_registry.execute("list_cases", {"offence_type": "fraud"})
+
+    assert result.success is True
+    assert result.data["total_count"] > 0
+    assert len(result.data["cases"]) > 0
+    assert any("fraud" in item["offence_category"].lower() for item in result.data["cases"])
+
+
+def test_list_cases_tool_returns_trafficking_collection(repo, audit_svc):
+    tool_registry = NEXUSToolRegistry(repo, audit_svc)
+    result = tool_registry.execute("list_cases", {"offence_type": "trafficking"})
+
+    assert result.success is True
+    assert result.data["total_count"] > 0
+    assert len(result.data["cases"]) > 0
+    assert any("trafficking" in item["offence_category"].lower() for item in result.data["cases"])
+
+
+def test_list_cases_tool_handles_count_and_empty_collection(repo, audit_svc):
+    tool_registry = NEXUSToolRegistry(repo, audit_svc)
+    count_result = tool_registry.execute("list_cases", {"offence_type": "fraud", "limit": 5})
+    empty_result = tool_registry.execute("list_cases", {"offence_type": "nonexistent-category"})
+
+    assert count_result.success is True
+    assert count_result.data["count"] == count_result.data["total_count"]
+    assert count_result.data["count"] <= 5
+
+    assert empty_result.success is True
+    assert empty_result.data["total_count"] == 0
+    assert empty_result.data["cases"] == []
+
+
+def test_orchestrator_selects_list_cases_tool_for_collection_queries(principal, repo, audit_svc):
+    from backend.app.ai.schemas import LLMResponse, ToolCall
+    from unittest.mock import MagicMock
+
+    tool_registry = NEXUSToolRegistry(repo, audit_svc)
+    mock_client = MagicMock()
+    mock_client.provider_name = "mock_test"
+    mock_client.model_name = "mock-model"
+    mock_client.generate.side_effect = [
+        LLMResponse(content="", tool_calls=[ToolCall(name="list_cases", arguments={"offence_type": "fraud"}, call_id="call-list-001")]),
+        LLMResponse(content="I found the matching fraud cases from the repository.", tool_calls=[]),
+    ]
+    orchestrator = AIToolOrchestrator(
+        llm_client=mock_client,
+        tool_registry=tool_registry,
+        prompt_manager=PromptManager(),
+        audit_service=audit_svc,
+    )
+
+    res = orchestrator.process_query(CopilotQueryRequest(query="Show all fraud cases"), principal=principal)
+
+    assert res is not None
+    assert res.is_refusal is False
+    assert res.collection_results is not None
+    assert len(res.collection_results) > 0
+    assert any(item.offence_category.lower().find("fraud") >= 0 for item in res.collection_results)
+
+
+def test_copilot_service_deterministic_collection_fallback(repo, audit_svc, principal, monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("NEXUS_LLM_API_KEY", raising=False)
+    monkeypatch.delenv("NEXUS_USE_MOCK_LLM", raising=False)
+
+    svc = CopilotService(repository=repo, audit_service=audit_svc, orchestrator=None)
+    res = svc.handle_query(CopilotQueryRequest(query="How many fraud cases are there?"), principal=principal)
+
+    assert res.is_refusal is False
+    assert res.collection_results is not None
+    assert res.total_count > 0
+    assert "fraud" in res.answer.lower()

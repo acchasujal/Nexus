@@ -187,6 +187,18 @@ export interface GroundedCitation {
   confidence: number
 }
 
+export interface CaseCollectionItem {
+  case_id: string
+  fir_number: string
+  title: string
+  offence_category: string
+  district: string
+  station_name: string
+  status: string
+  updated_at?: string
+  summary?: string
+}
+
 export interface CopilotQueryRequest {
   query: string
   case_id?: string
@@ -210,6 +222,9 @@ export interface CopilotQueryResponse {
   evidence_ids?: string[]
   reasoning_path?: string[]
   case_id?: string
+  collection_results?: CaseCollectionItem[]
+  total_count?: number
+  query_type?: string
 }
 
 export interface AuditLogEntry {

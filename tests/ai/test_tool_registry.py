@@ -28,12 +28,13 @@ def registry(repo, audit_svc):
 
 def test_tool_declarations_schema(registry):
     decls = registry.get_tool_declarations()
-    assert len(decls) == 9
+    assert len(decls) == 10
     tool_names = {d["function"]["name"] for d in decls}
     expected = {
         "find_shortest_path",
         "resolve_person_identity",
         "get_case_dossier",
+        "list_cases",
         "detect_bridge_brokers",
         "detect_communities",
         "detect_financial_layering",

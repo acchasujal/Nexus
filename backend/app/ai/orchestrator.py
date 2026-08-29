@@ -25,6 +25,7 @@ from backend.app.ai.tools import NEXUSToolRegistry, NEXUSToolResult
 from backend.app.auth.principal import Principal
 from backend.app.services.audit_service import AuditEventType, AuditService
 from shared.contracts.api import (
+    CaseCollectionItem,
     CopilotQueryRequest,
     CopilotQueryResponse,
     GroundedCitation,
@@ -153,6 +154,8 @@ class AIToolOrchestrator:
         all_reasoning_paths: list[str] = []
         all_case_ids: list[str] = []
         all_entity_ids: list[str] = []
+        collection_results: list[CaseCollectionItem] = []
+        collection_total = 0
         final_answer = ""
         detected_intent = "ai_tool_synthesis"
 
@@ -213,6 +216,7 @@ class AIToolOrchestrator:
                             "find_shortest_path": "cross_case_analysis",
                             "resolve_person_identity": "entity_lookup",
                             "get_case_dossier": "case_summary",
+                            "list_cases": "collection_query",
                             "detect_bridge_brokers": "bridge_analysis",
                             "detect_communities": "community_detection",
                             "detect_financial_layering": "transaction_analysis",
@@ -221,6 +225,15 @@ class AIToolOrchestrator:
                             "get_cross_case_connections": "cross_case_analysis",
                         }
                         detected_intent = _TOOL_INTENT_MAP.get(tc.name, "ai_tool_synthesis")
+
+                        if tc.name == "list_cases":
+                            cases_payload = tool_result.data.get("cases", []) if isinstance(tool_result.data, dict) else []
+                            collection_results = [
+                                CaseCollectionItem.model_validate(item)
+                                for item in cases_payload
+                                if isinstance(item, dict)
+                            ]
+                            collection_total = int(tool_result.data.get("total_count", len(collection_results))) if isinstance(tool_result.data, dict) else len(collection_results)
 
                         # Extract Authoritative Citations & Lineage from Tool Output
                         all_citations.extend(tool_result.citations)
@@ -278,6 +291,10 @@ class AIToolOrchestrator:
                 "View verified evidence chain",
             ]
 
+            if not final_answer and collection_results:
+                verb = "are" if collection_total != 1 else "is"
+                final_answer = f"I found {collection_total} matching case(s); {verb} ready to review below."
+
             return CopilotQueryResponse(
                 query=query_text,
                 intent=detected_intent,
@@ -289,6 +306,9 @@ class AIToolOrchestrator:
                 evidence_ids=deduped_evidence_ids,
                 reasoning_path=all_reasoning_paths,
                 case_id=resolved_case_id,
+                collection_results=collection_results,
+                total_count=collection_total,
+                query_type="collection_query" if collection_results else None,
             )
 
         except Exception as exc:
