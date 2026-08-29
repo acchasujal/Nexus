@@ -493,3 +493,122 @@ class IngestionBatchResponse(BaseModel):
     parse_issues: list[IngestionParseIssue] = Field(default_factory=list)
     review_candidates: list[dict[str, Any]] = Field(default_factory=list)
     graph_updated: bool = False
+
+
+# ── Hotspot Intelligence & Repeat Offender Radar ─────────────────────────────
+
+class DominantCategoryItem(BaseModel):
+    category: str
+    count: int
+    percentage: float
+
+
+class DistrictHotspotIntelligence(BaseModel):
+    district: str
+    case_count: int
+    baseline_cases: float
+    concentration_multiplier: float  # e.g., 3.4
+    dominant_categories: list[DominantCategoryItem] = Field(default_factory=list)
+    cross_case_links_count: int = 0
+    repeat_offender_overlap_count: int = 0
+    repeat_offender_ids: list[str] = Field(default_factory=list)
+    repeat_offender_names: list[str] = Field(default_factory=list)
+    evidence_backed: bool = True
+    evidence_ids: list[str] = Field(default_factory=list)
+    alert_level: str = "RED"  # RED | AMBER | GREEN
+    summary_reason: str = ""
+
+
+class HotspotCaseItem(BaseModel):
+    case_id: str
+    fir_number: str
+    title: str = ""
+    date: str = ""
+    crime_head: str = ""
+    police_station: str = ""
+    sections: list[str] = Field(default_factory=list)
+    accused_count: int = 0
+
+
+class HotspotEntityItem(BaseModel):
+    entity_id: str
+    name: str
+    entity_type: str = "Person"
+    case_count: int = 0
+    role: str = "Suspect"
+
+
+class HotspotDrilldownResponse(BaseModel):
+    district: str
+    case_count: int
+    baseline_cases: float
+    concentration_multiplier: float
+    cases: list[HotspotCaseItem] = Field(default_factory=list)
+    entities: list[HotspotEntityItem] = Field(default_factory=list)
+    repeat_offenders: list[dict[str, Any]] = Field(default_factory=list)
+    cross_case_links: list[dict[str, Any]] = Field(default_factory=list)
+    evidence_ids: list[str] = Field(default_factory=list)
+    evidence: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class SharedNetworkEntity(BaseModel):
+    entity_id: str
+    label: str
+    entity_type: str
+    shared_reason: str
+
+
+class RecentCaseInfo(BaseModel):
+    case_id: str
+    fir_number: str
+    date: str = ""
+    district: str = ""
+    crime_head: str = ""
+
+
+class RepeatOffenderRadarItem(BaseModel):
+    person_id: str
+    canonical_name: str
+    aliases: list[str] = Field(default_factory=list)
+    resolved_person_ids: list[str] = Field(default_factory=list)
+    case_count: int = 0
+    case_ids: list[str] = Field(default_factory=list)
+    fir_numbers: list[str] = Field(default_factory=list)
+    districts: list[str] = Field(default_factory=list)
+    district_count: int = 0
+    shared_network_entities_count: int = 0
+    shared_network_entities: list[SharedNetworkEntity] = Field(default_factory=list)
+    shared_phone_identifiers: list[str] = Field(default_factory=list)
+    most_recent_case: RecentCaseInfo | None = None
+    evidence_ids: list[str] = Field(default_factory=list)
+    why_surfaced: str = "Deterministic repeat-case + entity-resolution evidence."
+    compliance_status: str = "Investigative lead — not a finding of guilt."
+
+
+class BridgingOffenderDetail(BaseModel):
+    person_id: str
+    name: str
+    home_district: str
+    external_districts: list[str] = Field(default_factory=list)
+    case_ids: list[str] = Field(default_factory=list)
+    case_count: int = 0
+
+
+class ConnectedDistrictInfo(BaseModel):
+    district: str
+    bridging_offenders: list[str] = Field(default_factory=list)
+    case_count: int = 0
+
+
+class CombinedBridgeSignal(BaseModel):
+    signal_id: str
+    primary_district: str
+    primary_district_cases: int
+    repeat_offender_count: int
+    connected_districts: list[ConnectedDistrictInfo] = Field(default_factory=list)
+    cross_district_bridge_detected: bool = False
+    bridging_offender_details: list[BridgingOffenderDetail] = Field(default_factory=list)
+    evidence_ids: list[str] = Field(default_factory=list)
+    alert_title: str = "RED FLAG — Cross-District Criminal Network Bridge"
+    explanation: str = ""
+

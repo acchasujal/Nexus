@@ -55,9 +55,11 @@ def _deterministic_lead_id(rule_id: str, entity_ids: list[str], case_ids: list[s
         "cross_case_bridge": "lead-bridge",
         "cut_vertex_broker": "lead-broker",
         "community_detection": "lead-comm",
+        "cross_district_hotspot_bridge": "lead-hotspot-bridge",
     }
     prefix = prefix_map.get(rule_id, "lead-pat")
     return f"{prefix}-{digest}"
+
 
 
 class LeadPipelineService:
@@ -136,7 +138,31 @@ class LeadPipelineService:
                 )
             )
 
-        # ── 4. Process Each Finding into an Evidence-Backed Lead ──────────────
+        # ── 4. Discover Cross-District Hotspot Bridges ─────────────────────────
+        from backend.app.core.graph.repositories.graph_repository import GraphRepository
+        from backend.app.core.graph.services.hotspot_service import HotspotService
+        hotspot_svc = HotspotService(GraphRepository(store))
+        bridge_signals = hotspot_svc.get_combined_bridge_signals()
+        for bs in bridge_signals:
+            suspect_ids = [d["person_id"] for d in bs.get("bridging_offender_details", [])]
+            suspect_cases = []
+            for d in bs.get("bridging_offender_details", []):
+                suspect_cases.extend(d.get("case_ids", []))
+            pattern_findings.append(
+                PatternFinding(
+                    rule_id="cross_district_hotspot_bridge",
+                    explanation=bs["explanation"],
+                    entity_ids=suspect_ids[:6],
+                    edge_ids=[],
+                    evidence_ids=bs.get("evidence_ids", [])[:8],
+                    case_ids=sorted(list(set(suspect_cases)))[:6],
+                    derivation_class="DERIVED",
+                    severity="HIGH",
+                )
+            )
+
+        # ── 5. Process Each Finding into an Evidence-Backed Lead ──────────────
+
         for finding in pattern_findings:
             lead_id = _deterministic_lead_id(finding.rule_id, finding.entity_ids, finding.case_ids)
 
@@ -306,6 +332,20 @@ class LeadPipelineService:
                 "Louvain modularity clustering identified tightly connected group.",
                 "Supports mapping organizational hierarchy and joint chargesheeting.",
             ]
+
+        elif rule == "cross_district_hotspot_bridge":
+            title = f"Cross-District Crime Syndicate Bridge ({entity_count} Suspects)"
+            priority = "HIGH"
+            factors = {
+                "Jurisdictional Reach": "Multi-district criminal coordination",
+                "Repeat Accused Count": f"{entity_count} repeat offenders spanning districts",
+                "Intervention Value": "Inter-district task force mobilization recommended",
+            }
+            why = [
+                "Identified repeat offenders bridging active high-density crime hotspots.",
+                "Strong indicator of syndicated interstate/inter-district criminal operations.",
+            ]
+
 
         else:
             title = f"Algorithmic Pattern Finding: {rule}"

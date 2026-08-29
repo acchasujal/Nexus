@@ -30,6 +30,8 @@ from backend.app.api.dependencies import (
     get_audit_service,
     get_copilot_service,
     get_evidence_dossier_service,
+    get_hotspot_service,
+    get_offender_service,
     get_lead_service,
     get_ingestion_service,
     get_principal,
@@ -39,23 +41,30 @@ from backend.app.api.dependencies import (
 )
 from backend.app.auth.principal import Principal
 from backend.app.core.graph.enums import ResolutionStatus
+from backend.app.core.graph.services.hotspot_service import HotspotService
+from backend.app.core.graph.services.offender_service import OffenderService
 from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.db.ingestion.pipeline import CsvIngestionPipeline
 from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.copilot_service import CopilotService
 from shared.contracts.api import (
+    CombinedBridgeSignal,
     CopilotQueryRequest,
+    DistrictHotspotIntelligence,
     EvidenceBatchVerifyRequest,
     EvidenceBatchVerifyResponse,
     GroundedCitation,
+    HotspotDrilldownResponse,
     NetworkGraphResponse,
     NexusDossierRequest,
     NexusDossierResponse,
     NexusDossierVerificationResponse,
+    RepeatOffenderRadarItem,
 )
 from backend.app.services.ingestion_service import IngestionService
 from backend.app.db.ingestion.contracts import UploadedSource, SourceType
+
 
 # ── Pydantic Models ────────────────────────────────────────────────────────────
 
@@ -1881,4 +1890,102 @@ def create_nexus_router() -> APIRouter:
         # Ensure it maps nicely to the pydantic model if it's a dict
         return NexusSourceRecord(**record_data)
 
+    # ── Hotspots & Repeat Offender Intelligence Routes ─────────────────────
+
+    @router.get("/nexus/intelligence/hotspots", response_model=list[DistrictHotspotIntelligence])
+    def get_district_hotspots(
+        principal: Principal = Depends(get_principal),
+        hotspot_service: HotspotService = Depends(get_hotspot_service),
+        audit_service: AuditService = Depends(get_audit_service),
+    ) -> list[DistrictHotspotIntelligence]:
+        """Fetch all high-signal District Hotspots with baseline concentration multiplier."""
+        hotspots = hotspot_service.get_district_intelligence_hotspots()
+        audit_service.record(
+            event_type=AuditEventType.PATTERN_SEARCH_EXECUTED,
+            actor_id=principal.user_id,
+            details={"action": "GET_DISTRICT_HOTSPOTS", "hotspots_count": len(hotspots)},
+        )
+        return [DistrictHotspotIntelligence(**h) for h in hotspots]
+
+    @router.get("/nexus/intelligence/hotspots/{district}", response_model=HotspotDrilldownResponse)
+    def get_district_drilldown(
+        district: str,
+        principal: Principal = Depends(get_principal),
+        hotspot_service: HotspotService = Depends(get_hotspot_service),
+        audit_service: AuditService = Depends(get_audit_service),
+    ) -> HotspotDrilldownResponse:
+        """Fetch full cases, entities, repeat offenders, and evidence drill-down for a district."""
+        drilldown = hotspot_service.get_district_drilldown(district)
+        if not drilldown.get("cases") and drilldown.get("case_count") == 0:
+            # Check if any case exists with this district
+            store = hotspot_service._repo.store
+            from backend.app.core.graph.algorithms.utils import prop_str
+            district_exists = any(
+                prop_str(n, "district", default="").lower() == district.lower()
+                for n in store.nodes.values()
+                if n.entity_type == "Case"
+            )
+            if not district_exists:
+                raise HTTPException(status_code=404, detail=f"District '{district}' not found")
+        audit_service.record(
+            event_type=AuditEventType.PATTERN_SEARCH_EXECUTED,
+            actor_id=principal.user_id,
+            details={"action": "GET_DISTRICT_DRILLDOWN", "district": district, "case_count": drilldown.get("case_count", 0)},
+        )
+        return HotspotDrilldownResponse(**drilldown)
+
+    @router.get("/nexus/intelligence/offenders", response_model=list[RepeatOffenderRadarItem])
+    def get_repeat_offenders_radar(
+        min_cases: int = Query(2, ge=1, description="Minimum case count"),
+        top_k: int = Query(50, ge=1, le=200, description="Top K results limit"),
+        principal: Principal = Depends(get_principal),
+        offender_service: OffenderService = Depends(get_offender_service),
+        audit_service: AuditService = Depends(get_audit_service),
+    ) -> list[RepeatOffenderRadarItem]:
+        """Fetch Repeat Offender Radar records with resolved aliases and district spread."""
+        radar_items = offender_service.get_repeat_offender_radar(min_cases=min_cases, top_k=top_k)
+        audit_service.record(
+            event_type=AuditEventType.PATTERN_SEARCH_EXECUTED,
+            actor_id=principal.user_id,
+            details={"action": "GET_REPEAT_OFFENDER_RADAR", "offender_count": len(radar_items), "min_cases": min_cases},
+        )
+        return [RepeatOffenderRadarItem(**item) for item in radar_items]
+
+    @router.get("/nexus/intelligence/offenders/{person_id}", response_model=RepeatOffenderRadarItem)
+    def get_offender_profile_radar(
+        person_id: str,
+        principal: Principal = Depends(get_principal),
+        offender_service: OffenderService = Depends(get_offender_service),
+        audit_service: AuditService = Depends(get_audit_service),
+    ) -> RepeatOffenderRadarItem:
+        """Fetch detailed Repeat Offender Radar profile for a specific suspect/cluster."""
+        profile = offender_service.get_offender_radar_profile(person_id)
+        if not profile:
+            raise HTTPException(status_code=404, detail=f"Person '{person_id}' not found")
+        audit_service.record(
+            event_type=AuditEventType.ENTITY_VIEWED,
+            actor_id=principal.user_id,
+            entity_id=person_id,
+            entity_type="Person",
+            details={"action": "GET_OFFENDER_RADAR_PROFILE"},
+        )
+        return RepeatOffenderRadarItem(**profile)
+
+    @router.get("/nexus/intelligence/combined", response_model=list[CombinedBridgeSignal])
+    def get_combined_bridge_signals(
+        principal: Principal = Depends(get_principal),
+        hotspot_service: HotspotService = Depends(get_hotspot_service),
+        audit_service: AuditService = Depends(get_audit_service),
+    ) -> list[CombinedBridgeSignal]:
+        """Fetch combined Hotspot ↔ Repeat Offender Overlap and Cross-District Syndicate Bridges."""
+        signals = hotspot_service.get_combined_bridge_signals()
+        audit_service.record(
+            event_type=AuditEventType.PATTERN_SEARCH_EXECUTED,
+            actor_id=principal.user_id,
+            details={"action": "GET_COMBINED_BRIDGE_SIGNALS", "signals_count": len(signals)},
+        )
+        return [CombinedBridgeSignal(**s) for s in signals]
+
     return router
+
+

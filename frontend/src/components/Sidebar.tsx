@@ -98,7 +98,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       roles: ['SUPERVISOR', 'ADMIN', 'SHO', 'SP']
     },
     {
-      name: 'Patterns & Communities',
+      name: 'Intelligence & Hotspots',
       to: '/patterns',
       icon: Layers,
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']

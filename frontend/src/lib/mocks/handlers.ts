@@ -323,5 +323,196 @@ export const handlers = [
     }
 
     return HttpResponse.json(response)
-  })
+  }),
+
+  // 9. GET /api/v1/nexus/intelligence/hotspots
+  http.get(/\/api\/v1\/nexus\/intelligence\/hotspots/, () => {
+    return HttpResponse.json([
+      {
+        district: 'Mumbai Central',
+        case_count: 87,
+        baseline_cases: 25.6,
+        concentration_multiplier: 3.4,
+        dominant_categories: [
+          { category: 'Narcotics', count: 39, percentage: 44.8 },
+          { category: 'Robbery', count: 28, percentage: 32.2 },
+          { category: 'Cyber', count: 20, percentage: 23.0 },
+        ],
+        cross_case_links_count: 14,
+        repeat_offender_overlap_count: 6,
+        repeat_offender_ids: ['person-0040', 'person-0037'],
+        repeat_offender_names: ['Ramesh Hegde', 'Sunil Gupta'],
+        evidence_backed: true,
+        evidence_ids: ['EVD-FIR-141', 'EVD-CDR-01'],
+        alert_level: 'RED',
+        summary_reason: 'District Mumbai Central has 87 cases (3.4x baseline) with 6 repeat offenders.',
+      },
+      {
+        district: 'Pune City',
+        case_count: 32,
+        baseline_cases: 25.6,
+        concentration_multiplier: 1.2,
+        dominant_categories: [
+          { category: 'Financial Fraud', count: 18, percentage: 56.2 },
+          { category: 'Extortion', count: 14, percentage: 43.8 },
+        ],
+        cross_case_links_count: 5,
+        repeat_offender_overlap_count: 2,
+        repeat_offender_ids: ['person-0040'],
+        repeat_offender_names: ['Ramesh Hegde'],
+        evidence_backed: true,
+        evidence_ids: ['EVD-FIR-207'],
+        alert_level: 'AMBER',
+        summary_reason: 'District Pune City has 32 cases (1.2x baseline) with 2 repeat offenders.',
+      },
+    ])
+  }),
+
+  // 10. GET /api/v1/nexus/intelligence/hotspots/:district
+  http.get(/\/api\/v1\/nexus\/intelligence\/hotspots\/(.+)/, ({ params }) => {
+    const district = Array.isArray(params[0]) ? params[0][0] : (params[0] as string) || 'Mumbai Central'
+    return HttpResponse.json({
+      district,
+      case_count: 87,
+      baseline_cases: 25.6,
+      concentration_multiplier: 3.4,
+      cases: [
+        {
+          case_id: 'case-0141',
+          fir_number: 'FIR-2026-141',
+          title: 'Narcotics distribution syndicate',
+          date: '2026-02-04T10:00:00Z',
+          crime_head: 'Narcotics',
+          police_station: 'Mumbai Central Police Station',
+          sections: ['Section 21 NDPS', 'Section 120B IPC'],
+          accused_count: 4,
+        },
+        {
+          case_id: 'case-0142',
+          fir_number: 'FIR-2026-142',
+          title: 'Armed jewelry robbery',
+          date: '2026-02-12T14:30:00Z',
+          crime_head: 'Robbery',
+          police_station: 'Crime Branch Mumbai',
+          sections: ['Section 392 IPC', 'Section 397 IPC'],
+          accused_count: 3,
+        },
+      ],
+      entities: [
+        {
+          entity_id: 'person-0040',
+          name: 'Ramesh Hegde',
+          entity_type: 'Person',
+          case_count: 7,
+          role: 'ACCUSED_IN',
+        },
+        {
+          entity_id: 'person-0037',
+          name: 'Sunil Gupta',
+          entity_type: 'Person',
+          case_count: 3,
+          role: 'ACCUSED_IN',
+        },
+      ],
+      repeat_offenders: [
+        {
+          person_id: 'person-0040',
+          canonical_name: 'Ramesh Hegde',
+          aliases: ['Ramesh H.', 'R. Hegde'],
+          case_count: 7,
+          districts: ['Mumbai Central', 'Pune City', 'Thane'],
+          fir_numbers: ['FIR-2026-141', 'FIR-2026-142', 'FIR-2026-207'],
+          why_surfaced: 'Deterministic repeat-case + entity-resolution evidence.',
+        },
+      ],
+      cross_case_links: [
+        {
+          source_id: 'person-0040',
+          target_id: 'case-0142',
+          edge_type: 'ACCUSED_IN',
+          case_ids: ['case-0141', 'case-0142'],
+        },
+      ],
+      evidence_ids: ['EVD-FIR-141', 'EVD-CDR-01'],
+      evidence: [
+        {
+          evidence_id: 'EVD-FIR-141',
+          source_type: 'FIR_RECORD',
+          description: 'Original FIR record for Case 141',
+          case_id: 'case-0141',
+        },
+      ],
+    })
+  }),
+
+  // 11. GET /api/v1/nexus/intelligence/offenders
+  http.get(/\/api\/v1\/nexus\/intelligence\/offenders/, () => {
+    return HttpResponse.json([
+      {
+        person_id: 'person-0040',
+        canonical_name: 'Ramesh Hegde',
+        aliases: ['Ramesh H.', 'R. Hegde'],
+        resolved_person_ids: ['person-0040', 'person-0040-alias'],
+        case_count: 7,
+        case_ids: ['case-0141', 'case-0142', 'case-0207'],
+        fir_numbers: ['FIR-2026-141', 'FIR-2026-142', 'FIR-2026-207'],
+        districts: ['Mumbai Central', 'Pune City', 'Thane'],
+        district_count: 3,
+        shared_network_entities_count: 4,
+        shared_network_entities: [
+          {
+            entity_id: 'person-0037',
+            label: 'Sunil Gupta',
+            entity_type: 'Person',
+            shared_reason: 'Co-accused in case-0141',
+          },
+        ],
+        shared_phone_identifiers: ['+91 98200 11223', '+91 98200 99887'],
+        most_recent_case: {
+          case_id: 'case-0142',
+          fir_number: 'FIR-2026-142',
+          date: '2026-02-12T14:30:00Z',
+          district: 'Mumbai Central',
+          crime_head: 'Robbery',
+        },
+        evidence_ids: ['EVD-FIR-141', 'EVD-CDR-01'],
+        why_surfaced: 'Deterministic repeat-case + entity-resolution evidence.',
+        compliance_status: 'Investigative lead — not a finding of guilt.',
+      },
+    ])
+  }),
+
+  // 12. GET /api/v1/nexus/intelligence/combined
+  http.get(/\/api\/v1\/nexus\/intelligence\/combined/, () => {
+    return HttpResponse.json([
+      {
+        signal_id: 'sig-bridge-mumbai-central',
+        primary_district: 'Mumbai Central',
+        primary_district_cases: 87,
+        repeat_offender_count: 6,
+        connected_districts: [
+          {
+            district: 'Pune City',
+            bridging_offenders: ['Ramesh Hegde'],
+            case_count: 32,
+          },
+        ],
+        cross_district_bridge_detected: true,
+        bridging_offender_details: [
+          {
+            person_id: 'person-0040',
+            name: 'Ramesh Hegde',
+            home_district: 'Mumbai Central',
+            external_districts: ['Pune City', 'Thane'],
+            case_ids: ['case-0141', 'case-0207'],
+            case_count: 7,
+          },
+        ],
+        evidence_ids: ['EVD-FIR-141', 'EVD-CDR-01'],
+        alert_title: 'RED FLAG — Cross-District Criminal Network Bridge',
+        explanation: 'Crime hotspot: District Mumbai Central (87 cases). 6 resolved repeat offenders are associated with this area. 1 of those offenders also connect to cases in Pune City. Cross-case bridge detected.',
+      },
+    ])
+  }),
 ]
+

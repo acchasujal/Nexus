@@ -46,7 +46,7 @@ export function AppShell() {
         '/copilot': 'Investigator Copilot',
         '/audit': 'Audit Trail',
         '/settings': 'Settings',
-        '/patterns': 'Patterns & Communities',
+        '/patterns': 'Intelligence & Hotspots',
       }
 
       const pathKey = Object.keys(pageNames).find(k => location.pathname.startsWith(k))

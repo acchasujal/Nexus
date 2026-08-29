@@ -594,3 +594,122 @@ export interface NexusIngestResponse {
   provenance_completeness: number
   graph_ready: boolean
 }
+
+// ── Hotspot Intelligence & Repeat Offender Radar ─────────────────────────────
+
+export interface DominantCategoryItem {
+  category: string
+  count: number
+  percentage: number
+}
+
+export interface DistrictHotspotIntelligence {
+  district: string
+  case_count: number
+  baseline_cases: number
+  concentration_multiplier: number
+  dominant_categories: DominantCategoryItem[]
+  cross_case_links_count: number
+  repeat_offender_overlap_count: number
+  repeat_offender_ids: string[]
+  repeat_offender_names: string[]
+  evidence_backed: boolean
+  evidence_ids: string[]
+  alert_level: 'RED' | 'AMBER' | 'GREEN'
+  summary_reason: string
+}
+
+export interface HotspotCaseItem {
+  case_id: string
+  fir_number: string
+  title: string
+  date: string
+  crime_head: string
+  police_station: string
+  sections: string[]
+  accused_count: number
+}
+
+export interface HotspotEntityItem {
+  entity_id: string
+  name: string
+  entity_type: string
+  case_count: number
+  role: string
+}
+
+export interface HotspotDrilldownResponse {
+  district: string
+  case_count: number
+  baseline_cases: number
+  concentration_multiplier: number
+  cases: HotspotCaseItem[]
+  entities: HotspotEntityItem[]
+  repeat_offenders: Record<string, any>[]
+  cross_case_links: Record<string, any>[]
+  evidence_ids: string[]
+  evidence: Record<string, any>[]
+}
+
+export interface SharedNetworkEntity {
+  entity_id: string
+  label: string
+  entity_type: string
+  shared_reason: string
+}
+
+export interface RecentCaseInfo {
+  case_id: string
+  fir_number: string
+  date: string
+  district: string
+  crime_head: string
+}
+
+export interface RepeatOffenderRadarItem {
+  person_id: string
+  canonical_name: string
+  aliases: string[]
+  resolved_person_ids: string[]
+  case_count: number
+  case_ids: string[]
+  fir_numbers: string[]
+  districts: string[]
+  district_count: number
+  shared_network_entities_count: number
+  shared_network_entities: SharedNetworkEntity[]
+  shared_phone_identifiers: string[]
+  most_recent_case?: RecentCaseInfo | null
+  evidence_ids: string[]
+  why_surfaced: string
+  compliance_status: string
+}
+
+export interface BridgingOffenderDetail {
+  person_id: string
+  name: string
+  home_district: string
+  external_districts: string[]
+  case_ids: string[]
+  case_count: number
+}
+
+export interface ConnectedDistrictInfo {
+  district: string
+  bridging_offenders: string[]
+  case_count: number
+}
+
+export interface CombinedBridgeSignal {
+  signal_id: string
+  primary_district: string
+  primary_district_cases: number
+  repeat_offender_count: number
+  connected_districts: ConnectedDistrictInfo[]
+  cross_district_bridge_detected: boolean
+  bridging_offender_details: BridgingOffenderDetail[]
+  evidence_ids: string[]
+  alert_title: string
+  explanation: string
+}
+

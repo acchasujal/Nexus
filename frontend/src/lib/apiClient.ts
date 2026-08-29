@@ -29,6 +29,10 @@ import type {
   NexusDossierRequest,
   NexusDossierResponse,
   NexusDossierVerificationResponse,
+  DistrictHotspotIntelligence,
+  HotspotDrilldownResponse,
+  RepeatOffenderRadarItem,
+  CombinedBridgeSignal,
 } from '@shared/contracts/api'
 
 export class ApiError extends Error {
@@ -280,4 +284,12 @@ export const apiClient = {
     body: JSON.stringify(request),
   }),
   verifyEvidenceDossier: (dossierId: string) => apiFetch<NexusDossierVerificationResponse>(`/api/v1/nexus/evidence/dossier/${encodeURIComponent(dossierId)}/verify`, { method: 'POST' }),
+
+  // ── Intelligence Hub Methods ──────────────────────────────────────────────
+  getIntelligenceHotspots: () => apiFetch<DistrictHotspotIntelligence[]>('/api/v1/nexus/intelligence/hotspots'),
+  getHotspotDrilldown: (district: string) => apiFetch<HotspotDrilldownResponse>(`/api/v1/nexus/intelligence/hotspots/${encodeURIComponent(district)}`),
+  getRepeatOffenderRadar: (minCases = 2, topK = 50) => apiFetch<RepeatOffenderRadarItem[]>(`/api/v1/nexus/intelligence/offenders?min_cases=${minCases}&top_k=${topK}`),
+  getOffenderRadarProfile: (personId: string) => apiFetch<RepeatOffenderRadarItem>(`/api/v1/nexus/intelligence/offenders/${encodeURIComponent(personId)}`),
+  getCombinedBridgeSignals: () => apiFetch<CombinedBridgeSignal[]>('/api/v1/nexus/intelligence/combined'),
 }
+

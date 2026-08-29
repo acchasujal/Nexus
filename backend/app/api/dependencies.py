@@ -132,3 +132,25 @@ def get_ingestion_service(request: Request) -> IngestionService:
 def get_graph_repository(request: Request):
     from backend.app.core.graph.repositories.graph_repository import GraphRepository
     return request.app.state.graph_repo  # type: ignore[no-any-return]
+
+
+def get_offender_service(
+    repo: InMemoryBackendRepository = Depends(get_repository),
+) -> Any:
+    from backend.app.core.graph.repositories.graph_repository import GraphRepository
+    from backend.app.core.graph.services.offender_service import OffenderService
+    store = repo.to_graph_store()
+    return OffenderService(GraphRepository(store))
+
+
+def get_hotspot_service(
+    repo: InMemoryBackendRepository = Depends(get_repository),
+) -> Any:
+    from backend.app.core.graph.repositories.graph_repository import GraphRepository
+    from backend.app.core.graph.services.hotspot_service import HotspotService
+    from backend.app.core.graph.services.offender_service import OffenderService
+    store = repo.to_graph_store()
+    graph_repo = GraphRepository(store)
+    offender_svc = OffenderService(graph_repo)
+    return HotspotService(graph_repo, offender_service=offender_svc)
+
