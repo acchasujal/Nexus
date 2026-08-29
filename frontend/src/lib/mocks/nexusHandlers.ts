@@ -885,10 +885,63 @@ export const nexusHandlers = [
 
   http.post(/\/api\/v1\/entity-resolution\/resolve/, async ({ request }) => {
     const body = (await request.json()) as any
+    const name = String(body.full_name || body.name || '').toLowerCase()
+    const phone = String(body.phone_number || body.phone || '')
+    const vehicle = String(body.vehicle_number || body.vehicle || '')
+    const address = String(body.address_text || body.address || '')
+
+    const matches: any[] = []
+
+    if (name || phone || vehicle || address) {
+      const matchName = body.full_name || 'Vikram Sharma (Alias: Ramesh Hegde)'
+      matches.push({
+        matched_node_id: 'person-0040',
+        confidence: 0.94,
+        status: 'MATCHED',
+        matched_fields: ['full_name', 'phone_number', 'jurisdiction'],
+        reason: `Deterministic match on MSISDN +91 98201 22334 and phonetic double-metaphone alignment for "${matchName}".`,
+        evidence_breakdown: {
+          name_similarity: 0.92,
+          phone_match: 1.0,
+          graph_proximity: 0.9,
+        },
+        properties: {
+          full_name: matchName,
+          aliases: ['Ramesh Hegde', 'Vikky', 'S. Kumar'],
+          phone_number: phone || '+91 98201 22334',
+          role: 'Kingpin / Primary Coordinator',
+          district: 'Mumbai Central',
+          case_count: 3,
+        },
+      })
+
+      if (name.includes('vikram') || name.includes('sunil') || name.includes('deepak')) {
+        matches.push({
+          matched_node_id: 'person-0037',
+          confidence: 0.78,
+          status: 'PROBABLE_MATCH',
+          matched_fields: ['alias', 'co_accused_nexus', 'financial_mule'],
+          reason: 'Secondary alias match with shared financial mule accounts across FIR-141 and FIR-207.',
+          evidence_breakdown: {
+            name_similarity: 0.75,
+            financial_nexus: 0.82,
+          },
+          properties: {
+            full_name: 'Sunil Gupta',
+            aliases: ['Vikram Bhai', 'SG'],
+            phone_number: '+91 98111 55667',
+            role: 'Financial Mule Operator',
+            district: 'New Delhi',
+            case_count: 2,
+          },
+        })
+      }
+    }
+
     return HttpResponse.json({
       query: body,
-      matches: [],
-      total_matches: 0,
+      matches,
+      total_matches: matches.length,
     })
   }),
 
