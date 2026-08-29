@@ -1917,8 +1917,12 @@ def create_nexus_router() -> APIRouter:
         audit_service: AuditService = Depends(get_audit_service),
     ) -> EvidenceIntegrityCheckResult:
         import hashlib
+        import logging
         from backend.app.db.ingestion.normalization import canonicalize_csv_row
         from datetime import datetime, timezone
+        
+        logger = logging.getLogger(__name__)
+        
         record_data = repo.source_records.get(source_id)
         if not record_data:
             raise HTTPException(status_code=404, detail="Source record not found")
@@ -1927,6 +1931,13 @@ def create_nexus_router() -> APIRouter:
         raw_excerpt = record_data.get("raw_excerpt", "")
         # Since raw_excerpt is canonicalized row, we can hash it
         computed = hashlib.sha256(raw_excerpt.encode("utf-8")).hexdigest()
+        
+        logger.info(
+            f"Evidence Verification Hashing Completed: "
+            f"source_id={source_id}, "
+            f"computed_hash={computed}, "
+            f"matches_stored={bool(stored_hash and computed == stored_hash)}"
+        )
         
         is_verified = bool(stored_hash and computed == stored_hash)
         

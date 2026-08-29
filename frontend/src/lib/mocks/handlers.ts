@@ -1,6 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import type { 
-  CaseSummaryResponse, 
+  InvestigationSummaryResponse, 
   CaseDetailResponse, 
   EscalationResponse, 
   CopilotQueryResponse,
@@ -100,8 +100,8 @@ const mockEscalations: EscalationResponse[] = [
 ]
 
 // Generate 5000 case summaries dynamically for virtualization testing
-const generate5000Worklist = (): CaseSummaryResponse[] => {
-  const list: CaseSummaryResponse[] = []
+const generate5000Worklist = (): InvestigationSummaryResponse[] => {
+  const list: InvestigationSummaryResponse[] = []
   
   // Add our specific mock cases first so they are searchable
   mockCases.forEach((c) => {
