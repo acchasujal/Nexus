@@ -226,8 +226,14 @@ export function HotspotDrilldownModal({
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-[11px] text-neutral-600">
-                          <span>Role: {e.role}</span>
-                          <span>Appears in {e.case_count} case(s)</span>
+                          <span>Role: {e.role} · {e.case_count} case(s)</span>
+                          <Link
+                            to={`/network?node_id=${encodeURIComponent(e.entity_id)}`}
+                            onClick={onClose}
+                            className="inline-flex items-center gap-0.5 text-[11px] font-bold text-blue-700 hover:text-blue-900"
+                          >
+                            Inspect <ChevronRight className="h-3 w-3" />
+                          </Link>
                         </div>
                       </div>
                     ))
@@ -270,8 +276,18 @@ export function HotspotDrilldownModal({
                           </span>
                         </div>
 
-                        <div className="text-[11px] text-neutral-600 bg-white/80 p-2.5 rounded-lg border border-neutral-200">
-                          {off.why_surfaced}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                          <div className="text-[11px] text-neutral-600 bg-white/80 p-2.5 rounded-lg border border-neutral-200 flex-1">
+                            {off.why_surfaced}
+                          </div>
+                          <Link
+                            to={`/network?node_id=${encodeURIComponent(off.person_id)}`}
+                            onClick={onClose}
+                            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-200 transition-colors shadow-2xs cursor-pointer shrink-0"
+                          >
+                            <Network className="h-3.5 w-3.5" />
+                            Inspect on Canvas
+                          </Link>
                         </div>
                       </div>
                     ))

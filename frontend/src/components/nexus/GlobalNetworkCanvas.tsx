@@ -66,6 +66,8 @@ export function GlobalNetworkCanvas({
     if (initialNodeId && graph?.nodes?.some((n) => n.id === initialNodeId)) {
       setSelectedNode(initialNodeId)
       onNodeSelect?.(initialNodeId)
+    } else if (!initialNodeId) {
+      setSelectedNode(null)
     }
   }, [initialNodeId, graph, onNodeSelect])
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -111,8 +113,8 @@ export function GlobalNetworkCanvas({
     })
 
   const visibleRawNodes = useMemo(
-    () => graph.nodes.filter((n) => !hiddenTypes.has(n.entity_type) && (caseFilter === 'ALL' || n.case_ids.includes(caseFilter))),
-    [graph, hiddenTypes, caseFilter],
+    () => graph.nodes.filter((n) => !hiddenTypes.has(n.entity_type) && (caseFilter === 'ALL' || n.case_ids.includes(caseFilter) || n.id === selectedNode)),
+    [graph, hiddenTypes, caseFilter, selectedNode],
   )
 
   const visibleIds = useMemo(() => new Set(visibleRawNodes.map((n) => n.id)), [visibleRawNodes])

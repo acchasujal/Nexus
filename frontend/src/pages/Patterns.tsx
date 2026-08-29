@@ -458,8 +458,8 @@ export default function Patterns() {
                     {/* Footer Actions */}
                     <div className="p-3 border-t border-neutral-100 bg-neutral-50/50 flex items-center justify-between">
                       <Link
-                        to={`/network?focus=all`}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-900"
+                        to={`/network?node_id=${encodeURIComponent(offender.person_id)}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors shadow-2xs cursor-pointer"
                       >
                         <Network className="h-3.5 w-3.5" /> Inspect on Canvas
                       </Link>
@@ -550,7 +550,7 @@ export default function Patterns() {
                             </div>
                           </div>
                           <Link
-                            to={`/network?focus=${encodeURIComponent(b.person_id)}`}
+                            to={`/network?node_id=${encodeURIComponent(b.person_id)}`}
                             className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors cursor-pointer"
                           >
                             Explore
