@@ -36,9 +36,9 @@ class Settings(BaseSettings):
     )
 
     # ── Database & Graph ─────────────────────────────────────────────────────
-    nexus_repository: str = Field(default="local", alias="NEXUS_REPOSITORY")
+    nexus_repository: str = Field(default="postgres", alias="NEXUS_REPOSITORY")
     database_url: str = Field(
-        default="postgresql://nexus:nexus@localhost:5432/nexus_db",
+        default="postgresql://nexus_7pdz_user:7iOMrcTqT4HNbyc8fclDuOkUeuVgtZeL@dpg-da99ipss728c73d4cjrg-a.singapore-postgres.render.com/nexus_7pdz",
         alias="DATABASE_URL",
     )
     neo4j_uri: str = Field(default="bolt://localhost:7687", alias="NEO4J_URI")

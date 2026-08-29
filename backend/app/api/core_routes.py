@@ -661,10 +661,10 @@ def create_core_router() -> APIRouter:
             raw_events = [e for e in raw_events if e.get("actor_id") == actor_id]
         return [
             AuditLogEntry(
-                id=e["id"],
-                user_id=e["actor_id"],
-                user_role=e.get("details", {}).get("role", "INVESTIGATOR"),
-                action=e["event_type"],
+                id=e.get("id", ""),
+                user_id=e.get("actor_id") or e.get("user_id") or "system",
+                user_role=e.get("details", {}).get("role", e.get("user_role", "INVESTIGATOR")),
+                action=e.get("event_type") or e.get("action") or "UNKNOWN_EVENT",
                 entity_type=e.get("entity_type"),
                 entity_id=e.get("entity_id") or e.get("case_id"),
                 details=e.get("details", {}),

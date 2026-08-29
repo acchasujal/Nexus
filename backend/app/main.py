@@ -28,6 +28,7 @@ from backend.app.api.system_routes import create_system_router
 from backend.app.config import Settings, get_settings
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.db.in_memory import InMemoryBackendRepository
+from backend.app.db.postgres import PostgresBackendRepository
 from backend.app.db.ingestion.pipeline import CsvIngestionPipeline
 from backend.app.services.audit_service import AuditService
 from backend.app.services.ingestion_service import IngestionService
@@ -36,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_app(
-    repository: InMemoryBackendRepository | None = None,
+    repository: InMemoryBackendRepository | PostgresBackendRepository | None = None,
     settings: Settings | None = None,
 ) -> FastAPI:
     """Application factory for NEXUS backend."""
@@ -44,15 +45,34 @@ def create_app(
 
     # ── Repository ───────────────────────────────────────────────────────────
     if repository is None:
-        artifact_path: Path | None = None
-        if cfg.artifact_path and cfg.artifact_path.exists():
-            artifact_path = cfg.artifact_path
+        use_postgres = cfg.nexus_repository.lower() in ("postgres", "postgresql") or "postgres" in cfg.database_url
+        if use_postgres and cfg.database_url:
+            try:
+                artifact_path: Path | None = None
+                if cfg.artifact_path and cfg.artifact_path.exists():
+                    artifact_path = cfg.artifact_path
 
-        state_path = cfg.effective_state_path
-        repository = InMemoryBackendRepository(
-            artifact_path=artifact_path,
-            state_path=state_path,
-        )
+                repository = PostgresBackendRepository(
+                    database_url=cfg.database_url,
+                    artifact_path=artifact_path,
+                    state_path=cfg.effective_state_path,
+                )
+                logger.info("NEXUS backend initialized with PostgreSQL repository.")
+            except Exception as exc:
+                logger.warning("Failed to initialize PostgreSQL repository (%s), falling back to in-memory.", exc)
+                repository = None
+
+        if repository is None:
+            artifact_path: Path | None = None
+            if cfg.artifact_path and cfg.artifact_path.exists():
+                artifact_path = cfg.artifact_path
+
+            state_path = cfg.effective_state_path
+            repository = InMemoryBackendRepository(
+                artifact_path=artifact_path,
+                state_path=state_path,
+            )
+            logger.info("NEXUS backend initialized with in-memory repository.")
 
     # ── FastAPI App ───────────────────────────────────────────────────────────
     app = FastAPI(

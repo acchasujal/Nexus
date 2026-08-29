@@ -19,6 +19,19 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _parse_datetime(val: Any) -> datetime:
+    if isinstance(val, datetime):
+        return val if val.tzinfo else val.replace(tzinfo=timezone.utc)
+    if isinstance(val, str) and val:
+        try:
+            cleaned = val.replace("Z", "+00:00")
+            parsed = datetime.fromisoformat(cleaned)
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except ValueError:
+            pass
+    return _utcnow()
+
+
 class AuditEventType(str, Enum):
     """Exhaustive audit event taxonomy for NEXUS."""
     # Investigation views
@@ -99,6 +112,33 @@ class AuditService:
             }
             if hasattr(self._repository, "audit_events") and isinstance(self._repository.audit_events, list):
                 self._repository.audit_events.append(payload)
+
+            # Persist to PostgreSQL if repository supports it
+            if hasattr(self._repository, "_get_connection"):
+                try:
+                    from psycopg.types.json import Jsonb
+                    with self._repository._get_connection() as conn:
+                        with conn.cursor() as cur:
+                            cur.execute(
+                                """
+                                INSERT INTO audit_events (id, user_id, user_role, action, entity_type, entity_id, details, timestamp)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+                                """,
+                                (
+                                    payload["id"],
+                                    payload["actor_id"],
+                                    (payload["details"] or {}).get("role", "INVESTIGATOR"),
+                                    payload["event_type"],
+                                    payload["entity_type"],
+                                    payload["entity_id"] or payload["case_id"],
+                                    Jsonb(payload["details"] or {}),
+                                    _parse_datetime(payload["timestamp"]),
+                                ),
+                            )
+                        conn.commit()
+                except Exception as db_exc:
+                    logger.debug("Optional direct PostgreSQL audit write: %s", db_exc)
+
             logger.info("AUDIT: event=%s actor=%s entity=%s", event_type, actor_id, entity_id or case_id)
         except (AttributeError, TypeError, ValueError, KeyError, OSError) as exc:
             logger.warning("Audit log write failed (best-effort): %s", exc)
