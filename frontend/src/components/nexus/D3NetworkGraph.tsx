@@ -359,12 +359,80 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
     )
   }, [])
 
+  const zoomToNodeOrNeighborhood = useCallback((nodeId: string, animated = true) => {
+    if (!svgRef.current || !zoomBehaviorRef.current || !containerRef.current) return
+    const svg = d3.select(svgRef.current)
+    const fullWidth = containerRef.current.clientWidth || 900
+    const fullHeight = containerRef.current.clientHeight || 580
+
+    // Find node and its neighbors in simulation data
+    const simNodes = simulationRef.current?.nodes() || []
+    const targetNode = simNodes.find((n) => n.id === nodeId)
+    if (!targetNode || targetNode.x === undefined || targetNode.y === undefined) return
+
+    // Find neighbor nodes
+    const neighborIds = new Set<string>([nodeId])
+    rawEdges.forEach((e) => {
+      const s = typeof e.source === 'object' ? (e.source as D3GraphNode).id : e.source
+      const t = typeof e.target === 'object' ? (e.target as D3GraphNode).id : e.target
+      if (s === nodeId) neighborIds.add(t)
+      if (t === nodeId) neighborIds.add(s)
+    })
+
+    const clusterNodes = simNodes.filter(
+      (n) => neighborIds.has(n.id) && n.x !== undefined && n.y !== undefined
+    )
+
+    if (clusterNodes.length === 0) return
+
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+    clusterNodes.forEach((n) => {
+      if (n.x! < minX) minX = n.x!
+      if (n.x! > maxX) maxX = n.x!
+      if (n.y! < minY) minY = n.y!
+      if (n.y! > maxY) maxY = n.y!
+    })
+
+    const pad = 100
+    minX -= pad
+    maxX += pad
+    minY -= pad
+    maxY += pad
+
+    const clusterWidth = Math.max(maxX - minX, 160)
+    const clusterHeight = Math.max(maxY - minY, 160)
+    const midX = (minX + maxX) / 2
+    const midY = (minY + maxY) / 2
+
+    const scale = Math.min(
+      Math.max(0.85 / Math.max(clusterWidth / fullWidth, clusterHeight / fullHeight), 0.45),
+      1.5,
+    )
+
+    const translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY]
+
+    if (animated) {
+      svg.transition().duration(600).ease(d3.easeCubicOut).call(
+        zoomBehaviorRef.current.transform,
+        d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale),
+      )
+    } else {
+      svg.call(
+        zoomBehaviorRef.current.transform,
+        d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale),
+      )
+    }
+  }, [rawEdges])
+
   const reheatSimulation = useCallback(() => {
     if (simulationRef.current) {
       simulationRef.current.alpha(0.8).restart()
-      setTimeout(fitView, 400)
+      setTimeout(() => {
+        if (activeNodeId) zoomToNodeOrNeighborhood(activeNodeId)
+        else fitView()
+      }, 400)
     }
-  }, [fitView])
+  }, [fitView, activeNodeId, zoomToNodeOrNeighborhood])
 
   // Playback timer for temporal scrubber
   useEffect(() => {
@@ -387,6 +455,16 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
   const timeIndexRef = useRef(100)
   useEffect(() => { timeIndexRef.current = timeIndex }, [timeIndex])
 
+  // Dedicated Effect: Smoothly zoom to selected node / cluster whenever activeNodeId changes
+  useEffect(() => {
+    if (activeNodeId && simulationRef.current) {
+      const timer = setTimeout(() => {
+        zoomToNodeOrNeighborhood(activeNodeId)
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [activeNodeId, zoomToNodeOrNeighborhood])
+
   // Dedicated Effect: Live Selection & Highlighting (Runs instantly without tearing down simulation)
   useEffect(() => {
     if (!linkPathsRef.current || !nodeContainersRef.current) return
@@ -395,15 +473,31 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
     linkPathsRef.current
       .attr('stroke', (d) => {
         if (activeEdgeId === d.id) return '#e11d48'
+        if (activeNodeId) {
+          const src = typeof d.source === 'object' ? (d.source as D3GraphNode).id : d.source
+          const tgt = typeof d.target === 'object' ? (d.target as D3GraphNode).id : d.target
+          if (src === activeNodeId || tgt === activeNodeId) return '#0284c7'
+        }
         const type = String(d.edge_type || d.label || '')
         return EDGE_STROKES[type] ?? '#94a3b8'
       })
-      .attr('stroke-width', (d) => (activeEdgeId === d.id ? 3.5 : 2))
+      .attr('stroke-width', (d) => {
+        if (activeEdgeId === d.id) return 4.0
+        if (activeNodeId) {
+          const src = typeof d.source === 'object' ? (d.source as D3GraphNode).id : d.source
+          const tgt = typeof d.target === 'object' ? (d.target as D3GraphNode).id : d.target
+          if (src === activeNodeId || tgt === activeNodeId) return 3.5
+          if (neighborhood?.has(src) && neighborhood?.has(tgt)) return 2.5
+        }
+        return 2
+      })
       .attr('opacity', (d) => {
         if (!activeNodeId) return 0.85
         const src = typeof d.source === 'object' ? (d.source as D3GraphNode).id : d.source
         const tgt = typeof d.target === 'object' ? (d.target as D3GraphNode).id : d.target
-        return (src === activeNodeId || tgt === activeNodeId) ? 1.0 : 0.15
+        if (src === activeNodeId || tgt === activeNodeId) return 1.0
+        if (neighborhood?.has(src) && neighborhood?.has(tgt)) return 0.8
+        return 0.08
       })
 
     // 2. Update edge label badges (only visible when edge is selected)
@@ -424,31 +518,59 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
           if (highlightDelta && d.isDelta) return '#10b981'
           const communityBadge = (d.badges || []).find((b) => b.startsWith('COMMUNITY-'))
           if (communityBadge && COMMUNITY_STROKES[communityBadge]) return COMMUNITY_STROKES[communityBadge]
+          if (neighborhood?.has(d.id)) {
+            const rawType = String(d.entity_type || d.type || 'Person')
+            return (ENTITY_CONFIG[rawType] ?? ENTITY_CONFIG.Person).stroke
+          }
           return 'none'
         })
-        .attr('stroke-width', (d) => (activeNodeId === d.id || (highlightDelta && d.isDelta) ? 3.5 : 2.5))
+        .attr('stroke-width', (d) => (activeNodeId === d.id || (highlightDelta && d.isDelta) ? 4.5 : neighborhood?.has(d.id) ? 3.0 : 2.0))
         .attr('opacity', (d) => {
           if (!activeNodeId) return 1.0
-          return neighborhood?.has(d.id) ? 1.0 : 0.2
+          if (activeNodeId === d.id) return 1.0
+          return neighborhood?.has(d.id) ? 0.9 : 0.08
         })
     }
 
     // 4. Update node card elements & neighborhood dimming
     nodeContainersRef.current
       .select('path.node-circle')
-      .attr('stroke-width', (d) => ((d as D3GraphNode).id === activeNodeId ? 3.5 : 2))
+      .attr('stroke-width', (d) => {
+        const node = d as D3GraphNode
+        if (node.id === activeNodeId) return 4.5
+        if (neighborhood?.has(node.id)) return 3.0
+        return 2
+      })
       .attr('opacity', (d) => {
+        const node = d as D3GraphNode
         if (!activeNodeId) return 1.0
-        return neighborhood?.has((d as D3GraphNode).id) ? 1.0 : 0.22
+        if (node.id === activeNodeId) return 1.0
+        return neighborhood?.has(node.id) ? 1.0 : 0.12
+      })
+      .attr('filter', (d) => {
+        const node = d as D3GraphNode
+        if (node.id === activeNodeId) return 'drop-shadow(0 0 14px rgba(2,132,199,0.85))'
+        if (neighborhood?.has(node.id)) return 'drop-shadow(0 2px 8px rgba(0,0,0,0.18))'
+        return 'none'
       })
 
     nodeContainersRef.current
       .select('text')
-      .attr('opacity', (d) => (!activeNodeId || neighborhood?.has((d as D3GraphNode).id) ? 1.0 : 0.25))
+      .attr('opacity', (d) => {
+        const node = d as D3GraphNode
+        if (!activeNodeId) return 1.0
+        if (node.id === activeNodeId) return 1.0
+        return neighborhood?.has(node.id) ? 1.0 : 0.15
+      })
 
     nodeContainersRef.current
       .select('.node-label-group')
-      .attr('opacity', (d) => (!activeNodeId || neighborhood?.has((d as D3GraphNode).id) ? 1.0 : 0.25))
+      .attr('opacity', (d) => {
+        const node = d as D3GraphNode
+        if (!activeNodeId) return 1.0
+        if (node.id === activeNodeId) return 1.0
+        return neighborhood?.has(node.id) ? 1.0 : 0.12
+      })
 
   }, [activeNodeId, activeEdgeId, neighborhood, highlightDelta])
 
@@ -1026,10 +1148,14 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       nodeContainers.attr('transform', (d) => `translate(${d.x ?? 0}, ${d.y ?? 0})`)
     })
 
-    // Auto-fit view after initial stabilization
+    // Auto-fit view or zoom to active node after initial stabilization
     const timer = setTimeout(() => {
       if (simNodes.length > 0 && svgRef.current && zoomBehaviorRef.current) {
-        fitView()
+        if (activeNodeId && simNodes.some((n) => n.id === activeNodeId)) {
+          zoomToNodeOrNeighborhood(activeNodeId)
+        } else {
+          fitView()
+        }
       }
     }, 450)
 
@@ -1038,7 +1164,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       simulation.stop()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps -- activeNodeId/activeEdgeId/highlightDelta/neighborhood are intentionally omitted; handled by the dedicated selection useEffect above to avoid full canvas teardown
-  }, [rawNodes, rawEdges, parallelEdgeMeta, densityScale, fitView, handleSelectEdge, handleSelectNode, onNodeDoubleClick])
+  }, [rawNodes, rawEdges, parallelEdgeMeta, densityScale, fitView, handleSelectEdge, handleSelectNode, onNodeDoubleClick, zoomToNodeOrNeighborhood])
 
   return (
     <div
@@ -1046,6 +1172,37 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       className={`relative w-full h-full min-h-[450px] overflow-hidden bg-slate-50 border border-neutral-200 rounded-radius-md ${className}`}
       style={{ height }}
     >
+      {/* Floating Focus & Neighborhood Indicator Pill */}
+      {activeSelectedNode && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-neutral-900/90 text-white backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-lg border border-neutral-700 text-xs animate-in fade-in duration-200">
+          <span className="flex h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
+          <span className="font-semibold text-neutral-100 truncate max-w-[200px] sm:max-w-[280px]">
+            Focused: <strong className="text-white font-bold">{activeSelectedNode.label || activeSelectedNode.name || activeSelectedNode.id}</strong> ({activeSelectedNode.entity_type || 'Entity'})
+          </span>
+          <span className="text-neutral-400">·</span>
+          <span className="text-sky-300 font-medium whitespace-nowrap">{neighborhood ? neighborhood.size : 1} connected</span>
+          <div className="flex items-center gap-1 ml-1 pl-2 border-l border-neutral-700">
+            <button
+              onClick={() => zoomToNodeOrNeighborhood(activeSelectedNode.id)}
+              className="text-[11px] font-bold text-sky-400 hover:text-sky-300 px-1.5 py-0.5 rounded hover:bg-neutral-800 transition-colors cursor-pointer"
+              title="Center and zoom on this cluster"
+            >
+              Zoom
+            </button>
+            <button
+              onClick={() => {
+                handleSelectNode(null)
+                fitView()
+              }}
+              className="text-[11px] font-bold text-neutral-400 hover:text-white px-1 py-0.5 rounded hover:bg-neutral-800 transition-colors cursor-pointer"
+              title="Clear focus (Show full network)"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Interactive Controls Overlay */}
       <div className="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-1 bg-white/95 backdrop-blur-sm p-1 rounded-radius-md border border-neutral-200 shadow-sm">
         <button
