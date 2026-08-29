@@ -1,84 +1,64 @@
 {
   "audit_events": [
     {
-      "id": "799d9322-5a44-4f6d-bc1f-45c938b2c353",
-      "event_type": "ingestion_started",
-      "actor_id": "test_sp",
+      "id": "fc8ae631-b425-4975-b24f-20b49ebcc66e",
+      "event_type": "seed_completed",
+      "actor_id": "officer_io",
       "case_id": null,
       "entity_id": null,
       "entity_type": null,
       "request_id": null,
-      "occurred_at": "2026-08-29T07:37:27.376849+00:00",
-      "timestamp": "2026-08-29T07:37:27.376860+00:00",
+      "occurred_at": "2026-08-29T08:41:55.831405+00:00",
+      "timestamp": "2026-08-29T08:41:55.831428+00:00",
       "details": {
-        "files": [
-          "valid_fir.csv"
-        ]
+        "status": "reset"
       }
     },
     {
-      "id": "cf48f702-9335-4c87-9ac2-bb5cc43a1eb9",
-      "event_type": "network_explored",
-      "actor_id": "officer_sp",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": null,
-      "occurred_at": "2026-08-29T08:30:39.986667+00:00",
-      "timestamp": "2026-08-29T08:30:39.986679+00:00",
-      "details": {
-        "snapshot": "before",
-        "total_nodes": 465,
-        "total_edges": 511
-      }
-    },
-    {
-      "id": "df3d2545-c9c7-444c-922d-1facf9adda90",
+      "id": "3815645d-46f1-4669-bd92-f17102ef31e3",
       "event_type": "investigation_list_viewed",
-      "actor_id": "officer_sp",
+      "actor_id": "officer_io",
       "case_id": null,
       "entity_id": null,
       "entity_type": null,
-      "request_id": "d25880e8-0c17-442f-8b9b-be75a42237f0",
-      "occurred_at": "2026-08-29T08:30:47.058289+00:00",
-      "timestamp": "2026-08-29T08:30:47.058308+00:00",
+      "request_id": "3064bcf1-4da1-4e8e-baa4-9cd53478c32a",
+      "occurred_at": "2026-08-29T08:42:04.441560+00:00",
+      "timestamp": "2026-08-29T08:42:04.441581+00:00",
       "details": {
-        "role": "SP",
+        "role": "IO",
         "district": null,
         "category": null
       }
     },
     {
-      "id": "d1ddb765-d9ed-4686-84bd-6a4277214ad1",
+      "id": "28ad599f-87e6-4993-baa5-09d10262430e",
       "event_type": "investigation_list_viewed",
-      "actor_id": "officer_sp",
+      "actor_id": "officer_io",
       "case_id": null,
       "entity_id": null,
       "entity_type": null,
-      "request_id": "922c465f-00db-4d12-aa45-1eedd88a55d6",
-      "occurred_at": "2026-08-29T08:30:47.069388+00:00",
-      "timestamp": "2026-08-29T08:30:47.069406+00:00",
+      "request_id": "8e444711-9e78-4480-81c2-a033df71bee0",
+      "occurred_at": "2026-08-29T08:42:04.451564+00:00",
+      "timestamp": "2026-08-29T08:42:04.451585+00:00",
       "details": {
-        "role": "SP",
+        "role": "IO",
         "district": null,
         "category": null
       }
     },
     {
-      "id": "416b7c8d-021f-4b5d-9262-bf5148d3096c",
+      "id": "5fda4b7e-149a-4ff8-aa0a-0153c7dc12d3",
       "event_type": "ingestion_started",
-      "actor_id": "officer_sp",
+      "actor_id": "officer_io",
       "case_id": null,
       "entity_id": null,
       "entity_type": null,
       "request_id": null,
-      "occurred_at": "2026-08-29T08:31:31.251996+00:00",
-      "timestamp": "2026-08-29T08:31:31.252021+00:00",
+      "occurred_at": "2026-08-29T08:42:11.157034+00:00",
+      "timestamp": "2026-08-29T08:42:11.157053+00:00",
       "details": {
         "files": [
-          "fir_records.csv",
-          "cdr_records.csv",
-          "bank_transactions.csv"
+          "fir_records.csv"
         ]
       }
     }
@@ -251,296 +231,7 @@
       ],
       "auto_link_allowed": true,
       "requires_human_review": false
-    },
-    "RC-466b4dee-73b6-5063-90a8-1bf0f8d12ba7-f3bf9ea4-b988-59da-8130-d61ed9bc12f5": {
-      "incoming_record_id": "466b4dee-73b6-5063-90a8-1bf0f8d12ba7",
-      "candidate_node_id": "f3bf9ea4-b988-59da-8130-d61ed9bc12f5",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "address",
-        "full_name_exact",
-        "phone_number"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact normalized phone plus compatible name with no verified conflict.",
-      "source_record_ids": [
-        "3e592170-f1ea-5ab4-809e-1347c06de27e",
-        "8c08cc77-5c55-515a-b92e-76987bdb6714"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-d73c8dfa-bc50-5fe0-8bc5-152e22a40780-7338d649-fccc-5ec3-baa3-46eeef7b01c6": {
-      "incoming_record_id": "d73c8dfa-bc50-5fe0-8bc5-152e22a40780",
-      "candidate_node_id": "7338d649-fccc-5ec3-baa3-46eeef7b01c6",
-      "status": "REVIEW_REQUIRED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "address",
-        "full_name_exact"
-      ],
-      "conflicting_fields": [],
-      "reason": "Evidence requires human review.",
-      "source_record_ids": [
-        "c068d456-7593-5ac1-b5d5-3730e61fa3e7"
-      ],
-      "auto_link_allowed": false,
-      "requires_human_review": true
-    },
-    "RC-39b67173-f186-52df-b5a7-324130037c5a-f3bf9ea4-b988-59da-8130-d61ed9bc12f5": {
-      "incoming_record_id": "39b67173-f186-52df-b5a7-324130037c5a",
-      "candidate_node_id": "f3bf9ea4-b988-59da-8130-d61ed9bc12f5",
-      "status": "REVIEW_REQUIRED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact"
-      ],
-      "conflicting_fields": [],
-      "reason": "Name alone requires human review and cannot auto-match.",
-      "source_record_ids": [
-        "3e592170-f1ea-5ab4-809e-1347c06de27e",
-        "8c08cc77-5c55-515a-b92e-76987bdb6714"
-      ],
-      "auto_link_allowed": false,
-      "requires_human_review": true
-    },
-    "RC-466b4dee-73b6-5063-90a8-1bf0f8d12ba7-d5cf884e-1437-5482-a2d3-ae4eba57684b": {
-      "incoming_record_id": "466b4dee-73b6-5063-90a8-1bf0f8d12ba7",
-      "candidate_node_id": "d5cf884e-1437-5482-a2d3-ae4eba57684b",
-      "status": "REVIEW_REQUIRED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "name_similarity"
-      ],
-      "conflicting_fields": [],
-      "reason": "Name alone requires human review and cannot auto-match.",
-      "source_record_ids": [
-        "74ece0b9-835c-5b38-a2af-751aba172dc8"
-      ],
-      "auto_link_allowed": false,
-      "requires_human_review": true
-    },
-    "RC-f93c80e8-af41-58d1-ac63-c9af63effc87-bdadb385-f431-5792-909d-80acf094ac5e": {
-      "incoming_record_id": "f93c80e8-af41-58d1-ac63-c9af63effc87",
-      "candidate_node_id": "bdadb385-f431-5792-909d-80acf094ac5e",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "d5727bc2-9255-520e-9755-a02fd945aae1"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-19831af1-b511-5d1f-94d1-6ca5b4aa304a-aaa2c6fc-22e2-559e-ae27-8adb849c9db8": {
-      "incoming_record_id": "19831af1-b511-5d1f-94d1-6ca5b4aa304a",
-      "candidate_node_id": "aaa2c6fc-22e2-559e-ae27-8adb849c9db8",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "35a9f576-4942-57d7-8cf0-0f105fc36ee7"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-50e8ed02-a5cc-5b28-a9c6-9cdef5fb4400-69f773cd-766b-57f4-87c8-4389129e0700": {
-      "incoming_record_id": "50e8ed02-a5cc-5b28-a9c6-9cdef5fb4400",
-      "candidate_node_id": "69f773cd-766b-57f4-87c8-4389129e0700",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "cc033e6a-9be0-5c8b-aa67-145b11442b34"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-270bf728-e8cc-58a2-89c7-1f6d5b6afd26-aaa2c6fc-22e2-559e-ae27-8adb849c9db8": {
-      "incoming_record_id": "270bf728-e8cc-58a2-89c7-1f6d5b6afd26",
-      "candidate_node_id": "aaa2c6fc-22e2-559e-ae27-8adb849c9db8",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "35a9f576-4942-57d7-8cf0-0f105fc36ee7",
-        "66219b7b-87d0-52f6-aabc-39fb7d12d5b4"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-3c19ae05-14a2-50e5-88da-2c6b3927202b-79a0348d-2783-5496-99a0-bd77c947a4bb": {
-      "incoming_record_id": "3c19ae05-14a2-50e5-88da-2c6b3927202b",
-      "candidate_node_id": "79a0348d-2783-5496-99a0-bd77c947a4bb",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "ee724dbf-39e5-515c-aa64-4a1ca2f4017c"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-e4fc961d-ed2a-54c3-9a73-b7bdac9d225d-69f773cd-766b-57f4-87c8-4389129e0700": {
-      "incoming_record_id": "e4fc961d-ed2a-54c3-9a73-b7bdac9d225d",
-      "candidate_node_id": "69f773cd-766b-57f4-87c8-4389129e0700",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "430ea388-175f-5332-90c0-79e88f10ca7b",
-        "cc033e6a-9be0-5c8b-aa67-145b11442b34"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-2ff3e453-4235-57c1-a117-291f9b860b6f-bdadb385-f431-5792-909d-80acf094ac5e": {
-      "incoming_record_id": "2ff3e453-4235-57c1-a117-291f9b860b6f",
-      "candidate_node_id": "bdadb385-f431-5792-909d-80acf094ac5e",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "66219b7b-87d0-52f6-aabc-39fb7d12d5b4",
-        "d5727bc2-9255-520e-9755-a02fd945aae1"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-f8440baf-4776-5332-92cf-d5d59aa19a46-69f773cd-766b-57f4-87c8-4389129e0700": {
-      "incoming_record_id": "f8440baf-4776-5332-92cf-d5d59aa19a46",
-      "candidate_node_id": "69f773cd-766b-57f4-87c8-4389129e0700",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "22059642-9ee3-5bee-b776-50ded8bc4c88",
-        "430ea388-175f-5332-90c0-79e88f10ca7b",
-        "cc033e6a-9be0-5c8b-aa67-145b11442b34"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-5d136829-c0a3-539d-a09e-b03203adb5a9-69f773cd-766b-57f4-87c8-4389129e0700": {
-      "incoming_record_id": "5d136829-c0a3-539d-a09e-b03203adb5a9",
-      "candidate_node_id": "69f773cd-766b-57f4-87c8-4389129e0700",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "22059642-9ee3-5bee-b776-50ded8bc4c88",
-        "430ea388-175f-5332-90c0-79e88f10ca7b",
-        "818d2a6e-694a-5679-b8cf-b2429128b604",
-        "cc033e6a-9be0-5c8b-aa67-145b11442b34"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-bce15ea9-36b9-5b56-b65e-5161a918cabf-aaa2c6fc-22e2-559e-ae27-8adb849c9db8": {
-      "incoming_record_id": "bce15ea9-36b9-5b56-b65e-5161a918cabf",
-      "candidate_node_id": "aaa2c6fc-22e2-559e-ae27-8adb849c9db8",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "35a9f576-4942-57d7-8cf0-0f105fc36ee7",
-        "430ea388-175f-5332-90c0-79e88f10ca7b",
-        "66219b7b-87d0-52f6-aabc-39fb7d12d5b4"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-cd95b0a1-6486-52e1-97ed-c83a38d13be5-79a0348d-2783-5496-99a0-bd77c947a4bb": {
-      "incoming_record_id": "cd95b0a1-6486-52e1-97ed-c83a38d13be5",
-      "candidate_node_id": "79a0348d-2783-5496-99a0-bd77c947a4bb",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "22059642-9ee3-5bee-b776-50ded8bc4c88",
-        "ee724dbf-39e5-515c-aa64-4a1ca2f4017c"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-8840856b-3153-530b-bb5f-e2c8ee6b4929-69f773cd-766b-57f4-87c8-4389129e0700": {
-      "incoming_record_id": "8840856b-3153-530b-bb5f-e2c8ee6b4929",
-      "candidate_node_id": "69f773cd-766b-57f4-87c8-4389129e0700",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "22059642-9ee3-5bee-b776-50ded8bc4c88",
-        "430ea388-175f-5332-90c0-79e88f10ca7b",
-        "818d2a6e-694a-5679-b8cf-b2429128b604",
-        "a56ba993-c076-58f5-9f84-f38d8ddf8c28",
-        "cc033e6a-9be0-5c8b-aa67-145b11442b34"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
     }
   },
-  "saved_at": "2026-08-29T08:31:31.310012+00:00"
+  "saved_at": "2026-08-29T08:42:11.193961+00:00"
 }
