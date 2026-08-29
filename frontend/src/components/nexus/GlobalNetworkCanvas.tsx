@@ -11,7 +11,7 @@
  */
 import { useMemo, useState, useEffect } from 'react'
 import {
-  User, Briefcase, Phone, Landmark, BadgeCheck, Sparkles,
+  User, Briefcase, Phone, Landmark, BadgeCheck, Sparkles, Car
 } from 'lucide-react'
 import type { NexusNetworkResponse, SnapshotDiffResponse } from '@shared/contracts/api'
 import { D3NetworkGraph, type D3GraphNode, type D3GraphEdge, EDGE_STROKES } from './D3NetworkGraph'
@@ -38,6 +38,7 @@ const NODE_STYLE: Record<string, { icon: typeof User; ring: string; chip: string
   Case: { icon: Briefcase, ring: 'border-rose-500', chip: 'text-rose-900 bg-rose-50 border border-rose-200', bg: 'bg-rose-500' },
   Phone: { icon: Phone, ring: 'border-amber-500', chip: 'text-amber-900 bg-amber-50 border border-amber-200', bg: 'bg-amber-500' },
   Account: { icon: Landmark, ring: 'border-violet-500', chip: 'text-violet-900 bg-violet-50 border border-violet-200', bg: 'bg-violet-500' },
+  Vehicle: { icon: Car, ring: 'border-slate-500', chip: 'text-slate-900 bg-slate-50 border border-slate-200', bg: 'bg-slate-500' },
 }
 
 export function GlobalNetworkCanvas({

@@ -94,6 +94,8 @@ const ENTITY_CONFIG: Record<string, { bg: string; stroke: string; text: string; 
   section: { bg: '#eef2ff', stroke: '#4f46e5', text: '#3730a3', chipBg: '#e0e7ff', chipText: '#4338ca', icon: '⚖️' },
   Dependency: { bg: '#fff7ed', stroke: '#ea580c', text: '#c2410c', chipBg: '#ffedd5', chipText: '#ea580c', icon: '⏱️' },
   Officer: { bg: '#f8fafc', stroke: '#475569', text: '#1e293b', chipBg: '#f1f5f9', chipText: '#334155', icon: '🛡️' },
+  Vehicle: { bg: '#f8fafc', stroke: '#64748b', text: '#334155', chipBg: '#f1f5f9', chipText: '#475569', icon: '🚗' },
+  vehicle: { bg: '#f8fafc', stroke: '#64748b', text: '#334155', chipBg: '#f1f5f9', chipText: '#475569', icon: '🚗' },
 }
 
 // Entity type to D3 symbol type mapping
@@ -112,6 +114,8 @@ const ENTITY_SYMBOLS: Record<string, d3.SymbolType> = {
   section: d3.symbolStar,
   Officer: d3.symbolWye,
   Dependency: d3.symbolWye,
+  Vehicle: d3.symbolDiamond,
+  vehicle: d3.symbolDiamond,
 }
 
 function getNodeSymbolPath(type: string, area: number): string {
