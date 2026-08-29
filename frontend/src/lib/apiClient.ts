@@ -23,6 +23,7 @@ import type {
   NexusSearchResponse,
   ResolutionCandidate,
   ResolutionDecisionRequest,
+  EvidenceIntegrityCheckResult,
   ResolutionDecisionResponse,
   SnapshotDiffResponse,
   EvidenceBatchVerifyResponse,
@@ -247,6 +248,9 @@ export const apiClient = {
   getSnapshotDiff: () => apiFetch<SnapshotDiffResponse>('/api/v1/nexus/network/diff'),
   getEdgeEvidence: (relationshipId: string) => {
     return apiFetch<NexusEdgeEvidenceResponse>(`/api/v1/nexus/relationships/${relationshipId}/evidence`)
+  },
+  verifySourceRecord: (sourceId: string) => {
+    return apiFetch<EvidenceIntegrityCheckResult>(`/api/v1/nexus/sources/${sourceId}/verify`, { method: 'POST' })
   },
   findNexusPath: (sourceId: string, targetId: string, maxDepth = 6) => {
     return apiFetch<NexusPathResponse>(`/api/v1/nexus/path?source=${encodeURIComponent(sourceId)}&target=${encodeURIComponent(targetId)}&max_depth=${maxDepth}`)

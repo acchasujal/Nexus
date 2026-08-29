@@ -378,6 +378,10 @@ export interface NexusSourceRecord {
   source_type: string
   locator: string
   raw_excerpt: string
+  hash_algorithm?: string
+  content_hash?: string
+  hash_version?: string
+  hashed_at?: string
   occurred_at: string
 }
 

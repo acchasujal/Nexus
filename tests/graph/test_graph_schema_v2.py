@@ -87,14 +87,16 @@ def test_source_record_validates():
         source_type="CDR",
         locator="cdr_dump_bengaluru.csv:line_42",
         raw_excerpt="9876543210,9123456789,2026-08-24T14:30:00Z,300",
-        hash="a1b2c3d4e5f67890123456789abcdef0",
+        content_hash="a1b2c3d4e5f67890123456789abcdef0",
+        hash_algorithm="SHA-256",
         confidence=1.0,
     )
     assert sr.id == "src_rec_101"
     assert sr.entity_type == GraphEntityType.SOURCE_RECORD
     assert sr.batch_id == "batch_2026_08_24"
     assert sr.locator == "cdr_dump_bengaluru.csv:line_42"
-    assert sr.hash == "a1b2c3d4e5f67890123456789abcdef0"
+    assert sr.content_hash == "a1b2c3d4e5f67890123456789abcdef0"
+    assert sr.hash_algorithm == "SHA-256"
 
 
 def test_generic_node_contract():

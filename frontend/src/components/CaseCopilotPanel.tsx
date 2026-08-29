@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { RotateCcw, Sparkles, Send, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 import { MarkdownContent } from '@/components/nexus/MarkdownContent'
-import type { CopilotQueryResponse } from '@shared/contracts/api'
+import type { NexusCopilotResponse } from '@shared/contracts/api'
 
 interface CaseCopilotPanelProps {
   caseId: string
@@ -14,7 +14,7 @@ interface CaseCopilotMessage {
   role: 'user' | 'assistant'
   text: string
   timestamp: string
-  response?: CopilotQueryResponse
+  response?: NexusCopilotResponse
 }
 
 function loadMessages(storageKey: string): CaseCopilotMessage[] {
@@ -22,7 +22,7 @@ function loadMessages(storageKey: string): CaseCopilotMessage[] {
   try {
     const saved = sessionStorage.getItem(storageKey)
     if (!saved) return []
-    const parsed = JSON.parse(saved) as { messages?: CaseCopilotMessage[]; question?: string; response?: CopilotQueryResponse }
+    const parsed = JSON.parse(saved) as { messages?: CaseCopilotMessage[]; question?: string; response?: NexusCopilotResponse }
     if (Array.isArray(parsed.messages)) return parsed.messages
     if (parsed.question && parsed.response) {
       return [
@@ -69,10 +69,7 @@ export function CaseCopilotPanel({ caseId, caseLabel }: CaseCopilotPanelProps) {
       timestamp: new Date().toISOString(),
     }])
     try {
-      const res = await apiClient.queryCopilot({
-        query: text,
-        case_id: caseId,
-      })
+      const res = await apiClient.queryNexusCopilot(text, { caseId })
       setMessages((previous) => [...previous, {
         id: `assistant-${Date.now()}`,
         role: 'assistant',

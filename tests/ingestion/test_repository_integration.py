@@ -17,7 +17,8 @@ def _make_dummy_bundle() -> IngestionBundle:
         source_type=SourceType.FIR.value,
         locator="dummy.csv:1",
         raw_excerpt="foo",
-        hash="bar",
+        content_hash="bar",
+        hash_algorithm="SHA-256",
         occurred_at=datetime.now(timezone.utc),
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc),
@@ -118,4 +119,4 @@ def test_source_records_are_stored() -> None:
     repo.apply_bundle(bundle)
     
     assert "sr-1" in repo.source_records
-    assert repo.source_records["sr-1"]["hash"] == "bar"
+    assert repo.source_records["sr-1"]["content_hash"] == "bar"

@@ -253,7 +253,10 @@ class SourceRecord(GraphEntityBase):
     source_type: str = "DIRECT_RECORD"
     locator: str = ""
     raw_excerpt: str | None = None
-    hash: str | None = None
+    hash_algorithm: str = "SHA-256"
+    content_hash: str | None = None
+    hash_version: str = "v1"
+    hashed_at: datetime | None = None
     occurred_at: datetime = Field(default_factory=_utcnow)
 
 
@@ -278,7 +281,10 @@ class Evidence(GraphEntityBase):
     storage_location: str | None = None
     description: str = ""
     file_path: str | None = None
-    hash_sha256: str | None = None
+    hash_algorithm: str = "SHA-256"
+    content_hash: str | None = None
+    hash_version: str = "v1"
+    hashed_at: datetime | None = None
 
 
 class Officer(GraphEntityBase):

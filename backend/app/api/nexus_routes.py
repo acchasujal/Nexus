@@ -54,6 +54,7 @@ from shared.contracts.api import (
     DistrictHotspotIntelligence,
     EvidenceBatchVerifyRequest,
     EvidenceBatchVerifyResponse,
+    EvidenceIntegrityCheckResult,
     GroundedCitation,
     HotspotDrilldownResponse,
     NetworkGraphResponse,
@@ -1907,6 +1908,47 @@ def create_nexus_router() -> APIRouter:
             raise HTTPException(status_code=404, detail="Source record not found")
         # Ensure it maps nicely to the pydantic model if it's a dict
         return NexusSourceRecord(**record_data)
+
+    @router.post("/nexus/sources/{source_id}/verify", response_model=EvidenceIntegrityCheckResult)
+    def verify_source_record(
+        source_id: str,
+        principal: Principal = Depends(get_principal),
+        repo: InMemoryBackendRepository = Depends(get_repository),
+        audit_service: AuditService = Depends(get_audit_service),
+    ) -> EvidenceIntegrityCheckResult:
+        import hashlib
+        from backend.app.db.ingestion.normalization import canonicalize_csv_row
+        from datetime import datetime, timezone
+        record_data = repo.source_records.get(source_id)
+        if not record_data:
+            raise HTTPException(status_code=404, detail="Source record not found")
+            
+        stored_hash = record_data.get("content_hash")
+        raw_excerpt = record_data.get("raw_excerpt", "")
+        # Since raw_excerpt is canonicalized row, we can hash it
+        computed = hashlib.sha256(raw_excerpt.encode("utf-8")).hexdigest()
+        
+        is_verified = bool(stored_hash and computed == stored_hash)
+        
+        audit_service.record(
+            AuditEventType.EVIDENCE_INTEGRITY_VERIFIED if is_verified else AuditEventType.EVIDENCE_INTEGRITY_MISMATCH,
+            actor_id=principal.user_id,
+            entity_id=source_id,
+            details={
+                "stored_hash": stored_hash,
+                "computed_hash": computed,
+                "algorithm": record_data.get("hash_algorithm", "SHA-256")
+            }
+        )
+        
+        return EvidenceIntegrityCheckResult(
+            evidence_id=source_id,
+            expected_hash=stored_hash or "",
+            computed_hash=computed,
+            verified=is_verified,
+            verification_timestamp=datetime.now(timezone.utc).isoformat(),
+            failure_reason=None if is_verified else "Cryptographic hash mismatch. Source content altered."
+        )
 
     # ── Hotspots & Repeat Offender Intelligence Routes ─────────────────────
 

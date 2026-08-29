@@ -1,89 +1,29 @@
 {
   "audit_events": [
     {
-      "id": "1e6ec103-0c77-4636-b80d-bec75a11b168",
-      "event_type": "evidence_viewed",
-      "actor_id": "system",
+      "id": "fc8ae631-b425-4975-b24f-20b49ebcc66e",
+      "event_type": "seed_completed",
+      "actor_id": "officer_io",
       "case_id": null,
-      "entity_id": "person-0012",
+      "entity_id": null,
       "entity_type": null,
       "request_id": null,
-      "occurred_at": "2026-08-29T03:43:37.308806+00:00",
-      "timestamp": "2026-08-29T03:43:37.308842+00:00",
+      "occurred_at": "2026-08-29T08:41:55.831405+00:00",
+      "timestamp": "2026-08-29T08:41:55.831428+00:00",
       "details": {
-        "count": 14
+        "status": "reset"
       }
     },
     {
-      "id": "29fc3bf4-fd93-4b28-876f-08d82eac5665",
-      "event_type": "copilot_answered",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": "d23105b1-5ce5-4777-a0b8-e22923f8eb9a",
-      "occurred_at": "2026-08-29T03:43:41.102612+00:00",
-      "timestamp": "2026-08-29T03:43:41.102646+00:00",
-      "details": {
-        "query": "what do you know about vinod",
-        "intent": "evidence_query",
-        "telemetry": {
-          "generation_mode": "REAL_LLM",
-          "provider": "groq",
-          "model": "openai/gpt-oss-120b",
-          "tool_calls": [
-            {
-              "tool": "resolve_person_identity",
-              "arguments": {
-                "full_name": "Vinod"
-              },
-              "duration_ms": 27.99,
-              "success": true
-            },
-            {
-              "tool": "get_evidence_provenance",
-              "arguments": {
-                "entity_id": "person-0012"
-              },
-              "duration_ms": 6.02,
-              "success": true
-            }
-          ],
-          "tool_duration_ms": 34.00919999694452,
-          "retrieved_nodes_count": 19,
-          "retrieved_edges_count": 0,
-          "evidence_ids": [
-            "SRC-RESOLVE-person-0012",
-            "SRC-RESOLVE-person-0023",
-            "SRC-RESOLVE-person-0042",
-            "SRC-RESOLVE-person-0058",
-            "SRC-RESOLVE-person-0073",
-            "FIR-2026-719",
-            "FIR-2026-389",
-            "FIR-2026-196",
-            "CDR-phone-0012",
-            "CDR-phone-0134",
-            "CDR-SWEEP-402",
-            "CDR-SWEEP-105",
-            "CDR-SWEEP-189",
-            "CDR-SWEEP-191",
-            "INTEL-ALPHA-GANG",
-            "KYC-account-0018",
-            "INTEL-2026-501"
-          ]
-        }
-      }
-    },
-    {
-      "id": "023acca6-26e3-4886-918a-8f60c5d1ee74",
+      "id": "3815645d-46f1-4669-bd92-f17102ef31e3",
       "event_type": "investigation_list_viewed",
       "actor_id": "officer_io",
       "case_id": null,
       "entity_id": null,
       "entity_type": null,
-      "request_id": "4cffe46c-455a-4f86-8890-1a406297cd83",
-      "occurred_at": "2026-08-29T03:45:38.878798+00:00",
-      "timestamp": "2026-08-29T03:45:38.878833+00:00",
+      "request_id": "3064bcf1-4da1-4e8e-baa4-9cd53478c32a",
+      "occurred_at": "2026-08-29T08:42:04.441560+00:00",
+      "timestamp": "2026-08-29T08:42:04.441581+00:00",
       "details": {
         "role": "IO",
         "district": null,
@@ -91,15 +31,15 @@
       }
     },
     {
-      "id": "deb6fb0e-a8cf-421c-bb06-390b6f05c9d7",
+      "id": "28ad599f-87e6-4993-baa5-09d10262430e",
       "event_type": "investigation_list_viewed",
       "actor_id": "officer_io",
       "case_id": null,
       "entity_id": null,
       "entity_type": null,
-      "request_id": "a1d1cc0a-c8ec-4589-bb1f-f9ac6d9d596b",
-      "occurred_at": "2026-08-29T03:45:38.902554+00:00",
-      "timestamp": "2026-08-29T03:45:38.902588+00:00",
+      "request_id": "8e444711-9e78-4480-81c2-a033df71bee0",
+      "occurred_at": "2026-08-29T08:42:04.451564+00:00",
+      "timestamp": "2026-08-29T08:42:04.451585+00:00",
       "details": {
         "role": "IO",
         "district": null,
@@ -107,536 +47,23 @@
       }
     },
     {
-      "id": "d400e2ab-ce01-419e-8154-aadd86af3aaf",
+      "id": "5fda4b7e-149a-4ff8-aa0a-0153c7dc12d3",
       "event_type": "ingestion_started",
       "actor_id": "officer_io",
       "case_id": null,
       "entity_id": null,
       "entity_type": null,
       "request_id": null,
-      "occurred_at": "2026-08-29T03:46:28.429345+00:00",
-      "timestamp": "2026-08-29T03:46:28.429383+00:00",
-      "details": {
-        "files": [
-          "fir_records.csv",
-          "cdr_records.csv",
-          "bank_transactions.csv"
-        ]
-      }
-    },
-    {
-      "id": "214f7c78-2be5-4829-a991-c90958b0e8ba",
-      "event_type": "ingestion_completed",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": null,
-      "occurred_at": "2026-08-29T03:46:28.543851+00:00",
-      "timestamp": "2026-08-29T03:46:28.543887+00:00",
-      "details": {
-        "batch_id": "35400f4c-1b22-5951-90cf-5b3fc66e462f",
-        "status": "COMPLETED",
-        "nodes_created": 20,
-        "edges_created": 32
-      }
-    },
-    {
-      "id": "21030054-8ab9-4299-bc7e-85123cbfe53d",
-      "event_type": "investigation_list_viewed",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": "f0565069-51d9-4646-b94f-0391179110dc",
-      "occurred_at": "2026-08-29T03:53:47.213033+00:00",
-      "timestamp": "2026-08-29T03:53:47.213065+00:00",
-      "details": {
-        "role": "IO",
-        "district": null,
-        "category": null
-      }
-    },
-    {
-      "id": "0ac83335-dc7f-4ea0-b6b8-8c9a8c762c09",
-      "event_type": "investigation_list_viewed",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": "7c4e56a4-e0c2-46a1-b3bf-0bbe0be13fa6",
-      "occurred_at": "2026-08-29T03:53:47.228511+00:00",
-      "timestamp": "2026-08-29T03:53:47.228543+00:00",
-      "details": {
-        "role": "IO",
-        "district": null,
-        "category": null
-      }
-    },
-    {
-      "id": "860ce94e-b3ad-44a2-9eca-86598f5d8f20",
-      "event_type": "ingestion_started",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": null,
-      "occurred_at": "2026-08-29T03:54:15.432563+00:00",
-      "timestamp": "2026-08-29T03:54:15.432595+00:00",
+      "occurred_at": "2026-08-29T08:42:11.157034+00:00",
+      "timestamp": "2026-08-29T08:42:11.157053+00:00",
       "details": {
         "files": [
           "fir_records.csv"
         ]
       }
-    },
-    {
-      "id": "fa82fba4-2a5e-4315-8ae2-59e560e59704",
-      "event_type": "ingestion_completed",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": null,
-      "occurred_at": "2026-08-29T03:54:15.474607+00:00",
-      "timestamp": "2026-08-29T03:54:15.474647+00:00",
-      "details": {
-        "batch_id": "8b6f1730-3158-5174-a347-a261e8c33a69",
-        "status": "COMPLETED",
-        "nodes_created": 0,
-        "edges_created": 0
-      }
-    },
-    {
-      "id": "fef96928-d31b-4aa6-8bf5-a785042ecb8b",
-      "event_type": "network_explored",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": null,
-      "occurred_at": "2026-08-29T03:54:29.167836+00:00",
-      "timestamp": "2026-08-29T03:54:29.167856+00:00",
-      "details": {
-        "snapshot": "before",
-        "total_nodes": 485,
-        "total_edges": 543
-      }
-    },
-    {
-      "id": "d8c72551-8093-4247-9181-e2aa4e433bb3",
-      "event_type": "copilot_answered",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": "5c463ac2-dfba-409e-b77b-adbefa2ea561",
-      "occurred_at": "2026-08-29T03:57:17.975203+00:00",
-      "timestamp": "2026-08-29T03:57:17.975238+00:00",
-      "details": {
-        "query": "hii",
-        "intent": "ai_tool_synthesis",
-        "telemetry": {
-          "generation_mode": "REAL_LLM",
-          "provider": "groq",
-          "model": "openai/gpt-oss-120b",
-          "tool_calls": [],
-          "tool_duration_ms": 0.0,
-          "retrieved_nodes_count": 0,
-          "retrieved_edges_count": 0,
-          "evidence_ids": []
-        }
-      }
-    },
-    {
-      "id": "d29d590d-a859-46be-853b-b9222a5960b4",
-      "event_type": "copilot_refused",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": "f9a8cbe9-c785-44f9-9ed3-2ea1985b5f2a",
-      "occurred_at": "2026-08-29T03:57:37.748970+00:00",
-      "timestamp": "2026-08-29T03:57:37.749004+00:00",
-      "details": {
-        "query": "Is the accused guilty of committing cyber financial fraud?",
-        "reason": "Prohibited predictive/guilt inference query"
-      }
-    },
-    {
-      "id": "e50e2ee2-7d8b-4867-940a-07dda6ed4f36",
-      "event_type": "network_explored",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": null,
-      "occurred_at": "2026-08-29T04:06:10.714290+00:00",
-      "timestamp": "2026-08-29T04:06:10.714306+00:00",
-      "details": {
-        "snapshot": "before",
-        "total_nodes": 485,
-        "total_edges": 543
-      }
-    },
-    {
-      "id": "6dbf4c63-d682-48aa-8079-7b3473309eae",
-      "event_type": "investigation_list_viewed",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": "d2a7a2d6-f966-4d25-a77e-e3b94ded31db",
-      "occurred_at": "2026-08-29T04:06:12.147192+00:00",
-      "timestamp": "2026-08-29T04:06:12.147211+00:00",
-      "details": {
-        "role": "IO",
-        "district": null,
-        "category": null
-      }
-    },
-    {
-      "id": "d73d7f7d-583a-46e0-a8ba-b5abcabd5518",
-      "event_type": "investigation_list_viewed",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": "2f41c641-478e-4065-a190-bbfe2c1f5ead",
-      "occurred_at": "2026-08-29T04:06:12.156263+00:00",
-      "timestamp": "2026-08-29T04:06:12.156284+00:00",
-      "details": {
-        "role": "IO",
-        "district": null,
-        "category": null
-      }
-    },
-    {
-      "id": "0111cc1d-0a40-4309-93bd-c7f60a342832",
-      "event_type": "ingestion_started",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": null,
-      "occurred_at": "2026-08-29T04:06:28.306701+00:00",
-      "timestamp": "2026-08-29T04:06:28.306727+00:00",
-      "details": {
-        "files": [
-          "fir_records.csv",
-          "cdr_records.csv",
-          "bank_transactions.csv",
-          "intelligence_records.csv"
-        ]
-      }
-    },
-    {
-      "id": "32b669b8-a767-4ae3-8155-94530b9bd93e",
-      "event_type": "network_explored",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": null,
-      "occurred_at": "2026-08-29T04:25:40.891353+00:00",
-      "timestamp": "2026-08-29T04:25:40.891373+00:00",
-      "details": {
-        "snapshot": "before",
-        "total_nodes": 465,
-        "total_edges": 511
-      }
-    },
-    {
-      "id": "2a6029d8-8b11-4ffe-9c8c-4711435020cd",
-      "event_type": "investigation_list_viewed",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": "13626490-5af9-4760-8d7d-b442409da761",
-      "occurred_at": "2026-08-29T04:26:30.099383+00:00",
-      "timestamp": "2026-08-29T04:26:30.099403+00:00",
-      "details": {
-        "role": "IO",
-        "district": null,
-        "category": null
-      }
-    },
-    {
-      "id": "ddad0b35-2c66-4bc2-9edd-aae1e71c3aa6",
-      "event_type": "investigation_list_viewed",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": "4bd61aa0-811e-4479-8026-bec79c296fcb",
-      "occurred_at": "2026-08-29T04:26:30.109396+00:00",
-      "timestamp": "2026-08-29T04:26:30.109417+00:00",
-      "details": {
-        "role": "IO",
-        "district": null,
-        "category": null
-      }
-    },
-    {
-      "id": "20315720-46ad-4465-90e6-e48e93aba883",
-      "event_type": "ingestion_started",
-      "actor_id": "officer_io",
-      "case_id": null,
-      "entity_id": null,
-      "entity_type": null,
-      "request_id": null,
-      "occurred_at": "2026-08-29T04:26:53.442464+00:00",
-      "timestamp": "2026-08-29T04:26:53.442495+00:00",
-      "details": {
-        "files": [
-          "fir_records.csv",
-          "cdr_records.csv",
-          "bank_transactions.csv",
-          "intelligence_records.csv"
-        ]
-      }
     }
   ],
   "review_candidates": {
-    "RC-e087b5ca-7a79-5e15-9b39-729672fb017d-5370ee1e-92d4-504e-a27c-93c183ee6fcd": {
-      "incoming_record_id": "e087b5ca-7a79-5e15-9b39-729672fb017d",
-      "candidate_node_id": "5370ee1e-92d4-504e-a27c-93c183ee6fcd",
-      "status": "NOT_MATCHED",
-      "confidence": 0.95,
-      "matched_fields": [
-        "address",
-        "vehicle_number"
-      ],
-      "conflicting_fields": [
-        "national_id",
-        "phone_number"
-      ],
-      "reason": "Different verified national IDs prevent matching.",
-      "source_record_ids": [
-        "71f7e9ca-aafe-5c40-9d86-ee48ac30ca50"
-      ],
-      "auto_link_allowed": false,
-      "requires_human_review": true
-    },
-    "RC-f93c80e8-af41-58d1-ac63-c9af63effc87-bdadb385-f431-5792-909d-80acf094ac5e": {
-      "incoming_record_id": "f93c80e8-af41-58d1-ac63-c9af63effc87",
-      "candidate_node_id": "bdadb385-f431-5792-909d-80acf094ac5e",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "d5727bc2-9255-520e-9755-a02fd945aae1"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-19831af1-b511-5d1f-94d1-6ca5b4aa304a-aaa2c6fc-22e2-559e-ae27-8adb849c9db8": {
-      "incoming_record_id": "19831af1-b511-5d1f-94d1-6ca5b4aa304a",
-      "candidate_node_id": "aaa2c6fc-22e2-559e-ae27-8adb849c9db8",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "35a9f576-4942-57d7-8cf0-0f105fc36ee7"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-50e8ed02-a5cc-5b28-a9c6-9cdef5fb4400-69f773cd-766b-57f4-87c8-4389129e0700": {
-      "incoming_record_id": "50e8ed02-a5cc-5b28-a9c6-9cdef5fb4400",
-      "candidate_node_id": "69f773cd-766b-57f4-87c8-4389129e0700",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "cc033e6a-9be0-5c8b-aa67-145b11442b34"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-270bf728-e8cc-58a2-89c7-1f6d5b6afd26-aaa2c6fc-22e2-559e-ae27-8adb849c9db8": {
-      "incoming_record_id": "270bf728-e8cc-58a2-89c7-1f6d5b6afd26",
-      "candidate_node_id": "aaa2c6fc-22e2-559e-ae27-8adb849c9db8",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "35a9f576-4942-57d7-8cf0-0f105fc36ee7",
-        "66219b7b-87d0-52f6-aabc-39fb7d12d5b4"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-3c19ae05-14a2-50e5-88da-2c6b3927202b-79a0348d-2783-5496-99a0-bd77c947a4bb": {
-      "incoming_record_id": "3c19ae05-14a2-50e5-88da-2c6b3927202b",
-      "candidate_node_id": "79a0348d-2783-5496-99a0-bd77c947a4bb",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "ee724dbf-39e5-515c-aa64-4a1ca2f4017c"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-e4fc961d-ed2a-54c3-9a73-b7bdac9d225d-69f773cd-766b-57f4-87c8-4389129e0700": {
-      "incoming_record_id": "e4fc961d-ed2a-54c3-9a73-b7bdac9d225d",
-      "candidate_node_id": "69f773cd-766b-57f4-87c8-4389129e0700",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "430ea388-175f-5332-90c0-79e88f10ca7b",
-        "cc033e6a-9be0-5c8b-aa67-145b11442b34"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-2ff3e453-4235-57c1-a117-291f9b860b6f-bdadb385-f431-5792-909d-80acf094ac5e": {
-      "incoming_record_id": "2ff3e453-4235-57c1-a117-291f9b860b6f",
-      "candidate_node_id": "bdadb385-f431-5792-909d-80acf094ac5e",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "66219b7b-87d0-52f6-aabc-39fb7d12d5b4",
-        "d5727bc2-9255-520e-9755-a02fd945aae1"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-f8440baf-4776-5332-92cf-d5d59aa19a46-69f773cd-766b-57f4-87c8-4389129e0700": {
-      "incoming_record_id": "f8440baf-4776-5332-92cf-d5d59aa19a46",
-      "candidate_node_id": "69f773cd-766b-57f4-87c8-4389129e0700",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "22059642-9ee3-5bee-b776-50ded8bc4c88",
-        "430ea388-175f-5332-90c0-79e88f10ca7b",
-        "cc033e6a-9be0-5c8b-aa67-145b11442b34"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-5d136829-c0a3-539d-a09e-b03203adb5a9-69f773cd-766b-57f4-87c8-4389129e0700": {
-      "incoming_record_id": "5d136829-c0a3-539d-a09e-b03203adb5a9",
-      "candidate_node_id": "69f773cd-766b-57f4-87c8-4389129e0700",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "22059642-9ee3-5bee-b776-50ded8bc4c88",
-        "430ea388-175f-5332-90c0-79e88f10ca7b",
-        "818d2a6e-694a-5679-b8cf-b2429128b604",
-        "cc033e6a-9be0-5c8b-aa67-145b11442b34"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-bce15ea9-36b9-5b56-b65e-5161a918cabf-aaa2c6fc-22e2-559e-ae27-8adb849c9db8": {
-      "incoming_record_id": "bce15ea9-36b9-5b56-b65e-5161a918cabf",
-      "candidate_node_id": "aaa2c6fc-22e2-559e-ae27-8adb849c9db8",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "35a9f576-4942-57d7-8cf0-0f105fc36ee7",
-        "430ea388-175f-5332-90c0-79e88f10ca7b",
-        "66219b7b-87d0-52f6-aabc-39fb7d12d5b4"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-cd95b0a1-6486-52e1-97ed-c83a38d13be5-79a0348d-2783-5496-99a0-bd77c947a4bb": {
-      "incoming_record_id": "cd95b0a1-6486-52e1-97ed-c83a38d13be5",
-      "candidate_node_id": "79a0348d-2783-5496-99a0-bd77c947a4bb",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "22059642-9ee3-5bee-b776-50ded8bc4c88",
-        "ee724dbf-39e5-515c-aa64-4a1ca2f4017c"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-8840856b-3153-530b-bb5f-e2c8ee6b4929-69f773cd-766b-57f4-87c8-4389129e0700": {
-      "incoming_record_id": "8840856b-3153-530b-bb5f-e2c8ee6b4929",
-      "candidate_node_id": "69f773cd-766b-57f4-87c8-4389129e0700",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "22059642-9ee3-5bee-b776-50ded8bc4c88",
-        "430ea388-175f-5332-90c0-79e88f10ca7b",
-        "818d2a6e-694a-5679-b8cf-b2429128b604",
-        "a56ba993-c076-58f5-9f84-f38d8ddf8c28",
-        "cc033e6a-9be0-5c8b-aa67-145b11442b34"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
     "RC-7314f276-a986-573c-8b28-af71e0663d46-5370ee1e-92d4-504e-a27c-93c183ee6fcd": {
       "incoming_record_id": "7314f276-a986-573c-8b28-af71e0663d46",
       "candidate_node_id": "5370ee1e-92d4-504e-a27c-93c183ee6fcd",
@@ -696,6 +123,26 @@
       ],
       "auto_link_allowed": true,
       "requires_human_review": false
+    },
+    "RC-e087b5ca-7a79-5e15-9b39-729672fb017d-5370ee1e-92d4-504e-a27c-93c183ee6fcd": {
+      "incoming_record_id": "e087b5ca-7a79-5e15-9b39-729672fb017d",
+      "candidate_node_id": "5370ee1e-92d4-504e-a27c-93c183ee6fcd",
+      "status": "NOT_MATCHED",
+      "confidence": 0.95,
+      "matched_fields": [
+        "address",
+        "vehicle_number"
+      ],
+      "conflicting_fields": [
+        "national_id",
+        "phone_number"
+      ],
+      "reason": "Different verified national IDs prevent matching.",
+      "source_record_ids": [
+        "71f7e9ca-aafe-5c40-9d86-ee48ac30ca50"
+      ],
+      "auto_link_allowed": false,
+      "requires_human_review": true
     },
     "RC-f758be7a-0c52-5850-97e2-4670852dfead-aaa2c6fc-22e2-559e-ae27-8adb849c9db8": {
       "incoming_record_id": "f758be7a-0c52-5850-97e2-4670852dfead",
@@ -784,69 +231,7 @@
       ],
       "auto_link_allowed": true,
       "requires_human_review": false
-    },
-    "RC-24a8a9a6-53b3-51ed-81eb-b755edc08d3f-69f773cd-766b-57f4-87c8-4389129e0700": {
-      "incoming_record_id": "24a8a9a6-53b3-51ed-81eb-b755edc08d3f",
-      "candidate_node_id": "69f773cd-766b-57f4-87c8-4389129e0700",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id",
-        "phone_number"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "22059642-9ee3-5bee-b776-50ded8bc4c88",
-        "430ea388-175f-5332-90c0-79e88f10ca7b",
-        "818d2a6e-694a-5679-b8cf-b2429128b604",
-        "8fde7ce2-4c9a-5174-a2b8-a8a5173c1431",
-        "a56ba993-c076-58f5-9f84-f38d8ddf8c28",
-        "cc033e6a-9be0-5c8b-aa67-145b11442b34"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-fb940c34-dc91-59a0-9eff-1cd3913ce50e-aaa2c6fc-22e2-559e-ae27-8adb849c9db8": {
-      "incoming_record_id": "fb940c34-dc91-59a0-9eff-1cd3913ce50e",
-      "candidate_node_id": "aaa2c6fc-22e2-559e-ae27-8adb849c9db8",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id",
-        "phone_number"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "35a9f576-4942-57d7-8cf0-0f105fc36ee7",
-        "430ea388-175f-5332-90c0-79e88f10ca7b",
-        "66219b7b-87d0-52f6-aabc-39fb7d12d5b4",
-        "a56ba993-c076-58f5-9f84-f38d8ddf8c28"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
-    },
-    "RC-65a52d11-714d-533b-9d21-61bf69d47f33-5370ee1e-92d4-504e-a27c-93c183ee6fcd": {
-      "incoming_record_id": "65a52d11-714d-533b-9d21-61bf69d47f33",
-      "candidate_node_id": "5370ee1e-92d4-504e-a27c-93c183ee6fcd",
-      "status": "MATCHED",
-      "confidence": 1.0,
-      "matched_fields": [
-        "full_name_exact",
-        "national_id",
-        "phone_number"
-      ],
-      "conflicting_fields": [],
-      "reason": "Exact verified national ID with no strong conflict.",
-      "source_record_ids": [
-        "71f7e9ca-aafe-5c40-9d86-ee48ac30ca50"
-      ],
-      "auto_link_allowed": true,
-      "requires_human_review": false
     }
   },
-  "saved_at": "2026-08-29T04:26:53.479760+00:00"
+  "saved_at": "2026-08-29T08:42:11.193961+00:00"
 }
