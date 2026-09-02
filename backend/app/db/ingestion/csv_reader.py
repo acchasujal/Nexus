@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+import logging
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -13,6 +14,8 @@ from typing import Any
 from .contracts import IngestionSummary, IssueSeverity, ParseIssue, SourceType
 from .normalization import CsvValidationError, canonicalize_csv_row
 from .quality import calculate_ingestion_summary
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -103,6 +106,7 @@ def parse_csv_text(
 
         canonical_hashes: set[str] = set()
         seen_record_ids: dict[str, str] = {}
+        logger.info(f"Hashing is going on for file: {file_name}")
         for row_number, values in enumerate(reader, start=2):
             if row_number > max_rows + 1:
                 result.quarantined_rows.append({"row_number": row_number, "raw": values})
@@ -145,6 +149,7 @@ def parse_csv_text(
     except (UnicodeError, CsvValidationError):
         result.issues.append(_issue(source_type, file_name, 1, "INVALID_ENCODING", "CSV contains invalid UTF-8 or row data", IssueSeverity.ERROR))
 
+    logger.info(f"Hashing complete for file: {file_name}. Hashed {len(result.rows)} valid rows.")
     result.summary = calculate_ingestion_summary(result)
     return result
 

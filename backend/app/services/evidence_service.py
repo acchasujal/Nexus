@@ -73,7 +73,9 @@ def compute_evidence_hash(evidence: EvidenceItemResponse) -> str:
         sort_keys=True,
         ensure_ascii=False,
     )
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    computed_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    logger.info(f"Evidence hash computed successfully | evidence_id={evidence.id} | computed_hash={computed_hash}")
+    return computed_hash
 
 
 def compute_path_chain_hash(hop_hashes: list[str]) -> str:
@@ -85,7 +87,9 @@ def compute_path_chain_hash(hop_hashes: list[str]) -> str:
     if not hop_hashes:
         return ""
     chain_input = "||".join(hop_hashes)
-    return hashlib.sha256(chain_input.encode("utf-8")).hexdigest()
+    computed_chain_hash = hashlib.sha256(chain_input.encode("utf-8")).hexdigest()
+    logger.info(f"Path chain hash computed successfully | hops={len(hop_hashes)} | chain_hash={computed_chain_hash}")
+    return computed_chain_hash
 
 
 class EvidenceService:
