@@ -718,8 +718,26 @@ def create_core_router() -> APIRouter:
                 entity_id=e.get("entity_id") or e.get("case_id"),
                 details=e.get("details", {}),
                 timestamp=e.get("timestamp") or e.get("occurred_at"),
+                integrity_hash=e.get("integrity_hash"),
+                previous_hash=e.get("previous_hash"),
             )
             for e in raw_events
         ]
+
+    @router.get("/audit/{event_id}/verify")
+    def verify_audit_event(
+        event_id: str,
+        principal: Principal = Depends(get_principal),
+        audit_svc: AuditService = Depends(get_audit_service),
+    ) -> dict[str, Any]:
+        """Verify the cryptographic SHA-256 tamper-evidence fingerprint of an audit event."""
+        if not principal.can_view_audit_log():
+            raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges to verify audit log records.")
+
+        result = audit_svc.verify_event_integrity(event_id)
+        if result is None:
+            raise HTTPException(status_code=404, detail="Audit event not found.")
+
+        return result.to_dict()
 
     return router

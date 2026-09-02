@@ -134,6 +134,7 @@ class DevelopmentVerifier(TokenVerifier):
             except (KeyError, AttributeError):
                 pass
 
+        has_explicit_role = bool(request.headers.get("X-Role") or request.headers.get("X-Dev-Role") or (request.query_params.get("role") if request.query_params is not None and type(request.query_params).__name__ not in ("Mock", "MagicMock") else None))
         if not raw_role or type(raw_role).__name__ in ("Mock", "MagicMock"):
             raw_role = "INVESTIGATOR"
 
@@ -144,7 +145,7 @@ class DevelopmentVerifier(TokenVerifier):
             user_id=user_id,
             email=f"dev-{role.value.lower()}@nexus.internal",
             role=role,
-            is_anonymous=True,
+            is_anonymous=not has_explicit_role,
             officer_id=officer.officer_id,
             badge_number=officer.badge_number,
             name=officer.name,

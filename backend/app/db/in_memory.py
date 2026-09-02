@@ -540,15 +540,32 @@ class InMemoryBackendRepository:
         entity_id: str | None = None,
         details: dict[str, Any] | None = None,
     ) -> AuditLogEntry:
+        from backend.app.core.crypto.audit_integrity import compute_audit_event_hash
+        previous_hash = self.audit_events[-1].get("integrity_hash") if self.audit_events else None
+        now_dt = _utcnow()
+        raw_payload = {
+            "id": f"audit-{now_dt.timestamp()}-{len(self.audit_events)+1}",
+            "actor_id": user_id,
+            "event_type": action,
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "details": details or {},
+            "timestamp": now_dt.isoformat(),
+            "previous_hash": previous_hash,
+        }
+        computed_hash = compute_audit_event_hash(raw_payload)
+
         entry = AuditLogEntry(
-            id=f"audit-{_utcnow().timestamp()}-{len(self.audit_events)+1}",
+            id=raw_payload["id"],
             user_id=user_id,
             user_role=user_role,
             action=action,
             entity_type=entity_type,
             entity_id=entity_id,
             details=details or {},
-            timestamp=_utcnow(),
+            timestamp=now_dt,
+            integrity_hash=computed_hash,
+            previous_hash=previous_hash,
         )
         self.audit_events.append(entry.model_dump())
         self._save_state()

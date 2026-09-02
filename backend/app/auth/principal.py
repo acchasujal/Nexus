@@ -193,6 +193,8 @@ class Principal:
         return True
 
     def can_view_audit_log(self) -> bool:
+        if self.is_anonymous:
+            return False
         # All authenticated roles may view the audit log in demo mode. The audit log contains
         # only the investigator's own actions (no PII beyond what they performed themselves).
         # Production deployments with stricter access requirements would tighten this via

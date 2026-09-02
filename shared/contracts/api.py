@@ -281,6 +281,8 @@ class AuditLogEntry(BaseModel):
     entity_id: str | None = None
     details: dict[str, Any] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=_utcnow)
+    integrity_hash: str | None = None
+    previous_hash: str | None = None
 
 
 class AuthLoginRequest(BaseModel):

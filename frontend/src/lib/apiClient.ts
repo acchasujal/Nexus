@@ -193,6 +193,15 @@ export const apiClient = {
 
   // Audit
   getAuditLogs: (limit = 50) => apiFetch<Record<string, unknown>[]>(`/api/v1/audit?limit=${limit}`),
+  verifyAuditEvent: (eventId: string) =>
+    apiFetch<{
+      event_id: string
+      verified: boolean
+      stored_hash: string | null
+      computed_hash: string
+      reason: string
+      previous_hash: string | null
+    }>(`/api/v1/audit/${encodeURIComponent(eventId)}/verify`),
 
   // Ingestion
   ingestFiles: (files: { fir?: File, cdr?: File, bank?: File, intelligence?: File }) => {

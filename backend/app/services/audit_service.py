@@ -12,6 +12,12 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
+from backend.app.core.crypto.audit_integrity import (
+    AuditIntegrityVerificationResult,
+    compute_audit_event_hash,
+    verify_audit_event_integrity,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -98,6 +104,14 @@ class AuditService:
     ) -> None:
         """Record an audit event without ever throwing exceptions to callers."""
         try:
+            # Determine previous_hash safely from the existing repository audit log
+            previous_hash: str | None = None
+            events = getattr(self._repository, "audit_events", None)
+            if isinstance(events, list) and len(events) > 0:
+                last_event = events[-1]
+                previous_hash = last_event.get("integrity_hash")
+
+            now_iso = _utcnow().isoformat()
             payload = {
                 "id": str(uuid.uuid4()),
                 "event_type": event_type.value if hasattr(event_type, "value") else str(event_type),
@@ -106,10 +120,16 @@ class AuditService:
                 "entity_id": entity_id,
                 "entity_type": entity_type,
                 "request_id": request_id,
-                "occurred_at": _utcnow().isoformat(),
-                "timestamp": _utcnow().isoformat(),
+                "occurred_at": now_iso,
+                "timestamp": now_iso,
+                "previous_hash": previous_hash,
                 "details": details or {},
             }
+
+            # Cryptographic canonical serialization & SHA-256 computation
+            integrity_hash = compute_audit_event_hash(payload)
+            payload["integrity_hash"] = integrity_hash
+
             if hasattr(self._repository, "audit_events") and isinstance(self._repository.audit_events, list):
                 self._repository.audit_events.append(payload)
 
@@ -140,8 +160,26 @@ class AuditService:
                     logger.debug("Optional direct PostgreSQL audit write: %s", db_exc)
 
             logger.info("AUDIT: event=%s actor=%s entity=%s", event_type, actor_id, entity_id or case_id)
-        except (AttributeError, TypeError, ValueError, KeyError, OSError) as exc:
-            logger.warning("Audit log write failed (best-effort): %s", exc)
+        except Exception as exc:
+            logger.error("AuditService.record failed: %s", exc)
+
+    def get_event(self, event_id: str) -> dict[str, Any] | None:
+        """Retrieve a single audit event by ID from the repository."""
+        events = getattr(self._repository, "audit_events", [])
+        for e in events:
+            if e.get("id") == event_id:
+                return e
+        return None
+
+    def verify_event_integrity(self, event_id: str) -> AuditIntegrityVerificationResult | None:
+        """Verify the cryptographic integrity of a specific audit event.
+
+        Returns AuditIntegrityVerificationResult or None if event does not exist.
+        """
+        event = self.get_event(event_id)
+        if event is None:
+            return None
+        return verify_audit_event_integrity(event)
 
     def list_events(
         self,
