@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any
 from fastapi import Depends, Request
 
+from backend.app.auth.policy import EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal
 from backend.app.auth.verifier import make_verifier
 from backend.app.config import Settings, get_settings
@@ -64,6 +65,13 @@ def get_copilot_service(
     audit_svc: AuditService = Depends(get_audit_service),
 ) -> CopilotService:
     return CopilotService(repo, audit_svc)
+
+
+def get_evidence_authorization_policy(
+    repo: RepositoryType = Depends(get_repository),
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> EvidenceAuthorizationPolicy:
+    return EvidenceAuthorizationPolicy(repo, audit_svc)
 
 
 def get_evidence_service(

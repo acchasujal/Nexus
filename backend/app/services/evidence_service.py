@@ -106,11 +106,12 @@ class EvidenceService:
         evidence_id: str,
         actor_id: str,
         request_id: str | None = None,
+        suppress_audit: bool = False,
     ) -> EvidenceItemResponse | None:
         """Retrieve a single evidence item by its stable provenance-derived ID.
 
         Returns None if no evidence with that ID exists.
-        Logs EVIDENCE_VIEWED audit event on hit.
+        Logs EVIDENCE_VIEWED audit event on hit unless suppress_audit is True.
         """
         store = self._repo.to_graph_store()
         for etype, edges in store.edge_index.items():
@@ -119,13 +120,22 @@ class EvidenceService:
                 if prov.get("source_id"):
                     ev = self._edge_to_evidence(edge, etype)
                     if ev.id == evidence_id:
-                        self._audit.record(
-                            AuditEventType.EVIDENCE_VIEWED,
-                            actor_id=actor_id,
-                            entity_id=evidence_id,
-                            request_id=request_id,
-                            details={"source_type": prov.get("source_type", "")},
-                        )
+                        if not suppress_audit:
+                            self._audit.record(
+                                AuditEventType.EVIDENCE_VIEWED,
+                                actor_id=actor_id,
+                                case_id=ev.case_id or None,
+                                entity_id=evidence_id,
+                                entity_type="Evidence",
+                                request_id=request_id,
+                                details={
+                                    "allowed": True,
+                                    "action": "VIEW",
+                                    "source_type": prov.get("source_type", ""),
+                                    "case_id": ev.case_id or None,
+                                    "resource_id": evidence_id,
+                                },
+                            )
                         return ev
         return None
 

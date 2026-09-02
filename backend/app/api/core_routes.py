@@ -25,6 +25,7 @@ from backend.app.api.dependencies import (
     get_case_service,
     get_copilot_service,
     get_entity_service,
+    get_evidence_authorization_policy,
     get_evidence_service,
     get_export_service,
     get_ingestion_service,
@@ -32,6 +33,7 @@ from backend.app.api.dependencies import (
     get_repository,
     get_request_id,
 )
+from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal, resolve_officer_identity
 from backend.app.config import Settings, get_settings
 from backend.app.core.graph.algorithms.clustering import (
@@ -432,16 +434,34 @@ def create_core_router() -> APIRouter:
         evidence_id: str,
         principal: Principal = Depends(get_principal),
         evidence_svc: EvidenceService = Depends(get_evidence_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
         request_id: str = Depends(get_request_id),
     ) -> EvidenceItemResponse:
         """Retrieve a single evidence item by its stable provenance-derived ID."""
+        # Resolve existence and context first without leaking sensitive contents
+        ev_ctx = auth_policy.resolve_evidence_context(evidence_id)
+        if ev_ctx is None:
+            raise HTTPException(status_code=404, detail="Evidence not found")
+
+        # Deterministic RBAC authorization check
+        decision = auth_policy.authorize_evidence_access(
+            principal=principal,
+            evidence_id=evidence_id,
+            action=EvidenceAction.VIEW,
+            context=ev_ctx,
+            request_id=request_id,
+        )
+        if not decision.allowed:
+            raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges to view this evidence record.")
+
         item = evidence_svc.get_evidence_by_id(
             evidence_id=evidence_id,
             actor_id=principal.user_id,
             request_id=request_id,
+            suppress_audit=True,
         )
         if item is None:
-            raise HTTPException(status_code=404, detail=f"Evidence '{evidence_id}' not found")
+            raise HTTPException(status_code=404, detail="Evidence not found")
         return item
 
     @router.get("/evidence", response_model=list[EvidenceItemResponse])
@@ -451,16 +471,29 @@ def create_core_router() -> APIRouter:
         limit: int = Query(50, ge=1, le=200),
         principal: Principal = Depends(get_principal),
         evidence_svc: EvidenceService = Depends(get_evidence_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
         request_id: str = Depends(get_request_id),
     ) -> list[EvidenceItemResponse]:
-        """List evidence items, optionally filtered by case_id or entity_id."""
-        return evidence_svc.list_all_evidence(
+        """List evidence items, optionally filtered by case_id or entity_id, scoped to officer authorization."""
+        all_items = evidence_svc.list_all_evidence(
             case_id=case_id,
             entity_id=entity_id,
             limit=limit,
             actor_id=principal.user_id,
             request_id=request_id,
         )
+        # Filter items according to resource-level RBAC policy without producing redundant denial audit floods
+        authorized_items: list[EvidenceItemResponse] = []
+        for item in all_items:
+            decision = auth_policy.authorize_evidence_access(
+                principal=principal,
+                evidence_id=item.id,
+                action=EvidenceAction.VIEW,
+                suppress_audit=True,
+            )
+            if decision.allowed:
+                authorized_items.append(item)
+        return authorized_items
 
     @router.get(
         "/entities/{source_id}/links/{target_id}/evidence",
@@ -472,16 +505,28 @@ def create_core_router() -> APIRouter:
         edge_type: str | None = Query(None, description="Filter by relationship type"),
         principal: Principal = Depends(get_principal),
         evidence_svc: EvidenceService = Depends(get_evidence_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
         request_id: str = Depends(get_request_id),
     ) -> list[EvidenceItemResponse]:
-        """Retrieve all evidence citations supporting a specific graph edge."""
-        return evidence_svc.get_evidence_for_edge(
+        """Retrieve all evidence citations supporting a specific graph edge, scoped to officer authorization."""
+        all_items = evidence_svc.get_evidence_for_edge(
             source_id=source_id,
             target_id=target_id,
             edge_type=edge_type,
             actor_id=principal.user_id,
             request_id=request_id,
         )
+        authorized_items: list[EvidenceItemResponse] = []
+        for item in all_items:
+            decision = auth_policy.authorize_evidence_access(
+                principal=principal,
+                evidence_id=item.id,
+                action=EvidenceAction.VIEW,
+                suppress_audit=True,
+            )
+            if decision.allowed:
+                authorized_items.append(item)
+        return authorized_items
 
     @router.post("/evidence/verify", response_model=EvidenceVerificationResponse)
     def verify_evidence(

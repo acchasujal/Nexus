@@ -413,7 +413,7 @@ class LeadPipelineService:
         if decision_upper not in ("ACCEPT", "REJECT"):
             raise ValueError(f"Invalid lead decision '{decision}'. Must be 'ACCEPT' or 'REJECT'.")
 
-        authoritative_decided_by = actor_id or decided_by or "Investigating Officer"
+        authoritative_decided_by = decided_by or actor_id or "Investigating Officer"
         lead.status = "ACCEPTED" if decision_upper == "ACCEPT" else "REJECTED"
         lead.decided_at = datetime.now(timezone.utc).isoformat()
         lead.decided_by = authoritative_decided_by

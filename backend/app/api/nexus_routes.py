@@ -29,6 +29,7 @@ from pydantic import BaseModel, Field
 from backend.app.api.dependencies import (
     get_audit_service,
     get_copilot_service,
+    get_evidence_authorization_policy,
     get_evidence_dossier_service,
     get_hotspot_service,
     get_offender_service,
@@ -39,6 +40,7 @@ from backend.app.api.dependencies import (
     get_request_id,
     get_graph_repository,
 )
+from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal
 from backend.app.core.graph.enums import ResolutionStatus
 from backend.app.core.graph.services.hotspot_service import HotspotService
@@ -1330,6 +1332,7 @@ def create_nexus_router() -> APIRouter:
         principal: Principal = Depends(get_principal),
         audit: AuditService = Depends(get_audit_service),
         repo: InMemoryBackendRepository = Depends(get_repository),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
     ) -> NexusEdgeEvidenceResponse:
         edge = None
         for e in repo.edges:
@@ -1346,7 +1349,18 @@ def create_nexus_router() -> APIRouter:
 
         props = edge.get("properties", {})
         rec_ids = props.get("evidence_ids", [])
-        records = [NexusSourceRecord(**repo.source_records[rid]) for rid in rec_ids if rid in repo.source_records]
+        # Filter source records based on officer authorization
+        records = [
+            NexusSourceRecord(**repo.source_records[rid])
+            for rid in rec_ids
+            if rid in repo.source_records
+            and auth_policy.authorize_evidence_access(
+                principal=principal,
+                evidence_id=rid,
+                action=EvidenceAction.VIEW,
+                suppress_audit=True,
+            ).allowed
+        ]
 
         def get_label(nid: str) -> str:
             n = repo.nodes.get(nid, {})
@@ -1932,10 +1946,22 @@ def create_nexus_router() -> APIRouter:
         source_id: str,
         principal: Principal = Depends(get_principal),
         repo: InMemoryBackendRepository = Depends(get_repository),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+        request_id: str = Depends(get_request_id),
     ) -> NexusSourceRecord:
         record_data = repo.source_records.get(source_id)
         if not record_data:
             raise HTTPException(status_code=404, detail="Source record not found")
+
+        decision = auth_policy.authorize_evidence_access(
+            principal=principal,
+            evidence_id=source_id,
+            action=EvidenceAction.VIEW,
+            request_id=request_id,
+        )
+        if not decision.allowed:
+            raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges to view this evidence record.")
+
         # Ensure it maps nicely to the pydantic model if it's a dict
         return NexusSourceRecord(**record_data)
 
