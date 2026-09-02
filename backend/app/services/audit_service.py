@@ -85,6 +85,11 @@ class AuditEventType(str, Enum):
     EXPORT_INITIATED = "export_initiated"
     EXPORT_COMPLETED = "export_completed"
 
+    # Permissioned Blockchain Anchoring (Phase 4)
+    AUDIT_BATCH_ANCHORED = "audit_batch_anchored"
+    BLOCKCHAIN_VERIFIED = "blockchain_verified"
+    BLOCKCHAIN_VERIFICATION_FAILED = "blockchain_verification_failed"
+
 
 class AuditService:
     """Application-layer service for writing and querying audit logs."""

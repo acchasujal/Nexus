@@ -88,6 +88,15 @@ def create_app(
     # Store shared pipeline instance to maintain resolution registries
     app.state.pipeline = CsvIngestionPipeline()
 
+    # Store shared permissioned ledger instance
+    from backend.app.core.blockchain.ledger import PermissionedLedger
+    from backend.app.services.audit_anchor_service import AuditAnchorService
+    app.state.permissioned_ledger = PermissionedLedger()
+    app.state.audit_anchor_service = AuditAnchorService(
+        ledger=app.state.permissioned_ledger,
+        audit_service=AuditService(repository),
+    )
+
     # ── Middleware and error handlers ────────────────────────────────────────
     install_error_handlers(app)
 

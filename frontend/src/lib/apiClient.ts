@@ -203,6 +203,48 @@ export const apiClient = {
       previous_hash: string | null
     }>(`/api/v1/audit/${encodeURIComponent(eventId)}/verify`),
 
+  // Blockchain Anchors (Phase 4)
+  listAuditAnchors: () =>
+    apiFetch<Array<{
+      anchor_id: string
+      batch_start: string
+      batch_end: string
+      event_count: number
+      root_hash: string
+      anchored_at: string
+      creator_participant: string
+      block_index: number
+      block_hash: string
+      ledger_id: string
+    }>>('/api/v1/audit/anchors'),
+
+  createAuditAnchor: (limit = 50) =>
+    apiFetch<{
+      anchor_id: string
+      batch_start: string
+      batch_end: string
+      event_count: number
+      root_hash: string
+      anchored_at: string
+      creator_participant: string
+      ledger_id: string
+    }>(`/api/v1/audit/anchors?limit=${limit}`, {
+      method: 'POST',
+    }),
+
+  verifyAuditAnchor: (anchorId: string) =>
+    apiFetch<{
+      verified: boolean
+      anchor_id: string
+      root_hash: string
+      block_index: number | null
+      block_hash: string | null
+      ledger_id: string
+      reason: string
+      chain_valid: boolean
+      anchored_event_count: number
+    }>(`/api/v1/audit/anchors/${encodeURIComponent(anchorId)}/verify`),
+
   // Ingestion
   ingestFiles: (files: { fir?: File, cdr?: File, bank?: File, intelligence?: File }) => {
     const formData = new FormData()

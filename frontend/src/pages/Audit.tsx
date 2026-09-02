@@ -1,5 +1,16 @@
-import { useState, useEffect } from 'react'
-import { ShieldCheck, AlertTriangle, CheckCircle2, ChevronRight, ChevronDown, Fingerprint, AlertCircle } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import {
+  ShieldCheck,
+  AlertTriangle,
+  CheckCircle2,
+  ChevronRight,
+  ChevronDown,
+  Fingerprint,
+  AlertCircle,
+  Blocks,
+  RefreshCw,
+  PlusCircle,
+} from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
@@ -24,6 +35,26 @@ interface VerificationStatus {
   computed_hash?: string
   reason?: string
   previous_hash?: string | null
+  error?: string
+}
+
+interface BlockchainAnchor {
+  anchor_id: string
+  batch_start: string
+  batch_end: string
+  event_count: number
+  root_hash: string
+  anchored_at: string
+  creator_participant: string
+  block_index: number
+  block_hash: string
+  ledger_id: string
+}
+
+interface AnchorVerificationState {
+  loading: boolean
+  verified?: boolean
+  reason?: string
   error?: string
 }
 
@@ -57,33 +88,48 @@ function formatAuditDetails(details?: Record<string, unknown>): React.ReactNode 
 
 export default function Audit() {
   const [logs, setLogs] = useState<AuditLogEntry[]>([])
+  const [anchors, setAnchors] = useState<BlockchainAnchor[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
   const [verifications, setVerifications] = useState<Record<string, VerificationStatus>>({})
+  const [anchorVerifications, setAnchorVerifications] = useState<Record<string, AnchorVerificationState>>({})
+  const [isAnchoring, setIsAnchoring] = useState(false)
+  const [anchorMessage, setAnchorMessage] = useState<string | null>(null)
 
-  useEffect(() => {
-    apiClient.getAuditLogs().then((data) => {
-      setFetchError(null)
-      setLogs(Array.isArray(data) ? (data as AuditLogEntry[]) : [])
-    }).catch((err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Unable to load audit records'
-      setFetchError(msg)
-      setLogs([])
-    }).finally(() => {
-      setIsLoading(false)
-    })
+  const loadData = useCallback(() => {
+    setIsLoading(true)
+    Promise.all([
+      apiClient.getAuditLogs(),
+      apiClient.listAuditAnchors().catch(() => [] as BlockchainAnchor[]),
+    ])
+      .then(([logsData, anchorsData]) => {
+        setFetchError(null)
+        setLogs(Array.isArray(logsData) ? (logsData as AuditLogEntry[]) : [])
+        setAnchors(Array.isArray(anchorsData) ? anchorsData : [])
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'Unable to load audit records'
+        setFetchError(msg)
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
   }, [])
 
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
   const handleVerifyEvent = async (eventId: string) => {
-    setVerifications(prev => ({
+    setVerifications((prev) => ({
       ...prev,
-      [eventId]: { loading: true }
+      [eventId]: { loading: true },
     }))
 
     try {
       const res = await apiClient.verifyAuditEvent(eventId)
-      setVerifications(prev => ({
+      setVerifications((prev) => ({
         ...prev,
         [eventId]: {
           loading: false,
@@ -92,16 +138,16 @@ export default function Audit() {
           computed_hash: res.computed_hash,
           reason: res.reason,
           previous_hash: res.previous_hash,
-        }
+        },
       }))
     } catch (err: unknown) {
-      setVerifications(prev => ({
+      setVerifications((prev) => ({
         ...prev,
         [eventId]: {
           loading: false,
           verified: false,
-          error: err instanceof Error ? err.message : 'Verification failed'
-        }
+          error: err instanceof Error ? err.message : 'Verification failed',
+        },
       }))
     }
   }
@@ -117,17 +163,169 @@ export default function Audit() {
     }
   }
 
+  const handleCreateAnchor = async () => {
+    setIsAnchoring(true)
+    setAnchorMessage(null)
+    try {
+      const newAnchor = await apiClient.createAuditAnchor(50)
+      setAnchorMessage(`Created ${newAnchor.anchor_id} with Merkle root ${newAnchor.root_hash.slice(0, 16)}...`)
+      loadData()
+    } catch (err: unknown) {
+      setAnchorMessage(err instanceof Error ? err.message : 'Failed to create anchor')
+    } finally {
+      setIsAnchoring(false)
+    }
+  }
+
+  const handleVerifyAnchor = async (anchorId: string) => {
+    setAnchorVerifications((prev) => ({
+      ...prev,
+      [anchorId]: { loading: true },
+    }))
+
+    try {
+      const res = await apiClient.verifyAuditAnchor(anchorId)
+      setAnchorVerifications((prev) => ({
+        ...prev,
+        [anchorId]: {
+          loading: false,
+          verified: res.verified,
+          reason: res.reason,
+        },
+      }))
+    } catch (err: unknown) {
+      setAnchorVerifications((prev) => ({
+        ...prev,
+        [anchorId]: {
+          loading: false,
+          verified: false,
+          error: err instanceof Error ? err.message : 'Anchor verification failed',
+        },
+      }))
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto w-full">
       {/* Header */}
       <PageHeader
         icon={ShieldCheck}
-        title="Immutable Audit Trail &amp; Compliance Log"
-        subtitle="Cryptographically recorded actions, candidate decisions, search queries, copilot responses, and evidence accesses by investigator principals."
+        title="Immutable Audit Trail &amp; Permissioned Blockchain Ledger"
+        subtitle="Cryptographically sealed audit history, canonical SHA-256 digests, and Merkle root anchoring to an append-only permissioned block chain."
       />
 
+      {/* Permissioned Blockchain Anchors Section */}
+      <SectionCard
+        title="Permissioned Blockchain Trust Anchors"
+        subtitle="Cryptographic Merkle batch roots anchored to local permissioned blocks (NEXUS-POLICE-HQ / CYBER-CELL / DISTRICT-HQ)"
+        action={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCreateAnchor}
+              disabled={isAnchoring}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold shadow-sm disabled:opacity-50 transition-colors"
+            >
+              <PlusCircle className="h-3.5 w-3.5" />
+              {isAnchoring ? 'Anchoring Batch...' : 'Anchor Audit Batch'}
+            </button>
+            <button
+              onClick={loadData}
+              className="p-1.5 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
+              title="Refresh ledger"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
+          </div>
+        }
+      >
+        {anchorMessage && (
+          <div className="mb-4 text-xs font-mono p-2 bg-blue-50 border border-blue-200 text-blue-800 rounded-md">
+            {anchorMessage}
+          </div>
+        )}
+
+        {anchors.length === 0 ? (
+          <div className="p-4 text-center text-xs text-neutral-500">
+            No blockchain anchors committed yet. Click &quot;Anchor Audit Batch&quot; to commit the first batch.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {anchors.map((anc) => {
+              const vState = anchorVerifications[anc.anchor_id]
+              return (
+                <div
+                  key={anc.anchor_id}
+                  className="p-3.5 rounded-lg border border-neutral-200/80 bg-neutral-50/50 hover:bg-white hover:border-neutral-300 transition-all flex flex-col justify-between space-y-3"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 border-b border-neutral-200/60 pb-2">
+                      <span className="font-mono font-bold text-xs text-neutral-900 flex items-center gap-1.5">
+                        <Blocks className="h-4 w-4 text-blue-600" />
+                        {anc.anchor_id}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-neutral-200 text-neutral-700">
+                        Block #{anc.block_index}
+                      </span>
+                    </div>
+
+                    <div className="mt-2.5 space-y-1.5 text-xs">
+                      <div className="flex justify-between text-neutral-600">
+                        <span>Participant:</span>
+                        <span className="font-mono text-[11px] font-semibold text-neutral-800">
+                          {anc.creator_participant}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-neutral-600">
+                        <span>Anchored Events:</span>
+                        <span className="font-semibold text-neutral-900">{anc.event_count} events</span>
+                      </div>
+                      <div className="pt-1">
+                        <span className="text-neutral-500 text-[11px] block">Merkle Batch Root Hash:</span>
+                        <div className="font-mono text-[11px] text-blue-700 break-all select-all font-semibold">
+                          {anc.root_hash}
+                        </div>
+                      </div>
+                      <div className="pt-1">
+                        <span className="text-neutral-500 text-[11px] block">Block Hash:</span>
+                        <div className="font-mono text-[10px] text-neutral-600 break-all select-all">
+                          {anc.block_hash}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-neutral-200/60 flex items-center justify-between">
+                    <div>
+                      {vState?.loading ? (
+                        <span className="text-xs text-blue-600 animate-pulse">Verifying...</span>
+                      ) : vState?.verified ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> BLOCKCHAIN VERIFIED
+                        </span>
+                      ) : vState?.verified === false ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-red-600">
+                          <AlertTriangle className="h-3.5 w-3.5" /> LEDGER INTEGRITY FAILURE
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-neutral-400">Unverified</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleVerifyAnchor(anc.anchor_id)}
+                      className="px-2.5 py-1 text-xs font-semibold rounded bg-neutral-200 hover:bg-neutral-300 text-neutral-800 transition-colors"
+                    >
+                      Verify
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </SectionCard>
+
       {/* Audit Log Table Container */}
-      <SectionCard noPadding>
+      <SectionCard noPadding title="Audit Trail Records" subtitle="Sequential event log with backward SHA-256 hash chaining">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-sm text-neutral-800 min-w-[850px]">
             <thead className="bg-neutral-50/80 text-[11px] font-bold uppercase tracking-wider text-neutral-700 border-b border-neutral-200/80">

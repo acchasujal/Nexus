@@ -21,6 +21,7 @@ import jwt
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, File, UploadFile
 
 from backend.app.api.dependencies import (
+    get_audit_anchor_service,
     get_audit_service,
     get_case_service,
     get_copilot_service,
@@ -738,6 +739,68 @@ def create_core_router() -> APIRouter:
         if result is None:
             raise HTTPException(status_code=404, detail="Audit event not found.")
 
+        return result.to_dict()
+
+    # ── Permissioned Blockchain Anchoring Endpoints (Phase 4) ────────────────
+    @router.post("/audit/anchors")
+    def create_audit_anchor(
+        batch_start_id: str | None = None,
+        batch_end_id: str | None = None,
+        limit: int = 50,
+        principal: Principal = Depends(get_principal),
+        anchor_svc: Any = Depends(get_audit_anchor_service),
+    ) -> dict[str, Any]:
+        """Create a cryptographic Merkle root anchor for an audit event batch and seal in next block."""
+        if not principal.can_view_audit_log():
+            raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges to anchor audit batches.")
+
+        try:
+            anchor = anchor_svc.anchor_audit_batch(
+                batch_start_id=batch_start_id,
+                batch_end_id=batch_end_id,
+                limit=limit,
+                actor_id=principal.officer_id or principal.user_id,
+            )
+            return anchor.to_canonical_dict()
+        except ValueError as err:
+            raise HTTPException(status_code=400, detail=str(err))
+
+    @router.get("/audit/anchors")
+    def list_audit_anchors(
+        principal: Principal = Depends(get_principal),
+        anchor_svc: Any = Depends(get_audit_anchor_service),
+    ) -> list[dict[str, Any]]:
+        """List existing cryptographic anchors from the permissioned ledger."""
+        if not principal.can_view_audit_log():
+            raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges to view audit anchors.")
+        return anchor_svc.list_anchors()
+
+    @router.get("/audit/anchors/{anchor_id}")
+    def get_audit_anchor(
+        anchor_id: str,
+        principal: Principal = Depends(get_principal),
+        anchor_svc: Any = Depends(get_audit_anchor_service),
+    ) -> dict[str, Any]:
+        """Get details of a specific blockchain anchor."""
+        if not principal.can_view_audit_log():
+            raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges to view audit anchors.")
+        entry = anchor_svc.get_anchor(anchor_id)
+        if entry is None:
+            raise HTTPException(status_code=404, detail="Anchor not found.")
+        return entry
+
+    @router.get("/audit/anchors/{anchor_id}/verify")
+    def verify_audit_anchor(
+        anchor_id: str,
+        principal: Principal = Depends(get_principal),
+        anchor_svc: Any = Depends(get_audit_anchor_service),
+    ) -> dict[str, Any]:
+        """Verify the integrity of a blockchain anchor and the ledger chain."""
+        if not principal.can_view_audit_log():
+            raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges to verify blockchain anchors.")
+        result = anchor_svc.verify_anchor(anchor_id, actor_id=principal.officer_id or principal.user_id)
+        if not result.chain_valid and "not found" in result.reason.lower():
+            raise HTTPException(status_code=404, detail="Anchor not found.")
         return result.to_dict()
 
     return router

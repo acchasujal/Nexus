@@ -53,6 +53,24 @@ def get_audit_service(
     return AuditService(repo)
 
 
+def get_audit_anchor_service(
+    request: Request,
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> Any:
+    anchor_svc = getattr(request.app.state, "audit_anchor_service", None)
+    if anchor_svc is not None:
+        return anchor_svc
+    from backend.app.core.blockchain.ledger import PermissionedLedger
+    from backend.app.services.audit_anchor_service import AuditAnchorService
+    ledger = getattr(request.app.state, "permissioned_ledger", None)
+    if ledger is None:
+        ledger = PermissionedLedger()
+        request.app.state.permissioned_ledger = ledger
+    anchor_svc = AuditAnchorService(ledger=ledger, audit_service=audit_svc)
+    request.app.state.audit_anchor_service = anchor_svc
+    return anchor_svc
+
+
 def get_case_service(
     repo: RepositoryType = Depends(get_repository),
     audit_svc: AuditService = Depends(get_audit_service),
