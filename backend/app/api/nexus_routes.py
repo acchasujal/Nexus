@@ -1169,6 +1169,9 @@ def create_nexus_router() -> APIRouter:
     ) -> ResolutionDecisionResponse:
         status_map = {"CONFIRM": "CONFIRMED", "REJECT": "REJECTED", "DEFER": "DEFERRED"}
         c_data = repo.review_candidates.get(candidate_id)
+        officer_identity = principal.get_officer_identity()
+        authoritative_decided_by = officer_identity.name or principal.user_id
+
         if not c_data:
             target_cand = next((c for c in _demo_state.candidates if c.id == candidate_id), None)
             if not target_cand:
@@ -1176,14 +1179,21 @@ def create_nexus_router() -> APIRouter:
 
             target_cand.status = status_map[body.decision]
             target_cand.decided_at = datetime.now(timezone.utc).isoformat()
-            target_cand.decided_by = body.decided_by or principal.user_id
+            target_cand.decided_by = authoritative_decided_by
             _demo_state.decision_count += 1
             audit.record(
                 event_type=AuditEventType.ENTITY_RESOLUTION_EXECUTED,
                 actor_id=principal.user_id,
                 entity_type="ResolutionCandidate",
                 entity_id=candidate_id,
-                details={"decision": body.decision, "note": body.note},
+                details={
+                    "decision": body.decision,
+                    "note": body.note,
+                    "decided_by": authoritative_decided_by,
+                    "officer_id": officer_identity.officer_id,
+                    "badge_number": officer_identity.badge_number,
+                    "client_provided_decided_by": body.decided_by,
+                },
             )
             return ResolutionDecisionResponse(
                 candidate_id=target_cand.id,
@@ -1194,6 +1204,9 @@ def create_nexus_router() -> APIRouter:
 
         new_status = status_map[body.decision]
         repo.update_candidate_status(candidate_id, new_status)
+        if candidate_id in repo.review_candidates:
+            repo.review_candidates[candidate_id]["decided_by"] = authoritative_decided_by
+            repo.review_candidates[candidate_id]["decided_at"] = datetime.now(timezone.utc).isoformat()
         
         affected = []
         if body.decision == "CONFIRM":
@@ -1206,7 +1219,14 @@ def create_nexus_router() -> APIRouter:
             actor_id=principal.user_id,
             entity_type="ResolutionCandidate",
             entity_id=candidate_id,
-            details={"decision": body.decision, "note": body.note},
+            details={
+                "decision": body.decision,
+                "note": body.note,
+                "decided_by": authoritative_decided_by,
+                "officer_id": officer_identity.officer_id,
+                "badge_number": officer_identity.badge_number,
+                "client_provided_decided_by": body.decided_by,
+            },
         )
 
         return ResolutionDecisionResponse(
@@ -1674,10 +1694,13 @@ def create_nexus_router() -> APIRouter:
         audit: AuditService = Depends(get_audit_service),
         lead_svc: Any = Depends(get_lead_service),
     ) -> NexusLead:
+        officer_identity = principal.get_officer_identity()
+        authoritative_decided_by = officer_identity.name or principal.user_id
+
         if lead_id == _demo_state.lead.id:
             _demo_state.lead.status = "ACCEPTED" if body.decision == "ACCEPT" else "REJECTED"
             _demo_state.lead.decided_at = datetime.now(timezone.utc).isoformat()
-            _demo_state.lead.decided_by = body.decided_by or principal.user_id
+            _demo_state.lead.decided_by = authoritative_decided_by
             _demo_state.lead.decision_note = body.note
 
             audit.record(
@@ -1685,7 +1708,14 @@ def create_nexus_router() -> APIRouter:
                 actor_id=principal.user_id,
                 entity_type="Lead",
                 entity_id=lead_id,
-                details={"decision": body.decision, "note": body.note},
+                details={
+                    "decision": body.decision,
+                    "note": body.note,
+                    "decided_by": authoritative_decided_by,
+                    "officer_id": officer_identity.officer_id,
+                    "badge_number": officer_identity.badge_number,
+                    "client_provided_decided_by": body.decided_by,
+                },
             )
             return _demo_state.lead
 
@@ -1693,7 +1723,7 @@ def create_nexus_router() -> APIRouter:
             return lead_svc.decide_lead(
                 lead_id=lead_id,
                 decision=body.decision,
-                decided_by=body.decided_by,
+                decided_by=authoritative_decided_by,
                 note=body.note,
                 actor_id=principal.user_id,
             )

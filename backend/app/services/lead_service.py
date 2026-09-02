@@ -413,9 +413,10 @@ class LeadPipelineService:
         if decision_upper not in ("ACCEPT", "REJECT"):
             raise ValueError(f"Invalid lead decision '{decision}'. Must be 'ACCEPT' or 'REJECT'.")
 
+        authoritative_decided_by = actor_id or decided_by or "Investigating Officer"
         lead.status = "ACCEPTED" if decision_upper == "ACCEPT" else "REJECTED"
         lead.decided_at = datetime.now(timezone.utc).isoformat()
-        lead.decided_by = decided_by or actor_id
+        lead.decided_by = authoritative_decided_by
         lead.decision_note = note
 
         # Record immutable audit event
@@ -427,10 +428,12 @@ class LeadPipelineService:
             details={
                 "decision": decision_upper,
                 "note": note,
+                "decided_by": authoritative_decided_by,
+                "client_provided_decided_by": decided_by,
                 "lead_title": lead.title,
                 "rule_id": lead.rule_id,
                 "case_ids": lead.case_ids,
             },
         )
-        logger.info("LeadPipeline: Lead '%s' decided as %s by %s", lead_id, decision_upper, decided_by)
+        logger.info("LeadPipeline: Lead '%s' decided as %s by %s", lead_id, decision_upper, authoritative_decided_by)
         return lead

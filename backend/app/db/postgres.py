@@ -13,8 +13,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import psycopg
-from psycopg.types.json import Jsonb
+try:
+    import psycopg
+    from psycopg.types.json import Jsonb
+except ImportError:
+    psycopg = None  # type: ignore[assignment]
+    Jsonb = None  # type: ignore[assignment]
 
 from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord
 from backend.app.core.graph.enums import ResolutionStatus

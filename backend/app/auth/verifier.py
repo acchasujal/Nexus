@@ -20,7 +20,7 @@ from fastapi import Request
 from fastapi.security import HTTPBearer
 
 from backend.app.api.errors import ForbiddenError
-from backend.app.auth.principal import Principal
+from backend.app.auth.principal import Principal, resolve_officer_identity
 from backend.app.config import Settings
 from shared.contracts.api import UserRole
 
@@ -73,7 +73,22 @@ class DevelopmentVerifier(TokenVerifier):
                 email = payload.get("email", f"{user_id}@nexus.internal")
                 raw_role = payload.get("role", "INVESTIGATOR")
                 role = self._ROLE_MAP.get(str(raw_role).strip().lower(), UserRole.INVESTIGATOR)
-                return Principal(user_id=user_id, email=email, role=role, is_anonymous=False)
+                officer = resolve_officer_identity(
+                    user_id=user_id,
+                    role=role,
+                    officer_id=payload.get("officer_id"),
+                    badge_number=payload.get("badge_number"),
+                    name=payload.get("name"),
+                )
+                return Principal(
+                    user_id=user_id,
+                    email=email,
+                    role=role,
+                    is_anonymous=False,
+                    officer_id=officer.officer_id,
+                    badge_number=officer.badge_number,
+                    name=officer.name,
+                )
             except (jwt.PyJWTError, ValueError):
                 pass
 
@@ -86,7 +101,22 @@ class DevelopmentVerifier(TokenVerifier):
                     email = payload.get("email", f"{user_id}@nexus.internal")
                     raw_role = payload.get("role", "INVESTIGATOR")
                     role = self._ROLE_MAP.get(str(raw_role).strip().lower(), UserRole.INVESTIGATOR)
-                    return Principal(user_id=user_id, email=email, role=role, is_anonymous=False)
+                    officer = resolve_officer_identity(
+                        user_id=user_id,
+                        role=role,
+                        officer_id=payload.get("officer_id"),
+                        badge_number=payload.get("badge_number"),
+                        name=payload.get("name"),
+                    )
+                    return Principal(
+                        user_id=user_id,
+                        email=email,
+                        role=role,
+                        is_anonymous=False,
+                        officer_id=officer.officer_id,
+                        badge_number=officer.badge_number,
+                        name=officer.name,
+                    )
             except Exception:
                 pass
 
@@ -108,11 +138,16 @@ class DevelopmentVerifier(TokenVerifier):
             raw_role = "INVESTIGATOR"
 
         role = self._ROLE_MAP.get(str(raw_role).strip().lower(), UserRole.INVESTIGATOR)
+        user_id = f"dev-{role.value.lower()}"
+        officer = resolve_officer_identity(user_id=user_id, role=role)
         return Principal(
-            user_id=f"dev-{role.value.lower()}",
+            user_id=user_id,
             email=f"dev-{role.value.lower()}@nexus.internal",
             role=role,
             is_anonymous=True,
+            officer_id=officer.officer_id,
+            badge_number=officer.badge_number,
+            name=officer.name,
         )
 
 

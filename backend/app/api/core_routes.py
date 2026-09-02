@@ -32,7 +32,7 @@ from backend.app.api.dependencies import (
     get_repository,
     get_request_id,
 )
-from backend.app.auth.principal import Principal
+from backend.app.auth.principal import Principal, resolve_officer_identity
 from backend.app.config import Settings, get_settings
 from backend.app.core.graph.algorithms.clustering import (
     betweenness_centrality,
@@ -114,10 +114,14 @@ def create_core_router() -> APIRouter:
     @router.post("/auth/login", response_model=AuthTokenResponse)
     def login(req: AuthLoginRequest, settings: Settings = Depends(get_settings)) -> AuthTokenResponse:
         role = req.role or UserRole.INVESTIGATOR
+        officer = resolve_officer_identity(user_id=req.username, role=role)
         token_payload = {
             "sub": req.username,
             "email": f"{req.username}@nexus.internal",
             "role": role.value,
+            "officer_id": officer.officer_id,
+            "badge_number": officer.badge_number,
+            "name": officer.name,
         }
         token = jwt.encode(token_payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
         return AuthTokenResponse(
