@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { FileText, Calendar, Copy, Check, Phone, Landmark, FileSearch, ShieldCheck, MapPin, Briefcase, X } from 'lucide-react'
+import { FileText, Copy, Check, Phone, Landmark, FileSearch, X, ExternalLink } from 'lucide-react'
 import { allSourceRecords } from '@/lib/mocks/nexusFixture'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import type { NexusSourceRecord } from '@shared/contracts/api'
 
 const TYPE_CONFIG: Record<string, { badge: string; icon: typeof FileText }> = {
@@ -25,6 +26,7 @@ export default function Evidence() {
   const caseIdParam = searchParams.get('case_id')
   const allSources = useMemo<NexusSourceRecord[]>(() => Object.values(allSourceRecords), [])
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [selectedEvidenceId, setSelectedEvidenceId] = useState<string | null>(null)
 
   const sources = useMemo(() => {
     if (!caseIdParam) return allSources
@@ -38,7 +40,8 @@ export default function Evidence() {
     )
   }, [allSources, caseIdParam])
 
-  const copyId = async (id: string) => {
+  const copyId = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
     try {
       await navigator.clipboard.writeText(id)
       setCopiedId(id)
@@ -74,7 +77,9 @@ export default function Evidence() {
       {/* Compliance Note */}
       <div className="flex items-start gap-2.5 text-xs text-neutral-700 bg-neutral-50/80 p-3.5 rounded-xl border border-neutral-200/80">
         <FileSearch className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
-        <span>All source records carry exact page/row locators and raw forensic excerpts. Click any edge in the Network Explorer to trace its derivation chain via the Evidence Drawer.</span>
+        <span>
+          All source records carry exact page/row locators and raw forensic excerpts. Click any evidence card below to open the <strong>Evidence Drawer</strong> for forensic verification, Section 63 BSA hash verification, and derivation inspection.
+        </span>
       </div>
 
       {/* Evidence Cards Grid */}
@@ -83,7 +88,11 @@ export default function Evidence() {
           const cfg = TYPE_CONFIG[item.source_type] || TYPE_CONFIG.FIR
           const Icon = cfg.icon
           return (
-            <div key={item.id} className="rounded-xl border border-neutral-200/90 bg-white p-5 space-y-3.5 shadow-xs hover:border-neutral-300 transition-all flex flex-col justify-between">
+            <div
+              key={item.id}
+              onClick={() => setSelectedEvidenceId(item.id)}
+              className="group rounded-xl border border-neutral-200/90 bg-white p-5 space-y-3.5 shadow-xs hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between cursor-pointer"
+            >
               <div className="space-y-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-1">
@@ -91,10 +100,10 @@ export default function Evidence() {
                       <Icon className="h-3 w-3" />
                       {item.source_type}
                     </span>
-                    <h3 className="text-sm sm:text-base font-bold font-mono text-neutral-900 flex items-center gap-2">
+                    <h3 className="text-sm sm:text-base font-bold font-mono text-neutral-900 flex items-center gap-2 group-hover:text-blue-600 transition-colors">
                       {item.id}
                       <button
-                        onClick={() => copyId(item.id)}
+                        onClick={(e) => copyId(item.id, e)}
                         className="text-neutral-400 hover:text-neutral-700 transition-colors cursor-pointer"
                         title="Copy Evidence ID"
                       >
@@ -106,9 +115,10 @@ export default function Evidence() {
                       </button>
                     </h3>
                   </div>
-                  <span className="text-xs font-semibold text-neutral-500 tabular-nums">
-                    {new Date(item.occurred_at).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
-                  </span>
+                  <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500 tabular-nums">
+                    <span>{new Date(item.occurred_at).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</span>
+                    <ExternalLink className="h-4 w-4 text-neutral-400 group-hover:text-blue-600 transition-colors" />
+                  </div>
                 </div>
 
                 <div className="rounded-lg bg-neutral-50 p-2.5 font-mono text-xs text-amber-900 border border-neutral-200/80">
@@ -117,7 +127,7 @@ export default function Evidence() {
                 </div>
 
                 <blockquote className="border-l-2 border-blue-500 pl-3 text-xs text-neutral-700 italic leading-relaxed">
-                  "{item.raw_excerpt}"
+                  &ldquo;{item.raw_excerpt}&rdquo;
                 </blockquote>
               </div>
 
@@ -131,6 +141,14 @@ export default function Evidence() {
           )
         })}
       </div>
+
+      {/* Interactive Evidence Drawer for Clicked Item */}
+      {selectedEvidenceId && (
+        <EvidenceDrawer
+          evidenceId={selectedEvidenceId}
+          onClose={() => setSelectedEvidenceId(null)}
+        />
+      )}
     </div>
   )
 }
