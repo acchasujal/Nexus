@@ -51,7 +51,7 @@ function getEntityIcon(type: string) {
 export function Header({ onMenuToggle }: HeaderProps) {
   const navigate = useNavigate()
   const { tableDensity, setTableDensity } = useUI()
-  const { role } = useAuth()
+  const { role, login } = useAuth()
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
   // Search state
@@ -426,12 +426,23 @@ export function Header({ onMenuToggle }: HeaderProps) {
             />
           </button>
 
-          {/* Active Role Indicator */}
-          <div className="hidden items-center space-x-2 text-xs text-neutral-600 lg:flex" aria-label={`Active role: ${role ?? 'None'}`}>
-            <span aria-hidden="true">Role:</span>
-            <span className="rounded-md bg-blue-50 px-2 py-0.5 font-bold text-blue-700 border border-blue-200">
-              {role ?? 'None'}
-            </span>
+          {/* Officer Profile & Role Switcher Dropdown */}
+          <div className="flex items-center space-x-1.5 text-xs text-neutral-700">
+            <span className="hidden sm:inline text-neutral-500 font-medium">Officer:</span>
+            <select
+              value={role || 'IO'}
+              onChange={(e) => {
+                const targetRole = e.target.value as any
+                login(targetRole)
+              }}
+              aria-label="Switch Active Officer Profile & Role"
+              className="rounded-lg border border-neutral-300 bg-neutral-50 hover:bg-white px-2.5 py-1.5 text-xs font-semibold text-neutral-900 shadow-xs focus:border-blue-600 focus:ring-1 focus:ring-blue-600 cursor-pointer transition-colors"
+            >
+              <option value="IO">👮 Inspector Rajesh Kumar (IO · KA-1001)</option>
+              <option value="SHO">🛡️ SHO Sunita Sharma (SHO · KA-1002)</option>
+              <option value="SP">⭐ SP Vikram Hegde (SP · KA-1003)</option>
+              <option value="ANALYST">🔍 Analyst Cyber Cell (ANALYST)</option>
+            </select>
           </div>
         </div>
       </header>
