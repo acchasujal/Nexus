@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react'
 import { 
   Briefcase, 
-  Layers, 
   TrendingUp, 
   Printer, 
-  Calendar,
   Sparkles,
   ChevronRight,
   Phone,

@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './styles/index.css'
 
-async function enableMocking() {
+async function enableMocking(): Promise<void> {
   // Only run MSW in non-production mode
   if (import.meta.env.PROD || import.meta.env.VITE_ENABLE_MOCKS === 'false') {
     return
@@ -12,7 +12,7 @@ async function enableMocking() {
   try {
     const { worker } = await import('./lib/mocks/browser')
     // Start MSW worker
-    return await worker.start({
+    await worker.start({
       onUnhandledRequest: 'bypass',
       serviceWorker: {
         url: '/mockServiceWorker.js',

@@ -34,6 +34,9 @@ import type {
   HotspotDrilldownResponse,
   RepeatOffenderRadarItem,
   CombinedBridgeSignal,
+  NexusSourceRecord,
+  EntityProfileResponse,
+  AuditLogEntry,
 } from '@shared/contracts/api'
 
 export class ApiError extends Error {
@@ -155,7 +158,7 @@ export const apiClient = {
     return apiFetch<NetworkGraphResponse>(`/api/v1/network/cases/${encodeURIComponent(caseId)}?depth=${depth}`)
   },
   getEntityProfile: (entityId: string) => {
-    return apiFetch<Record<string, unknown>>(`/api/v1/entities/${encodeURIComponent(entityId)}`)
+    return apiFetch<EntityProfileResponse>(`/api/v1/entities/${encodeURIComponent(entityId)}`)
   },
   getEntityNetwork: (entityId: string, depth = 2) => {
     return apiFetch<NetworkGraphResponse>(`/api/v1/entities/${encodeURIComponent(entityId)}/network?depth=${depth}`)
@@ -192,7 +195,7 @@ export const apiClient = {
   },
 
   // Audit
-  getAuditLogs: (limit = 50) => apiFetch<Record<string, unknown>[]>(`/api/v1/audit?limit=${limit}`),
+  getAuditLogs: (limit = 50) => apiFetch<AuditLogEntry[]>(`/api/v1/audit?limit=${limit}`),
   verifyAuditEvent: (eventId: string) =>
     apiFetch<{
       event_id: string

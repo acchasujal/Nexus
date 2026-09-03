@@ -18,6 +18,13 @@ export interface NetworkEdge {
   target: string
   label: string
   edge_type?: string
+  reason?: string
+  derivation_class?: 'FACT' | 'DERIVED' | 'HYPOTHESIS'
+  confidence?: number
+  provenance?: Record<string, unknown>
+  properties?: Record<string, unknown>
+  call_count?: number
+  channel?: string
   [key: string]: unknown
 }
 

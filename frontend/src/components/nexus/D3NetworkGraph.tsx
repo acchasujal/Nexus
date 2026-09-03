@@ -473,6 +473,7 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
       }, 50)
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [activeNodeId, zoomToNodeOrNeighborhood])
 
   // Dedicated Effect: Live Selection & Highlighting (Runs instantly without tearing down simulation)
@@ -831,12 +832,12 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
         const type = String(d.edge_type || d.label || '')
         return `url(#arrow-${type in EDGE_STROKES ? type : 'default'})`
       })
-      .on('mouseenter', function(event, d) {
+      .on('mouseenter', function(_event, d) {
         if (d.id !== activeEdgeId) {
           d3.select(this).attr('stroke-width', 3).attr('stroke-opacity', 1)
         }
       })
-      .on('mouseleave', function(event, d) {
+      .on('mouseleave', function(_event, d) {
         if (d.id !== activeEdgeId) {
           d3.select(this).attr('stroke-width', 2).attr('stroke-opacity', 0.85)
         }

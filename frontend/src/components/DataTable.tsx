@@ -10,10 +10,10 @@ export interface ColumnDef<T> {
   cell?: (row: T, index: number) => React.ReactNode
 }
 
-interface DataTableProps<T> {
+export interface DataTableProps<T> {
   columns: ColumnDef<T>[]
   data: T[]
-  isLoading: boolean
+  isLoading?: boolean
   onRowClick?: (row: T) => void
   emptyMessage?: string
   /** Accessible label for the table. Defaults to "Data table". */
@@ -23,7 +23,7 @@ interface DataTableProps<T> {
 export function DataTable<T extends { id: string }>({
   columns,
   data,
-  isLoading,
+  isLoading = false,
   onRowClick,
   emptyMessage = 'No records found.',
   ariaLabel = 'Data table',

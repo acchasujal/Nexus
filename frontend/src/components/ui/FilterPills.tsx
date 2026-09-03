@@ -1,4 +1,3 @@
-import React from 'react'
 
 export interface FilterPillOption<T extends string = string> {
   value: T

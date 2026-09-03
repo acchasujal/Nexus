@@ -178,11 +178,11 @@ export function SimilarityPanel({ caseId, firNumber: _firNumber }: SimilarityPan
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-caption font-semibold text-neutral-800">
-                        Case: {match.properties.fir_number ?? match.case_id}
+                        Case: {String((match.properties as Record<string, unknown>).fir_number ?? match.case_id)}
                       </p>
-                      {match.properties.offence_category && (
+                      {Boolean((match.properties as Record<string, unknown>).offence_category) && (
                         <p className="text-[10px] text-neutral-600 font-medium">
-                          {match.properties.offence_category}
+                          {String((match.properties as Record<string, unknown>).offence_category)}
                         </p>
                       )}
                     </div>

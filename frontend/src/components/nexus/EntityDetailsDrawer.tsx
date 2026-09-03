@@ -172,11 +172,11 @@ export function EntityDetailsDrawer({
                     {profile.entity_type}
                   </span>
                   <button
-                    onClick={() => copyText(profile.id)}
+                    onClick={() => copyText(profile.entity_id)}
                     className="inline-flex items-center gap-1 text-[10px] font-mono text-neutral-500 hover:text-neutral-900 bg-white border border-neutral-200 px-1.5 py-0.5 rounded"
                   >
-                    {copied === profile.id ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
-                    {profile.id}
+                    {copied === profile.entity_id ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                    {profile.entity_id}
                   </button>
                 </div>
 
@@ -200,7 +200,7 @@ export function EntityDetailsDrawer({
                   {onFocusEntity && (
                     <button
                       onClick={() => {
-                        onFocusEntity(profile.id)
+                        onFocusEntity(profile.entity_id)
                         onClose()
                       }}
                       className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1.5 rounded-lg transition-colors"
@@ -210,7 +210,7 @@ export function EntityDetailsDrawer({
                     </button>
                   )}
                   <Link
-                    to={`/network?node_id=${encodeURIComponent(profile.id)}`}
+                    to={`/network?node_id=${encodeURIComponent(profile.entity_id)}`}
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-300 px-2.5 py-1.5 rounded-lg transition-colors"
                   >
                     <ExternalLink className="h-3.5 w-3.5 text-neutral-500" />

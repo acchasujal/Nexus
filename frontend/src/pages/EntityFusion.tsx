@@ -7,16 +7,14 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  GitMerge, CheckCircle2, XCircle, Clock, FileText, AlertTriangle,
-  ThumbsUp, PauseCircle, ShieldCheck, Network, Sparkles, ArrowRight,
+  GitMerge, CheckCircle2, XCircle, Clock, FileText,
+  PauseCircle, ShieldCheck, Network, ArrowRight,
 } from 'lucide-react'
 import { useResolutionCandidates, useDecideCandidate } from '@/hooks/useNexus'
-import { DerivationBadge } from '@/components/nexus/DerivationBadge'
 import { EvidenceConflictMatrix } from '@/components/nexus/EvidenceConflictMatrix'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { SectionCard } from '@/components/ui/SectionCard'
 import type { ResolutionCandidateRecord } from '@shared/contracts/api'
 
 function RecordPanel({ title, record, accent }: { title: string; record: ResolutionCandidateRecord; accent: 'sky' | 'rose' }) {

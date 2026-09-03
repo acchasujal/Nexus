@@ -12,13 +12,12 @@ import { Link } from 'react-router-dom'
 import {
   Layers, Network, Users, Share2, AlertTriangle, ShieldCheck, Inbox,
   Flame, Radio, GitBranch, ArrowRight, ExternalLink, RefreshCw,
-  Phone, Eye, MapPin, Calendar, FileText, CheckCircle2, ShieldAlert
+  MapPin,
 } from 'lucide-react'
 import {
   useIntelligenceHotspots,
   useRepeatOffenderRadar,
   useCombinedBridgeSignals,
-  useScanLeads,
 } from '@/hooks/useNexus'
 import { apiClient } from '@/lib/apiClient'
 import { HotspotDrilldownModal } from '@/components/nexus/HotspotDrilldownModal'
@@ -78,8 +77,6 @@ export default function Patterns() {
   const [communities, setCommunities] = useState<CommunityItem[]>([])
   const [graphBridges, setGraphBridges] = useState<BridgeItem[]>([])
   const [isGraphAlgoLoading, setIsGraphAlgoLoading] = useState<boolean>(true)
-
-  const scanLeadsMutation = useScanLeads()
 
   const loadGraphAlgos = () => {
     setIsGraphAlgoLoading(true)
@@ -233,7 +230,7 @@ export default function Patterns() {
           )}
 
           {isHotspotsLoading ? (
-            <LoadingSkeleton layout="grid" count={3} />
+            <LoadingSkeleton layout="card" />
           ) : hotspotsError ? (
             <ErrorState message="Failed to load crime hotspots." onRetry={() => void refetchHotspots()} />
           ) : !hotspots || hotspots.length === 0 ? (
@@ -274,7 +271,7 @@ export default function Patterns() {
                         </div>
                         <div className="flex items-baseline justify-between text-xs text-neutral-600">
                           <span>Total Cases:</span>
-                          <span className="font-bold text-neutral-900">{hotspot.case_count ?? hotspot.total_cases}</span>
+                          <span className="font-bold text-neutral-900">{hotspot.case_count}</span>
                         </div>
                       </div>
                     </div>
@@ -370,7 +367,7 @@ export default function Patterns() {
           </div>
 
           {isRadarLoading ? (
-            <LoadingSkeleton layout="grid" count={3} />
+            <LoadingSkeleton layout="card" />
           ) : radarError ? (
             <ErrorState message="Failed to load repeat offender radar." onRetry={() => void refetchRadar()} />
           ) : !repeatOffenders || repeatOffenders.length === 0 ? (
@@ -484,7 +481,7 @@ export default function Patterns() {
       {activeTab === 'combined' && (
         <div className="space-y-6">
           {isBridgeLoading ? (
-            <LoadingSkeleton layout="grid" count={2} />
+            <LoadingSkeleton layout="card" />
           ) : bridgeError ? (
             <ErrorState message="Failed to load cross-district bridges." onRetry={() => void refetchBridges()} />
           ) : !bridgeSignals || bridgeSignals.length === 0 ? (

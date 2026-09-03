@@ -105,7 +105,7 @@ export default function Audit() {
     ])
       .then(([logsData, anchorsData]) => {
         setFetchError(null)
-        setLogs(Array.isArray(logsData) ? (logsData as AuditLogEntry[]) : [])
+        setLogs(Array.isArray(logsData) ? logsData : [])
         setAnchors(Array.isArray(anchorsData) ? anchorsData : [])
       })
       .catch((err: unknown) => {
@@ -218,7 +218,7 @@ export default function Audit() {
       <SectionCard
         title="Permissioned Blockchain Trust Anchors"
         subtitle="Cryptographic Merkle batch roots anchored to local permissioned blocks (NEXUS-POLICE-HQ / CYBER-CELL / DISTRICT-HQ)"
-        action={
+        actions={
           <div className="flex items-center gap-2">
             <button
               onClick={handleCreateAnchor}

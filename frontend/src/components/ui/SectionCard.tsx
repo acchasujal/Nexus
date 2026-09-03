@@ -1,10 +1,10 @@
-import React from 'react'
+import type { ReactNode } from 'react'
 
-interface SectionCardProps {
-  title?: React.ReactNode
-  subtitle?: React.ReactNode
-  actions?: React.ReactNode
-  children: React.ReactNode
+export interface SectionCardProps {
+  title?: ReactNode
+  subtitle?: ReactNode
+  actions?: ReactNode
+  children: ReactNode
   className?: string
   noPadding?: boolean
 }

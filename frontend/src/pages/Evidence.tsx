@@ -33,7 +33,7 @@ export default function Evidence() {
     const cid = caseIdParam.toLowerCase()
     return allSources.filter(
       (item) =>
-        (item.case_ids && item.case_ids.some((c) => c.toLowerCase() === cid)) ||
+        (item.case_ids && item.case_ids.some((c: string) => c.toLowerCase() === cid)) ||
         item.id.toLowerCase().includes(cid) ||
         item.raw_excerpt.toLowerCase().includes(cid) ||
         item.locator.toLowerCase().includes(cid)

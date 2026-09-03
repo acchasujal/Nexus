@@ -8,11 +8,10 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
 import { setupServer } from 'msw/node'
 import { nexusHandlers } from '@/lib/mocks/nexusHandlers'
 import NetworkExplorer from '@/pages/NetworkExplorer'
-import React from 'react'
 
 const server = setupServer(...nexusHandlers)
 

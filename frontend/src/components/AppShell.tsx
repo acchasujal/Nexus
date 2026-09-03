@@ -33,34 +33,34 @@ export function AppShell() {
 
   // Announce route changes to screen readers
   useEffect(() => {
-    if (announceRef.current) {
-      // Map pathnames to human-readable page names
-      const pageNames: Record<string, string> = {
-        '/network': 'Global Network Explorer',
-        '/fusion': 'Entity Fusion Workbench',
-        '/leads': 'Lead Inbox',
-        '/worklist': 'Investigation Overview',
-        '/entities': 'Entity Resolution',
-        '/timeline': 'Investigative Timeline',
-        '/evidence': 'Evidence & Provenance',
-        '/copilot': 'Investigator Copilot',
-        '/audit': 'Audit Trail',
-        '/settings': 'Settings',
-        '/patterns': 'Intelligence & Hotspots',
-      }
+    if (!announceRef.current) return undefined
 
-      const pathKey = Object.keys(pageNames).find(k => location.pathname.startsWith(k))
-      const pageName = pathKey ? pageNames[pathKey] : 'Case Detail'
-
-      // Set the text and immediately clear it to force re-announcement
-      announceRef.current.textContent = `Navigated to ${pageName}`
-      const timer = setTimeout(() => {
-        if (announceRef.current) {
-          announceRef.current.textContent = ''
-        }
-      }, 1000)
-      return () => clearTimeout(timer)
+    // Map pathnames to human-readable page names
+    const pageNames: Record<string, string> = {
+      '/network': 'Global Network Explorer',
+      '/fusion': 'Entity Fusion Workbench',
+      '/leads': 'Lead Inbox',
+      '/worklist': 'Investigation Overview',
+      '/entities': 'Entity Resolution',
+      '/timeline': 'Investigative Timeline',
+      '/evidence': 'Evidence & Provenance',
+      '/copilot': 'Investigator Copilot',
+      '/audit': 'Audit Trail',
+      '/settings': 'Settings',
+      '/patterns': 'Intelligence & Hotspots',
     }
+
+    const pathKey = Object.keys(pageNames).find(k => location.pathname.startsWith(k))
+    const pageName = pathKey ? pageNames[pathKey] : 'Case Detail'
+
+    // Set the text and immediately clear it to force re-announcement
+    announceRef.current.textContent = `Navigated to ${pageName}`
+    const timer = setTimeout(() => {
+      if (announceRef.current) {
+        announceRef.current.textContent = ''
+      }
+    }, 1000)
+    return () => clearTimeout(timer)
   }, [location.pathname])
 
   // Redirect to login if not authenticated

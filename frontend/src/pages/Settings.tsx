@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Monitor, ShieldCheck, ShieldAlert, RotateCcw, Loader2, CheckCircle2, Settings as SettingsIcon } from 'lucide-react'
+import { ShieldCheck, RotateCcw, Loader2, CheckCircle2, Settings as SettingsIcon } from 'lucide-react'
 import { useResetDemo } from '@/hooks/useNexus'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'

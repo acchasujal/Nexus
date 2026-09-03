@@ -1,5 +1,5 @@
 import { useRouteError, isRouteErrorResponse, Link } from 'react-router-dom'
-import { AlertOctagon, RotateCcw, Home, Network } from 'lucide-react'
+import { AlertOctagon, RotateCcw, Home } from 'lucide-react'
 
 export function RouteErrorBoundary() {
   const error = useRouteError()

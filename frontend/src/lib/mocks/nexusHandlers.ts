@@ -4,7 +4,7 @@
  * MSW handlers for the frozen M4 NEXUS prototype contract (/api/v1/nexus/*).
  */
 import { http, HttpResponse, delay } from 'msw'
-import type { ResolutionCandidate } from '@shared/contracts/api'
+import type { ResolutionCandidate, SnapshotDiffResponse } from '@shared/contracts/api'
 import {
   AFTER_EDGES, AFTER_NODES, BEFORE_EDGES, BEFORE_NODES, BRIDGE_LEAD,
   CANDIDATE_RC1, CANDIDATE_RC2, CANDIDATE_RC3, SNAPSHOT_DIFF, allSourceRecords, evidenceFor,

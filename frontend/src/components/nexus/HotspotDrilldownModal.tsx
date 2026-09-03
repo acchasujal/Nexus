@@ -9,7 +9,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   X, AlertTriangle, FileText, Users, Network, ShieldCheck,
-  ExternalLink, ChevronRight, MapPin, Calendar, Hash
+  ExternalLink, ChevronRight, MapPin, Calendar,
 } from 'lucide-react'
 import { useHotspotDrilldown } from '@/hooks/useNexus'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'

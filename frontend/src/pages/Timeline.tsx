@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
-import { Clock, Calendar, FileText, Phone, Landmark, ShieldCheck, MapPin, Briefcase, Filter, X } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { Clock, FileText, Phone, Landmark, Briefcase, X } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 import { allSourceRecords } from '@/lib/mocks/nexusFixture'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { FilterPills } from '@/components/ui/FilterPills'
-import { SectionCard } from '@/components/ui/SectionCard'
 
 interface TimelineEvent {
   id: string

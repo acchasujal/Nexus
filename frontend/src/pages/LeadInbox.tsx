@@ -7,10 +7,10 @@
 import { useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  Inbox, Route, ThumbsUp, ThumbsDown, ShieldCheck, ShieldQuestion,
-  MessageSquareCode, FileText, AlertOctagon, ChevronRight, RefreshCw, Sparkles, CheckCircle2, XCircle,
+  Inbox, Route,
+  FileText, ChevronRight, RefreshCw, Sparkles, CheckCircle2, XCircle,
 } from 'lucide-react'
-import { useLeads, useScanLeads, useDecideLead, useNexusCopilot, useNexusNetwork } from '@/hooks/useNexus'
+import { useLeads, useScanLeads, useDecideLead, useNexusNetwork } from '@/hooks/useNexus'
 import { DerivationBadge } from '@/components/nexus/DerivationBadge'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
@@ -19,7 +19,6 @@ import { MarkdownContent } from '@/components/nexus/MarkdownContent'
 import { EvidenceDossierActions } from '@/components/EvidenceDossierActions'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { FilterPills, type FilterPillOption } from '@/components/ui/FilterPills'
-import { SectionCard } from '@/components/ui/SectionCard'
 
 /** Maps canonical source record IDs to the most representative graph edge
  *  that carries them in its evidence_ids. Derived from NEXUS golden fixture. */
@@ -64,9 +63,8 @@ export default function LeadInbox() {
   const lead = effectiveLeads.find((l) => l.id === effectiveSelectedId) ?? effectiveLeads[0] ?? leads?.[0]
 
   const afterNetwork = useNexusNetwork('after', Boolean(lead))
-  const [copilotAnswer, setCopilotAnswer] = useState<string | null>(null)
-  const [copilotError, setCopilotError] = useState<string | null>(null)
-  const copilotQuery = useNexusCopilot(copilotAnswer === null && !copilotError ? 'How are the two cases connected?' : null)
+  const [, setCopilotAnswer] = useState<string | null>(null)
+  const [, setCopilotError] = useState<string | null>(null)
   
   const [evidenceDrawerEdgeId, setEvidenceDrawerEdgeId] = useState<string | null>(null)
   const [evidenceDrawerEvidenceId, setEvidenceDrawerEvidenceId] = useState<string | null>(null)

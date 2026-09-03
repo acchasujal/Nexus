@@ -502,7 +502,7 @@ export function NetworkAnalysisPanel({
                     <FileText className="h-4 w-4 text-status-info" aria-hidden="true" /> Reason for Connection
                   </h4>
                   <div className="mt-2 p-3 bg-blue-50/90 border border-blue-200 rounded-radius-sm text-neutral-900 text-small leading-relaxed font-semibold">
-                    {selectedEdge.reason || 'Direct investigative relationship between entities.'}
+                    {selectedEdge.reason ? String(selectedEdge.reason) : 'Direct investigative relationship between entities.'}
                   </div>
                 </div>
 
@@ -512,22 +512,22 @@ export function NetworkAnalysisPanel({
                     <Layers className="h-4 w-4" aria-hidden="true" /> Evidentiary Provenance
                   </h4>
                   <dl className="mt-2 text-small space-y-1 text-neutral-700 bg-neutral-100 p-3 rounded-radius-sm">
-                    {selectedEdge.provenance?.source_type && (
+                    {Boolean(selectedEdge.provenance && (selectedEdge.provenance as Record<string, unknown>).source_type) && (
                       <div className="flex justify-between">
                         <dt className="text-neutral-500">Source Type</dt>
-                        <dd className="font-bold text-blue-900">{String(selectedEdge.provenance.source_type)}</dd>
+                        <dd className="font-bold text-blue-900">{String((selectedEdge.provenance as Record<string, unknown>).source_type)}</dd>
                       </div>
                     )}
-                    {selectedEdge.provenance?.source_id && (
+                    {Boolean(selectedEdge.provenance && (selectedEdge.provenance as Record<string, unknown>).source_id) && (
                       <div className="flex justify-between">
                         <dt className="text-neutral-500">Source Record ID</dt>
-                        <dd className="font-mono text-[10px]">{String(selectedEdge.provenance.source_id)}</dd>
+                        <dd className="font-mono text-[10px]">{String((selectedEdge.provenance as Record<string, unknown>).source_id)}</dd>
                       </div>
                     )}
-                    {selectedEdge.provenance?.derivation_method && (
+                    {Boolean(selectedEdge.provenance && (selectedEdge.provenance as Record<string, unknown>).derivation_method) && (
                       <div className="flex justify-between">
                         <dt className="text-neutral-500">Derivation</dt>
-                        <dd className="font-semibold text-neutral-800">{String(selectedEdge.provenance.derivation_method)}</dd>
+                        <dd className="font-semibold text-neutral-800">{String((selectedEdge.provenance as Record<string, unknown>).derivation_method)}</dd>
                       </div>
                     )}
                     {(selectedEdge as Record<string, unknown>).call_count !== undefined && (
@@ -536,7 +536,7 @@ export function NetworkAnalysisPanel({
                         <dd className="font-bold text-amber-800">{String((selectedEdge as Record<string, unknown>).call_count)} Calls</dd>
                       </div>
                     )}
-                    {(selectedEdge as Record<string, unknown>).channel && (
+                    {Boolean((selectedEdge as Record<string, unknown>).channel) && (
                       <div className="flex justify-between">
                         <dt className="text-neutral-500">Channel</dt>
                         <dd className="capitalize">{String((selectedEdge as Record<string, unknown>).channel).replace('_', ' ')}</dd>

@@ -30,7 +30,54 @@ export interface EvidenceProvenanceContract {
   extracted_fact: string
   derivation_method: string
   confidence: number
+  file_hash?: string
 }
+
+export type ClockStatus = 'green' | 'amber' | 'red' | 'overdue' | string
+
+export interface ClockResponse {
+  id: string
+  case_id: string
+  clock_type: string
+  start_date: string
+  deadline_date: string
+  days_remaining: number
+  status: ClockStatus
+  bnss_reference?: string
+}
+
+export interface EscalationResponse {
+  id: string
+  case_id: string
+  triggered_at: string
+  reason: string
+  routed_to_rank: string
+  routed_to_officer_id: string
+  resolved: boolean
+}
+
+export interface DependencyResponse {
+  id: string
+  case_id: string
+  name: string
+  status: 'pending' | 'resolved' | string
+  days_stale: number
+  assigned_to: string
+}
+
+export type DependencyStatus = 'pending' | 'resolved' | string
+
+export interface ChatResponse {
+  query?: string
+  message?: string
+  answer?: string
+  response?: string
+  conversation_id?: string
+  intent?: Record<string, any> | string
+  citations?: GroundedCitation[]
+  [key: string]: any
+}
+
 
 export interface EvidenceItemResponse {
   id: string
@@ -152,33 +199,41 @@ export interface TimelineEventResponse {
 export interface InvestigationSummaryResponse {
   id: string
   fir_number: string
-  title: string
+  title?: string
   station_name: string
-  district: string
+  district?: string
   offence_category: string
-  status: string
-  updated_at: string
-  accused_count: number
-  evidence_count: number
-  priority_rank: number
+  status?: string
+  updated_at?: string
+  accused_count?: number
+  evidence_count?: number
+  priority_rank?: number
+  clock?: ClockResponse
+  unresolved_dependency_count?: number
+  risk_rank?: number
 }
 
 export interface InvestigationDetailResponse {
   id: string
   fir_number: string
-  title: string
+  title?: string
   station_name: string
-  district: string
+  district?: string
   offence_category: string
   incident_date?: string
-  status: string
-  summary: string
-  sections: string[]
-  accused: Record<string, any>[]
-  victims: Record<string, any>[]
-  evidence: EvidenceItemResponse[]
-  updated_at: string
+  status?: string
+  summary?: string
+  sections?: string[]
+  accused?: Record<string, any>[]
+  victims?: Record<string, any>[]
+  evidence?: EvidenceItemResponse[]
+  updated_at?: string
+  clocks?: ClockResponse[]
+  dependencies?: DependencyResponse[]
 }
+
+export type CaseDetailResponse = InvestigationDetailResponse
+
 
 export interface GroundedCitation {
   source_type: string
@@ -378,6 +433,7 @@ export interface NexusSourceRecord {
   source_type: string
   locator: string
   raw_excerpt: string
+  case_ids?: string[]
   hash_algorithm?: string
   content_hash?: string
   hash_version?: string
@@ -527,6 +583,7 @@ export interface NexusCopilotResponse {
   suggested_actions?: string[]
   graph_context?: NetworkGraphResponse
   case_id?: string
+  collection_results?: CaseCollectionItem[]
 }
 
 export interface NexusSearchResponse {
@@ -535,20 +592,6 @@ export interface NexusSearchResponse {
   entities: { id: string; label: string; entity_type: string; case_ids: string[]; score: number; subtext?: string }[]
 }
 
-/** @deprecated Prototype Request */
-export interface IngestRequest {
-  source_type: string
-  file_name: string
-  records: Record<string, any>[]
-}
-
-/** @deprecated Prototype Response */
-export interface IngestResponse {
-  ingested_count: number
-  skipped_count: number
-  error_count: number
-  audit_event_id: string
-}
 
 // ── Real Ingestion API ────────────────────────────────────────────────────────
 

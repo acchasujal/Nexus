@@ -6,7 +6,7 @@
  * and copyable evidence IDs.
  */
 import { useState, useEffect } from 'react'
-import { X, Copy, Check, FileSearch, Link2, ShieldQuestion, Clock, FileText } from 'lucide-react'
+import { X, Copy, Check, FileSearch, Link2, ShieldQuestion, Clock } from 'lucide-react'
 import { useEdgeEvidence } from '@/hooks/useNexus'
 import { apiClient } from '@/lib/apiClient'
 import { DerivationBadge } from './DerivationBadge'

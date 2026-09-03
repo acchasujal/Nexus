@@ -21,6 +21,7 @@ import EntityFusion from '@/pages/EntityFusion'
 import NetworkExplorer from '@/pages/NetworkExplorer'
 import LeadInbox from '@/pages/LeadInbox'
 import { BEFORE_NODES, BEFORE_EDGES } from '@/lib/mocks/nexusFixture'
+import type { NexusNetworkResponse } from '@shared/contracts/api'
 
 const server = setupServer(...nexusHandlers)
 
@@ -157,7 +158,7 @@ describe('NEXUS Frontend Prototype Suite', () => {
 
   describe('NetworkExplorer', () => {
     it('filters the graph to the selected region subgraph at the data layer', () => {
-      const graph = {
+      const graph: NexusNetworkResponse = {
         snapshot_id: 'test-region',
         state: 'before',
         nodes: BEFORE_NODES,
@@ -177,7 +178,7 @@ describe('NEXUS Frontend Prototype Suite', () => {
     })
 
     it('restores the full graph when selecting All Regions and returns an empty subgraph for unknown regions', () => {
-      const graph = {
+      const graph: NexusNetworkResponse = {
         snapshot_id: 'test-region',
         state: 'before',
         nodes: BEFORE_NODES,

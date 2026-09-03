@@ -11,7 +11,7 @@
  */
 import { useMemo, useState, useEffect } from 'react'
 import {
-  User, Briefcase, Phone, Landmark, BadgeCheck, Sparkles, Car
+  User, Briefcase, Phone, Landmark, Car
 } from 'lucide-react'
 import type { NexusNetworkResponse, SnapshotDiffResponse } from '@shared/contracts/api'
 import { D3NetworkGraph, type D3GraphNode, type D3GraphEdge, EDGE_STROKES } from './D3NetworkGraph'

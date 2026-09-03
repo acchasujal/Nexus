@@ -134,7 +134,7 @@ class DevelopmentVerifier(TokenVerifier):
             except (KeyError, AttributeError):
                 pass
 
-        has_explicit_role = bool(request.headers.get("X-Role") or request.headers.get("X-Dev-Role") or (request.query_params.get("role") if request.query_params is not None and type(request.query_params).__name__ not in ("Mock", "MagicMock") else None))
+        has_explicit_role = bool(request.headers.get("X-Role") or request.headers.get("X-Dev-Role") or raw_role)
         if not raw_role or type(raw_role).__name__ in ("Mock", "MagicMock"):
             raw_role = "INVESTIGATOR"
 

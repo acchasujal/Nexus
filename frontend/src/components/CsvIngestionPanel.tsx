@@ -13,14 +13,11 @@ import {
   Landmark,
   Network,
   Users,
-  Search,
-  Filter,
   Loader2,
   RotateCcw,
   Info,
 } from 'lucide-react'
 import { useIngestFiles } from '@/hooks/useIngestion'
-import { DataTable, type ColumnDef } from '@/components/DataTable'
 
 type FileSlotType = 'fir' | 'cdr' | 'bank' | 'intelligence'
 
@@ -30,6 +27,10 @@ interface FileSlot {
   icon: React.ElementType
   required: boolean
   description: string
+}
+
+export interface CsvIngestionPanelProps {
+  onIngestSuccess?: () => void
 }
 
 const FILE_SLOTS: FileSlot[] = [
@@ -49,7 +50,7 @@ const PROGRESS_STAGES = [
   'Updating investigation workspace',
 ]
 
-export function CsvIngestionPanel() {
+export function CsvIngestionPanel({ onIngestSuccess }: CsvIngestionPanelProps = {}) {
   const [files, setFiles] = useState<Record<FileSlotType, File | null>>({
     fir: null,
     cdr: null,
@@ -79,6 +80,13 @@ export function CsvIngestionPanel() {
     }
     return () => clearInterval(interval)
   }, [isPending])
+
+  useEffect(() => {
+    if (isSuccess) {
+      onIngestSuccess?.()
+    }
+  }, [isSuccess, onIngestSuccess])
+
 
   const validateFile = (file: File): string | null => {
     if (!file.name.endsWith('.csv') && !file.name.endsWith('.txt')) {

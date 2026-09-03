@@ -1,5 +1,5 @@
 import { Link, useSearchParams, useParams } from 'react-router-dom'
-import { ArrowLeft, Network, Layers, MessageSquareCode, Calendar, FileText, Users, GitMerge, Inbox, ArrowRight, ShieldAlert, CheckCircle2, Briefcase } from 'lucide-react'
+import { Network, Layers, MessageSquareCode, Calendar, FileText, GitMerge, Inbox, ArrowRight, ShieldAlert, CheckCircle2, Briefcase } from 'lucide-react'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'

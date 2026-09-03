@@ -106,7 +106,7 @@ const generate5000Worklist = (): InvestigationSummaryResponse[] => {
   // Add our specific mock cases first so they are searchable
   mockCases.forEach((c) => {
     // Find primary clock (lowest days remaining, or overdue)
-    const primaryClock = c.clocks.reduce((prev, curr) => {
+    const primaryClock = c.clocks?.reduce((prev: any, curr: any) => {
       if (prev.status === 'overdue') return prev
       if (curr.status === 'overdue') return curr
       return curr.days_remaining < prev.days_remaining ? curr : prev
@@ -118,7 +118,7 @@ const generate5000Worklist = (): InvestigationSummaryResponse[] => {
       station_name: c.station_name,
       offence_category: c.offence_category,
       clock: primaryClock,
-      unresolved_dependency_count: c.dependencies.filter(d => d.status !== 'resolved').length,
+      unresolved_dependency_count: c.dependencies?.filter((d: any) => d.status !== 'resolved').length || 0,
       risk_rank: c.id === "847" ? 1 : 2
     })
   })
@@ -226,7 +226,7 @@ export const handlers = [
     let updatedDep: DependencyResponse | null = null
     
     mockCases = mockCases.map(c => {
-      const deps = c.dependencies.map(d => {
+      const deps = (c.dependencies || []).map((d: any) => {
         if (d.id === id) {
           updatedDep = { ...d, status: body.status as DependencyStatus }
           return updatedDep
@@ -267,15 +267,18 @@ export const handlers = [
     const queryLower = body.query.toLowerCase()
     
     const response: CopilotQueryResponse = {
-      refused: false,
-      confidence: 1.0
+      query: body.query,
+      intent: 'INVESTIGATION_STATUS',
+      answer: '',
+      is_refusal: false,
+      grounded_citations: [],
+      suggested_actions: [],
     }
 
     // Refusal Gate check (Law 13 & D6 - "Is the accused guilty?" -> Refusal)
     if (queryLower.includes('guilty') || queryLower.includes('commit') || queryLower.includes('culpable')) {
-      response.refused = true
+      response.is_refusal = true
       response.refusal_reason = "I cannot infer guilt, innocence, or risk of reoffense. These are matters of judicial determination."
-      response.confidence = 0.95
     } 
     // Explainable Query Response for Hero Case 847
     else if (body.case_id === '847' && (queryLower.includes('risk') || queryLower.includes('clock') || queryLower.includes('block'))) {

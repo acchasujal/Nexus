@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { PathfinderEntitySelector, GOLDEN_SUGGESTIONS } from '@/components/nexus/PathfinderEntitySelector'
-import React from 'react'
+import { PathfinderEntitySelector } from '@/components/nexus/PathfinderEntitySelector'
+import type { ReactNode } from 'react'
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -10,7 +10,7 @@ function createWrapper() {
       queries: { retry: false, gcTime: 0 },
     },
   })
-  return ({ children }: { children: React.ReactNode }) => (
+  return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   )
 }

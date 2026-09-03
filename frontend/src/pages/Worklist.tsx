@@ -10,13 +10,11 @@ import { SectionCard } from '@/components/ui/SectionCard'
 import { 
   ShieldAlert, 
   Search, 
-  Filter, 
   Network, 
   FileText, 
   Users, 
   ArrowRight,
   Briefcase,
-  Layers,
   MapPin,
 } from 'lucide-react'
 import { CsvIngestionPanel } from '@/components/CsvIngestionPanel'

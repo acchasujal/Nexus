@@ -5,14 +5,10 @@ import {
   Route,
   ShieldQuestion,
   ArrowRightLeft,
-  Search,
   Sparkles,
-  Layers,
   CheckCircle2,
   AlertCircle,
-  X,
   ExternalLink,
-  ChevronRight,
   Briefcase,
 } from 'lucide-react'
 import { useNexusNetwork, useSnapshotDiff, useNexusPath, useEntityNetwork, useCaseNetworkData, useBatchNetwork, useResolutionCandidates } from '@/hooks/useNexus'
@@ -26,7 +22,13 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Link, useSearchParams } from 'react-router-dom'
-import type { NetworkGraphResponse, NexusNetworkResponse } from '@shared/contracts/api'
+import type {
+  NetworkGraphResponse,
+  NexusNetworkResponse,
+  NexusPathResponse,
+  NexusGraphNode,
+  NexusGraphEdge,
+} from '@shared/contracts/api'
 
 type ReplayState = 'before' | 'after'
 
@@ -220,7 +222,6 @@ export default function NetworkExplorer() {
   const [sourceId, setSourceId] = useState(caseIdParam || nodeIdParam || '')
   const [targetId, setTargetId] = useState('')
   const [maxHops, setMaxHops] = useState(6)
-  const [isExploring, setIsExploring] = useState(Boolean(caseIdParam || nodeIdParam))
 
   // Pre-fill from query params if requested
   useEffect(() => {
@@ -229,12 +230,10 @@ export default function NetworkExplorer() {
       if (targetCaseIdParam) {
         setTargetId(targetCaseIdParam)
         setShowPathfinder(true)
-        setIsExploring(true)
       }
     } else if (nodeIdParam) {
       setSourceId(nodeIdParam)
       setShowPathfinder(true)
-      setIsExploring(true)
     }
   }, [caseIdParam, targetCaseIdParam, nodeIdParam])
 
@@ -379,7 +378,6 @@ export default function NetworkExplorer() {
     setTargetId(tgt)
     setMaxHops(hops)
     setShowPathfinder(true)
-    setIsExploring(true)
   }
 
   return (
@@ -411,7 +409,6 @@ export default function NetworkExplorer() {
               <button
                 onClick={() => {
                   setReplay('before')
-                  setIsExploring(true)
                   updateNetworkUrl({ snapshot: 'before' })
                 }}
                 aria-pressed={replay === 'before'}
@@ -426,7 +423,6 @@ export default function NetworkExplorer() {
               <button
                 onClick={() => {
                   setReplay('after')
-                  setIsExploring(true)
                   updateNetworkUrl({ snapshot: 'after' })
                 }}
                 aria-pressed={replay === 'after'}
