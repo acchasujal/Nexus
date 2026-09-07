@@ -116,7 +116,19 @@ def create_core_router() -> APIRouter:
 
     @router.post("/auth/login", response_model=AuthTokenResponse)
     def login(req: AuthLoginRequest, settings: Settings = Depends(get_settings)) -> AuthTokenResponse:
-        role = req.role or UserRole.INVESTIGATOR
+        role = req.role
+        if not role:
+            u = req.username.lower().strip()
+            if "sho" in u or "ka-1002" in u or "analyst" in u:
+                role = UserRole.SHO
+            elif "sp" in u or "ka-1003" in u or "supervisor" in u:
+                role = UserRole.SP
+            elif "admin" in u or "ka-1000" in u:
+                role = UserRole.ADMIN
+            elif "io" in u or "ka-1001" in u or "investigator" in u:
+                role = UserRole.IO
+            else:
+                role = UserRole.INVESTIGATOR
         officer = resolve_officer_identity(user_id=req.username, role=role)
         token_payload = {
             "sub": req.username,
@@ -125,6 +137,9 @@ def create_core_router() -> APIRouter:
             "officer_id": officer.officer_id,
             "badge_number": officer.badge_number,
             "name": officer.name,
+            "rank": officer.rank,
+            "station_id": officer.station_id,
+            "district": officer.district,
         }
         token = jwt.encode(token_payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
         return AuthTokenResponse(

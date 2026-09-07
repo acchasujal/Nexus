@@ -18,6 +18,7 @@ import {
   MapPin,
   Shield,
   FileText,
+  LogOut,
   X as CloseX 
 } from 'lucide-react'
 import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog'
@@ -51,7 +52,7 @@ function getEntityIcon(type: string) {
 export function Header({ onMenuToggle }: HeaderProps) {
   const navigate = useNavigate()
   const { tableDensity, setTableDensity } = useUI()
-  const { role, login } = useAuth()
+  const { role, user, logout } = useAuth()
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
   // Search state
@@ -426,23 +427,47 @@ export function Header({ onMenuToggle }: HeaderProps) {
             />
           </button>
 
-          {/* Officer Profile & Role Switcher Dropdown */}
-          <div className="flex items-center space-x-1.5 text-xs text-neutral-700">
-            <span className="hidden sm:inline text-neutral-500 font-medium">Officer:</span>
-            <select
-              value={role || 'IO'}
-              onChange={(e) => {
-                const targetRole = e.target.value as any
-                login(targetRole)
-              }}
-              aria-label="Switch Active Officer Profile & Role"
-              className="rounded-lg border border-neutral-300 bg-neutral-50 hover:bg-white px-2.5 py-1.5 text-xs font-semibold text-neutral-900 shadow-xs focus:border-blue-600 focus:ring-1 focus:ring-blue-600 cursor-pointer transition-colors"
+          {/* Authenticated Officer Identity */}
+          <div className="flex items-center gap-2.5 border-l border-neutral-200 pl-3">
+            <div className="hidden sm:flex flex-col items-end text-right">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-neutral-900 leading-none" data-testid="officer-name">
+                  {user?.name || 'Authorized Officer'}
+                </span>
+                <span
+                  className="rounded-md bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 tracking-wider uppercase"
+                  data-testid="officer-role"
+                >
+                  {user?.role || role || 'INVESTIGATOR'}
+                </span>
+              </div>
+              <span className="text-[11px] font-medium text-neutral-500 mt-0.5" data-testid="officer-meta">
+                {user?.rank ? `${user.rank} · ` : ''}{user?.badgeNumber || 'KA-1001'}
+              </span>
+            </div>
+
+            {/* Mobile Officer Badge */}
+            <div
+              className="sm:hidden flex items-center justify-center h-8 w-8 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 font-bold text-xs"
+              title={`${user?.name || 'Officer'} (${user?.badgeNumber || 'KA-1001'})`}
             >
-              <option value="IO">👮 Inspector Rajesh Kumar (IO · KA-1001)</option>
-              <option value="SHO">🛡️ SHO Sunita Sharma (SHO · KA-1002)</option>
-              <option value="SP">⭐ SP Vikram Hegde (SP · KA-1003)</option>
-              <option value="ANALYST">🔍 Analyst Cyber Cell (ANALYST)</option>
-            </select>
+              {(user?.badgeNumber || 'KA').slice(0, 3)}
+            </div>
+
+            {/* Logout Action */}
+            <button
+              onClick={() => {
+                logout()
+                navigate('/login')
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-100 hover:border-neutral-300 px-2.5 py-1.5 text-xs font-semibold text-neutral-700 hover:text-red-700 transition-colors shadow-2xs cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500"
+              title="Log Out of NEXUS Platform"
+              aria-label="Log Out of NEXUS Platform"
+              data-testid="logout-button"
+            >
+              <LogOut className="h-3.5 w-3.5 text-neutral-500 hover:text-red-600" aria-hidden="true" />
+              <span className="hidden md:inline">Logout</span>
+            </button>
           </div>
         </div>
       </header>

@@ -37,6 +37,8 @@ import type {
   NexusSourceRecord,
   EntityProfileResponse,
   AuditLogEntry,
+  AuthLoginRequest,
+  AuthTokenResponse,
 } from '@shared/contracts/api'
 
 export class ApiError extends Error {
@@ -144,6 +146,14 @@ async function apiFetchBlob(path: string): Promise<Blob> {
 }
 
 export const apiClient = {
+  // Authentication
+  login: (req: AuthLoginRequest) => {
+    return apiFetch<AuthTokenResponse>('/api/v1/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+
   // Investigations
   getInvestigations: (params?: { district?: string; category?: string; status?: string }) => {
     const query = new URLSearchParams(params as Record<string, string>).toString()

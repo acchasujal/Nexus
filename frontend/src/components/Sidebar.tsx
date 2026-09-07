@@ -24,7 +24,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const { role, logout } = useAuth()
+  const { role, user, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem('nexus-sidebar-collapsed') === 'true' } catch { return false }
   })
@@ -86,47 +86,53 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
+      name: 'Intelligence & Hotspots',
+      to: '/patterns',
+      icon: Layers,
+      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+    },
+    {
       name: 'Investigator Copilot',
       to: '/copilot',
       icon: MessageSquareCode,
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
-      name: 'Audit Trail',
+      name: 'Audit Trail & BSA Anchors',
       to: '/audit',
       icon: ShieldCheck,
       roles: ['SUPERVISOR', 'ADMIN', 'SHO', 'SP']
     },
-    {
-      name: 'Intelligence & Hotspots',
-      to: '/patterns',
-      icon: Layers,
-      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
-    }
   ]
 
-  const filteredNavItems = navItems.filter(item => !role || item.roles.includes(role))
+  const filteredNavItems = navItems.filter((item) => {
+    if (!role) return false
+    return item.roles.includes(role)
+  })
 
   return (
     <>
-      {/* Mobile backdrop */}
+      {/* Mobile Backdrop Overlay */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-neutral-900/50 lg:hidden transition-opacity duration-normal"
+        <div
+          role="presentation"
+          className="fixed inset-0 z-40 bg-neutral-950/60 backdrop-blur-xs lg:hidden animate-fade-in"
           onClick={onClose}
         />
       )}
 
+      {/* Sidebar Navigation Drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-neutral-200 bg-white text-neutral-900 shadow-xs transition-all duration-200 lg:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } ${
-          collapsed ? 'w-14' : 'w-sidebar'
-        }`}
+        role="navigation"
+        aria-label="Main Navigation"
+        className={`fixed top-0 bottom-0 left-0 z-40 flex flex-col border-r border-neutral-200 bg-white transition-all duration-200 shadow-sm
+          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${collapsed ? 'w-14' : 'w-60'}
+        `}
       >
-        {/* Brand Wordmark */}
-        <div className={`flex h-16 items-center border-b border-neutral-200 gap-3 ${collapsed ? 'justify-center px-2' : 'px-6'}`}>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 shadow-md">
+        {/* Brand Header */}
+        <div className={`flex items-center h-16 border-b border-neutral-200 ${collapsed ? 'justify-center px-0' : 'px-6 space-x-3'}`}>
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 shadow-xs">
             <Network className="h-5 w-5 text-white" />
           </div>
           {!collapsed && (
@@ -139,15 +145,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* User Role Badge */}
         {!collapsed && (
-          <div className="px-6 py-3.5 border-b border-neutral-200 bg-neutral-50">
-            <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 rounded-full bg-blue-100 border border-blue-300 flex items-center justify-center font-bold text-blue-900 text-xs">
-                {role ? role.substring(0, 2) : 'NV'}
+          <div className="px-5 py-3 border-b border-neutral-200 bg-neutral-50/80">
+            <div className="flex items-center space-x-2.5">
+              <div className="h-8 w-8 rounded-lg bg-blue-100 border border-blue-300 flex items-center justify-center font-bold text-blue-900 text-xs shrink-0">
+                {user?.badgeNumber?.slice(0, 2) || (role ? role.substring(0, 2) : 'KA')}
               </div>
-              <div>
-                <div className="text-xs font-bold text-neutral-900">{role || 'Investigator'}</div>
-                <div className="text-[11px] text-neutral-500 font-medium">
-                  {role === 'SP' || role === 'SUPERVISOR' ? 'Supervisor / SP' : role === 'ANALYST' ? 'Intelligence Analyst' : 'Investigating Officer'}
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-bold text-neutral-900 truncate">
+                  {user?.name || (role || 'Investigating Officer')}
+                </div>
+                <div className="text-[11px] text-neutral-500 font-medium truncate">
+                  {user?.rank || (role === 'SP' || role === 'SUPERVISOR' ? 'Supervisor / SP' : role === 'ANALYST' || role === 'SHO' ? 'Station House Officer' : 'Inspector')} · {user?.badgeNumber || 'KA-1001'}
                 </div>
               </div>
             </div>
