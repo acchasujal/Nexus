@@ -21,7 +21,7 @@ from fastapi.security import HTTPBearer
 
 from backend.app.api.errors import ForbiddenError
 from backend.app.auth.principal import Principal, resolve_officer_identity
-from backend.app.config import Settings
+from backend.app.config import Settings, development_jwt_secret
 from shared.contracts.api import UserRole
 
 logger = logging.getLogger(__name__)
@@ -54,11 +54,11 @@ class DevelopmentVerifier(TokenVerifier):
     def __init__(
         self,
         is_production: bool = False,
-        secret_key: str = "nexus-dev-secret-key-2026",
+        secret_key: str | None = None,
         auth_mode: str = "demo",
     ) -> None:
         self._is_production = is_production
-        self._secret_key = secret_key
+        self._secret_key = secret_key or development_jwt_secret()
         self._auth_mode = auth_mode
 
     async def verify(self, request: Request) -> Principal:

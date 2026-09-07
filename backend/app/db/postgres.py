@@ -125,7 +125,7 @@ class PostgresBackendRepository:
                 conn.commit()
             logger.info("PostgreSQL schema validated successfully.")
         except Exception as exc:
-            logger.error("Failed to initialize PostgreSQL schema: %s", exc)
+            logger.error("Failed to initialize PostgreSQL schema")
             raise
 
     def _load_from_postgres(self) -> None:
@@ -228,7 +228,7 @@ class PostgresBackendRepository:
                 len(self.audit_events),
             )
         except Exception as exc:
-            logger.error("Error loading state from PostgreSQL: %s", exc)
+            logger.error("Error loading state from PostgreSQL")
             raise
 
     def _seed_from_artifact(self) -> None:
@@ -313,7 +313,7 @@ class PostgresBackendRepository:
                 conn.commit()
             logger.info("Successfully seeded %d nodes and %d edges into PostgreSQL.", len(nodes_data), len(edges_data))
         except Exception as exc:
-            logger.error("Failed to seed artifact into PostgreSQL: %s", exc)
+            logger.error("Failed to seed artifact into PostgreSQL")
 
     def _rebuild_indexes(self) -> None:
         self.incident_edges = {}
@@ -331,7 +331,7 @@ class PostgresBackendRepository:
                     cur.execute("TRUNCATE TABLE edges, nodes, source_records, audit_events, review_candidates, ingestion_batches CASCADE;")
                 conn.commit()
         except Exception as exc:
-            logger.error("Error clearing PostgreSQL tables: %s", exc)
+            logger.error("Error clearing PostgreSQL tables")
 
         self.nodes.clear()
         self.edges.clear()
@@ -511,7 +511,7 @@ class PostgresBackendRepository:
                     )
                 conn.commit()
         except Exception as exc:
-            logger.error("Failed to persist bundle to PostgreSQL: %s", exc)
+            logger.error("Failed to persist bundle to PostgreSQL")
 
         return nodes_created, nodes_reused, edges_created, edges_reused
 
@@ -553,7 +553,7 @@ class PostgresBackendRepository:
                     )
                 conn.commit()
         except Exception as exc:
-            logger.error("Failed to store review candidates in PostgreSQL: %s", exc)
+            logger.error("Failed to store review candidates in PostgreSQL")
 
     def get_review_candidates(self) -> list[EntityReviewCandidate]:
         return [
@@ -571,7 +571,7 @@ class PostgresBackendRepository:
                     cur.execute("UPDATE review_candidates SET status = %s WHERE id = %s;", (status, candidate_id))
                 conn.commit()
         except Exception as exc:
-            logger.error("Failed to update candidate status in PostgreSQL: %s", exc)
+            logger.error("Failed to update candidate status in PostgreSQL")
 
     def merge_nodes(self, incoming_node_id: str, canonical_node_id: str) -> None:
         if incoming_node_id not in self.nodes or canonical_node_id not in self.nodes:
@@ -614,7 +614,7 @@ class PostgresBackendRepository:
                     cur.execute("DELETE FROM nodes WHERE id = %s;", (incoming_node_id,))
                 conn.commit()
         except Exception as exc:
-            logger.error("Failed to persist node merge in PostgreSQL: %s", exc)
+            logger.error("Failed to persist node merge in PostgreSQL")
 
     def global_search(self, query: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         query_lower = query.lower()
@@ -909,7 +909,7 @@ class PostgresBackendRepository:
                     )
                 conn.commit()
         except Exception as exc:
-            logger.error("Failed to record audit event in PostgreSQL: %s", exc)
+            logger.error("Failed to record audit event in PostgreSQL")
 
         return entry
 

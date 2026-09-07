@@ -26,6 +26,25 @@ from backend.app.services.ingestion_service import IngestionService
 RepositoryType = InMemoryBackendRepository | PostgresBackendRepository | Any
 
 
+async def require_graph_projection(request: Request) -> None:
+    """Temporary foundation gate: selected Neo4j must never serve a memory graph.
+
+    Projection reads/writes are a later step. Preserve probes and login while
+    refusing data operations explicitly until their Neo4j read path exists.
+    """
+    if request.app.state.settings.graph_backend != "neo4j":
+        return
+    path = request.url.path.removeprefix("/api/v1").rstrip("/") or "/"
+    if path in {"/", "/health", "/ready", "/system/status", "/auth/login"}:
+        return
+    from backend.app.api.errors import ExternalServiceUnavailableError
+
+    raise ExternalServiceUnavailableError(
+        "Neo4j connection foundation only: graph projection is not implemented; data operations are unavailable.",
+        details={"graph_backend": "neo4j", "projection": "not_implemented"},
+    )
+
+
 def get_settings_dep(request: Request) -> Settings:
     state_settings = getattr(request.app.state, "settings", None)
     if state_settings is not None:

@@ -1,5 +1,268 @@
 # Neo4j implementation record
 
+## Step 2 — secure connection foundation (2026-09-07)
+
+Verified before editing: branch `feat/neo4j-integration`, HEAD
+`2ad00f68868dd679c955a8ba802ca7eb8af7d90c`, clean working tree. Read root
+AGENTS.md, PROGRESS.md, current startup/configuration/repository/health code,
+tests, manifests and Compose configuration again. The user's no-switch/no-commit
+instructions take precedence over the branch workflow in AGENTS.md. No branch
+switch, commit, push, deployment, history rewrite or external credential rotation.
+
+### Implemented behavior and scope
+
+- Added the official **neo4j==6.3.0** driver to both Python dependency manifests.
+  This repository has no Python lockfile; the frontend package-lock.json is
+  unrelated and unchanged. No new dependency manager or database framework.
+- Added validated GRAPH_BACKEND (`memory`/`neo4j`), connection credentials and
+  database selection, positive bounded timeouts in seconds, and an explicit
+  required/degraded policy. Neo4j mode rejects missing credentials, invalid
+  schemes/ports, embedded URI credentials, paths/query strings/fragments, and
+  invalid/system database names. `NEO4J_PASSWORD` uses SecretStr and is excluded
+  from settings serialization. Validation errors omit input values.
+- `db/neo4j.py:Neo4jConnection` owns one reusable AsyncDriver/pool for each app
+  lifespan (one app per worker process). There is no import-time Neo4j connection
+  or per-request driver. Memory mode does not import/create/use the driver.
+- Startup calls `verify_connectivity()` and a read-routed `RETURN 1 AS ok` in
+  the explicitly selected database. The query checks authentication/database
+  accessibility as well as transport. Queries use the configured server timeout;
+  a client deadline of `2 * connection_timeout + query_timeout` bounds the probe.
+  Connection acquisition also uses connection_timeout; automatic transaction
+  retries are disabled for predictable health checks. Driver telemetry is disabled.
+- Driver work is async and awaited. The existing PostgreSQL readiness probe is
+  synchronous psycopg work offloaded through `run_in_threadpool`, with its existing
+  15-second connect limit and a 2-second SQL statement timeout. This step does not
+  rewrite the existing ingestion service's synchronous PostgreSQL mutation path.
+- FastAPI wraps its original lifespan context, preserving framework/router
+  startup/shutdown behavior. The pool closes on normal shutdown, connection
+  startup failure, cancelled startup, and later startup-hook failure. Close
+  exceptions produce a generic warning and `cleanup_failed`, not a false claim
+  of successful cleanup. Driver exceptions/credentials are not interpolated into
+  application logs or responses.
+- PostgreSQL remains the record repository. Removed the embedded remote URL and
+  default Neo4j password from application defaults and root .env.example.
+  Unconfigured development starts explicitly in memory mode. Explicit PostgreSQL
+  selection requires DATABASE_URL. Production requires JWT_SECRET_KEY; development
+  can use a private ephemeral per-process signing key instead of a committed key.
+  Auth verifier and templates no longer supply the old hardcoded signing default.
+- Existing PostgreSQL error messages were sanitized at their source; transaction
+  logic is unchanged. Legacy PostgreSQL-to-memory fallback in graph memory mode
+  remains for compatibility but now makes readiness fail. Selecting Neo4j forbids
+  that fallback if PostgreSQL initialization fails.
+- Local Compose pins **neo4j:5.26.30-community**, binds published ports to loopback,
+  removes APOC/unrestricted-procedure configuration, and requires private passwords
+  from the environment. Its explicit `nexus-local` project and `neo4j_526_data`
+  volume avoid automatically reusing/upgrading an older 5.20 volume. The backend
+  no longer has a mandatory Compose dependency on Neo4j in memory mode.
+
+**This is connectivity, not graph persistence.** No projection schema, graph
+write/read implementation, synchronization revision or relationship codec has
+been added. `GRAPH_BACKEND=neo4j` gates data operations with the existing HTTP 503
+envelope and `projection=not_implemented`; it never runs them against the memory
+or demo graph. Root metadata, login, health/readiness and system status remain
+available. System status is explicitly degraded in Neo4j mode. The gate covers
+all data routes, including ingestion/reviews/reset, so data cannot silently be
+mutated through an unimplemented selected graph backend. Memory-mode successful
+API contracts and NetworkX algorithms remain unchanged.
+
+### Liveness, readiness and failure policy
+
+`/health` and `/api/v1/health` remain process-liveness probes, without database
+queries. Existing duplicate core/system health registrations are preserved.
+`/ready` and `/api/v1/ready` actively probe required storage and Neo4j; they expose
+actual storage, storage_available, dependencies_ready, graph connection state,
+failure policy, operational flag and projection status. Neo4j readiness counts
+are zero rather than presenting the repository's memory counts as a Neo4j graph.
+
+| Mode/policy | Startup | Readiness in this step | Data operations |
+| --- | --- | --- | --- |
+| memory, storage available | No Neo4j work | 200 ready; graph connection disabled | Existing behavior |
+| neo4j + required, connection fails | Aborts; closes driver | No ready application from that startup | Unavailable |
+| neo4j + required, connection succeeds | Starts; pool reused | **503 not_ready**, dependencies_ready=true, projection not_implemented | 503; no memory fallback |
+| neo4j + required, connection later fails | Process remains alive | 503; dependencies_ready=false | 503 |
+| neo4j + degraded, connection succeeds or fails | Starts with connection state visible | **200 degraded** if required storage is available; operational=false | 503 until projection exists |
+| Any mode, required storage unavailable/fallback | Existing memory-mode fallback only, or startup failure in Neo4j mode | 503 if application remains running | Not a ready service |
+
+Degraded is an explicit opt-in to a diagnostics-only Neo4j foundation, not
+permission to substitute graph data. Probes can recover a degraded connection
+using the same pool. Failure to construct a driver (for example a missing package)
+requires fixing the installation and restarting. Optional graph availability
+does not make PostgreSQL optional. A successful connection will only make a
+required Neo4j application operational after the future projection/read step.
+
+### Configuration and local setup
+
+Selected-version compatibility was checked against the official
+[driver 6.3.0 release](https://github.com/neo4j/neo4j-python-driver/releases/tag/6.3.0),
+[Python/server compatibility matrix](https://neo4j.com/docs/python-manual/current/install/),
+[async driver API](https://neo4j.com/docs/api/python-driver/current/async_api.html),
+and [Neo4j 5.26.30 release notes](https://neo4j.com/release-notes/database/neo4j-5-26-30/).
+Driver 6.x supports Neo4j 5.x and Python >=3.10, encompassing this project's
+Python >=3.11 requirement. The actual 6.3.0/5.26.30 pair and the implemented
+Cypher 5 connectivity queries passed the isolated smoke test; projection Cypher
+does not yet exist and is not claimed as verified.
+
+| Environment variable | Default / validation |
+| --- | --- |
+| GRAPH_BACKEND | memory; accepts only memory or neo4j |
+| NEO4J_URI | Empty; required in Neo4j mode; bolt/neo4j schemes including +s/+ssc |
+| NEO4J_USER | Empty; nonblank in Neo4j mode |
+| NEO4J_PASSWORD | Empty private SecretStr; nonblank in Neo4j mode |
+| NEO4J_DATABASE | neo4j; user database name, 3–63 letters/digits/dots/hyphens |
+| NEO4J_CONNECTION_TIMEOUT | 5 seconds; >0 and <=120 |
+| NEO4J_QUERY_TIMEOUT | 10 seconds; >0 and <=300 |
+| NEO4J_FAILURE_POLICY | required; accepts required or degraded |
+| NEXUS_REPOSITORY / DATABASE_URL | memory / empty by default; explicit postgres selection requires a URL |
+| JWT_SECRET_KEY | Private configured value; otherwise ephemeral in development and rejected in production |
+
+From the repository root, install the existing backend requirements:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+```
+
+Edit the local ignored .env privately. For Compose, fill POSTGRES_PASSWORD and
+NEO4J_PASSWORD with distinct random values; use a URL-safe PostgreSQL password
+for the Compose URL interpolation. Never print the resolved Compose configuration.
+Do not overwrite an existing .env, copy credentials from history, or reuse a
+shared database. Retain the private local Neo4j password across restarts: changing
+NEO4J_AUTH does not reset a password in an already initialized volume.
+
+To start only the dedicated local development databases (not executed by this
+step; the smoke test below uses a separate container):
+
+```powershell
+docker compose --env-file .env config --quiet
+docker compose --env-file .env up -d postgres neo4j
+```
+
+Set GRAPH_BACKEND=neo4j in .env and start the local backend when inspecting the
+connection foundation:
+
+```powershell
+docker compose --env-file .env up -d backend
+```
+
+Required mode's /ready=503 after a successful connection is expected in Step 2:
+read `dependencies_ready` and `graph.projection`. Use degraded only when you
+explicitly want the diagnostics process to remain ready while graph operations
+are unavailable. Keep GRAPH_BACKEND=memory to use the current synthetic demo.
+No production/deployment command is provided. Do not attach the old Neo4j volume
+without a separately reviewed upgrade, and do not use `down -v` on team resources.
+
+### Tests and the isolated real connection smoke test
+
+`tests/conftest.py` now sets safe memory/database/AI/auth configuration **before
+collection imports the module-level application**, and disables .env settings
+loading for tests. It does not alter local .env files. Integration opt-in is a
+separate variable; unit tests never pick up a deployment URL or password.
+
+```powershell
+New-Item -ItemType Directory -Path .test-tmp -Force | Out-Null
+.\.venv\Scripts\python.exe -m pytest -q -o addopts= --tb=short --basetemp=.test-tmp/neo4j-full
+$env:NEXUS_RUN_NEO4J_SMOKE = '1'
+.\.venv\Scripts\python.exe -m pytest tests/integration/test_neo4j_connection.py -q -o addopts= --tb=short
+Remove-Item Env:NEXUS_RUN_NEO4J_SMOKE
+```
+
+The smoke test refuses remote Docker contexts: it requires a Unix socket or
+Windows named-pipe endpoint and pins each Docker operation to that context.
+It accepts no existing database URI. It creates a unique labeled container and
+volume, allocates an ephemeral loopback Bolt port, supplies a random private
+password through process environment, and executes only connectivity/version
+queries. It verifies server version/edition, valid authentication, rejection of
+an invalid password and missing database, and driver closure. Cleanup checks
+exact ownership labels before removing only its own container and volume.
+It does not use root Compose, a production database, shared records, APOC or GDS.
+
+### Commands actually executed and results
+
+Final environment: Python 3.13.1 in the existing project .venv, Neo4j driver
+6.3.0, FastAPI 0.141.1, Starlette 1.6.0, pytest 8.4.2, NetworkX 3.6.1,
+psycopg 3.3.5 and Ruff 0.16.4. Step 1 used the system interpreter; these versions
+are reported explicitly rather than claiming identical environments.
+
+| Executed command/check | Result |
+| --- | --- |
+| `.venv/Scripts/python.exe -m pip install neo4j==6.3.0` | PASSED after approved network escalation; installed driver and pytz in .venv. |
+| `.venv/Scripts/python.exe -m pip install -r backend/requirements.txt` | PASSED; completed the existing partial .venv (reportlab and other declared dependencies were missing). |
+| Focused pytest: `tests/test_neo4j_foundation.py tests/test_system_health.py -q -o addopts= --tb=short --basetemp=.test-tmp/neo4j-foundation` | PASSED: **34 tests**, 10.90 s. Later small cleanup-status/config changes are also covered by the final full run. |
+| Full pytest: `-q -o addopts= --tb=short --basetemp=.test-tmp/neo4j-full` | PASSED: **699 passed, 2 skipped, 3 warnings**, 176.96 s. Skips are the opt-in smoke test and the previously identified empty-evidence fixture. |
+| Opt-in pytest: `tests/integration/test_neo4j_connection.py -q -o addopts= --tb=short --basetemp=.test-tmp/neo4j-smoke` | PASSED against real local Neo4j: initially 15.46 s; final run after local-context/cleanup hardening **1 passed, 18.52 s**. |
+| `.venv/Scripts/python.exe scripts/evaluate_ground_truth.py` | PASSED: TP=2, FP=0, FN=0; 100% precision/recall/F1. |
+| `.venv/Scripts/python.exe -m ruff check backend/ shared/ tests/ --output-format concise` | PASSED: all checks passed. |
+| `docker desktop start --detach`; `docker version --format '{{.Server.Version}}'` | PASSED with approved escalation; local Docker Desktop started, engine 29.2.1. |
+| `docker pull neo4j:5.26.30-community` | PASSED; image digest `sha256:037cf5756f0135cbfd66b739b6df7c7c4bb100f9ce11602f6f9538e17e02c74d`. |
+| `docker compose --env-file .env.example config --quiet` with ephemeral private process variables | PASSED; resolved configuration not printed and no development stack started. |
+| Docker container/volume listing filtered by `io.nexus.connection-smoke` | PASSED after the first smoke run: no matching resources remained; final smoke also completed ownership-checked cleanup. |
+| Value-suppressed scan of tracked source/template working files | PASSED: no non-placeholder remote PostgreSQL URI found; only the existing redacted documentation example matched. |
+| `git diff --check` | PASSED; only Git's LF/CRLF normalization notices. |
+| Frontend tests/build/lint | NOT RUN in Step 2; frontend sources and contracts unchanged. Step 1's frontend lint failures remain baseline debt. |
+| PostgreSQL durability/projection/migration integration tests | NOT RUN; outside this connection-foundation step. |
+
+Failed attempts, not final pass claims: the sandbox first blocked PyPI and Docker
+access; approved retries succeeded. Initial focused tests could not collect due
+to missing reportlab. After installing declared requirements, 8 tests exposed
+removed APIRouter startup/shutdown methods in this .venv; replaced those calls by
+wrapping the original lifespan and reran successfully. The first full run had
+683 passes and 16 fixture setup errors because `.test-tmp` did not exist; created
+the parent and the complete retry passed. No application failures remain in the
+final run. Existing short-HMAC fixture warnings and the .venv Starlette/httpx
+deprecation warning are not suppressed or described as test failures.
+
+Logs are local `%TEMP%/nexus_step2_{dependencies,foundation,full_retry,smoke_final}.log`.
+The Docker Desktop process remains running and the downloaded image is cached;
+the smoke database is removed. No development stack was launched.
+
+### File responsibilities, troubleshooting and remaining work
+
+| Created/modified file | Responsibility |
+| --- | --- |
+| `backend/app/db/neo4j.py` (new) | Async driver ownership, connectivity/query probes, safe errors and cleanup |
+| `backend/app/config.py`, `.env.example` | Validated selection/credentials/timeouts/policy and safe development defaults |
+| `backend/app/auth/verifier.py`, `configs/.env.example` | Remove committed signing-key defaults; use the configured or ephemeral development key |
+| `backend/app/main.py` | Wrap existing lifecycle, share connection, prevent PostgreSQL fallback in Neo4j mode |
+| `backend/app/api/dependencies.py` | Explicit temporary Neo4j data-operation gate; no memory substitution |
+| `backend/app/api/system_routes.py` | Required-dependency readiness, async-safe PostgreSQL probe, honest graph capability/status |
+| `backend/app/db/postgres.py` | Sanitize existing database-error logs only; persistence semantics unchanged |
+| `pyproject.toml`, `backend/requirements.txt` | Matching official driver pin |
+| `docker-compose.yml` | Pinned local-only Neo4j with persistent storage and no extra plugins |
+| `tests/conftest.py`, `pytest.ini` | Safe collection-time configuration and integration marker |
+| `tests/test_neo4j_foundation.py` (new) | Configuration, lifecycle, policy, failures, cancellation, redaction and no-fallback tests |
+| `tests/integration/test_neo4j_connection.py` (new) | Opt-in, self-owned real local Neo4j smoke test |
+| `docs/NEO4J_IMPLEMENTATION.md` | Actual behavior, commands/results, setup and limitations |
+
+Troubleshooting: if Docker's named pipe/socket is missing, start Docker Desktop
+and check engine availability. A missing driver requires installing requirements
+with the same interpreter that runs Uvicorn. For rejected configuration, check
+variable names, positive timeouts and separate credentials from the URI. For
+connection failures, privately verify the Bolt address, TLS scheme, password and
+database; a successful HTTP browser probe alone is insufficient. A reused volume
+keeps its initialized authentication; do not delete shared data to resolve an
+auth error. Driver exceptions and resolved settings are intentionally withheld
+from public diagnostics. After changing credentials/configuration, restart the
+application; environment changes do not mutate an existing pool.
+
+**Owner action remains required:** rotate the previously exposed remote PostgreSQL
+credential and any deployed secret that reused committed defaults. This step
+removed current defaults/templates, not historical exposure, and did not attempt
+rotation. Development JWTs without an explicit key expire across process restarts;
+multiple workers need a shared private configured key.
+
+Projection writes/reads, lossless relationship metadata, synchronization/lag
+revisions, reliable PostgreSQL transaction boundaries, durable review/audit
+restart parity, and broader case authorization remain future work from Step 1.
+There are no new guilt scores or graph-based claims of criminal involvement.
+
+Suggested commit message:
+`feat(neo4j): add secure configuration and managed driver lifecycle`
+
+---
+
+The following Step 1 and Step 0 sections are historical audit records. Step 2
+above supersedes their missing-connection/configuration findings only.
+
 ## Step 1 — architecture audit and test baseline (2026-09-07)
 
 **Scope:** read-only runtime audit; documentation is the only tracked change.
