@@ -33,7 +33,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     try {
       localStorage.setItem('nexus-sidebar-collapsed', String(collapsed))
       document.documentElement.setAttribute('data-sidebar-collapsed', String(collapsed))
-    } catch {}
+    } catch {
+      // ignore storage write errors
+    }
   }, [collapsed])
 
   // Sync initial state to attribute

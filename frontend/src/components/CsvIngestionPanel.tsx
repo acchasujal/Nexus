@@ -42,6 +42,23 @@ const FILE_SLOTS: FileSlot[] = [
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
 
+function SummaryCard({ label, value, type = 'neutral' }: { label: string, value: number, type?: 'success' | 'warning' | 'error' | 'neutral' | 'info' }) {
+  let colorCls = 'text-neutral-900 border-neutral-200 bg-white'
+  let valCls = 'text-neutral-900'
+  
+  if (type === 'success') { colorCls = 'border-emerald-200 bg-emerald-50'; valCls = 'text-emerald-700' }
+  if (type === 'warning') { colorCls = 'border-amber-200 bg-amber-50'; valCls = 'text-amber-700' }
+  if (type === 'error' && value > 0) { colorCls = 'border-red-200 bg-red-50'; valCls = 'text-red-700' }
+  if (type === 'info') { colorCls = 'border-blue-200 bg-blue-50'; valCls = 'text-blue-700' }
+
+  return (
+    <div className={`p-3 rounded-lg border shadow-sm ${colorCls} text-center`} data-testid={`summary-${label.toLowerCase().replace(/ /g, '-')}`}>
+      <div className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">{label}</div>
+      <div className={`text-2xl font-bold mt-1 ${valCls}`}>{value.toLocaleString()}</div>
+    </div>
+  )
+}
+
 const PROGRESS_STAGES = [
   'Uploading files securely',
   'Validating headers and formats',
@@ -293,23 +310,6 @@ export function CsvIngestionPanel({ onIngestSuccess }: CsvIngestionPanelProps = 
 
   // Success View
   const { status, batch_id, received_rows, accepted_rows, rejected_rows, duplicates, conflicts, warnings, nodes_extracted, relations_formed, review_required, graph_ready } = result
-
-  const SummaryCard = ({ label, value, type = 'neutral' }: { label: string, value: number, type?: 'success' | 'warning' | 'error' | 'neutral' | 'info' }) => {
-    let colorCls = 'text-neutral-900 border-neutral-200 bg-white'
-    let valCls = 'text-neutral-900'
-    
-    if (type === 'success') { colorCls = 'border-emerald-200 bg-emerald-50'; valCls = 'text-emerald-700' }
-    if (type === 'warning') { colorCls = 'border-amber-200 bg-amber-50'; valCls = 'text-amber-700' }
-    if (type === 'error' && value > 0) { colorCls = 'border-red-200 bg-red-50'; valCls = 'text-red-700' }
-    if (type === 'info') { colorCls = 'border-blue-200 bg-blue-50'; valCls = 'text-blue-700' }
-
-    return (
-      <div className={`p-3 rounded-lg border shadow-sm ${colorCls} text-center`} data-testid={`summary-${label.toLowerCase().replace(/ /g, '-')}`}>
-        <div className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">{label}</div>
-        <div className={`text-2xl font-bold mt-1 ${valCls}`}>{value.toLocaleString()}</div>
-      </div>
-    )
-  }
 
   return (
     <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-6 space-y-6" data-testid="success-panel">

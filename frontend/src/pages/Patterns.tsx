@@ -78,9 +78,9 @@ export default function Patterns() {
   const [graphBridges, setGraphBridges] = useState<BridgeItem[]>([])
   const [isGraphAlgoLoading, setIsGraphAlgoLoading] = useState<boolean>(true)
 
-  const loadGraphAlgos = () => {
-    setIsGraphAlgoLoading(true)
-    Promise.all([
+  const loadGraphAlgos = (setLoading = true) => {
+    if (setLoading) setIsGraphAlgoLoading(true)
+    return Promise.all([
       apiClient.getCommunities().catch(() => []),
       apiClient.getBridges().catch(() => []),
     ])
@@ -95,7 +95,7 @@ export default function Patterns() {
 
   // Initial load of graph modularity
   useEffect(() => {
-    loadGraphAlgos()
+    loadGraphAlgos(false)
   }, [])
 
   const handleRefreshAll = async () => {

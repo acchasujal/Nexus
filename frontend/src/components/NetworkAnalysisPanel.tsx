@@ -586,14 +586,11 @@ export function NetworkAnalysisPanel({
                     {inspectTarget.properties && Object.entries(inspectTarget.properties).map(([key, value]) => {
                       if (value === null || value === undefined || key === 'id' || key === 'type') return null
                       
-                      let formattedValue = ''
-                      if (Array.isArray(value)) {
-                        formattedValue = value.map(String).join(', ')
-                      } else if (typeof value === 'object') {
-                        try { formattedValue = JSON.stringify(value) } catch { formattedValue = '[Object]' }
-                      } else {
-                        formattedValue = String(value)
-                      }
+                      const formattedValue = Array.isArray(value)
+                        ? value.map(String).join(', ')
+                        : typeof value === 'object'
+                        ? (() => { try { return JSON.stringify(value) } catch { return '[Object]' } })()
+                        : String(value)
                       
                       // Format the key to be readable (e.g. "first_name" -> "First Name")
                       const formattedKey = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')

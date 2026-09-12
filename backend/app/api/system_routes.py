@@ -70,10 +70,12 @@ def create_system_router() -> APIRouter:
         graph_connected = await connection.check()
         # Step 2 implements connectivity only. Required graph mode is deliberately
         # unready even when Bolt connects, until durable projection reads exist.
-        graph_operational = cfg.graph_backend == "memory"
+        graph_operational = (cfg.graph_backend == "memory") or getattr(connection, "is_operational", False)
         graph_required = cfg.neo4j_failure_policy == "required"
         ready = storage_ok and (graph_operational or not graph_required)
         response.status_code = 200 if ready else 503
+        
+        projection_status = "not_applicable" if cfg.graph_backend == "memory" else ("synced" if graph_operational else "not_operational")
         return {
             "status": ("ready" if graph_operational else "degraded") if ready else "not_ready",
             "service": "nexus-backend",
@@ -85,7 +87,7 @@ def create_system_router() -> APIRouter:
                 "connection": connection.status,
                 "failure_policy": cfg.neo4j_failure_policy,
                 "operational": graph_operational,
-                "projection": "not_applicable" if graph_operational else "not_implemented",
+                "projection": projection_status,
             },
             "total_nodes": len(nodes) if graph_operational else 0,
             "total_edges": len(edges) if graph_operational else 0,

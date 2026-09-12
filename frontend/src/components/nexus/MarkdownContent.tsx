@@ -233,7 +233,7 @@ function renderInline(text: string): React.ReactNode {
     }
 
     // 5. Plain text segment up to the next special character
-    const nextSpecial = remaining.search(/[`*_\[]/)
+    const nextSpecial = remaining.search(/[[`*_]/)
     if (nextSpecial === -1) {
       tokens.push(remaining)
       break

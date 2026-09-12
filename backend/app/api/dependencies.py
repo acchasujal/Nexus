@@ -27,21 +27,26 @@ RepositoryType = InMemoryBackendRepository | PostgresBackendRepository | Any
 
 
 async def require_graph_projection(request: Request) -> None:
-    """Temporary foundation gate: selected Neo4j must never serve a memory graph.
+    """Graph projection gate: selected Neo4j must never serve a memory graph when unready.
 
-    Projection reads/writes are a later step. Preserve probes and login while
-    refusing data operations explicitly until their Neo4j read path exists.
+    When Neo4j is operational (connected and projection synced), data operations
+    proceed cleanly. If not operational, fail with 503 rather than serving an un-synced graph.
     """
     if request.app.state.settings.graph_backend != "neo4j":
         return
     path = request.url.path.removeprefix("/api/v1").rstrip("/") or "/"
     if path in {"/", "/health", "/ready", "/system/status", "/auth/login"}:
         return
+    
+    neo4j_conn = getattr(request.app.state, "neo4j", None)
+    if neo4j_conn is not None and getattr(neo4j_conn, "is_operational", False):
+        return
+
     from backend.app.api.errors import ExternalServiceUnavailableError
 
     raise ExternalServiceUnavailableError(
-        "Neo4j connection foundation only: graph projection is not implemented; data operations are unavailable.",
-        details={"graph_backend": "neo4j", "projection": "not_implemented"},
+        "Neo4j graph projection is not yet operational; data operations are unavailable.",
+        details={"graph_backend": "neo4j", "projection": "not_operational"},
     )
 
 

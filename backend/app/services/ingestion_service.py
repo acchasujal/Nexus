@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.db.in_memory import InMemoryBackendRepository
@@ -26,11 +29,13 @@ class IngestionService:
         graph_repo: GraphRepository,
         audit_service: AuditService,
         pipeline: CsvIngestionPipeline,
+        neo4j_conn: Any = None,
     ):
         self._repo = repository
         self._graph_repo = graph_repo
         self._audit = audit_service
         self._pipeline = pipeline
+        self._neo4j = neo4j_conn
         self._lock = asyncio.Lock()
 
     async def ingest_files(
@@ -99,6 +104,16 @@ class IngestionService:
 
                 # Refresh the analytical graph store
                 self._graph_repo.replace_store(self._repo.to_graph_store())
+
+                # If Neo4j is active and operational, sync projection
+                if self._neo4j is not None and getattr(self._neo4j, "is_operational", False):
+                    try:
+                        nodes = [self._repo.nodes[nid] for nid in self._repo.batches[bundle.batch_id]["nodes"] if isinstance(nid, str)] if bundle.batch_id in self._repo.batches else list(self._repo.nodes.values())
+                        edges = self._repo.batches[bundle.batch_id]["edges"] if bundle.batch_id in self._repo.batches else self._repo.edges
+                        await self._neo4j.sync_nodes(list(self._repo.nodes.values()))
+                        await self._neo4j.sync_edges(self._repo.edges)
+                    except Exception as err:
+                        logger.warning("Neo4j projection sync during ingestion encountered an issue: %s", err)
 
                 # Determine warnings
                 has_warnings = any(i.severity.name == "WARNING" for i in bundle.issues)

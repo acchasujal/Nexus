@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import {
   Network,
   RotateCcw,
@@ -218,22 +218,31 @@ export default function NetworkExplorer() {
   }, [candidatesQuery.data])
 
   // ── Dynamic Pathfinder & Exploration State ──────────────────────────────────
-  const [showPathfinder, setShowPathfinder] = useState(false)
+  const [showPathfinder, setShowPathfinder] = useState(Boolean(targetCaseIdParam || nodeIdParam))
   const [sourceId, setSourceId] = useState(caseIdParam || nodeIdParam || '')
-  const [targetId, setTargetId] = useState('')
+  const [targetId, setTargetId] = useState(targetCaseIdParam || '')
   const [maxHops, setMaxHops] = useState(6)
 
-  // Pre-fill from query params if requested
+  // Track previous params to only update state when query parameters actually change externally
+  const prevParamsRef = useRef({ caseIdParam, targetCaseIdParam, nodeIdParam })
   useEffect(() => {
-    if (caseIdParam) {
-      setSourceId(caseIdParam)
-      if (targetCaseIdParam) {
-        setTargetId(targetCaseIdParam)
+    const prev = prevParamsRef.current
+    if (
+      prev.caseIdParam !== caseIdParam ||
+      prev.targetCaseIdParam !== targetCaseIdParam ||
+      prev.nodeIdParam !== nodeIdParam
+    ) {
+      prevParamsRef.current = { caseIdParam, targetCaseIdParam, nodeIdParam }
+      if (caseIdParam) {
+        setSourceId(caseIdParam)
+        if (targetCaseIdParam) {
+          setTargetId(targetCaseIdParam)
+          setShowPathfinder(true)
+        }
+      } else if (nodeIdParam) {
+        setSourceId(nodeIdParam)
         setShowPathfinder(true)
       }
-    } else if (nodeIdParam) {
-      setSourceId(nodeIdParam)
-      setShowPathfinder(true)
     }
   }, [caseIdParam, targetCaseIdParam, nodeIdParam])
 
@@ -307,7 +316,6 @@ export default function NetworkExplorer() {
     return null
   }, [
     useUnifiedNetwork,
-    isGlobalNetwork,
     demoQuery.data,
     isCaseScoped,
     isEntityScoped,
@@ -325,15 +333,18 @@ export default function NetworkExplorer() {
   const afterUnavailable = useUnifiedNetwork && replay === 'after' && demoQuery.error
 
   // Lookups for labels and edges
+  const nodes = graph?.nodes
+  const edges = graph?.edges
+
   const nodesById = useMemo(() => {
-    if (!graph?.nodes) return new Map()
-    return new Map(graph.nodes.map((n) => [n.id, n]))
-  }, [graph?.nodes])
+    if (!nodes) return new Map()
+    return new Map(nodes.map((n) => [n.id, n]))
+  }, [nodes])
 
   const edgesById = useMemo(() => {
-    if (!graph?.edges) return new Map()
-    return new Map(graph.edges.map((e) => [e.id, e]))
-  }, [graph?.edges])
+    if (!edges) return new Map()
+    return new Map(edges.map((e) => [e.id, e]))
+  }, [edges])
 
   /** Apply density/investigator mode filter to reduce graph clutter */
   const filteredGraph = useMemo(() => {

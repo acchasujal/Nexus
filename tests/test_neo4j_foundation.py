@@ -93,23 +93,23 @@ def test_single_driver_database_probe_and_shutdown(driver_factory):
         for path in ("/health", "/api/v1/health"):
             assert client.get(path).status_code == 200
         result = client.get("/ready")
-        # Connectivity succeeds, but this step has no operational projection yet.
-        assert result.status_code == 503
+        # Connectivity and projection succeed, making the application fully ready.
+        assert result.status_code == 200
         assert result.json()["dependencies_ready"] is True
         assert result.json()["graph"]["connection"] == "connected"
-        assert result.json()["graph"]["operational"] is False
-        for path in ("/api/v1/nexus/network", "/api/v1/graph/stats", "/api/v1/entities"):
+        assert result.json()["graph"]["operational"] is True
+        assert result.json()["graph"]["projection"] == "synced"
+        for path in ("/api/v1/nexus/network", "/api/v1/graph/stats", "/api/v1/entities?query=test"):
             response = client.get(path)
-            assert response.status_code == 503
-            assert response.json()["details"]["projection"] == "not_implemented"
-        assert client.post("/api/v1/nexus/demo/reset").status_code == 503
+            assert response.status_code == 200
+        assert client.post("/api/v1/nexus/demo/reset").status_code == 200
     driver_factory.assert_called_once()
     driver = driver_factory.return_value
     driver.verify_connectivity.assert_awaited_once()
     for call in driver.execute_query.call_args_list:
         assert call.kwargs["database_"] == "nexus"
-        assert call.kwargs["routing_"] == "r"
         assert call.args[0].timeout == 3
+        assert call.kwargs["routing_"] in ("r", "w")
     assert driver_factory.call_args.kwargs["connection_timeout"] == 2
     driver.close.assert_awaited_once()
     assert app.state.neo4j.status == "closed"

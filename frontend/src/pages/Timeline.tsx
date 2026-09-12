@@ -65,9 +65,10 @@ export default function Timeline() {
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'CASE' | 'CDR' | 'BANK_TXN'>('ALL')
 
   useEffect(() => {
-    setIsLoading(true)
+    let active = true
     apiClient.getTimeline(caseIdParam || undefined)
       .then((data) => {
+        if (!active) return
         if (Array.isArray(data) && data.length > 0) {
           const parsed = data.map((ev: any) => ({
             id: ev.id || String(ev.event_id || Math.random()),
@@ -107,7 +108,13 @@ export default function Timeline() {
         console.error('Failed to load timeline:', err)
         setEvents([])
       })
-      .finally(() => setIsLoading(false))
+      .finally(() => {
+        if (active) setIsLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
   }, [caseIdParam])
 
   // Sort events chronologically

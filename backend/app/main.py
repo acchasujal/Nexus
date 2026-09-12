@@ -89,6 +89,17 @@ def create_app(
     async def lifespan(app: FastAPI):
         try:
             await connection.start()
+            if cfg.graph_backend == "neo4j" and connection.status == "connected":
+                try:
+                    await connection.ensure_schema()
+                    nodes = list(repository.nodes.values())
+                    edges = repository.edges
+                    await connection.sync_projection(nodes, edges)
+                except Exception as ex:
+                    logger.warning("Failed to project graph into Neo4j: %s", ex)
+                    if cfg.neo4j_failure_policy == "required":
+                        await connection.close()
+                        raise
             async with original_lifespan(app):
                 yield
         finally:
@@ -156,6 +167,7 @@ def create_app(
         graph_repo=graph_repo,
         audit_service=AuditService(repository),
         pipeline=app.state.pipeline,
+        neo4j_conn=connection,
     )
 
     app.include_router(
