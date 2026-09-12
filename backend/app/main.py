@@ -11,17 +11,19 @@ Wires together:
 from __future__ import annotations
 
 import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO)
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 
 from backend.app.api.core_routes import create_core_router
+from backend.app.api.dependencies import require_graph_projection
 from backend.app.api.errors import install_error_handlers
 from backend.app.api.graph_routes import create_graph_router
 from backend.app.api.nexus_routes import create_nexus_router
@@ -31,6 +33,7 @@ from backend.app.config import Settings, get_settings
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.db.postgres import PostgresBackendRepository
+from backend.app.db.neo4j import Neo4jConnection
 from backend.app.db.ingestion.pipeline import CsvIngestionPipeline
 from backend.app.services.audit_service import AuditService
 from backend.app.services.ingestion_service import IngestionService
@@ -44,6 +47,7 @@ def create_app(
 ) -> FastAPI:
     """Application factory for NEXUS backend."""
     cfg = settings or get_settings()
+    repository_fallback = False
 
     # ── Repository ───────────────────────────────────────────────────────────
     if repository is None:
@@ -60,8 +64,11 @@ def create_app(
                     state_path=cfg.effective_state_path,
                 )
                 logger.info("NEXUS backend initialized with PostgreSQL repository.")
-            except Exception as exc:
-                logger.warning("Failed to initialize PostgreSQL repository (%s), falling back to in-memory.", exc)
+            except Exception:
+                if cfg.graph_backend == "neo4j":
+                    raise RuntimeError("Required PostgreSQL repository is unavailable; no fallback permitted") from None
+                logger.warning("Failed to initialize PostgreSQL repository; using memory with unready status.")
+                repository_fallback = True
                 repository = None
 
         if repository is None:
@@ -76,16 +83,34 @@ def create_app(
             )
             logger.info("NEXUS backend initialized with in-memory repository.")
 
+    connection = Neo4jConnection(cfg)
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        try:
+            await connection.start()
+            async with original_lifespan(app):
+                yield
+        finally:
+            await connection.close()
+
     # ── FastAPI App ───────────────────────────────────────────────────────────
     app = FastAPI(
         title=cfg.app_name,
         version=cfg.app_version,
         description="Evidence-Grounded Criminal Network Intelligence Platform for SIH 2026 PS 26189.",
+        dependencies=[Depends(require_graph_projection)],
     )
+    # Wrap the framework's existing lifecycle, preserving startup/shutdown hooks
+    # without relying on removed APIRouter.startup()/shutdown() methods.
+    original_lifespan = app.router.lifespan_context
+    app.router.lifespan_context = lifespan
 
     # Store repository on app.state for dependency injection
     app.state.repository = repository
     app.state.settings = cfg
+    app.state.neo4j = connection
+    app.state.repository_fallback = repository_fallback
     
     # Store shared pipeline instance to maintain resolution registries
     app.state.pipeline = CsvIngestionPipeline()
@@ -123,7 +148,7 @@ def create_app(
     app.include_router(nexus_router, prefix="/api/v1")
 
     # Graph intelligence routes
-    graph_repo = GraphRepository(repository.to_graph_store())
+    graph_repo = GraphRepository(repository.to_graph_store() if cfg.graph_backend == "memory" else None)
     app.state.graph_repo = graph_repo
     
     app.state.ingestion_service = IngestionService(

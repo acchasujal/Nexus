@@ -8,9 +8,19 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from secrets import token_urlsafe
+from typing import Literal
+from urllib.parse import urlsplit
+import re
 
-from pydantic import Field
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+@lru_cache(maxsize=1)
+def development_jwt_secret() -> str:
+    """Ephemeral per-process development key; never a committed credential."""
+    return token_urlsafe(48)
 
 
 class Settings(BaseSettings):
@@ -36,20 +46,23 @@ class Settings(BaseSettings):
     )
 
     # ── Database & Graph ─────────────────────────────────────────────────────
-    nexus_repository: str = Field(default="postgres", alias="NEXUS_REPOSITORY")
-    database_url: str = Field(
-        default="postgresql://nexus_7pdz_user:7iOMrcTqT4HNbyc8fclDuOkUeuVgtZeL@dpg-da99ipss728c73d4cjrg-a.singapore-postgres.render.com/nexus_7pdz",
-        alias="DATABASE_URL",
+    nexus_repository: str = Field(default="memory", alias="NEXUS_REPOSITORY")
+    database_url: str = Field(default="", alias="DATABASE_URL", repr=False, exclude=True)
+    graph_backend: Literal["memory", "neo4j"] = Field(default="memory", alias="GRAPH_BACKEND")
+    neo4j_uri: str = Field(default="", alias="NEO4J_URI", repr=False)
+    neo4j_user: str = Field(default="", alias="NEO4J_USER", repr=False)
+    neo4j_password: SecretStr = Field(default=SecretStr(""), alias="NEO4J_PASSWORD", exclude=True)
+    neo4j_database: str = Field(default="neo4j", alias="NEO4J_DATABASE")
+    neo4j_connection_timeout: float = Field(default=5.0, gt=0, le=120, alias="NEO4J_CONNECTION_TIMEOUT")
+    neo4j_query_timeout: float = Field(default=10.0, gt=0, le=300, alias="NEO4J_QUERY_TIMEOUT")
+    neo4j_failure_policy: Literal["required", "degraded"] = Field(
+        default="required", alias="NEO4J_FAILURE_POLICY",
     )
-    neo4j_uri: str = Field(default="bolt://localhost:7687", alias="NEO4J_URI")
-    neo4j_user: str = Field(default="neo4j", alias="NEO4J_USER")
-    neo4j_password: str = Field(default="nexuspassword", alias="NEO4J_PASSWORD")
 
     # ── Auth & Security ─────────────────────────────────────────────────────
     auth_mode: str = Field(default="demo", alias="AUTH_MODE")
     jwt_secret_key: str = Field(
-        default="nexus-dev-secret-key-2026-sih",
-        alias="JWT_SECRET_KEY",
+        default_factory=development_jwt_secret, alias="JWT_SECRET_KEY", repr=False, exclude=True,
     )
     jwt_algorithm: str = "HS256"
     jwt_expire_seconds: int = 86400
@@ -72,7 +85,40 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+        hide_input_in_errors=True,
     )
+
+    @field_validator("jwt_secret_key")
+    @classmethod
+    def empty_development_key(cls, value: str) -> str:
+        return value or development_jwt_secret()
+
+    @model_validator(mode="after")
+    def validate_dependencies(self) -> "Settings":
+        if self.is_production and self.jwt_secret_key == development_jwt_secret():
+            raise ValueError("JWT_SECRET_KEY must be explicitly configured in production")
+        if self.nexus_repository.lower() in ("postgres", "postgresql") and not self.database_url.strip():
+            raise ValueError("DATABASE_URL is required for PostgreSQL")
+        if self.graph_backend == "neo4j":
+            if not self.neo4j_uri or not self.neo4j_user.strip() or not self.neo4j_password.get_secret_value().strip():
+                raise ValueError("Neo4j mode requires NEO4J_URI, NEO4J_USER and NEO4J_PASSWORD")
+            try:
+                uri = urlsplit(self.neo4j_uri)
+                port = uri.port
+                valid = (
+                    uri.scheme in ("bolt", "bolt+s", "bolt+ssc", "neo4j", "neo4j+s", "neo4j+ssc")
+                    and bool(uri.hostname) and uri.username is None and uri.password is None
+                    and not uri.path and not uri.query and not uri.fragment
+                    and (port is None or 1 <= port <= 65535)
+                    and not any(c.isspace() for c in self.neo4j_uri)
+                )
+            except ValueError:
+                valid = False
+            if not valid:
+                raise ValueError("NEO4J_URI must be a Bolt/Neo4j URI without embedded credentials or path")
+            if not re.fullmatch(r"[A-Za-z][A-Za-z0-9.-]{2,62}", self.neo4j_database) or self.neo4j_database.lower() == "system":
+                raise ValueError("NEO4J_DATABASE must name a user database (3-63 letters, digits, dots or hyphens)")
+        return self
 
     @property
     def cors_origins_list(self) -> list[str]:
@@ -95,17 +141,6 @@ class Settings(BaseSettings):
         return self.environment.lower() == "production"
 
 
-_DEV_JWT_SECRET = "nexus-dev-secret-key-2026-sih"
-
-
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    import logging as _logging
-
-    settings = Settings()
-    if settings.is_production and settings.jwt_secret_key == _DEV_JWT_SECRET:
-        _logging.getLogger(__name__).warning(
-            "WARNING: Using default JWT secret in production. "
-            "Set JWT_SECRET_KEY environment variable to a strong random value."
-        )
-    return settings
+    return Settings()
