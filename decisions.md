@@ -88,3 +88,95 @@ This document is the **single source of truth** for material architectural, secu
 - **Alternatives Considered:**
   - *External blockchain anchoring:* Higher complexity and latency for MVP; SHA-256 with immutable audit logs in PostgreSQL meets statutory standard.
 - **Consequences:** Cryptographically guarantees data integrity from ingestion to PDF dossier export.
+
+---
+
+## DEC-007 — Temporal Graph Snapshots & Network Diff Engine
+- **Date:** 2026-09-17
+- **Status:** Accepted & Implemented in core algorithm, API/UI Promotion In Progress
+- **Decision:** Establish `GraphSnapshot` and `NetworkChange` as first-class domain models, promoting the existing `backend/app/core/graph/algorithms/snapshot_diff.py` engine into the authoritative `NetworkDiffService`.
+  1. The diff engine performs pure, non-mutating $O(N + E)$ comparisons across temporal intervals or explicit snapshot revisions.
+  2. Evaluates structural additions/removals (`added_nodes`, `removed_nodes`, `added_relationships`, `removed_relationships`) and semantic property modifications without mutation.
+  3. Identifies topological phase shifts: bridge emergence/loss, community splits/merges, and identifier drift events.
+- **Reason:** Law enforcement networks are non-static; kingpins adapt phone numbers, vehicles, and intermediaries across time. Retrospective static graphs hide these operational adaptations.
+- **Alternatives Considered:**
+  - *Ad-hoc timestamp filters on every graph query:* Slow, non-deterministic, and cannot compare two discrete investigative states.
+- **Consequences:** Enables investigators to scrub time windows and observe syndicate reorganization deterministically.
+
+---
+
+## DEC-008 — Network Pulse & Structural Significance Filtering
+- **Date:** 2026-09-17
+- **Status:** Accepted & Roadmap P0
+- **Decision:** Implement `NetworkPulseService` to filter raw graph diffs into qualified `NetworkPulse` intelligence records:
+  1. Raw edge additions (e.g. routine calls) do not trigger alarms; only high-significance structural changes (new bridge to a dormant syndicate, identifier transition, cross-jurisdiction transfer) generate a Pulse.
+  2. Pulses are prioritized purely for investigator review priority (`CRITICAL_REVIEW`, `PRIORITY_REVIEW`, `ROUTINE_REVIEW`). Under no circumstances is priority converted into a "guilt" or "dangerousness" score.
+  3. Every pulse carries explicit pointers to supporting evidence records, action windows, and uncertainty metrics.
+- **Reason:** Prevents alert fatigue and information overload for investigating officers.
+- **Alternatives Considered:**
+  - *Alert on every added edge:* Generates hundreds of trivial notifications, diluting high-value intelligence.
+- **Consequences:** High signal-to-noise ratio in the investigator worklist while upholding non-negotiable ethical boundaries.
+
+---
+
+## DEC-009 — Multi-State Evidence Sufficiency & Contradiction Model
+- **Date:** 2026-09-17
+- **Status:** Accepted & Roadmap P0
+- **Decision:** Model evidence sufficiency through explicit discrete epistemic states:
+  - `SUPPORTS`: Concrete official record directly substantiates the relationship.
+  - `CONFLICTS`: Independent evidence contradicts the claimed fact (e.g., CDR tower in Delhi while FIR narrative claims presence in Bengaluru).
+  - `MISSING`: Relationship is suspected or inferred but lacks mandatory corroborating documentation.
+  - `INFERRED`: Derived via deterministic graph clustering or phonetic similarity; awaiting corroboration.
+  - `VERIFIED`: Confirmed by an authorized investigating officer after reviewing primary documents.
+- **Reason:** Legal prosecution requires evidentiary sufficiency, not just statistical likelihood. Contradictory evidence must be surfaced transparently rather than silently smoothed over.
+- **Alternatives Considered:**
+  - *Single floating-point confidence score (0.0 - 1.0):* Obscures whether a low score is due to missing data or active contradiction.
+- **Consequences:** Absolute clarity in investigative dossiers; legal defensibility under scrutiny in judicial cross-examination.
+
+---
+
+## DEC-010 — Constrained Early-Warning Forecasting & Mandatory Abstention
+- **Date:** 2026-09-17
+- **Status:** Accepted & Roadmap P0
+- **Decision:** Architect the `EarlyWarningService` with strictly constrained forecast targets and a mandatory abstention gate:
+  1. **Permitted Targets:** Narrow operational state transitions:
+     - `JURISDICTION_SHIFT` (activity moving to neighboring district/state)
+     - `COMMUNICATION_PATTERN_SHIFT` (sudden radio silence or shift to encrypted/burner channels)
+     - `FINANCIAL_ROUTE_TRANSITION` (re-routing through mule accounts after a freeze)
+     - `IDENTIFIER_DRIFT` (phone/vehicle transition)
+     - `NETWORK_RESTRUCTURING` (intermediary replacement)
+  2. **Prohibited Targets:** Guilt, criminality propensity, future crime commission, dangerousness, or recidivism risk.
+  3. **Mandatory Abstention:** If supporting evidence is below sufficiency thresholds, stale (>90 days), or conflicting, the service MUST output `INSUFFICIENT EVIDENCE / NO FORECAST`.
+- **Reason:** Algorithmic bias and black-box crime prediction violate human rights and Indian constitutional norms. Forecasting must be strictly restricted to network topology and operational logistics.
+- **Alternatives Considered:**
+  - *Predictive recidivism scoring:* Unconstitutional, legally inadmissible, and ethically prohibited.
+- **Consequences:** Provides actionable operational leads for law enforcement while ensuring strict legal compliance.
+
+---
+
+## DEC-011 — Role-Gated Cross-Branch Intelligence Pulse Routing
+- **Date:** 2026-09-17
+- **Status:** Accepted & Roadmap P1
+- **Decision:** Structure inter-case and inter-jurisdictional intelligence propagation into `IntelligencePulse` packets:
+  1. Automated bridge detection between independent cases (e.g. Case A in Bengaluru and Case B in Mumbai) generates an unrouted candidate pulse.
+  2. Propagation is strictly governed by RBAC/ABAC: only supervisors/analysts with appropriate clearance can authorize transmission.
+  3. Transmission and acknowledgement are logged in the immutable audit log with full actor provenance.
+- **Reason:** Inter-unit rivalry and data siloing hinder coordinated action against multi-state syndicates, but unvetted sharing risks investigative compromise and leaks.
+- **Alternatives Considered:**
+  - *Global shared graph across all stations without access gating:* Violates operational security and need-to-know principles.
+- **Consequences:** Controlled, audited, and secure cross-station collaboration.
+
+---
+
+## DEC-012 — Controlled SOCMINT & Digital Shadow Evidence Governance
+- **Date:** 2026-09-17
+- **Status:** Accepted & Roadmap P1
+- **Decision:** Ingest digital signals (e.g. social media handles, marketplace postings, messaging identifiers) strictly as controlled evidence items under explicit governance:
+  1. Only authorized, lawful, and publicly available or legally subpoenaed signals are ingested.
+  2. Association states follow an explicit progression:
+     $$\text{OBSERVED} \to \text{CANDIDATE LINK} \to \text{CORROBORATED} \to \text{INVESTIGATOR CONFIRMED}$$
+  3. A digital handle or profile match is NEVER sufficient proof of legal identity by itself; it requires independent hard-identifier corroboration (phone, IMEI, Aadhaar token, banking).
+- **Reason:** Unregulated digital scraping produces false positives, violates privacy rights, and fails statutory standards of evidence.
+- **Alternatives Considered:**
+  - *Full automated identity merging from social handles:* Severe risk of false citizen implication.
+- **Consequences:** Preserves civil liberties, complies with DPDP Act 2023, and delivers verifiable digital corroboration.

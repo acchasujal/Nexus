@@ -1,73 +1,105 @@
 # NEXUS — Intelligence Processing Pipeline
 
-The NEXUS intelligence pipeline transforms heterogeneous, unstructured, and noisy crime records into an evidence-grounded graph intelligence workspace.
+The NEXUS intelligence pipeline transforms heterogeneous, unstructured, and noisy crime records into an evidence-grounded, proactive network intelligence workspace.
+
+---
+
+## 1. The 11-Stage Proactive Intelligence Lifecycle
+
+NEXUS evolves from a 7-stage retrospective graph pipeline into an **11-stage proactive intelligence lifecycle**:
 
 ```mermaid
-flowchart LR
-    S1[1. Multi-Source Ingestion] --> S2[2. Normalization & NER]
-    S2 --> S3[3. Entity Resolution]
-    S3 --> S4[4. Graph Construction]
-    S4 --> S5[5. Modularity & Centrality]
-    S5 --> S6[6. Temporal Sequencing]
-    S6 --> S7[7. Provenance & Copilot]
+flowchart TD
+    subgraph RetrospectiveFoundation ["Baseline Foundation (Stages 1-4)"]
+        S1["1. Multi-Source Ingestion<br/>(FIR, CDR, Bank, Intel)"] --> S2["2. Normalization & Indian NER<br/>(Phonetic Tokenization)"]
+        S2 --> S3["3. Entity Resolution<br/>(Double Metaphone + Jaccard)"]
+        S3 --> S4["4. Knowledge Graph Assembly<br/>(In-Memory Store + Neo4j)"]
+    end
+
+    subgraph ProactiveChangePlane ["Proactive Network Change Plane (Stages 5-9)"]
+        S4 --> S5["5. Temporal State & Snapshots<br/>(GraphSnapshot Serialization)"]
+        S5 --> S6["6. Network Diffing<br/>(O(N+E) Structural Comparison)"]
+        S6 --> S7["7. Network Pulse Filtering<br/>(Significance & Review Priority)"]
+        S7 --> S8["8. Evidence Assessment<br/>(Supports / Conflicts / Missing)"]
+        S8 --> S9["9. Constrained Early Warning<br/>(Operational Forecast + Abstention)"]
+    end
+
+    subgraph InvestigatorAction ["Action, Governance & Learning (Stages 10-11)"]
+        S9 --> S10["10. Next Best Verification<br/>& Intelligence Routing"]
+        S10 --> S11["11. Human Decision & Closed Loop<br/>(Audit Trail & Graph Refresh)"]
+        S11 -.->|"Updates Graph & New Snapshot"| S5
+    end
 ```
 
 ---
 
-## Pipeline Stage Breakdown
+## 2. Detailed Pipeline Stage Breakdown
 
-### 1. Multi-Source Ingestion
-- **Purpose:** Ingest unstructured crime reports and structured telemetry logs.
-- **Input:** PDF/TXT FIR narratives, CSV CDR phone logs, IMPS/NEFT/UPI bank transaction files.
-- **Output:** Canonical JSON document records.
-- **Status:** **Implemented** (local file readers & synthetic generator).
-- **Technology:** Python `json`, standard CSV/text parsers.
-- **Known Limitations:** Ingestion of proprietary scanned TIFF/OCR formats currently requires pre-processing into text.
+### Stage 1: Multi-Source Ingestion
+- **Implementation Status:** **CURRENT / IMPLEMENTED**
+- **Input:** Unstructured FIR text narratives, structured CSV CDR telephony logs, bank transfer ledgers (IMPS/UPI/NEFT), field intelligence memos.
+- **Processing:** Validates column formats, sanitizes input strings, and canonicalizes records into standard JSON schemas.
+- **Output:** Canonical ingestion payload with computed SHA-256 raw digests.
 
-### 2. Entity Normalization & Extraction
-- **Purpose:** Extract standardized entities and clean noisy Indian vernacular text.
-- **Input:** Raw textual narratives and structured records.
-- **Output:** Normalized name tokens, phone numbers (10-digit MSISDN), vehicle registrations (e.g. `KA01AB1001`), and UTC timestamps.
-- **Status:** **Implemented**.
-- **Technology:** Python regex normalizers, custom Indian phonetic normalizer (`phonetic_normalize`).
-- **Known Limitations:** Custom domain spaCy fine-tuning is planned for Phase 2.
+### Stage 2: Entity Normalization & Extraction
+- **Implementation Status:** **CURRENT / IMPLEMENTED**
+- **Input:** Raw narrative text and telemetry records.
+- **Processing:** Extracts phone numbers (10-digit MSISDN), vehicle registrations (e.g. `KA01AB1001`), bank account numbers, and person names. Applies custom Indian phonetic normalization (`phonetic_normalize`) handling regional variations (`sh` ↔ `s`, `v` ↔ `b`, `ee` ↔ `i`, `ou` ↔ `u`).
+- **Output:** Normalized entity candidate attributes.
 
-### 3. Explainable Entity Resolution (Disambiguation)
-- **Purpose:** Resolve whether multiple suspect records represent the same individual without manual merging.
-- **Input:** Suspect candidate query vs. Graph person profiles.
-- **Output:** Match score ($0.0 - 1.0$), confidence tier (`MATCHED`, `PROBABLE_MATCH`, `REVIEW_REQUIRED`, `NOT_MATCHED`), and exact evidence breakdown.
-- **Status:** **Implemented & Benchmarked** (100% Precision / Recall on ground-truth dataset).
-- **Technology:** Character-bigram Jaccard, Double Metaphone-style phonetic clustering, alias lookups, and hard-ID corroboration.
-- **Known Limitations:** Full multi-attribute clustering runs in memory; large-scale distributed clustering (e.g. Apache Spark) is roadmap for 10M+ nodes.
+### Stage 3: Explainable Entity Resolution (Disambiguation)
+- **Implementation Status:** **CURRENT / IMPLEMENTED** (100% Precision / Recall on Ground-Truth Benchmark)
+- **Input:** Suspect candidate records vs. active graph person profiles.
+- **Processing:** Multi-factor weighted corroboration scoring:
+  - Indian Phonetic Match (Double Metaphone)
+  - Character-bigram Jaccard name similarity
+  - Hard-identifier corroboration (shared phone, IMEI, vehicle, national ID)
+- **Output:** Match score ($0.0 - 1.0$), confidence tier (`MATCHED`, `PROBABLE_MATCH`, `REVIEW_REQUIRED`), and mathematical evidence contribution breakdown.
 
-### 4. Knowledge Graph Construction
-- **Purpose:** Build unified in-memory property graph.
+### Stage 4: Knowledge Graph Construction & Projection
+- **Implementation Status:** **CURRENT / IMPLEMENTED**
 - **Input:** Normalized entities and typed relationships.
-- **Output:** Indexed `GraphStore` with bidirectional adjacency lists (`adj` and `radj`).
-- **Status:** **Implemented & Benchmarked** (Index build time: 6.05 ms for 445 nodes / 530 edges).
-- **Technology:** In-memory Python data structures, Neo4j 5 Cypher integration.
-- **Known Limitations:** Currently loads complete graph in memory; Neo4j server provides disk-backed persistence.
+- **Processing:** Constructs in-memory `GraphStore` with dual adjacency lists (`adj` and `radj`). Simultaneously synchronizes durable graph projections into Neo4j 5 using parameterized batch Cypher `UNWIND ... MERGE`.
+- **Output:** High-speed in-memory graph index (<0.025ms BFS) with disk-backed Neo4j durability.
 
-### 5. Syndicate Modularity & Bridge Centrality Analysis
-- **Purpose:** Discover criminal syndicate structures and isolate hidden kingpin brokers.
-- **Input:** `GraphStore` network topology.
-- **Output:** Community partition IDs, betweenness centrality scores, and articulation bridge nodes.
-- **Status:** **Implemented & Benchmarked** (Community detection: 46.07 ms; Bridge detection: 363.40 ms).
-- **Technology:** NetworkX Louvain modularity algorithm, betweenness centrality.
-- **Known Limitations:** Centrality on graphs exceeding 100,000 nodes requires approximate sampling or Neo4j GDS projection.
+### Stage 5: Temporal State & Snapshot Serialization
+- **Implementation Status:** **EXTENSION / IN PROGRESS**
+- **Input:** Graph state at discrete chronological intervals or after ingestion batches.
+- **Processing:** Generates immutable `GraphSnapshot` records with version hashes, node counts, and edge counts.
+- **Output:** Queryable point-in-time graph state.
 
-### 6. Temporal & Pattern Intelligence
-- **Purpose:** Reveal chronological communication spikes, fund layering paths, and shared burner phones.
-- **Input:** Timestamped event edges and entity attributes.
-- **Output:** Chronological timeline events, repeat accused lists, and shared attribute clusters.
-- **Status:** **Implemented**.
-- **Technology:** Temporal interval queries, reverse edge index scans.
-- **Known Limitations:** Visual timeline handles up to 10,000 events before requiring client-side virtualized scrolling.
+### Stage 6: Deterministic Network Diffing
+- **Implementation Status:** **CURRENT IN ENGINE (`snapshot_diff.py`) / API EXTENSION IN PROGRESS**
+- **Input:** Two graph snapshots (`snapshot_before`, `snapshot_after`) or temporal boundaries.
+- **Processing:** Executes pure, non-mutating $O(N + E)$ comparison. Identifies added/removed nodes, added/removed relationships, bridge transitions, and property modifications.
+- **Output:** Typed `GraphSnapshotDiff` containing structural change metrics.
 
-### 7. Evidence Provenance & Grounded Copilot
-- **Purpose:** Answer natural-language investigative questions with citations, while refusing unethical guilt predictions.
-- **Input:** Officer natural language query + active case context.
-- **Output:** Grounded answer, structured `GroundedCitation` list, refusal status, and suggested graph actions.
-- **Status:** **Implemented & Benchmarked** (100% refusal gate accuracy across canonical test suite).
-- **Technology:** `CopilotService`, deterministic intent parser, safety refusal gate.
-- **Known Limitations:** Local quantized LLM for zero-shot natural language Cypher generation is scheduled for Phase 2.
+### Stage 7: Network Pulse & Structural Significance Filtering
+- **Implementation Status:** **ROADMAP P0 / NEXT PROTOTYPE**
+- **Input:** Raw `GraphSnapshotDiff` events.
+- **Processing:** Filters out routine edge changes; scores structural significance based on bridge emergence to dormant syndicates, identifier shifts, or cross-jurisdictional financial movement.
+- **Output:** Qualified `NetworkPulse` records assigned review priority (`CRITICAL_REVIEW`, `PRIORITY_REVIEW`, `ROUTINE_REVIEW`).
+
+### Stage 8: Evidence Assessment & Contradiction Checking
+- **Implementation Status:** **ROADMAP P0 / NEXT PROTOTYPE**
+- **Input:** Claimed relationships within a `NetworkPulse`.
+- **Processing:** Evaluates evidence completeness and consistency. Classifies supporting records into `SUPPORTS`, `CONFLICTS`, `MISSING`, `INFERRED`, or `VERIFIED`.
+- **Output:** `EvidenceAssessment` report with provenance chains and freshness metrics.
+
+### Stage 9: Constrained Early Warning & Mandatory Abstention
+- **Implementation Status:** **ROADMAP P0 / NEXT PROTOTYPE**
+- **Input:** Verified `NetworkPulse` and `EvidenceAssessment`.
+- **Processing:** Forecasts narrowly defined operational state transitions (`JURISDICTION_SHIFT`, `COMMUNICATION_PATTERN_SHIFT`, `IDENTIFIER_DRIFT`, `NETWORK_RESTRUCTURING`). If evidence is sparse, stale, or contradictory, triggers mandatory abstention (`INSUFFICIENT EVIDENCE / NO FORECAST`).
+- **Output:** `Forecast` object with explicit uncertainty bounds and action windows.
+
+### Stage 10: Next Best Verification & Intelligence Pulse Routing
+- **Implementation Status:** **ROADMAP P0/P1 / NEXT PROTOTYPE**
+- **Input:** Missing evidence gaps and cross-case bridge detections.
+- **Processing:** Suggests role-aware verification plans (e.g. subpoena subscriber data). Dispatches structured `IntelligencePulse` packets to authorized investigators handling affected cases across police stations.
+- **Output:** Actionable verification recommendations and dispatched intelligence packets.
+
+### Stage 11: Human Decision, Audit & Closed-Loop Graph Update
+- **Implementation Status:** **CURRENT BASELINE (AUDIT & COPILOT) / EXTENSION FOR PULSES**
+- **Input:** Investigating officer actions (confirm candidate match, acknowledge pulse, resolve verification).
+- **Processing:** All decisions are immutably logged via `AuditService`. Confirmed relationships are merged into the graph, generating a new snapshot revision that feeds back into Stage 5.
+- **Output:** Updated knowledge graph with verified judicial provenance.

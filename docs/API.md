@@ -4,117 +4,98 @@ All API endpoints are served with prefix `/api/v1` (or root where configured) an
 
 ---
 
-## 1. Investigations & Cases
+## 1. Current Implemented APIs (Verified Baseline)
 
-### `GET /api/v1/investigations`
-Retrieve a paginated or filtered list of active criminal investigations.
-- **Query Parameters:**
-  - `district` *(optional)*: Filter by district name (e.g. `Bengaluru Urban`)
-  - `category` *(optional)*: Filter by crime category (e.g. `Narcotics & Drug Trafficking`)
-  - `status` *(optional)*: Filter by case status (`OPEN`, `UNDER_INVESTIGATION`, `CHARGESHEETED`)
-- **Response:** `list[InvestigationSummaryResponse]`
+### 1.1 Investigations & Case Management
+- **`GET /api/v1/investigations`**
+  - Query parameters: `district`, `category`, `status`
+  - Returns: `list[InvestigationSummaryResponse]`
+- **`GET /api/v1/investigations/{case_id}`**
+  - Returns comprehensive case details, accused persons, evidence items, and timestamps.
+- **`GET /api/v1/cases/{case_id}/overview`**
+  - Returns quick executive dashboard metrics for a specific FIR.
 
-### `GET /api/v1/investigations/{case_id}`
-Retrieve comprehensive details of a specific investigation including linked accused persons, evidence items, and timestamps.
-- **Response:** `InvestigationDetailResponse`
+### 1.2 Network Explorer & Graph Analytics
+- **`GET /api/v1/network/cases/{case_id}?depth=2`**
+  - Executes multi-hop BFS neighborhood expansion centered on a case node or suspect entity.
+- **`GET /api/v1/communities`**
+  - Returns Louvain modularity clusters identifying criminal syndicates.
+- **`GET /api/v1/influence/bridges`**
+  - Identifies critical articulation points bridging distinct syndicate cells.
+- **`GET /api/v1/influence/rankings`**
+  - Returns betweenness and degree centrality rankings.
+- **`GET /api/v1/nexus/network/path`**
+  - Pathfinder endpoint finding shortest paths and financial routes between two entities with edge citations.
 
----
+### 1.3 Explainable Entity Resolution
+- **`POST /api/v1/entity-resolution/resolve`**
+  - Resolves suspect candidate records against the knowledge graph using Indian phonetic matching and multi-attribute corroboration.
+  - Returns match confidence, matched fields, and mathematical contribution breakdowns.
+- **`GET /api/v1/nexus/entity-resolution/candidates`**
+  - Returns flagged cross-case resolution candidate pairs for human review.
+- **`POST /api/v1/nexus/entity-resolution/decide`**
+  - Records an investigator's decision (`CONFIRMED`, `REJECTED`, `DEFERRED`) on a candidate match.
 
-## 2. Network Explorer & Graph Analytics
+### 1.4 Patterns & Temporal Intelligence
+- **`GET /api/v1/patterns/repeat-offenders`**
+  - Lists repeat accused appearing across multiple FIRs.
+- **`GET /api/v1/patterns/shared-clusters`**
+  - Detects clusters of persons sharing phone numbers, vehicles, or addresses.
+- **`GET /api/v1/timeline?case_id={case_id}`**
+  - Returns chronological sequences of calls, transactions, and meetings.
 
-### `GET /api/v1/network/cases/{case_id}?depth=2`
-Execute a multi-hop BFS neighborhood expansion centered on a case node or suspect entity.
-- **Query Parameters:** `depth` (integer, 1 to 3)
-- **Response:** `NetworkGraphResponse` (`nodes`, `edges`, `centrality_scores`)
+### 1.5 Grounded Investigator Copilot
+- **`POST /api/v1/copilot/query`**
+  - Translates natural language investigative inquiries into verified graph facts with clickable Section 63 BSA evidence citations.
+  - Gated by an architectural **Ethical Refusal Gate** that halts queries requesting guilt, dangerousness, or recidivism predictions.
 
-### `GET /api/v1/communities`
-Retrieve detected criminal syndicates and community clusters.
-- **Response:** `list[CommunitySummaryResponse]`
+### 1.6 Evidence Provenance & Cryptographic Integrity
+- **`GET /api/v1/evidence/{evidence_id}`**
+  - Returns evidence item details and chain-of-custody provenance.
+- **`POST /api/v1/nexus/sources/{source_id}/verify`**
+  - Verifies raw evidence payload against stored SHA-256 digest, raising an audit alert if tampered.
 
-### `GET /api/v1/influence/bridges`
-Identify critical bridge nodes and articulation points connecting separate criminal syndicates.
-- **Response:** `list[BridgeNodeResponse]`
-
-### `GET /api/v1/influence/rankings`
-Retrieve high-influence network nodes ranked by betweenness and degree centrality.
-- **Response:** `list[InfluenceRankingResponse]`
-
----
-
-## 3. Explainable Entity Resolution
-
-### `POST /api/v1/entity-resolution/resolve`
-Resolve a suspect candidate record against the knowledge graph.
-- **Request Body:**
-  ```json
-  {
-    "full_name": "Vikram Sharma",
-    "phone_number": "9845012345",
-    "vehicle_number": "KA01AB1001",
-    "address_text": "Main Bazaar, Bengaluru Urban",
-    "confidence_threshold": 0.45,
-    "candidate_limit": 10
-  }
-  ```
-- **Response:**
-  ```json
-  {
-    "query": { ... },
-    "matches": [
-      {
-        "matched_node_id": "person-0002",
-        "confidence": 0.95,
-        "status": "MATCHED",
-        "matched_fields": ["full_name_phonetic", "phone_number"],
-        "reason": "Phonetic name match 'Bikram Sarma'; Matching phone (9845012345)",
-        "evidence_breakdown": {
-          "phone_number": 1.0,
-          "name_score": 1.0
-        },
-        "properties": { ... }
-      }
-    ]
-  }
-  ```
+### 1.7 Audit & System Telemetry
+- **`GET /api/v1/audit?limit=50`**
+  - Returns immutable append-only audit trail logs (Requires `SUPERVISOR` or `ADMIN` role).
+- **`GET /api/v1/system/status`**
+  - Returns real-time graph size, node counts, index build latencies, and Neo4j connection status.
+- **`GET /health`** & **`GET /ready`**
+  - Liveness and readiness probes for cloud container orchestration.
 
 ---
 
-## 4. Patterns & Temporal Intelligence
+## 2. Target API Contracts (Proactive Network Change Plane)
 
-### `GET /api/v1/patterns/repeat-offenders`
-List suspects appearing as accused across multiple distinct investigations.
+The following endpoints represent the target interface for upcoming P0 and P1 capabilities:
 
-### `GET /api/v1/patterns/shared-clusters`
-Detect clusters of persons sharing phone numbers, vehicles, or hideout locations.
+### 2.1 Graph Snapshots & Network Diff (P0)
+- **`GET /api/v1/nexus/snapshots`**
+  - List available point-in-time graph snapshots for an investigation.
+- **`GET /api/v1/nexus/diff?before={snapshot_id}&after={snapshot_id}`**
+  - Executes deterministic snapshot comparison using `NetworkDiffService`.
+  - Returns: Added/removed nodes, added/removed relationships, bridge transitions, community splits/merges, and identifier drift records.
 
-### `GET /api/v1/timeline?case_id={case_id}`
-Retrieve a chronological sequence of suspect meetings, communication bursts, and transactions.
+### 2.2 Network Pulse Queue (P0)
+- **`GET /api/v1/nexus/pulses?priority={CRITICAL_REVIEW}`**
+  - Retrieve filtered high-significance network change events.
+- **`GET /api/v1/nexus/pulses/{pulse_id}`**
+  - Inspect detailed pulse metrics, supporting evidence, and action windows.
 
----
+### 2.3 Evidence Sufficiency & Early Warning (P0)
+- **`POST /api/v1/nexus/pulses/{pulse_id}/assess-evidence`**
+  - Evaluates evidence state (`SUPPORTS`, `CONFLICTS`, `MISSING`) for claims in a pulse.
+- **`GET /api/v1/nexus/forecasts?case_id={case_id}`**
+  - Returns constrained operational state forecasts (`JURISDICTION_SHIFT`, `IDENTIFIER_DRIFT`) with explicit uncertainty and abstention status.
+- **`GET /api/v1/nexus/verification/{pulse_id}`**
+  - Returns suggested next-best verification actions.
 
-## 5. Grounded Investigator Copilot
+### 2.4 Cross-Branch Intelligence Pulse (P1)
+- **`GET /api/v1/nexus/intelligence-pulses`**
+  - Retrieve inbound cross-case intelligence packets affecting the investigator's assigned cases.
+- **`POST /api/v1/nexus/intelligence-pulses/{pulse_id}/acknowledge`**
+  - Acknowledge or reject receipt of routed intelligence, recorded in the audit log.
 
-### `POST /api/v1/copilot/query`
-Query the evidence-grounded intelligence copilot.
-- **Request Body:**
-  ```json
-  {
-    "query": "Show phone and syndicate links connected to case-0001",
-    "case_id": "case-0001"
-  }
-  ```
-- **Response:** `CopilotQueryResponse`
-  - `answer`: Grounded factual summary
-  - `grounded_citations`: List of verifiable source documents
-  - `is_refusal`: Boolean indicating if safety refusal gate was triggered
-  - `suggested_actions`: Contextual graph actions for investigator follow-up
-
----
-
-## 6. Audit & System Health
-
-### `GET /api/v1/audit?limit=50`
-Retrieve immutable audit logs (Requires `SUPERVISOR` or `ADMIN` role).
-
-### `GET /api/v1/system/status`
-Retrieve real-time graph size, node counts, and operational health metrics.
+### 2.5 Explainable Case DNA (P2)
+- **`GET /api/v1/nexus/case-dna/{case_id}`**
+  - Returns structural and topological similarity breakdown against historical syndicates.

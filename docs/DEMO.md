@@ -1,57 +1,73 @@
 # NEXUS — 3-Minute Live Demonstration Script
 
-> **Scenario:** Inter-state criminal syndicate operating across extortion cells, telecom burner chains, and mule bank accounts.
+> **Scenario:** Inter-state extortion and cyber-fraud syndicate adapting its network through burner device rotation and cross-border bank layering.
 
 ---
 
-## Live Demonstration Flow (3 Minutes)
+## 1. Proactive Demonstration Flow (3 Minutes)
 
 ```mermaid
 journey
     title 3-Minute Live Demonstration Journey
-    section 0:00 - 0:30 Ingestion
-      Upload FIR, CDR, & Bank Logs: 5: Investigator
-      Automatic Normalization: 5: NEXUS
-    section 0:30 - 1:10 Entity Resolution
-      Disambiguate 'Raju @ Munna': 5: NEXUS
-      Explainable Match Breakdown: 5: Investigator
-    section 1:10 - 1:50 Syndicate Centrality
-      Louvain Community Detection: 5: NEXUS
-      Betweenness Centrality isolates Kingpin: 5: Investigator
-    section 1:50 - 2:25 Temporal & Provenance
-      Scrub Chronological Timeline: 5: Investigator
-      Inspect Clickable Edge Evidence: 5: Investigator
-    section 2:25 - 3:00 Grounded Copilot
-      Query Natural Language Copilot: 5: Investigator
-      Verifiable Citations & BSA Dossier: 5: NEXUS
+    section 0:00 - 0:35 Ingestion & Baseline
+      Load Disparate Crime Telemetry: 5: Investigator
+      Verify SHA-256 Provenance Hashes: 5: NEXUS
+    section 0:35 - 1:15 Entity Resolution & Fusion
+      Disambiguate 'Vikram' vs 'Bikram': 5: NEXUS
+      Investigator Confirms Candidate Match: 5: Investigator
+    section 1:15 - 2:00 Network Diff & Network Pulse
+      Inject New Batch of CDR & Bank Logs: 5: Investigator
+      O(N+E) Network Diff detects Bridge: 5: NEXUS
+      Network Pulse alerts on Jurisdiction Shift: 5: Investigator
+    section 2:00 - 2:30 Evidence & Early Warning
+      Inspect Supports/Conflicts/Missing Badges: 5: Investigator
+      Constrained Forecast with Abstention: 5: NEXUS
+      Next Best Verification suggests Action: 5: Investigator
+    section 2:30 - 3:00 Intelligence Pulse & Copilot
+      Dispatch Intelligence Pulse to Mumbai Cell: 5: Investigator
+      Copilot Explains Facts with BSA Citations: 5: NEXUS
+      Ethical Refusal Gate rejects Guilt Score: 5: NEXUS
 ```
 
-### 1. Ingestion & Normalization (0:00 – 0:30)
-- **Investigator Narrative:**  
-  *"Organized crime rings operate across state boundaries using burner SIMs, mule accounts, and aliases. An investigator receives three disparate data streams: an extortion FIR from Delhi, a CDR dump from a cyber cell in Haryana, and a bank statement from Mumbai."*
-- **Action on Screen:**  
-  Navigate to the Investigations overview. Open **FIR-2026-0001**, displaying connected accused persons, phone records, and seized physical evidence.
+---
 
-### 2. Multi-Factor Entity Resolution (0:30 – 1:10)
-- **Investigator Narrative:**  
-  *"Notice the suspect names: 'Vikram Sharma' in the FIR and 'Bikram Sarma' in the bank logs. In standard databases, they exist as disconnected people. NEXUS applies phonetic normalization and matches a shared phone/vehicle, resolving them with 95% confidence."*
-- **Action on Screen:**  
-  Open **Entity Resolution** tab. Execute search for `Vikram Sharma` (`9845012345`). Click on the resolved match candidate to display the mathematical evidence contribution breakdown.
+## 2. Minute-by-Minute Demonstration Script
 
-### 3. Kingpin & Bridge Broker Discovery (1:10 – 1:50)
+### Minute 0:00 – 0:35: Multi-Source Ingestion & Evidence Provenance
 - **Investigator Narrative:**  
-  *"Who coordinates the syndicate? Counting raw phone calls only catches low-level operatives. But when we execute Betweenness Centrality and Community Detection, NEXUS isolates the bridge broker who connects the extortion cell to the cyber hawala ring."*
+  *"Organized criminal networks do not respect district boundaries. In Indian policing, intelligence arrives piecemeal: an extortion FIR in Bengaluru, a CDR dump from a cyber cell in Haryana, and a bank transaction sheet from Mumbai. NEXUS ingests these multi-modal streams and immediately locks every record into an immutable SHA-256 cryptographic chain conforming to Section 63 of the Bharatiya Sakshya Adhiniyam, 2023."*
 - **Action on Screen:**  
-  Open **Patterns & Communities** and **Network Explorer**. Highlight the two distinct modular communities and the bridge broker connecting them.
+  1. Navigate to **Investigations** (`/worklist`). Open **FIR-2026-0001**.
+  2. Open the **Evidence Drawer**. Click **[Verify Integrity]** to show real-time SHA-256 validation passing with 0 mismatches.
 
-### 4. Temporal Intelligence & Evidence Provenance (1:50 – 2:25)
+### Minute 0:35 – 1:15: Explainable Entity Resolution & Human Decision
 - **Investigator Narrative:**  
-  *"To build an airtight legal case, we scrub our chronological timeline slider to watch the syndicate coordinate prior to the offense. Clicking any relationship edge opens the Evidence Provenance Sheet, showing the exact FIR number, CDR call log timestamp, and transaction reference."*
+  *"Notice the primary suspects: 'Vikram Sharma' in Bengaluru and 'Bikram Sarma' in Mumbai. Traditional databases treat them as separate individuals. NEXUS applies phonetic normalization and matches a shared IMEI and vehicle, resolving them with 95% confidence. But AI does not make the final call—the officer reviews the mathematical breakdown and confirms the merge."*
 - **Action on Screen:**  
-  Open **Timeline & Events**. Scrub across event dates. Open **Evidence Registry** to inspect chain-of-custody metadata.
+  1. Open **Entity Fusion** (`/fusion`).
+  2. Inspect candidate pair `Vikram Sharma` ↔ `Bikram Sarma`. Show the phonetic and identifier contribution weights.
+  3. Click **[Confirm Match]**. Show that the decision is immediately logged in the immutable audit log.
 
-### 5. Grounded Investigator Copilot (2:25 – 3:00)
+### Minute 1:15 – 2:00: Network Diff & Network Pulse
 - **Investigator Narrative:**  
-  *"An investigator asks: 'Show phone and syndicate links connected to case-0001'. The copilot answers strictly from verified graph facts, backed by clickable citations. If an officer asks for an illegal prediction like 'Is suspect X guilty?', the safety refusal gate intercepts and politely refuses."*
+  *"NEXUS does not stop at showing static connections. When new CDR logs or financial transactions arrive, our deterministic Network Diff engine compares graph snapshots in sub-millisecond time. Rather than flooding the officer with hundreds of trivial calls, Network Pulse isolates the emergence of an articulation bridge connecting an extortion cell to a hawala syndicate."*
 - **Action on Screen:**  
-  Open **Investigator Copilot**. Query analytical question to see citations. Submit prohibited query (`Is the accused guilty?`) to demonstrate the safety refusal banner.
+  1. Navigate to **Network Explorer** (`/network`). Toggle the **Snapshot Diff Overlay**.
+  2. Green highlights show newly added relationship edges; dashed borders highlight the newly emerged bridge node.
+  3. Show the **Network Pulse** review card flagged with `CRITICAL_REVIEW`.
+
+### Minute 2:00 – 2:30: Evidence Assessment, Early Warning & Abstention
+- **Investigator Narrative:**  
+  *"How do we know this lead is sound? Our Evidence Assessment engine classifies supporting documentation into SUPPORTS, CONFLICTS, and MISSING. Furthermore, NEXUS features a constrained Early-Warning Engine: it forecasts operational movements like JURISDICTION_SHIFT, but if evidence is contradictory or stale, it explicitly abstains. Next Best Verification immediately recommends the exact legal step required—such as obtaining a Section 91 CrPC subscriber verification."*
+- **Action on Screen:**  
+  1. Click the Pulse card to display the **Evidence Assessment** panel. Highlight the `SUPPORTS` and `MISSING` badges.
+  2. Show the **Early Warning Card** indicating `Target State: JURISDICTION_SHIFT (Action Window: 48h)`.
+  3. Demonstrate the **Next Best Verification** recommendation.
+
+### Minute 2:30 – 3:00: Cross-Branch Intelligence Pulse & Refusal Firewall
+- **Investigator Narrative:**  
+  *"Finally, how do we alert the Mumbai Cyber Cell? NEXUS packages the verified lead into a structured Intelligence Pulse, routing it securely based on RBAC clearance. To interrogate the case, the officer turns to the Grounded Copilot. If an officer asks 'Is the suspect guilty?', our ethical refusal firewall intercepts the query, preserving the constitutional prerogative of the judiciary."*
+- **Action on Screen:**  
+  1. Click **[Dispatch Intelligence Pulse]** to send the packet to the affected investigation.
+  2. Open **Copilot** (`/copilot`). Query: *"Show phone and syndicate links connected to case-0001"*. Show verifiable citations.
+  3. Query: *"Is the accused guilty?"*. Show the immediate ethical refusal interceptor explanation.

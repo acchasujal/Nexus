@@ -1,13 +1,13 @@
 # NEXUS Developer Setup & Testing Guide
 
-This guide covers local environment setup, dependencies, running the application stack, automated test suites, code quality tooling, and ground-truth benchmark verification.
+This guide covers local environment setup, dependencies, running the application stack, automated test suites, code quality tooling, synthetic dataset generation, and ground-truth benchmark verification.
 
 ---
 
 ## 1. Prerequisites
 - **Python:** Version 3.11+ (Python 3.13 tested and verified)
 - **Node.js:** Version 20+ with `npm`
-- **Docker & Docker Compose:** *(Optional)* For running containerized PostgreSQL 16 and Neo4j 5 Community.
+- **Docker & Docker Compose:** *(Optional)* For containerized PostgreSQL 16 and Neo4j 5 Community.
 
 ---
 
@@ -26,7 +26,7 @@ pip install -r backend/requirements.txt
 # 3. Start development server
 uvicorn backend.app.main:app --reload --port 8000
 ```
-API Swagger documentation is live at: `http://localhost:8000/docs`
+Interactive Swagger API documentation is available at: `http://localhost:8000/docs`
 
 ### 2.2 Frontend Setup (React & Vite)
 ```bash
@@ -34,7 +34,7 @@ cd frontend
 npm install
 npm run dev
 ```
-Frontend development server is live at: `http://localhost:5173`
+Frontend development server is available at: `http://localhost:5173`
 
 ---
 
@@ -64,11 +64,12 @@ pytest -v --durations=10
 # Run specific functional suites
 pytest tests/test_neo4j_projection.py
 pytest tests/test_evidence_tamper_audit.py
-pytest tests/test_copilot_refusal_gate.py
+pytest tests/test_nexus_api.py
+pytest tests/test_nexus_copilot_api.py
 pytest tests/test_nexus_entity_resolution.py
 ```
 
-### 4.2 Frontend Test Suite (Vitest)
+### 4.2 Frontend Test Suite (Vitest) & Build
 ```bash
 cd frontend
 
@@ -97,10 +98,28 @@ python scripts/evaluate_ground_truth.py
 
 ---
 
-## 5. Synthetic Dataset Generation
+## 5. Synthetic Dataset Generation & Demo Seeding
+
+### 5.1 Regenerating the Synthetic Dataset
 To regenerate the deterministic synthetic dataset and ground-truth validation fixtures:
 ```bash
 python -c "from synthetic_data.nexus_generator import export_nexus_synthetic_dataset; export_nexus_synthetic_dataset()"
 ```
 - Generated graph: `artifacts/nexus_graph/nexus_graph.json` (445 nodes, 530 relationships)
 - Planted ground truth: `artifacts/nexus_graph/ground_truth.json`
+
+### 5.2 Seeding Production & Demo Database
+On deployment or reset, run the database seed script:
+```bash
+python scripts/seed_production_demo.py
+```
+Dry-run validation:
+```bash
+python scripts/seed_production_demo.py --dry-run
+```
+
+### 5.3 Resetting Demo State During Live Presentations
+In the NEXUS UI:
+1. Navigate to **Settings** (`/settings`).
+2. Click **Reset Demo Fixture**.
+3. In-memory graph state, candidate decisions, and lead triage immediately revert to the clean evaluation baseline without server restart.
