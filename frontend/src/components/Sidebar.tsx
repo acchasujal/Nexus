@@ -52,7 +52,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
-      name: 'Entity Fusion (Workbench)',
+      name: 'Entity Fusion',
       to: '/fusion',
       icon: GitMerge,
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
@@ -70,7 +70,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
-      name: 'Entity Search & Query',
+      name: 'Entity Search',
       to: '/entities',
       icon: Users,
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
@@ -100,7 +100,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
     },
     {
-      name: 'Audit Trail & BSA Anchors',
+      name: 'Audit & Integrity',
       to: '/audit',
       icon: ShieldCheck,
       roles: ['SUPERVISOR', 'ADMIN', 'SHO', 'SP']

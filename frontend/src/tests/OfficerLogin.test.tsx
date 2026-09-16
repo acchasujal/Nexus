@@ -95,8 +95,8 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
 
     // Brand and subtitle
     expect(screen.getByText('NEXUS')).toBeInTheDocument()
-    expect(screen.getByText(/AI-Powered Criminal Network Analysis & Investigation Platform/i)).toBeInTheDocument()
-    expect(screen.getByText(/Restricted Access · Authorized Personnel Only · Cryptographically Audited/i)).toBeInTheDocument()
+    expect(screen.getByText(/Investigative Network Intelligence Platform/i)).toBeInTheDocument()
+    expect(screen.getByText(/Restricted Access · All Sessions Cryptographically Audited/i)).toBeInTheDocument()
 
     // Inputs
     expect(screen.getByLabelText(/Officer ID \/ Service Identifier/i)).toBeInTheDocument()

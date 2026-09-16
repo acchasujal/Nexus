@@ -50,7 +50,7 @@ export function RouteErrorBoundary() {
         </div>
 
         <div className="pt-3 border-t border-neutral-100 text-[11px] text-neutral-400">
-          NEXUS Criminal Network Intelligence · SIH 2026 PS 26189
+          NEXUS · Criminal Network Intelligence Platform
         </div>
       </div>
     </div>

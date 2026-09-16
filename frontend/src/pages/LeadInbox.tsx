@@ -69,13 +69,28 @@ export default function LeadInbox() {
   const [evidenceDrawerEdgeId, setEvidenceDrawerEdgeId] = useState<string | null>(null)
   const [evidenceDrawerEvidenceId, setEvidenceDrawerEvidenceId] = useState<string | null>(null)
 
+  const [decisionNote, setDecisionNote] = useState('')
+  const [decisionSuccess, setDecisionSuccess] = useState<string | null>(null)
+
   const nodeLabel = (id: string) => afterNetwork.data?.nodes.find((n) => n.id === id)?.label ?? id
 
   const submit = async (decision: 'ACCEPT' | 'REJECT') => {
     setCopilotAnswer(null)
     setCopilotError(null)
+    if (!lead) return
+    const currentId = lead.id
     try {
-      await decide.mutateAsync({ id: lead!.id, req: { decision, decided_by: 'Investigating Officer' } })
+      await decide.mutateAsync({
+        id: currentId,
+        req: {
+          decision,
+          decided_by: 'Investigating Officer',
+          note: decisionNote.trim() || undefined,
+        },
+      })
+      setSelectedLeadId(currentId)
+      setDecisionSuccess(`Lead ${decision === 'ACCEPT' ? 'confirmed' : 'rejected'} successfully.`)
+      setTimeout(() => setDecisionSuccess(null), 3000)
     } catch (e) {
       setCopilotError(e instanceof Error ? e.message : 'Decision failed')
     }
@@ -207,8 +222,8 @@ export default function LeadInbox() {
                 <span className="rounded-md border border-neutral-200 bg-neutral-100 px-2 py-0.5 font-mono text-[10px] font-bold text-neutral-800">rule: {lead.rule_id}</span>
                 <DerivationBadge klass={lead.derivation_class} />
                 {lead.generation_mode && (
-                  <span className="rounded-md border border-purple-200 bg-purple-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-purple-900 flex items-center gap-1">
-                    <Sparkles className="h-3 w-3 text-purple-600" /> {lead.generation_mode}
+                  <span className="rounded-md border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-neutral-800 flex items-center gap-1">
+                    <Sparkles className="h-3 w-3 text-blue-600" /> {lead.generation_mode.replace('_FALLBACK', '').replace('_', ' ')}
                   </span>
                 )}
                 {lead.status !== 'NEW' && (
@@ -219,7 +234,13 @@ export default function LeadInbox() {
                   </span>
                 )}
               </div>
-              <h2 className="text-lg sm:text-xl font-bold text-neutral-900">{lead.title}</h2>
+
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-neutral-900 leading-snug">{lead.title}</h3>
+                <p className="mt-1 text-xs text-neutral-500">
+                  Detected {lead.detected_at ? new Date(lead.detected_at).toLocaleString() : 'Recently'} · Lead Reference: <span className="font-mono text-neutral-700">{lead.id}</span>
+                </p>
+              </div>
               <div className="pt-1"><EvidenceDossierActions request={{ lead_id: lead.id }} /></div>
               
               {/* Rich Markdown Explanation */}
@@ -273,8 +294,35 @@ export default function LeadInbox() {
 
             {/* Officer Decision Bar */}
             <div className="rounded-xl border border-neutral-200/90 bg-white p-5 shadow-xs space-y-3">
-              <h3 className="text-sm font-bold text-neutral-900">Investigative Action &amp; Triage</h3>
-              <div className="flex flex-wrap gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-neutral-900">Investigative Action &amp; Triage</h3>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  Record an authoritative decision for this lead in the immutable investigative record.
+                </p>
+              </div>
+
+              {decisionSuccess && (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-900 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>{decisionSuccess}</span>
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="lead-decision-notes" className="block text-xs font-semibold text-neutral-700 mb-1">
+                  Officer Rationale / Notes (Optional)
+                </label>
+                <textarea
+                  id="lead-decision-notes"
+                  rows={2}
+                  value={decisionNote}
+                  onChange={(e) => setDecisionNote(e.target.value)}
+                  placeholder="e.g., Verified CDR overlap with suspect SIM. Proceeding with formal summon."
+                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-xs text-neutral-900 placeholder-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-3 pt-1">
                 <button
                   onClick={() => submit('ACCEPT')}
                   disabled={decide.isPending}

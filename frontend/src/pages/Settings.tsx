@@ -33,9 +33,9 @@ export default function Settings() {
         subtitle="Manage synthetic demo data and test scenario resets"
       >
         <div className="space-y-4">
-          <div className="rounded-lg bg-amber-50/70 border border-amber-200/80 p-4 text-xs text-amber-950 leading-relaxed space-y-1.5 shadow-2xs">
-            <div className="font-bold text-amber-900 flex items-center gap-1.5">
-              <span>🛡️ Hackathon Prototype Disclosure:</span>
+          <div className="rounded-lg bg-neutral-50 border border-neutral-200 p-4 text-xs text-neutral-800 leading-relaxed space-y-1.5 shadow-2xs">
+            <div className="font-bold text-neutral-900 flex items-center gap-1.5">
+              <span>Evaluation Prototype Disclosure:</span>
             </div>
             <p>
               This system runs against <strong>synthetic intelligence fixtures</strong> generated for evaluation. Authentication is provided in role-switching demo mode and is not production SSO. Zero real citizen PII is processed.

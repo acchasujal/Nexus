@@ -7,9 +7,7 @@ import {
   Bell, 
   Search, 
   Keyboard, 
-  RotateCcw, 
-  Loader2, 
-  Check, 
+  Loader2,
   Briefcase, 
   User, 
   Phone,
@@ -22,7 +20,7 @@ import {
   X as CloseX 
 } from 'lucide-react'
 import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog'
-import { useNexusSearch, useResetDemo } from '@/hooks/useNexus'
+import { useNexusSearch } from '@/hooks/useNexus'
 
 interface HeaderProps {
   onMenuToggle: () => void
@@ -109,19 +107,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
   }, [query, searchResults])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Reset demo mutation
-  const resetMutation = useResetDemo()
-  const [resetSuccess, setResetSuccess] = useState(false)
 
-  const handleReset = async () => {
-    try {
-      await resetMutation.mutateAsync()
-      setResetSuccess(true)
-      setTimeout(() => setResetSuccess(false), 2000)
-    } catch {
-      // handled by mutation
-    }
-  }
 
   // Close search dropdown on click outside
   useEffect(() => {
@@ -355,26 +341,6 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
         {/* Utility Actions */}
         <div className="flex items-center space-x-1.5 sm:space-x-2 lg:space-x-3 shrink-0">
-          {/* Reset Demo Button */}
-          <button
-            onClick={handleReset}
-            disabled={resetMutation.isPending}
-            className="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-2 sm:px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 shadow-sm transition-colors"
-            title="Reset synthetic demo fixture to original state"
-            aria-label="Reset Demo Fixture"
-          >
-            {resetMutation.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
-            ) : resetSuccess ? (
-              <Check className="h-3.5 w-3.5 text-emerald-600" />
-            ) : (
-              <RotateCcw className="h-3.5 w-3.5 text-neutral-500" />
-            )}
-            <span className="hidden sm:inline">
-              {resetMutation.isPending ? 'Resetting…' : resetSuccess ? 'Reset!' : 'Reset Demo'}
-            </span>
-          </button>
-
           {/* Table Density Selector */}
           <div
             className="hidden md:flex items-center rounded-lg bg-neutral-100 p-0.5 text-xs font-semibold border border-neutral-200"
