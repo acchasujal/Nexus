@@ -120,6 +120,10 @@ class EvidenceDossierService:
             leads = self._lead_svc.get_leads()
             lead_info = next((lead for lead in leads if lead.id == request.lead_id), None)
             if not lead_info:
+                from backend.app.api.nexus_routes import _demo_state
+                if _demo_state.lead and _demo_state.lead.id == request.lead_id:
+                    lead_info = _demo_state.lead
+            if not lead_info:
                 raise KeyError(f"Investigative Lead '{request.lead_id}' not found.")
 
             # Gather evidence items cited in lead

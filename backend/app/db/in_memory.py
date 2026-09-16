@@ -112,6 +112,125 @@ class InMemoryBackendRepository:
         raw = json.loads(artifact_path.read_text(encoding="utf-8"))
         self.nodes = {str(node["id"]): dict(node) for node in raw.get("nodes", [])}
         self.edges = [dict(edge) for edge in raw.get("edges", [])]
+        self._seed_default_source_records()
+
+    def _seed_default_source_records(self) -> None:
+        """Seed canonical forensic source records so citations resolve deterministically."""
+        default_sources = {
+            "SRC-FIR-141": {
+                "id": "SRC-FIR-141",
+                "batch_id": "BATCH-2026-08-24",
+                "source_type": "FIR",
+                "locator": "fir_141_2026.pdf — page 2, row 4 (accused list)",
+                "raw_excerpt": "Accused: Rafiq Khan, s/o Iqbal Khan, age 35, res. Hootagalli, Mysuru. Mobile disclosed: +91 98450 11223.",
+                "occurred_at": "2026-02-11T09:30:00Z",
+                "case_ids": ["CASE-141"],
+                "content_hash": "2f6a96ef1d0b38bc9381c855a02cfc2de25df963ebefc0bb4f04c0ec23a85b9b",
+                "hash_algorithm": "SHA-256",
+            },
+            "SRC-FIR-207": {
+                "id": "SRC-FIR-207",
+                "batch_id": "BATCH-2026-08-24",
+                "source_type": "FIR",
+                "locator": "fir_207_2026.pdf — page 1, row 7 (accused list)",
+                "raw_excerpt": "Accused: Rafiq Ahmed, s/o Iqbal Khan, age 35, res. Hootagalli Colony, Mysuru. Mobile: +91 98450 11223.",
+                "occurred_at": "2026-03-02T14:15:00Z",
+                "case_ids": ["CASE-207"],
+                "content_hash": "7d9959e19d7b42aa1527c70c04f9810f60c70428efb0451a44e59174df44b4c7",
+                "hash_algorithm": "SHA-256",
+            },
+            "SRC-CDR-A12": {
+                "id": "SRC-CDR-A12",
+                "batch_id": "BATCH-2026-08-24",
+                "source_type": "CDR",
+                "locator": "cdr_mysuru_feb.csv — row 1287 (A-party +91 98450 11223)",
+                "raw_excerpt": "2026-02-14T22:41:05Z, +91 98450 11223 → +91 99801 55210, duration 412s, cell 4701-Hootagalli.",
+                "occurred_at": "2026-02-14T22:41:05Z",
+                "case_ids": ["CASE-141"],
+                "content_hash": "a189f7d466f289cf30c49eb9e782d09bb2f35d283ad6f73db5817cbe30c50009",
+                "hash_algorithm": "SHA-256",
+            },
+            "SRC-CDR-B31": {
+                "id": "SRC-CDR-B31",
+                "batch_id": "BATCH-2026-08-24",
+                "source_type": "CDR",
+                "locator": "cdr_bengaluru_mar.csv — row 4402 (A-party +91 98450 11223)",
+                "raw_excerpt": "2026-03-05T02:12:44Z, +91 98450 11223 → +91 98450 77310, duration 96s, cell 6112-Whitefield.",
+                "occurred_at": "2026-03-05T02:12:44Z",
+                "case_ids": ["CASE-207"],
+                "content_hash": "20b2241cfb25a3d7637841c7b3991c0e3a6c116d790d9326e6ef1c3cb16ff369",
+                "hash_algorithm": "SHA-256",
+            },
+            "SRC-TXN-55": {
+                "id": "SRC-TXN-55",
+                "batch_id": "BATCH-2026-08-24",
+                "source_type": "BANK_TXN",
+                "locator": "txns_axis_9914.csv — row 55",
+                "raw_excerpt": "2026-03-09T11:03:00Z, ACC-9914 → ACC-7731, ₹4,80,000, ref NIFT/20260309/5521.",
+                "occurred_at": "2026-03-09T11:03:00Z",
+                "case_ids": ["CASE-141", "CASE-207"],
+                "content_hash": "f68d90fae134df39c5957d191295bcfcfbc8732890ae15bb7c44040a455dc87c",
+                "hash_algorithm": "SHA-256",
+            },
+            "SRC-TXN-71": {
+                "id": "SRC-TXN-71",
+                "batch_id": "BATCH-2026-08-24",
+                "source_type": "BANK_TXN",
+                "locator": "txns_axis_9914.csv — row 71",
+                "raw_excerpt": "2026-03-11T16:47:00Z, ACC-9914 → ACC-7731, ₹2,15,000, ref NIFT/20260311/8830.",
+                "occurred_at": "2026-03-11T16:47:00Z",
+                "case_ids": ["CASE-141", "CASE-207"],
+                "content_hash": "848da09c3f41a0d242637217db587d55c70ef37d1217e94e5a953e5eef725eb7",
+                "hash_algorithm": "SHA-256",
+            },
+            "SRC-FIR-305": {
+                "id": "SRC-FIR-305",
+                "batch_id": "BATCH-2026-08-24",
+                "source_type": "FIR",
+                "locator": "fir_305_2026.pdf — page 2, row 3",
+                "raw_excerpt": "Accused: Vikram Sharma, age 32, res. Indiranagar Bengaluru. Mobile: +91 98450 77310. Aadhaar: XXXX-XXXX-4491.",
+                "occurred_at": "2026-03-15T11:00:00Z",
+                "case_ids": ["CASE-305"],
+                "content_hash": "37f40778cba2207b1a646c2415d8f6f578dfca4b9671d18f553f1915eafe7539",
+                "hash_algorithm": "SHA-256",
+            },
+            "SRC-FIR-412": {
+                "id": "SRC-FIR-412",
+                "batch_id": "BATCH-2026-08-24",
+                "source_type": "FIR",
+                "locator": "fir_412_2026.pdf — page 1, row 5",
+                "raw_excerpt": "Accused: Bikram Sarma, age 32, res. Domlur Layout Bengaluru. Mobile: +91 98450 77310. Aadhaar: XXXX-XXXX-4491.",
+                "occurred_at": "2026-03-22T16:30:00Z",
+                "case_ids": ["CASE-412"],
+                "content_hash": "0f622d0577d612ec9bb399991207e78696b99480ffda32cf16995642a8b9e69c",
+                "hash_algorithm": "SHA-256",
+            },
+            "SRC-FIR-501": {
+                "id": "SRC-FIR-501",
+                "batch_id": "BATCH-2026-08-24",
+                "source_type": "FIR",
+                "locator": "fir_501_2026.pdf — page 3, row 2",
+                "raw_excerpt": "Accused: Suniel Shetty, s/o R. Shetty, age 41, res. Jayanagar Bengaluru. Vehicle: KA-01-AB-1001.",
+                "occurred_at": "2026-04-02T10:15:00Z",
+                "case_ids": ["CASE-501"],
+                "content_hash": "848e02611a91e55ec746bf9971ceea3a58e3eb99b514ca597db2bfbe5f27c3d7",
+                "hash_algorithm": "SHA-256",
+            },
+            "SRC-FIR-502": {
+                "id": "SRC-FIR-502",
+                "batch_id": "BATCH-2026-08-24",
+                "source_type": "FIR",
+                "locator": "fir_502_2026.pdf — page 2, row 8",
+                "raw_excerpt": "Accused: Sunil Shetty, s/o R. Shetty, age 41, res. 4th Block Jayanagar. Vehicle: KA-01-AB-1001.",
+                "occurred_at": "2026-04-18T14:40:00Z",
+                "case_ids": ["CASE-502"],
+                "content_hash": "b2fbb1b93f1ea1a9420b784a92c3a525f0a78cae08bb39c90380f2b3886196dc",
+                "hash_algorithm": "SHA-256",
+            },
+        }
+        for k, v in default_sources.items():
+            if k not in self.source_records:
+                self.source_records[k] = v
 
     def _load_state(self) -> None:
         if self.state_path is None or not self.state_path.exists():

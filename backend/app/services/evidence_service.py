@@ -35,6 +35,19 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _parse_datetime(val: Any) -> datetime:
+    if isinstance(val, datetime):
+        return val if val.tzinfo else val.replace(tzinfo=timezone.utc)
+    if isinstance(val, str) and val:
+        try:
+            cleaned = val.replace("Z", "+00:00")
+            parsed = datetime.fromisoformat(cleaned)
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except ValueError:
+            pass
+    return _utcnow()
+
+
 def _get_prov(edge: Any) -> dict:
     """Extract provenance dict from AdjEdge.properties safely.
 
@@ -123,7 +136,11 @@ class EvidenceService:
                 prov = _get_prov(edge)
                 if prov.get("source_id"):
                     ev = self._edge_to_evidence(edge, etype)
-                    if ev.id == evidence_id:
+                    if (
+                        ev.id == evidence_id
+                        or prov.get("source_id") == evidence_id
+                        or ev.evidence_number == evidence_id
+                    ):
                         if not suppress_audit:
                             self._audit.record(
                                 AuditEventType.EVIDENCE_VIEWED,
@@ -141,6 +158,52 @@ class EvidenceService:
                                 },
                             )
                         return ev
+
+        # Fallback: check repository source_records directly if referenced by source_id
+        source_records = getattr(self._repo, "source_records", {})
+        if evidence_id in source_records:
+            s_rec = source_records[evidence_id]
+            ts_raw = s_rec.get("occurred_at")
+            ts = _parse_datetime(ts_raw) if ts_raw else _utcnow()
+            case_ids = s_rec.get("case_ids") or []
+            case_id = case_ids[0] if case_ids else ""
+            source_type = s_rec.get("source_type", "RECORD")
+            excerpt = s_rec.get("raw_excerpt", "")
+            ev = EvidenceItemResponse(
+                id=evidence_id,
+                evidence_number=evidence_id,
+                case_id=case_id,
+                evidence_type=source_type,
+                description=excerpt or f"Source record {evidence_id}",
+                collected_at=ts,
+                storage_location=s_rec.get("locator"),
+                provenance=EvidenceProvenanceContract(
+                    source_type=source_type,
+                    source_id=evidence_id,
+                    timestamp=ts,
+                    extracted_fact=excerpt,
+                    derivation_method="DIRECT",
+                    confidence=1.0,
+                ),
+            )
+            if not suppress_audit:
+                self._audit.record(
+                    AuditEventType.EVIDENCE_VIEWED,
+                    actor_id=actor_id,
+                    case_id=case_id or None,
+                    entity_id=evidence_id,
+                    entity_type="Evidence",
+                    request_id=request_id,
+                    details={
+                        "allowed": True,
+                        "action": "VIEW",
+                        "source_type": source_type,
+                        "case_id": case_id or None,
+                        "resource_id": evidence_id,
+                    },
+                )
+            return ev
+
         return None
 
     def get_evidence_for_edge(

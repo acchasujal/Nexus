@@ -44,7 +44,18 @@ class AuthorizationDecision:
 DEMO_OFFICER_CASE_ASSIGNMENTS: dict[str, set[str]] = {
     # Inspector Rajesh Kumar (IO / INVESTIGATOR) is directly assigned to specific cases:
     # case-0001 (Mangaluru), case-0009 (Bengaluru Rural), and case-0010 (Bengaluru Rural)
-    "OFFICER-DEMO-IO-01": {"case-0001", "case-0009", "case-0010"},
+    # plus golden demo cases (CASE-141, CASE-207, etc.)
+    "OFFICER-DEMO-IO-01": {
+        "case-0001",
+        "case-0009",
+        "case-0010",
+        "CASE-141",
+        "CASE-207",
+        "CASE-305",
+        "CASE-412",
+        "CASE-501",
+        "CASE-502",
+    },
 }
 
 # Stations supervised by SHO (Station House Officer) in demo mode

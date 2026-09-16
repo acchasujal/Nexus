@@ -959,20 +959,23 @@ class GraphRAGContextBuilder:
                 continue
             item = self._evidence_svc.get_evidence_by_id(ev_id, actor_id="graphrag") if self._evidence_svc else None
             if item:
+                locator = getattr(item, "locator", None) or getattr(item, "storage_location", None)
+                excerpt = getattr(item, "excerpt", None) or (item.provenance.extracted_fact if item.provenance else "") or ""
+                extracted_fact = getattr(item, "extracted_fact", None) or (item.provenance.extracted_fact if item.provenance else "") or item.description
                 retrieved_evidence[ev_id] = EvidenceContext(
                     evidence_id=item.id,
-                    source_type=item.provenance.source_type,
-                    source_id=item.provenance.source_id,
-                    locator=item.locator,
+                    source_type=item.provenance.source_type if item.provenance else item.evidence_type,
+                    source_id=item.provenance.source_id if item.provenance else None,
+                    locator=locator,
                     description=item.description,
-                    excerpt=item.excerpt or "",
-                    confidence=item.provenance.confidence,
-                    extracted_fact=item.extracted_fact or item.description,
+                    excerpt=excerpt,
+                    confidence=item.provenance.confidence if item.provenance else 1.0,
+                    extracted_fact=extracted_fact,
                     provenance={
-                        "source_type": item.provenance.source_type,
-                        "source_id": item.provenance.source_id,
-                        "extracted_fact": item.provenance.extracted_fact,
-                        "confidence": item.provenance.confidence,
+                        "source_type": item.provenance.source_type if item.provenance else item.evidence_type,
+                        "source_id": item.provenance.source_id if item.provenance else None,
+                        "extracted_fact": item.provenance.extracted_fact if item.provenance else extracted_fact,
+                        "confidence": item.provenance.confidence if item.provenance else 1.0,
                     },
                 )
             else:
