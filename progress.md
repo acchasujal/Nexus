@@ -62,6 +62,7 @@ This document is the **single source of truth** for ongoing engineering, capabil
 
 | Date | Milestone / Action | Deliverables | Verification Status |
 |---|---|---|---|
+| 2026-09-17 | Production UX, Trust & Lead Repair | Fixed Lead accept/reject persistence and officer notes; resolved source record lookup (`SRC-FIR-141`); redesigned Login to restrained enterprise aesthetic; removed hackathon branding and inappropriate demo strings from Header, Sidebar, ErrorBoundary, and Settings. | ✅ 713/713 Backend Tests, 114/114 Frontend Tests, Clean Build |
 | 2026-09-17 | P0 Proactive Intelligence Implementation | Implemented `ProactiveIntelligenceService` covering graph snapshots, network diff, structural significance pulse filtering, 5-state evidence assessments, constrained early warning with mandatory abstention, next-best verification planner, and UI pulse queue panel. | ✅ 713/713 Backend Tests Passed, 114/114 Frontend Tests Passed |
 | 2026-09-17 | Single Source of Truth Transformation | Consolidated canonical docs; archived `NEXUS.md`, `PROBLEM_AND_DOMAIN.md`, `PROJECT_OVERVIEW.md`, `PRODUCTION_DEMO_DATA.md` to `docs/archive/`; established DEC-007 through DEC-012; updated `AGENTS.md` and `README.md`. | ✅ PASSED |
 | 2026-09-12 | Security & Audit Hardening | Implemented SHA-256 evidence tampering audit suite & verification tests (`test_evidence_tamper_audit.py`). | ✅ 708/708 Tests Passed |
