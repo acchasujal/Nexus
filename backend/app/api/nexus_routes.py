@@ -39,6 +39,7 @@ from backend.app.api.dependencies import (
     get_repository,
     get_request_id,
     get_graph_repository,
+    get_proactive_intelligence_service,
 )
 from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal
@@ -64,9 +65,14 @@ from shared.contracts.api import (
     NexusDossierResponse,
     NexusDossierVerificationResponse,
     RepeatOffenderRadarItem,
+    GraphSnapshotSummary,
+    NetworkDiffResponse,
+    NetworkPulseItem,
+    ReviewPriority,
 )
 from backend.app.services.ingestion_service import IngestionService
 from backend.app.db.ingestion.contracts import UploadedSource, SourceType
+
 
 
 # ── Pydantic Models ────────────────────────────────────────────────────────────
@@ -2113,6 +2119,82 @@ def create_nexus_router() -> APIRouter:
         )
         return [CombinedBridgeSignal(**s) for s in signals]
 
+    # ── P0 Proactive Network Change Intelligence Endpoints ────────────────────
+
+    @router.get("/nexus/snapshots", response_model=list[GraphSnapshotSummary])
+    def list_graph_snapshots(
+        case_scope: str | None = Query(None, description="Optional case ID to filter snapshots"),
+        principal: Principal = Depends(get_principal),
+        proactive_svc: Any = Depends(get_proactive_intelligence_service),
+        audit_service: AuditService = Depends(get_audit_service),
+    ) -> list[GraphSnapshotSummary]:
+        """List available point-in-time graph snapshots for an investigation."""
+        snapshots = proactive_svc.list_snapshots(case_scope=case_scope)
+        audit_service.record(
+            event_type=AuditEventType.PATTERN_SEARCH_EXECUTED,
+            actor_id=principal.user_id,
+            details={"action": "LIST_SNAPSHOTS", "count": len(snapshots)},
+        )
+        return snapshots
+
+    @router.post("/nexus/snapshots", response_model=GraphSnapshotSummary)
+    def create_graph_snapshot(
+        snapshot_id: str = Query(..., description="Unique snapshot identifier"),
+        case_scope: str | None = Query(None, description="Optional case scope"),
+        principal: Principal = Depends(get_principal),
+        proactive_svc: Any = Depends(get_proactive_intelligence_service),
+        audit_service: AuditService = Depends(get_audit_service),
+    ) -> GraphSnapshotSummary:
+        """Capture current graph state into an immutable snapshot."""
+        snap = proactive_svc.create_snapshot(snapshot_id=snapshot_id, case_scope=case_scope)
+        audit_service.record(
+            event_type=AuditEventType.EVIDENCE_ATTACHED,
+            actor_id=principal.user_id,
+            details={"action": "CREATE_SNAPSHOT", "snapshot_id": snapshot_id},
+        )
+        return snap
+
+    @router.get("/nexus/diff", response_model=NetworkDiffResponse)
+    def get_network_diff(
+        before: str = Query("snap-baseline-v1", description="Baseline snapshot ID"),
+        after: str = Query("snap-current", description="Target snapshot ID"),
+        principal: Principal = Depends(get_principal),
+        proactive_svc: Any = Depends(get_proactive_intelligence_service),
+        audit_service: AuditService = Depends(get_audit_service),
+    ) -> NetworkDiffResponse:
+        """Execute deterministic pure O(N+E) snapshot comparison."""
+        diff_res = proactive_svc.compute_network_diff(before, after)
+        audit_service.record(
+            event_type=AuditEventType.NETWORK_EXPLORED,
+            actor_id=principal.user_id,
+            details={
+                "action": "COMPUTE_NETWORK_DIFF",
+                "before": before,
+                "after": after,
+                "added_nodes": len(diff_res.added_nodes),
+                "added_relationships": len(diff_res.added_relationships),
+            },
+        )
+        return diff_res
+
+    @router.get("/nexus/pulses", response_model=list[NetworkPulseItem])
+    def list_network_pulses(
+        priority: ReviewPriority | None = Query(None, description="Filter by review priority"),
+        case_id: str | None = Query(None, description="Filter by affected case ID"),
+        principal: Principal = Depends(get_principal),
+        proactive_svc: Any = Depends(get_proactive_intelligence_service),
+        audit_service: AuditService = Depends(get_audit_service),
+    ) -> list[NetworkPulseItem]:
+        """Fetch qualified Network Pulse items with evidence assessment and early-warning forecast."""
+        pulses = proactive_svc.list_active_pulses(priority=priority, case_id=case_id)
+        audit_service.record(
+            event_type=AuditEventType.PATTERN_SEARCH_EXECUTED,
+            actor_id=principal.user_id,
+            details={"action": "LIST_NETWORK_PULSES", "count": len(pulses)},
+        )
+        return pulses
+
     return router
+
 
 

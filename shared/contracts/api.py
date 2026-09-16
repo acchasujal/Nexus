@@ -629,3 +629,102 @@ class CombinedBridgeSignal(BaseModel):
     alert_title: str = "RED FLAG — Cross-District Criminal Network Bridge"
     explanation: str = ""
 
+
+# ── P0 Proactive Network Change Intelligence Contracts ────────────────────────
+
+class EpistemicState(str, Enum):
+    SUPPORTS = "SUPPORTS"
+    CONFLICTS = "CONFLICTS"
+    MISSING = "MISSING"
+    INFERRED = "INFERRED"
+    VERIFIED = "VERIFIED"
+
+
+class ReviewPriority(str, Enum):
+    CRITICAL_REVIEW = "CRITICAL_REVIEW"
+    PRIORITY_REVIEW = "PRIORITY_REVIEW"
+    ROUTINE_REVIEW = "ROUTINE_REVIEW"
+
+
+class ForecastTarget(str, Enum):
+    JURISDICTION_SHIFT = "JURISDICTION_SHIFT"
+    COMMUNICATION_PATTERN_SHIFT = "COMMUNICATION_PATTERN_SHIFT"
+    FINANCIAL_ROUTE_TRANSITION = "FINANCIAL_ROUTE_TRANSITION"
+    IDENTIFIER_DRIFT = "IDENTIFIER_DRIFT"
+    NETWORK_RESTRUCTURING = "NETWORK_RESTRUCTURING"
+
+
+class EvidenceAssessmentItem(BaseModel):
+    claim_id: str
+    target_relationship_id: str
+    evidence_ref: str
+    state: EpistemicState
+    rationale: str
+    source_quality: float = 1.0
+    freshness_days: int = 0
+
+
+class ForecastItem(BaseModel):
+    forecast_id: str
+    pulse_id: str
+    target_state: ForecastTarget
+    time_window: tuple[str, str] = ("", "")
+    support_level: float = 0.0
+    uncertainty: float = 0.0
+    action_window: str = "Within 48 hours"
+    suggested_verification: str = ""
+    abstained: bool = False
+    abstention_reason: str | None = None
+
+
+class VerificationActionItem(BaseModel):
+    verification_id: str
+    target_claim: str
+    missing_evidence_type: str
+    recommended_action: str
+    responsible_role: UserRole = UserRole.INVESTIGATOR
+    status: str = "PENDING"
+    result: str | None = None
+
+
+class NetworkPulseItem(BaseModel):
+    pulse_id: str
+    change_ids: list[str] = Field(default_factory=list)
+    signal_headline: str
+    review_priority: ReviewPriority = ReviewPriority.PRIORITY_REVIEW
+    time_window: tuple[str, str] = ("", "")
+    evidence_refs: list[str] = Field(default_factory=list)
+    support_level: float = 0.0
+    uncertainty: float = 0.0
+    action_window: str = "Immediate"
+    abstained: bool = False
+    generated_at: str = Field(default_factory=lambda: _utcnow().isoformat())
+    assessment: list[EvidenceAssessmentItem] = Field(default_factory=list)
+    forecast: ForecastItem | None = None
+    verification_plan: list[VerificationActionItem] = Field(default_factory=list)
+    affected_entities: list[str] = Field(default_factory=list)
+    affected_cases: list[str] = Field(default_factory=list)
+
+
+class GraphSnapshotSummary(BaseModel):
+    snapshot_id: str
+    case_scope: str | None = None
+    created_at: str
+    node_count: int
+    edge_count: int
+    version: str = "v1"
+
+
+class NetworkDiffResponse(BaseModel):
+    before_snapshot_id: str
+    after_snapshot_id: str
+    added_nodes: list[str] = Field(default_factory=list)
+    removed_nodes: list[str] = Field(default_factory=list)
+    added_relationships: list[str] = Field(default_factory=list)
+    removed_relationships: list[str] = Field(default_factory=list)
+    modified_node_count: int = 0
+    modified_relationship_count: int = 0
+    pulses: list[NetworkPulseItem] = Field(default_factory=list)
+    summary: dict[str, Any] = Field(default_factory=dict)
+
+

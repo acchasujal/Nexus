@@ -8,7 +8,7 @@ This document is the **single source of truth** for ongoing engineering, capabil
 
 | Metric / Subsystem | Current Measured Status | Target Requirement | Status |
 |---|---|---|---|
-| **Backend Test Suite** | **708 / 708 passing** (`pytest`) | 100% pass rate | ✅ VERIFIED GREEN |
+| **Backend Test Suite** | **713 / 713 passing** (`pytest`) | 100% pass rate | ✅ VERIFIED GREEN |
 | **Frontend Test Suite** | **114 / 114 passing** (`vitest`) | 100% pass rate | ✅ VERIFIED GREEN |
 | **Backend Code Quality** | **0 errors / clean** (`ruff check`) | 0 lint errors | ✅ VERIFIED CLEAN |
 | **Frontend Typecheck / Build** | **0 errors / clean build** (`tsc && vite build`) | 0 TypeScript errors | ✅ VERIFIED CLEAN |
@@ -20,12 +20,12 @@ This document is the **single source of truth** for ongoing engineering, capabil
 
 ## 2. Active Priorities & Roadmap Workstreams
 
-- **P0-A:** Single-source-of-truth documentation consolidation & repository hygiene.
-- **P0-B:** Promote existing `snapshot_diff.py` engine into first-class `NetworkDiffService` & `GraphSnapshot` API/UI.
-- **P0-C:** Implement `NetworkPulseService` for meaningful change detection & review-priority scoring.
-- **P0-D:** Implement `EvidenceAssessmentService` (`SUPPORTS`, `CONFLICTS`, `MISSING`, `INFERRED`, `VERIFIED`).
-- **P0-E:** Implement `EarlyWarningService` with constrained forecast scopes & mandatory abstention gate.
-- **P0-F:** Implement `VerificationPlanner` for role-aware investigation actions.
+- **P0-A:** Single-source-of-truth documentation consolidation & repository hygiene. (✅ COMPLETED)
+- **P0-B:** Promote existing `snapshot_diff.py` engine into first-class `NetworkDiffService` & `GraphSnapshot` API/UI. (✅ COMPLETED)
+- **P0-C:** Implement `NetworkPulseService` for meaningful change detection & review-priority scoring. (✅ COMPLETED)
+- **P0-D:** Implement `EvidenceAssessmentService` (`SUPPORTS`, `CONFLICTS`, `MISSING`, `INFERRED`, `VERIFIED`). (✅ COMPLETED)
+- **P0-E:** Implement `EarlyWarningService` with constrained forecast scopes & mandatory abstention gate. (✅ COMPLETED)
+- **P0-F:** Implement `VerificationPlanner` for role-aware investigation actions. (✅ COMPLETED)
 
 ---
 
@@ -43,11 +43,11 @@ This document is the **single source of truth** for ongoing engineering, capabil
 | **Grounded Copilot** | `copilot_service.py` | ✅ CURRENT | BASELINE | Natural language facts with citations; safety refusal firewall. |
 | **RBAC & Security** | `policy.py`, `verifier.py` | ✅ CURRENT | BASELINE | Least-privilege roles (`INVESTIGATOR`, `ANALYST`, `SUPERVISOR`, `ADMIN`). |
 | **Immutable Audit** | `audit_service.py` | ✅ CURRENT | BASELINE | Append-only logging of queries, expansions, refusals, and tamper alerts. |
-| **Temporal Snapshot Diff** | `snapshot_diff.py` | 🔄 EXTENSION | P0 (IN PROGRESS) | Algorithmic diff implemented; promoting to service & API/UI view. |
-| **Network Pulse** | `NetworkPulseService` | ⏳ NEW PROTOTYPE | P0 (NEXT) | Structural significance scoring, review priority queue. |
-| **Evidence Assessment** | `EvidenceAssessmentService` | ⏳ NEW PROTOTYPE | P0 (NEXT) | Formal 5-state epistemic model (`SUPPORTS` to `VERIFIED`). |
-| **Early Warning & Abstention**| `EarlyWarningService` | ⏳ NEW PROTOTYPE | P0 (NEXT) | Constrained operational state forecasting; mandatory abstention. |
-| **Next Best Verification** | `VerificationPlanner` | ⏳ NEW PROTOTYPE | P0 (NEXT) | Role-aware missing evidence resolution suggestions. |
+| **Temporal Snapshot Diff** | `proactive_intelligence_service.py` | ✅ CURRENT | EXTENSION | Pure $O(N+E)$ graph snapshot diffing with structural changes and provenance. |
+| **Network Pulse** | `proactive_intelligence_service.py` | ✅ CURRENT | NEW PROTOTYPE | Structural significance filtering & non-guilt review priority queue. |
+| **Evidence Assessment** | `proactive_intelligence_service.py` | ✅ CURRENT | NEW PROTOTYPE | Formal 5-state epistemic model (`SUPPORTS` to `VERIFIED`) with rationale. |
+| **Early Warning & Abstention**| `proactive_intelligence_service.py` | ✅ CURRENT | NEW PROTOTYPE | Constrained operational state forecasting; mandatory abstention on sparse data. |
+| **Next Best Verification** | `proactive_intelligence_service.py` | ✅ CURRENT | NEW PROTOTYPE | Role-aware missing evidence resolution suggestions and action workflows. |
 | **Intelligence Pulse** | `IntelligencePulseService` | ⏳ NEW PROTOTYPE | P1 (ROADMAP) | Cross-case/branch routing packets with authorization & ACK. |
 | **Identity Drift** | `IdentityDriftService` | ⏳ NEW PROTOTYPE | P1 (ROADMAP) | Identifier transition radar (phone, IMEI, vehicle, alias). |
 | **Network Adaptation** | `NetworkAdaptationService` | ⏳ NEW PROTOTYPE | P1 (ROADMAP) | Intermediary replacement, bridge substitution detection. |
@@ -62,6 +62,7 @@ This document is the **single source of truth** for ongoing engineering, capabil
 
 | Date | Milestone / Action | Deliverables | Verification Status |
 |---|---|---|---|
+| 2026-09-17 | P0 Proactive Intelligence Implementation | Implemented `ProactiveIntelligenceService` covering graph snapshots, network diff, structural significance pulse filtering, 5-state evidence assessments, constrained early warning with mandatory abstention, next-best verification planner, and UI pulse queue panel. | ✅ 713/713 Backend Tests Passed, 114/114 Frontend Tests Passed |
 | 2026-09-17 | Single Source of Truth Transformation | Consolidated canonical docs; archived `NEXUS.md`, `PROBLEM_AND_DOMAIN.md`, `PROJECT_OVERVIEW.md`, `PRODUCTION_DEMO_DATA.md` to `docs/archive/`; established DEC-007 through DEC-012; updated `AGENTS.md` and `README.md`. | ✅ PASSED |
 | 2026-09-12 | Security & Audit Hardening | Implemented SHA-256 evidence tampering audit suite & verification tests (`test_evidence_tamper_audit.py`). | ✅ 708/708 Tests Passed |
 | 2026-09-12 | Durable Neo4j Graph Projection | Implemented bidirectional Neo4j projection engine, parameterized batch Cypher sync, constraints & fallback. | ✅ 708/708 Tests Passed |
@@ -71,14 +72,13 @@ This document is the **single source of truth** for ongoing engineering, capabil
 
 ---
 
-## 5. In Progress & Next Steps
+## 5. In Progress & Next Steps (P1 & P2 Roadmap)
 
-1. **Promote `snapshot_diff.py` to `NetworkDiffService`:**
-   - Expose REST endpoint `GET /api/v1/nexus/diff` to compare investigation snapshots or temporal windows.
-   - Wire diff visualization into frontend Network Explorer canvas (added/removed nodes and edges with visual diff highlights).
-2. **Implement `NetworkPulseService`:**
-   - Add filtering logic to surface significant structural changes into a dedicated `Network Pulse` queue.
-3. **Integrate Evidence Assessment & Early Warning:**
-   - Implement `SUPPORTS`, `CONFLICTS`, `MISSING` badges on edge citations and forecast cards with explicit abstention indicators.
-4. **Maintain Continuous Quality Gates:**
-   - Ensure every commit executes `ruff check`, `pytest`, `npm test`, and `evaluate_ground_truth.py`.
+1. **P1 — Intelligence Pulse & Cross-Jurisdiction Routing:**
+   - Multi-tenant routing envelope with cryptographically signed transmission and investigator acknowledgment.
+2. **P1 — Identity Drift Radar:**
+   - Detect carrier switching, burner SIM turnover, and device sharing via deterministic temporal windowing.
+3. **P1 — Network Adaptation Engine:**
+   - Identify intermediary replacements and structural reconfiguration post-enforcement actions.
+4. **P1 — Digital Shadow (SOCMINT Governance):**
+   - Strictly controlled public digital identifier corroboration following Section 63 BSA lifecycle states.

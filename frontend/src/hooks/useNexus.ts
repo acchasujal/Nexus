@@ -173,3 +173,28 @@ export function useCombinedBridgeSignals() {
   })
 }
 
+// ── P0 Proactive Network Change Intelligence Hooks ────────────────────────────
+
+export function useSnapshots(caseScope?: string) {
+  return useQuery({
+    queryKey: ['nexus', 'snapshots', caseScope],
+    queryFn: () => apiClient.getSnapshots(caseScope),
+  })
+}
+
+export function useProactiveDiff(before = 'snap-baseline-v1', after = 'snap-current', enabled = true) {
+  return useQuery({
+    queryKey: ['nexus', 'proactive-diff', before, after],
+    queryFn: () => apiClient.getProactiveDiff(before, after),
+    enabled,
+  })
+}
+
+export function useNetworkPulses(priority?: string, caseId?: string) {
+  return useQuery({
+    queryKey: ['nexus', 'pulses', priority, caseId],
+    queryFn: () => apiClient.getPulses(priority, caseId),
+  })
+}
+
+

@@ -775,3 +775,91 @@ export interface CombinedBridgeSignal {
   explanation: string
 }
 
+// ── P0 Proactive Network Change Intelligence Contracts ────────────────────────
+
+export type EpistemicState = 'SUPPORTS' | 'CONFLICTS' | 'MISSING' | 'INFERRED' | 'VERIFIED'
+
+export type ReviewPriority = 'CRITICAL_REVIEW' | 'PRIORITY_REVIEW' | 'ROUTINE_REVIEW'
+
+export type ForecastTarget = 
+  | 'JURISDICTION_SHIFT'
+  | 'COMMUNICATION_PATTERN_SHIFT'
+  | 'FINANCIAL_ROUTE_TRANSITION'
+  | 'IDENTIFIER_DRIFT'
+  | 'NETWORK_RESTRUCTURING'
+
+export interface EvidenceAssessmentItem {
+  claim_id: string
+  target_relationship_id: string
+  evidence_ref: string
+  state: EpistemicState
+  rationale: string
+  source_quality: number
+  freshness_days: number
+}
+
+export interface ForecastItem {
+  forecast_id: string
+  pulse_id: string
+  target_state: ForecastTarget
+  time_window: [string, string]
+  support_level: number
+  uncertainty: number
+  action_window: string
+  suggested_verification: string
+  abstained: boolean
+  abstention_reason?: string | null
+}
+
+export interface VerificationActionItem {
+  verification_id: string
+  target_claim: string
+  missing_evidence_type: string
+  recommended_action: string
+  responsible_role: UserRole
+  status: string
+  result?: string | null
+}
+
+export interface NetworkPulseItem {
+  pulse_id: string
+  change_ids: string[]
+  signal_headline: string
+  review_priority: ReviewPriority
+  time_window: [string, string]
+  evidence_refs: string[]
+  support_level: number
+  uncertainty: number
+  action_window: string
+  abstained: boolean
+  generated_at: string
+  assessment: EvidenceAssessmentItem[]
+  forecast?: ForecastItem | null
+  verification_plan: VerificationActionItem[]
+  affected_entities: string[]
+  affected_cases: string[]
+}
+
+export interface GraphSnapshotSummary {
+  snapshot_id: string
+  case_scope?: string | null
+  created_at: string
+  node_count: number
+  edge_count: number
+  version: string
+}
+
+export interface NetworkDiffResponse {
+  before_snapshot_id: string
+  after_snapshot_id: string
+  added_nodes: string[]
+  removed_nodes: string[]
+  added_relationships: string[]
+  removed_relationships: string[]
+  modified_node_count: number
+  modified_relationship_count: number
+  pulses: NetworkPulseItem[]
+  summary: Record<string, any>
+}
+
+

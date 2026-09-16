@@ -18,6 +18,7 @@ import { EntityDetailsDrawer } from '@/components/nexus/EntityDetailsDrawer'
 import { DerivationBadge } from '@/components/nexus/DerivationBadge'
 import { PathfinderEntitySelector } from '@/components/nexus/PathfinderEntitySelector'
 import { NetworkDeltaSummary } from '@/components/nexus/NetworkDeltaSummary'
+import { NetworkPulsePanel } from '@/components/nexus/NetworkPulsePanel'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -450,6 +451,9 @@ export default function NetworkExplorer() {
           </>
         }
       />
+
+      {/* ── Proactive Network Pulse Queue (What Changed & Why it Matters) ── */}
+      <NetworkPulsePanel />
 
       {/* ── Network Delta (What Changed) Component ───────────────────────────── */}
       <NetworkDeltaSummary activeSnapshot={replay} />

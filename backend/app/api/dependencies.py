@@ -207,3 +207,18 @@ def get_hotspot_service(
     offender_svc = OffenderService(graph_repo)
     return HotspotService(graph_repo, offender_service=offender_svc)
 
+
+def get_proactive_intelligence_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+) -> Any:
+    """Return the shared or per-request ProactiveIntelligenceService instance."""
+    proactive_svc = getattr(request.app.state, "proactive_intelligence_service", None)
+    if proactive_svc is not None:
+        return proactive_svc
+    from backend.app.services.proactive_intelligence_service import ProactiveIntelligenceService
+    proactive_svc = ProactiveIntelligenceService(repo)
+    request.app.state.proactive_intelligence_service = proactive_svc
+    return proactive_svc
+
+

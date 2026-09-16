@@ -359,5 +359,25 @@ export const apiClient = {
   getRepeatOffenderRadar: (minCases = 2, topK = 50) => apiFetch<RepeatOffenderRadarItem[]>(`/api/v1/nexus/intelligence/offenders?min_cases=${minCases}&top_k=${topK}`),
   getOffenderRadarProfile: (personId: string) => apiFetch<RepeatOffenderRadarItem>(`/api/v1/nexus/intelligence/offenders/${encodeURIComponent(personId)}`),
   getCombinedBridgeSignals: () => apiFetch<CombinedBridgeSignal[]>('/api/v1/nexus/intelligence/combined'),
+
+  // ── P0 Proactive Network Change Intelligence Methods ──────────────────────
+  getSnapshots: (caseScope?: string) => 
+    apiFetch<import('@shared/contracts/api').GraphSnapshotSummary[]>(
+      caseScope ? `/api/v1/nexus/snapshots?case_scope=${encodeURIComponent(caseScope)}` : '/api/v1/nexus/snapshots'
+    ),
+  getProactiveDiff: (before = 'snap-baseline-v1', after = 'snap-current') =>
+    apiFetch<import('@shared/contracts/api').NetworkDiffResponse>(
+      `/api/v1/nexus/diff?before=${encodeURIComponent(before)}&after=${encodeURIComponent(after)}`
+    ),
+  getPulses: (priority?: string, caseId?: string) => {
+    const params = new URLSearchParams()
+    if (priority) params.append('priority', priority)
+    if (caseId) params.append('case_id', caseId)
+    const qs = params.toString()
+    return apiFetch<import('@shared/contracts/api').NetworkPulseItem[]>(
+      qs ? `/api/v1/nexus/pulses?${qs}` : '/api/v1/nexus/pulses'
+    )
+  },
 }
+
 
