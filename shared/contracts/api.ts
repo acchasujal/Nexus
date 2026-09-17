@@ -913,5 +913,91 @@ export interface AcknowledgePulseRequest {
   note?: string | null
 }
 
+// ── P1-C Network Adaptation Engine Contracts ─────────────────────────────────
+
+export type NetworkAdaptationType = 
+  | 'INTERMEDIARY_REPLACEMENT'
+  | 'BRIDGE_SUBSTITUTION'
+  | 'FINANCIAL_REROUTING'
+  | 'COMMUNITY_RECONNECTION'
+
+export type AdaptationReviewStatus = 
+  | 'DETECTED'
+  | 'CONFIRMED'
+  | 'DISMISSED'
+  | 'MONITORING'
+
+export interface NetworkAdaptationEvent {
+  adaptation_id: string
+  adaptation_type: NetworkAdaptationType
+  primary_entity_id: string
+  primary_entity_name: string
+  secondary_entity_id: string
+  secondary_entity_name: string
+  substitute_intermediary_id?: string | null
+  substitute_intermediary_name?: string | null
+  previous_path: string[]
+  new_path: string[]
+  detected_at: string
+  time_lag_days?: number | null
+  structural_significance: number
+  corroborating_context: string
+  evidence_refs: string[]
+  derivation_class: string
+  review_status: AdaptationReviewStatus
+  investigator_note?: string | null
+  decided_at?: string | null
+  decided_by?: string | null
+}
+
+export interface DecideNetworkAdaptationRequest {
+  status: AdaptationReviewStatus
+  note?: string | null
+}
+
+// ── P1-D Digital Shadow (SOCMINT Governance) Contracts ───────────────────────
+
+export type DigitalShadowPlatform = 
+  | 'TELEGRAM'
+  | 'WHATSAPP'
+  | 'DARKWEB_FORUM'
+  | 'SOCIAL_MEDIA'
+  | 'PAYMENT_GATEWAY'
+  | 'MARKETPLACE'
+
+export type DigitalShadowLifecycle = 
+  | 'OBSERVED'
+  | 'CANDIDATE_LINK'
+  | 'CORROBORATED'
+  | 'INVESTIGATOR_CONFIRMED'
+  | 'DISMISSED'
+
+export interface DigitalShadowCorroboration {
+  corroboration_id: string
+  person_id: string
+  person_name: string
+  platform: DigitalShadowPlatform
+  digital_identifier: string
+  corroborating_physical_id: string
+  corroborating_physical_type: string
+  confidence_score: number
+  lifecycle_state: DigitalShadowLifecycle
+  observation_context: string
+  source_url_or_channel: string
+  evidence_refs: string[]
+  derivation_class: string
+  first_observed_at: string
+  last_verified_at?: string | null
+  investigator_note?: string | null
+  decided_at?: string | null
+  decided_by?: string | null
+}
+
+export interface DecideDigitalShadowRequest {
+  lifecycle_state: DigitalShadowLifecycle
+  note?: string | null
+}
+
+
 
 

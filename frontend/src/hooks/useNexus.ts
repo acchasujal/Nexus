@@ -282,3 +282,31 @@ export function useNetworkAdaptationSummary() {
   })
 }
 
+// ── P1-D Digital Shadow (SOCMINT Governance) Hooks ──────────────────────────
+
+export function useDigitalShadows(personId?: string, platform?: string, lifecycleState?: string) {
+  return useQuery({
+    queryKey: ['nexus', 'intelligence', 'digital-shadow', personId, platform, lifecycleState],
+    queryFn: () => apiClient.getDigitalShadows(personId, platform, lifecycleState),
+  })
+}
+
+export function useDecideDigitalShadow() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ corroborationId, req }: { corroborationId: string; req: import('@shared/contracts/api').DecideDigitalShadowRequest }) =>
+      apiClient.decideDigitalShadow(corroborationId, req),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['nexus', 'intelligence', 'digital-shadow'] })
+    },
+  })
+}
+
+export function useDigitalShadowSummary() {
+  return useQuery({
+    queryKey: ['nexus', 'intelligence', 'digital-shadow', 'summary'],
+    queryFn: () => apiClient.getDigitalShadowSummary(),
+  })
+}
+
+

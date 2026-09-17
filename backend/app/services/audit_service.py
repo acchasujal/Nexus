@@ -102,6 +102,10 @@ class AuditEventType(str, Enum):
     NETWORK_ADAPTATION_VIEWED = "network_adaptation_viewed"
     NETWORK_ADAPTATION_DECIDED = "network_adaptation_decided"
 
+    # Digital Shadow SOCMINT Governance (P1-D)
+    DIGITAL_SHADOW_VIEWED = "digital_shadow_viewed"
+    DIGITAL_SHADOW_DECIDED = "digital_shadow_decided"
+
 
 class AuditService:
     """Application-layer service for writing and querying audit logs."""

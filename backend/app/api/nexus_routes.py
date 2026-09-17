@@ -43,6 +43,7 @@ from backend.app.api.dependencies import (
     get_intelligence_pulse_service,
     get_identity_drift_service,
     get_network_adaptation_service,
+    get_digital_shadow_service,
 )
 from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal
@@ -60,8 +61,12 @@ from shared.contracts.api import (
     CombinedBridgeSignal,
     CopilotQueryRequest,
     CreateIntelligencePulseRequest,
+    DecideDigitalShadowRequest,
     DecideIdentityDriftRequest,
     DecideNetworkAdaptationRequest,
+    DigitalShadowCorroboration,
+    DigitalShadowLifecycle,
+    DigitalShadowPlatform,
     DistrictHotspotIntelligence,
     EvidenceBatchVerifyRequest,
     EvidenceBatchVerifyResponse,
@@ -2328,6 +2333,47 @@ def create_nexus_router() -> APIRouter:
     ) -> dict[str, Any]:
         """Retrieve aggregated summary metrics for Network Adaptation Radar."""
         return adapt_svc.get_adaptation_radar_summary()
+
+    # ── P1-D Digital Shadow (SOCMINT Governance) Endpoints ────────────────────
+
+    @router.get("/nexus/intelligence/digital-shadow", response_model=list[DigitalShadowCorroboration])
+    def list_digital_shadows(
+        person_id: str | None = Query(None, description="Optional Person node ID filter"),
+        platform: DigitalShadowPlatform | None = Query(None, description="Filter by digital platform"),
+        lifecycle_state: DigitalShadowLifecycle | None = Query(None, description="Filter by Section 63 BSA lifecycle state"),
+        principal: Principal = Depends(get_principal),
+        shadow_svc: Any = Depends(get_digital_shadow_service),
+    ) -> list[DigitalShadowCorroboration]:
+        """List corroborated digital shadow identifiers governed under Section 63 BSA."""
+        return shadow_svc.list_digital_shadows(
+            principal=principal,
+            person_id=person_id,
+            platform=platform,
+            lifecycle_state=lifecycle_state,
+        )
+
+    @router.post("/nexus/intelligence/digital-shadow/{corroboration_id}/decide", response_model=DigitalShadowCorroboration)
+    def decide_digital_shadow(
+        corroboration_id: str,
+        request: DecideDigitalShadowRequest,
+        principal: Principal = Depends(get_principal),
+        shadow_svc: Any = Depends(get_digital_shadow_service),
+    ) -> DigitalShadowCorroboration:
+        """Record investigator decision advancing or dismissing a digital footprint lifecycle state."""
+        try:
+            return shadow_svc.decide_digital_shadow(corroboration_id, request, principal)
+        except KeyError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to record digital shadow decision: {e}")
+
+    @router.get("/nexus/intelligence/digital-shadow/summary", response_model=dict[str, Any])
+    def get_digital_shadow_summary(
+        principal: Principal = Depends(get_principal),
+        shadow_svc: Any = Depends(get_digital_shadow_service),
+    ) -> dict[str, Any]:
+        """Retrieve aggregated summary metrics for Digital Shadow Radar."""
+        return shadow_svc.get_digital_shadow_summary()
 
     return router
 

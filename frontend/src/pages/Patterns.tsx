@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom'
 import {
   Layers, Network, Users, Share2, AlertTriangle, ShieldCheck, Inbox,
   Flame, Radio, GitBranch, ArrowRight, ExternalLink, RefreshCw,
-  MapPin, GitFork,
+  MapPin, GitFork, Globe,
 } from 'lucide-react'
 import {
   useIntelligenceHotspots,
@@ -28,8 +28,9 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { IdentityDriftRadarSection } from '@/components/nexus/IdentityDriftRadarSection'
 import { NetworkAdaptationSection } from '@/components/nexus/NetworkAdaptationSection'
+import { DigitalShadowSection } from '@/components/nexus/DigitalShadowSection'
 
-type HubTab = 'hotspots' | 'radar' | 'drift' | 'adaptation' | 'combined' | 'communities'
+type HubTab = 'hotspots' | 'radar' | 'drift' | 'adaptation' | 'shadow' | 'combined' | 'communities'
 
 interface CommunityItem {
   community_id?: string
@@ -192,6 +193,18 @@ export default function Patterns() {
         >
           <GitFork className="h-4 w-4 text-indigo-600" />
           Network Adaptation Radar (P1-C)
+        </button>
+
+        <button
+          onClick={() => setActiveTab('shadow')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === 'shadow'
+              ? 'border-sky-600 text-sky-900 bg-sky-50/50'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+          }`}
+        >
+          <Globe className="h-4 w-4 text-sky-600" />
+          Digital Shadow / SOCMINT (P1-D)
         </button>
 
         <button
@@ -513,7 +526,12 @@ export default function Patterns() {
         <NetworkAdaptationSection />
       )}
 
-      {/* TAB 5: COMBINED CROSS-DISTRICT BRIDGES */}
+      {/* TAB 5: DIGITAL SHADOW / SOCMINT (P1-D) */}
+      {activeTab === 'shadow' && (
+        <DigitalShadowSection />
+      )}
+
+      {/* TAB 6: COMBINED CROSS-DISTRICT BRIDGES */}
       {activeTab === 'combined' && (
         <div className="space-y-6">
           {isBridgeLoading ? (

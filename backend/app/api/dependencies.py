@@ -268,4 +268,20 @@ def get_network_adaptation_service(
     return adapt_svc
 
 
+def get_digital_shadow_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_service: AuditService = Depends(get_audit_service),
+) -> Any:
+    """Return the shared or per-request DigitalShadowService instance."""
+    shadow_svc = getattr(request.app.state, "digital_shadow_service", None)
+    if shadow_svc is not None:
+        return shadow_svc
+    from backend.app.services.digital_shadow_service import DigitalShadowService
+    shadow_svc = DigitalShadowService(repo, audit_service=audit_service)
+    request.app.state.digital_shadow_service = shadow_svc
+    return shadow_svc
+
+
+
 

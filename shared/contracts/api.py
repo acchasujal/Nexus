@@ -863,3 +863,50 @@ class NetworkAdaptationEvent(BaseModel):
 class DecideNetworkAdaptationRequest(BaseModel):
     status: AdaptationReviewStatus
     note: str | None = None
+
+
+# ── P1-D Digital Shadow (SOCMINT Governance) Contracts ───────────────────────
+
+class DigitalShadowPlatform(str, Enum):
+    TELEGRAM = "TELEGRAM"
+    WHATSAPP = "WHATSAPP"
+    DARKWEB_FORUM = "DARKWEB_FORUM"
+    SOCIAL_MEDIA = "SOCIAL_MEDIA"
+    PAYMENT_GATEWAY = "PAYMENT_GATEWAY"
+    MARKETPLACE = "MARKETPLACE"
+
+
+class DigitalShadowLifecycle(str, Enum):
+    """Mandatory Section 63 BSA progression lifecycle for digital corroboration."""
+    OBSERVED = "OBSERVED"
+    CANDIDATE_LINK = "CANDIDATE_LINK"
+    CORROBORATED = "CORROBORATED"
+    INVESTIGATOR_CONFIRMED = "INVESTIGATOR_CONFIRMED"
+    DISMISSED = "DISMISSED"
+
+
+class DigitalShadowCorroboration(BaseModel):
+    corroboration_id: str
+    person_id: str
+    person_name: str
+    platform: DigitalShadowPlatform
+    digital_identifier: str
+    corroborating_physical_id: str  # Mandatory hard physical identifier (Phone, IMEI, Account, Bank)
+    corroborating_physical_type: str  # Phone, Device, Account
+    confidence_score: float = 0.85
+    lifecycle_state: DigitalShadowLifecycle = DigitalShadowLifecycle.OBSERVED
+    observation_context: str
+    source_url_or_channel: str
+    evidence_refs: list[str] = Field(default_factory=list)
+    derivation_class: str = "DERIVED"
+    first_observed_at: str = Field(default_factory=lambda: _utcnow().isoformat())
+    last_verified_at: str | None = None
+    investigator_note: str | None = None
+    decided_at: str | None = None
+    decided_by: str | None = None
+
+
+class DecideDigitalShadowRequest(BaseModel):
+    lifecycle_state: DigitalShadowLifecycle
+    note: str | None = None
+

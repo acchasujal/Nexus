@@ -445,6 +445,28 @@ export const apiClient = {
     ),
   getNetworkAdaptationSummary: () =>
     apiFetch<Record<string, any>>('/api/v1/nexus/intelligence/network-adaptation/summary'),
+
+  // ── P1-D Digital Shadow (SOCMINT Governance) Methods ───────────────────────
+  getDigitalShadows: (personId?: string, platform?: string, lifecycleState?: string) => {
+    const params = new URLSearchParams()
+    if (personId) params.append('person_id', personId)
+    if (platform) params.append('platform', platform)
+    if (lifecycleState) params.append('lifecycle_state', lifecycleState)
+    const qs = params.toString()
+    return apiFetch<import('@shared/contracts/api').DigitalShadowCorroboration[]>(
+      qs ? `/api/v1/nexus/intelligence/digital-shadow?${qs}` : '/api/v1/nexus/intelligence/digital-shadow'
+    )
+  },
+  decideDigitalShadow: (corroborationId: string, req: import('@shared/contracts/api').DecideDigitalShadowRequest) =>
+    apiFetch<import('@shared/contracts/api').DigitalShadowCorroboration>(
+      `/api/v1/nexus/intelligence/digital-shadow/${encodeURIComponent(corroborationId)}/decide`,
+      {
+        method: 'POST',
+        body: JSON.stringify(req),
+      }
+    ),
+  getDigitalShadowSummary: () =>
+    apiFetch<Record<string, any>>('/api/v1/nexus/intelligence/digital-shadow/summary'),
 }
 
 
