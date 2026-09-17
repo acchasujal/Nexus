@@ -781,4 +781,41 @@ class AcknowledgePulseRequest(BaseModel):
     note: str | None = None
 
 
+# ── P1-B Identity Drift Radar Contracts ───────────────────────────────────────
 
+class IdentityDriftType(str, Enum):
+    PHONE_TURNOVER = "PHONE_TURNOVER"
+    DEVICE_HOP = "DEVICE_HOP"
+    VEHICLE_DRIFT = "VEHICLE_DRIFT"
+    ALIAS_EVOLUTION = "ALIAS_EVOLUTION"
+
+
+class IdentityDriftStatus(str, Enum):
+    DETECTED = "DETECTED"
+    CONFIRMED = "CONFIRMED"
+    DISMISSED = "DISMISSED"
+    MONITORING = "MONITORING"
+
+
+class IdentityDriftEvent(BaseModel):
+    drift_id: str
+    person_id: str
+    person_name: str
+    drift_type: IdentityDriftType
+    previous_value: str
+    new_value: str
+    previous_seen_at: str | None = None
+    new_seen_at: str | None = None
+    time_window_days: int | None = None
+    corroborating_context: str
+    evidence_refs: list[str] = Field(default_factory=list)
+    derivation_class: str = "DERIVED"
+    human_status: IdentityDriftStatus = IdentityDriftStatus.DETECTED
+    investigator_note: str | None = None
+    decided_at: str | None = None
+    decided_by: str | None = None
+
+
+class DecideIdentityDriftRequest(BaseModel):
+    status: IdentityDriftStatus
+    note: str | None = None

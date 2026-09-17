@@ -71,29 +71,63 @@ def generate_nexus_synthetic_dataset(
     edges: list[dict[str, Any]] = []
     node_id_map: dict[str, str] = {}
 
-    # SYNTHETIC_ASSUMPTION: Multilingual Karnataka name pools (NCRB does not provide name distributions)
-    # Source: ncrb_calibration.KARNATAKA_MALE_FIRST_NAMES / KARNATAKA_FEMALE_FIRST_NAMES / KARNATAKA_LAST_NAMES
-    first_names = KARNATAKA_MALE_FIRST_NAMES
-    female_first_names = KARNATAKA_FEMALE_FIRST_NAMES
-    last_names = KARNATAKA_LAST_NAMES
-    aliases_pool = KARNATAKA_CRIMINAL_ALIASES
-    districts = ["Bengaluru City", "Bengaluru Rural", "Mysuru", "Mangaluru", "Hubballi-Dharwad", "Belagavi"]
-    stations = ["Central Crime Branch", "Indiranagar PS", "Koramangala PS", "Ulsoor PS", "Jayanagar PS", "Hebbal PS", "Cyber Crime PS"]
-    # NCRB-calibrated crime categories; constrained fixture cases (i<26, i==48) override these explicitly
-    # NCRB_INFERRED: Derived from Karnataka IPC group weights (1DistrictwiseIPCCrimes2024.xlsx, row 378)
-    _ipc_crime_category_weights = KARNATAKA_IPC_CRIME_CATEGORY_WEIGHTS
+    # Profile differentiation:
+    # BASELINE: Uniform unweighted distribution, original legacy name pools
+    # NCRB_CALIBRATED: NCRB 2024 calibrated weights, multi-lingual name pools, BNS sections
+    # ADVERSARIAL: Higher alias rates, noise, transliteration variations
+    is_baseline = (profile == "baseline")
+    is_adversarial = (profile == "adversarial")
+
+    if is_baseline:
+        first_names = [
+            "Vikram", "Rajesh", "Sameer", "Arjun", "Suresh", "Manoj", "Karan", "Anil", "Deepak",
+            "Sunil", "Rahul", "Imran", "Farhan", "Ramesh", "Sanjay", "Amit", "Vinod", "Praveen",
+            "Mahesh", "Girish", "Pradeep", "Raghu", "Vijay", "Satish", "Naveen", "Harish", "Rohit",
+        ]
+        female_first_names = first_names
+        last_names = [
+            "Sharma", "Patel", "Gowda", "Reddy", "Singh", "Khan", "Kumar", "Shetty", "Iyer",
+            "Hegde", "Deshmukh", "Chauhan", "Joshi", "Bhat", "Naik", "Verma", "Gupta", "Malhotra",
+        ]
+        aliases_pool = [
+            "Vicky", "Bhai", "Shooter", "Doctor", "Ustaad", "Pandit", "Chhota", "Seth", "Captain",
+            "Munna", "Anna", "Hawala King", "Master", "Agent", "Shadow", "Pilot", "Mama",
+        ]
+        districts = ["Bengaluru Urban", "Bengaluru Rural", "Mysuru", "Mangaluru", "Hubballi-Dharwad", "Belagavi"]
+        stations = ["Central Crime Branch", "Indiranagar PS", "Koramangala PS", "Ulsoor PS", "Jayanagar PS", "Hebbal PS", "Cyber Crime PS"]
+        crime_categories_baseline = [
+            "Narcotics & Drug Trafficking",
+            "Cyber Financial Fraud & Phishing",
+            "Organized Extortion & Protection Racketeering",
+            "Illegal Arms Trafficking",
+            "Hawala & Money Laundering",
+        ]
+    else:
+        # SYNTHETIC_ASSUMPTION: Multilingual Karnataka name pools (NCRB does not provide name distributions)
+        # Source: ncrb_calibration.KARNATAKA_MALE_FIRST_NAMES / KARNATAKA_FEMALE_FIRST_NAMES / KARNATAKA_LAST_NAMES
+        first_names = KARNATAKA_MALE_FIRST_NAMES
+        female_first_names = KARNATAKA_FEMALE_FIRST_NAMES
+        last_names = KARNATAKA_LAST_NAMES
+        aliases_pool = KARNATAKA_CRIMINAL_ALIASES
+        districts = ["Bengaluru City", "Bengaluru Rural", "Mysuru", "Mangaluru", "Hubballi-Dharwad", "Belagavi"]
+        stations = ["Central Crime Branch", "Indiranagar PS", "Koramangala PS", "Ulsoor PS", "Jayanagar PS", "Hebbal PS", "Cyber Crime PS"]
+        _ipc_crime_category_weights = KARNATAKA_IPC_CRIME_CATEGORY_WEIGHTS
 
     # ── 1. Create Person Nodes ───────────────────────────────────────────────
     persons: list[dict[str, Any]] = []
     for i in range(num_persons):
         pid = f"person-{i+1:04d}"
-        # SYNTHETIC_ASSUMPTION: gender prior from ncrb_calibration (NCRB Table 10A not in current files)
-        _gender_roll = rng.random()
-        _is_female = _gender_roll > NCRB_ACCUSED_GENDER_WEIGHTS[0][1]  # male threshold
-        fn = rng.choice(female_first_names if _is_female else first_names)
+        if is_baseline:
+            fn = rng.choice(first_names)
+        else:
+            # SYNTHETIC_ASSUMPTION: gender prior from ncrb_calibration (NCRB Table 10A not in current files)
+            _gender_roll = rng.random()
+            _is_female = _gender_roll > NCRB_ACCUSED_GENDER_WEIGHTS[0][1]  # male threshold
+            fn = rng.choice(female_first_names if _is_female else first_names)
         ln = rng.choice(last_names)
         full_name = f"{fn} {ln}"
-        aliases = [rng.choice(aliases_pool)] if rng.random() < 0.35 else []
+        alias_prob = 0.65 if is_adversarial else 0.35
+        aliases = [rng.choice(aliases_pool)] if rng.random() < alias_prob else []
         phone = f"98{rng.randint(10000000, 99999999)}"
         vehicle = f"KA-{rng.randint(1, 53):02d}-{chr(65+rng.randint(0, 25))}{chr(65+rng.randint(0, 25))}-{rng.randint(1000, 9999)}"
         address = f"#{rng.randint(10, 500)}, {rng.choice(['MG Road', '100ft Road', 'Ring Road', 'Brigade Road', 'Main Bazaar'])}, {rng.choice(districts)}"
@@ -223,10 +257,14 @@ def generate_nexus_synthetic_dataset(
             station = "Indiranagar PS"
             accused_sample = [p_sanjay, p_naveen, p_girish]
         else:
-            # NCRB_INFERRED: weighted district selection from Karnataka IPC district weights
-            district = _weighted_choice(rng, NEXUS_DISTRICT_IPC_WEIGHTS)
-            # NCRB_INFERRED: weighted crime category from Karnataka IPC group weights
-            category = _weighted_choice(rng, _ipc_crime_category_weights)
+            if is_baseline:
+                district = rng.choice(districts)
+                category = rng.choice(crime_categories_baseline)
+            else:
+                # NCRB_INFERRED: weighted district selection from Karnataka IPC district weights
+                district = _weighted_choice(rng, NEXUS_DISTRICT_IPC_WEIGHTS)
+                # NCRB_INFERRED: weighted crime category from Karnataka IPC group weights
+                category = _weighted_choice(rng, _ipc_crime_category_weights)
             station = rng.choice(stations)
             num_acc = 1 if iso_idx + 2 >= len(isolated_pool) else rng.randint(1, 2)
             accused_sample = isolated_pool[iso_idx : iso_idx + num_acc]
@@ -234,6 +272,15 @@ def generate_nexus_synthetic_dataset(
 
         days_offset = rng.randint(5, 120)
         incident_date = (base_time - timedelta(days=days_offset)).isoformat()
+
+        if is_baseline:
+            case_status = rng.choice(["OPEN", "INVESTIGATION_IN_PROGRESS", "CHARGESHEET_FILED"])
+            case_sections = ["Section 303 (BNS)", "Section 318 (BNS)", "Section 61 (BNS)"]
+        else:
+            # NCRB_INFERRED: all-India proxy from TABLE17B13 (Chargesheeting Rate 76%, Pendency 33.5%)
+            case_status = _weighted_choice(rng, NEXUS_CASE_STATUS_WEIGHTS)
+            # SYNTHETIC_ASSUMPTION: BNS sections curated per category, informed by TABLE1B44 headers
+            case_sections = _pick_bns_sections(category)
 
         c_node = {
             "id": cid,
@@ -245,11 +292,9 @@ def generate_nexus_synthetic_dataset(
                 "station_name": station,
                 "offence_category": category,
                 "incident_date": incident_date,
-                # NCRB_INFERRED: all-India proxy from TABLE17B13 (Chargesheeting Rate 76%, Pendency 33.5%)
-                "status": _weighted_choice(rng, NEXUS_CASE_STATUS_WEIGHTS),
+                "status": case_status,
                 "summary": f"Case registered regarding suspected {category.lower()} involving syndicates in {district}.",
-                # SYNTHETIC_ASSUMPTION: BNS sections curated per category, informed by TABLE1B44 headers
-                "sections": _pick_bns_sections(category),
+                "sections": case_sections,
             },
         }
         nodes.append(c_node)

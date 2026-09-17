@@ -228,5 +228,29 @@ export function useAcknowledgeIntelligencePulse() {
   })
 }
 
+// ── P1-B Identity Drift Radar Hooks ───────────────────────────────────────────
 
+export function useIdentityDrifts(personId?: string, driftType?: string, status?: string) {
+  return useQuery({
+    queryKey: ['nexus', 'intelligence', 'identity-drift', personId, driftType, status],
+    queryFn: () => apiClient.getIdentityDrifts(personId, driftType, status),
+  })
+}
 
+export function useDecideIdentityDrift() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ driftId, req }: { driftId: string; req: import('@shared/contracts/api').DecideIdentityDriftRequest }) =>
+      apiClient.decideIdentityDrift(driftId, req),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['nexus', 'intelligence', 'identity-drift'] })
+    },
+  })
+}
+
+export function useIdentityDriftSummary() {
+  return useQuery({
+    queryKey: ['nexus', 'intelligence', 'identity-drift', 'summary'],
+    queryFn: () => apiClient.getIdentityDriftSummary(),
+  })
+}

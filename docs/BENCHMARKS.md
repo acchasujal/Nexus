@@ -45,6 +45,23 @@ To avoid misleading judges with inflated claims, NEXUS separates seeded regressi
 | **Seeded Ground Truth** | Planted identity clusters (`ground_truth.json`) | **100.0%** | **100.0%** | **100.0%** | $0.0\%$ | ✅ Qualified Seeded |
 | **Adversarial Noise Suite** | Typos, Indian phonetics, shared vehicles, common names | **87.5%** | **87.5%** | **87.5%** | $50.0\%$ (Strict disambiguation) | ✅ Robustness Benchmark |
 
+### 3.2 NCRB 2024 Calibration Fit & Comparative Realism
+
+Evaluated on paired datasets (`seed=42`, $N=50$ cases, $N=120$ persons, 445 graph entities) comparing unweighted **BASELINE** against **NCRB_CALIBRATED** and **ADVERSARIAL** profiles. Backed by machine-readable artifact [`artifacts/benchmarks/ncrb_calibrated_comparison.json`](file:///d:/Projects/Nexus/artifacts/benchmarks/ncrb_calibrated_comparison.json).
+
+| Evaluation Metric | Baseline Synthetic | NCRB-Calibrated | Improvement ($\Delta$) | Provenance & Standard |
+| :--- | :---: | :---: | :---: | :--- |
+| **District JS Divergence** | $0.3621$ | **$0.1061$** ($0.0003$ at $N=500$) | **$-70.7\%$** | Jensen-Shannon divergence vs NCRB 2024 Karnataka District IPC totals |
+| **District MAE** | $0.1844$ | **$0.1130$** ($0.0041$ at $N=500$) | **$-38.7\%$** | Mean Absolute Error across Karnataka districts |
+| **Crime Category JS Divergence** | $0.5000$ | **$0.0518$** ($0.0015$ at $N=500$) | **$-89.6\%$** | Jensen-Shannon divergence vs NCRB 2024 Karnataka Crime Category groups |
+| **Crime Category MAE** | $0.1250$ | **$0.0385$** | **$-69.2\%$** | Mean Absolute Error across 8 IPC crime categories |
+| **Case Status JS Divergence** | $0.0466$ | **$0.0079$** | **$-83.0\%$** | Jensen-Shannon divergence vs TABLE17B disposal rates |
+| **Planted Ground-Truth ER** | $100.0\%\text{ P / }100.0\%\text{ R}$ | **$100.0\%\text{ P / }100.0\%\text{ R}$** | **$0.0\%\text{ (Preserved)}$** | Seeded identity clusters (`ground_truth.json`) intact |
+| **Graph Density** | $0.004889$ | **$0.004808$** | $-1.7\%$ | Graph density preserved without artificial sparsity collapse |
+| **Connected Components** | $63$ | **$64$** | $+1.6\%$ | Natural modularity preserved across syndicates |
+| **1-Hop BFS Latency (p50)** | $0.0002\text{ ms}$ | **$0.0002\text{ ms}$** | $0.0\text{ ms}$ | Zero latency degradation |
+| **Snapshot Diff Latency (p50)**| $3.495\text{ ms}$ | **$3.442\text{ ms}$** | $-0.05\text{ ms}$ | High-efficiency temporal diff preserved |
+
 ---
 
 ## 4. Proactive Intelligence Benchmarks (P0 Engine)

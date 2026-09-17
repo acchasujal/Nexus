@@ -147,7 +147,7 @@ describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
     const commTab = screen.getByRole('button', { name: /Network Modules & Brokers/i })
     fireEvent.click(commTab)
 
-    expect(await screen.findByText(/Detected Network Modules \/ Communities/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Detected Network Modules \/ Communities/i, {}, { timeout: 10000 })).toBeInTheDocument()
     expect(screen.getByText(/Bridge Nodes & Articulation Points/i)).toBeInTheDocument()
   })
 

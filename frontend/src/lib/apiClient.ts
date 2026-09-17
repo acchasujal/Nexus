@@ -402,6 +402,28 @@ export const apiClient = {
         body: JSON.stringify(req),
       }
     ),
+
+  // ── P1-B Identity Drift Radar Methods ──────────────────────────────────────
+  getIdentityDrifts: (personId?: string, driftType?: string, status?: string) => {
+    const params = new URLSearchParams()
+    if (personId) params.append('person_id', personId)
+    if (driftType) params.append('drift_type', driftType)
+    if (status) params.append('status', status)
+    const qs = params.toString()
+    return apiFetch<import('@shared/contracts/api').IdentityDriftEvent[]>(
+      qs ? `/api/v1/nexus/intelligence/identity-drift?${qs}` : '/api/v1/nexus/intelligence/identity-drift'
+    )
+  },
+  decideIdentityDrift: (driftId: string, req: import('@shared/contracts/api').DecideIdentityDriftRequest) =>
+    apiFetch<import('@shared/contracts/api').IdentityDriftEvent>(
+      `/api/v1/nexus/intelligence/identity-drift/${encodeURIComponent(driftId)}/decide`,
+      {
+        method: 'POST',
+        body: JSON.stringify(req),
+      }
+    ),
+  getIdentityDriftSummary: () =>
+    apiFetch<Record<string, any>>('/api/v1/nexus/intelligence/identity-drift/summary'),
 }
 
 

@@ -94,6 +94,10 @@ class AuditEventType(str, Enum):
     INTELLIGENCE_PULSE_DISPATCHED = "intelligence_pulse_dispatched"
     INTELLIGENCE_PULSE_ACKNOWLEDGED = "intelligence_pulse_acknowledged"
 
+    # Identity Drift Radar (P1-B)
+    IDENTITY_DRIFT_VIEWED = "identity_drift_viewed"
+    IDENTITY_DRIFT_DECIDED = "identity_drift_decided"
+
 
 class AuditService:
     """Application-layer service for writing and querying audit logs."""

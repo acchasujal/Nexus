@@ -26,8 +26,9 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { MetricCard } from '@/components/ui/MetricCard'
+import { IdentityDriftRadarSection } from '@/components/nexus/IdentityDriftRadarSection'
 
-type HubTab = 'hotspots' | 'radar' | 'combined' | 'communities'
+type HubTab = 'hotspots' | 'radar' | 'drift' | 'combined' | 'communities'
 
 interface CommunityItem {
   community_id?: string
@@ -166,6 +167,18 @@ export default function Patterns() {
         >
           <Radio className="h-4 w-4 text-amber-600" />
           Repeat Offender Radar ({repeatOffenders?.length ?? 0})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('drift')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === 'drift'
+              ? 'border-cyan-600 text-cyan-900 bg-cyan-50/50'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+          }`}
+        >
+          <Share2 className="h-4 w-4 text-cyan-600" />
+          Identity Drift Radar (P1-B)
         </button>
 
         <button
@@ -477,7 +490,12 @@ export default function Patterns() {
         </div>
       )}
 
-      {/* TAB 3: COMBINED CROSS-DISTRICT BRIDGES */}
+      {/* TAB 3: IDENTITY DRIFT RADAR (P1-B) */}
+      {activeTab === 'drift' && (
+        <IdentityDriftRadarSection />
+      )}
+
+      {/* TAB 4: COMBINED CROSS-DISTRICT BRIDGES */}
       {activeTab === 'combined' && (
         <div className="space-y-6">
           {isBridgeLoading ? (

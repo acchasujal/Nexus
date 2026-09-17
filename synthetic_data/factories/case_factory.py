@@ -12,6 +12,7 @@ from backend.app.core.graph.entities import Act, Case, Court, CrimeHead, CrimeSu
 from backend.app.core.graph.enums import GraphEntityType
 
 from synthetic_data.configs import (
+    DatasetProfile,
     SyntheticDataConfig,
     SyntheticNodeRecord,
     build_faker,
@@ -252,8 +253,15 @@ def build_case_blueprints(
     ]
 
     for case_index in range(config.case_count):
-        # NCRB_INFERRED: weighted district from Karnataka IPC district weights
-        district = choose_weighted(rng, NEXUS_DISTRICT_IPC_WEIGHTS)
+        if config.profile == DatasetProfile.BASELINE:
+            district = config.districts[case_index % len(config.districts)]
+            offence_category = offence_categories[case_index % len(offence_categories)]
+        else:
+            # NCRB_INFERRED: weighted district from Karnataka IPC district weights
+            district = choose_weighted(rng, NEXUS_DISTRICT_IPC_WEIGHTS)
+            # NCRB_INFERRED: weighted crime category from Karnataka IPC group weights
+            offence_category = choose_weighted(rng, KARNATAKA_IPC_CRIME_CATEGORY_WEIGHTS)
+
         station_name = _DISTRICT_STATIONS.get(district, ("Central PS", "North PS", "South PS"))[case_index % len(_DISTRICT_STATIONS.get(district, ("Central PS",)))]
         location = references.locations[(case_index * 7) % len(references.locations)]
         court = references.courts[case_index % len(references.courts)]
@@ -262,8 +270,6 @@ def build_case_blueprints(
         sections = section_groups[case_index % len(section_groups)]
         crime_head = references.crime_heads[case_index % len(references.crime_heads)]
         crime_sub_head = references.crime_sub_heads[case_index % len(references.crime_sub_heads)]
-        # NCRB_INFERRED: weighted crime category from Karnataka IPC group weights
-        offence_category = choose_weighted(rng, KARNATAKA_IPC_CRIME_CATEGORY_WEIGHTS)
         case_stage = case_stages[case_index % len(case_stages)]
         reported_at = timestamp_for_index(base_now, case_index, step_hours=14)
         incident_at = reported_at - timedelta(hours=rng.randint(1, 72))

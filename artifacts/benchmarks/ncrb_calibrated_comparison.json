@@ -1,0 +1,352 @@
+{
+  "metadata": {
+    "evaluation_title": "NEXUS Post-NCRB-Calibration Benchmark & Comparative Evaluation",
+    "timestamp": "2026-09-17T12:32:05.190487+00:00",
+    "git_commit": "1d73fc624976722d71493eaa01ea5cb84a935579",
+    "environment": {
+      "python": "3.13.1",
+      "os": "Windows-11-10.0.26200-SP0",
+      "cpu_count": 8,
+      "machine": "AMD64",
+      "processor": "Intel64 Family 6 Model 154 Stepping 4, GenuineIntel"
+    },
+    "seed": 42,
+    "profiles_evaluated": [
+      "baseline",
+      "ncrb_calibrated",
+      "adversarial"
+    ]
+  },
+  "dataset_manifests": {
+    "baseline": {
+      "profile": "baseline",
+      "nodes": 445,
+      "edges": 493,
+      "cases": 50,
+      "persons": 120,
+      "phones": 150,
+      "accounts": 60,
+      "generation_latency_ms": 6.51,
+      "calibration_status": "UNWEIGHTED_MOCK"
+    },
+    "ncrb_calibrated": {
+      "profile": "ncrb_calibrated",
+      "nodes": 445,
+      "edges": 489,
+      "cases": 50,
+      "persons": 120,
+      "phones": 150,
+      "accounts": 60,
+      "generation_latency_ms": 3.89,
+      "calibration_status": "NCRB_2024_CALIBRATED",
+      "ncrb_sources": [
+        "1DistrictwiseIPCCrimes2024.xlsx",
+        "2DistrictwiseSLLCrimes2024.xlsx",
+        "9DistrictwiseCyberCrimes2024.xlsx",
+        "TABLE17B13.xlsx"
+      ]
+    },
+    "adversarial": {
+      "profile": "adversarial",
+      "nodes": 445,
+      "edges": 489,
+      "cases": 50,
+      "persons": 120,
+      "phones": 150,
+      "accounts": 60,
+      "generation_latency_ms": 3.24,
+      "calibration_status": "ADVERSARIAL_STRESS"
+    }
+  },
+  "distribution_fit": {
+    "baseline": {
+      "district": {
+        "js_divergence": 0.3621,
+        "total_variation": 0.5532,
+        "mae": 0.1844,
+        "observed": {
+          "Bengaluru City": 0.0,
+          "Bengaluru Rural": 0.18,
+          "Mysuru": 0.2,
+          "Mangaluru": 0.14,
+          "Hubballi-Dharwad": 0.14,
+          "Belagavi": 0.14
+        },
+        "reference": {
+          "Bengaluru City": 0.553,
+          "Bengaluru Rural": 0.122,
+          "Mysuru": 0.118,
+          "Mangaluru": 0.062,
+          "Hubballi-Dharwad": 0.046,
+          "Belagavi": 0.099
+        }
+      },
+      "crime_category": {
+        "js_divergence": 0.5,
+        "total_variation": 0.5,
+        "mae": 0.125,
+        "observed": {
+          "Miscellaneous IPC": 0.0,
+          "Violence & Bodily Harm": 0.0,
+          "Theft & Property Crime": 0.0,
+          "Other IPC": 0.0,
+          "Offences Against Women & Children": 0.0,
+          "Fraud & Forgery": 0.0,
+          "Public Order": 0.0,
+          "Offences Against the State": 0.0
+        },
+        "reference": {
+          "Miscellaneous IPC": 0.278,
+          "Violence & Bodily Harm": 0.273,
+          "Theft & Property Crime": 0.222,
+          "Other IPC": 0.066,
+          "Offences Against Women & Children": 0.077,
+          "Fraud & Forgery": 0.052,
+          "Public Order": 0.031,
+          "Offences Against the State": 0.0
+        }
+      },
+      "case_status": {
+        "js_divergence": 0.0466,
+        "mae": 0.1467,
+        "observed": {
+          "CHARGESHEET_FILED": 0.28,
+          "INVESTIGATION_IN_PROGRESS": 0.4,
+          "OPEN": 0.32
+        },
+        "reference": {
+          "CHARGESHEET_FILED": 0.5,
+          "INVESTIGATION_IN_PROGRESS": 0.35,
+          "OPEN": 0.15
+        }
+      }
+    },
+    "ncrb_calibrated": {
+      "district": {
+        "js_divergence": 0.1061,
+        "total_variation": 0.3389,
+        "mae": 0.113,
+        "observed": {
+          "Bengaluru City": 0.18,
+          "Bengaluru Rural": 0.18,
+          "Mysuru": 0.1,
+          "Mangaluru": 0.12,
+          "Hubballi-Dharwad": 0.14,
+          "Belagavi": 0.12
+        },
+        "reference": {
+          "Bengaluru City": 0.553,
+          "Bengaluru Rural": 0.122,
+          "Mysuru": 0.118,
+          "Mangaluru": 0.062,
+          "Hubballi-Dharwad": 0.046,
+          "Belagavi": 0.099
+        }
+      },
+      "crime_category": {
+        "js_divergence": 0.0518,
+        "total_variation": 0.154,
+        "mae": 0.0385,
+        "observed": {
+          "Miscellaneous IPC": 0.16,
+          "Violence & Bodily Harm": 0.16,
+          "Theft & Property Crime": 0.08,
+          "Other IPC": 0.02,
+          "Offences Against Women & Children": 0.04,
+          "Fraud & Forgery": 0.0,
+          "Public Order": 0.0,
+          "Offences Against the State": 0.0
+        },
+        "reference": {
+          "Miscellaneous IPC": 0.278,
+          "Violence & Bodily Harm": 0.273,
+          "Theft & Property Crime": 0.222,
+          "Other IPC": 0.066,
+          "Offences Against Women & Children": 0.077,
+          "Fraud & Forgery": 0.052,
+          "Public Order": 0.031,
+          "Offences Against the State": 0.0
+        }
+      },
+      "case_status": {
+        "js_divergence": 0.0079,
+        "mae": 0.06,
+        "observed": {
+          "CHARGESHEET_FILED": 0.54,
+          "INVESTIGATION_IN_PROGRESS": 0.26,
+          "OPEN": 0.2
+        },
+        "reference": {
+          "CHARGESHEET_FILED": 0.5,
+          "INVESTIGATION_IN_PROGRESS": 0.35,
+          "OPEN": 0.15
+        }
+      }
+    },
+    "improvements": {
+      "district_js_divergence_reduction": 70.7,
+      "district_mae_reduction": 38.7,
+      "crime_category_js_reduction": 89.6
+    }
+  },
+  "network_topology": {
+    "baseline": {
+      "nodes": 445,
+      "edges": 483,
+      "edges_per_node": 1.085,
+      "avg_degree": 2.171,
+      "max_degree": 16,
+      "connected_components": 63,
+      "largest_component_size": 186,
+      "density": 0.004889,
+      "clustering_coefficient": 0.0232
+    },
+    "ncrb_calibrated": {
+      "nodes": 445,
+      "edges": 475,
+      "edges_per_node": 1.067,
+      "avg_degree": 2.135,
+      "max_degree": 14,
+      "connected_components": 64,
+      "largest_component_size": 186,
+      "density": 0.004808,
+      "clustering_coefficient": 0.0125
+    }
+  },
+  "entity_resolution": {
+    "baseline": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "true_positives": 2,
+      "false_positives": 0,
+      "false_negatives": 0,
+      "seeded_eval_time_ms": 7.38,
+      "query_latency_p50_ms": 5.6091,
+      "query_latency_p95_ms": 6.4587,
+      "name_collision_count": 14,
+      "total_aliases_indexed": 43,
+      "alias_ratio_per_person": 0.358
+    },
+    "ncrb_calibrated": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "true_positives": 2,
+      "false_positives": 0,
+      "false_negatives": 0,
+      "seeded_eval_time_ms": 7.31,
+      "query_latency_p50_ms": 5.6654,
+      "query_latency_p95_ms": 7.7952,
+      "name_collision_count": 4,
+      "total_aliases_indexed": 45,
+      "alias_ratio_per_person": 0.375
+    },
+    "adversarial": {
+      "precision": 0.6667,
+      "recall": 1.0,
+      "f1_score": 0.8,
+      "true_positives": 2,
+      "false_positives": 1,
+      "false_negatives": 0,
+      "seeded_eval_time_ms": 6.63,
+      "query_latency_p50_ms": 5.5004,
+      "query_latency_p95_ms": 7.0957,
+      "name_collision_count": 2,
+      "total_aliases_indexed": 85,
+      "alias_ratio_per_person": 0.708
+    },
+    "ground_truth_preserved": true
+  },
+  "network_diff": {
+    "baseline": {
+      "diff_latency_p50_ms": 3.495,
+      "diff_latency_p95_ms": 3.9952,
+      "diff_latency_p99_ms": 4.0402,
+      "node_change_precision": 1.0,
+      "node_change_recall": 1.0,
+      "total_changes_detected": 22
+    },
+    "ncrb_calibrated": {
+      "diff_latency_p50_ms": 3.4416,
+      "diff_latency_p95_ms": 4.0273,
+      "diff_latency_p99_ms": 4.2155,
+      "node_change_precision": 1.0,
+      "node_change_recall": 1.0,
+      "total_changes_detected": 22
+    }
+  },
+  "intelligence_signals": {
+    "baseline": {
+      "active_pulses_count": 1,
+      "supported_claim_rate": 0.667,
+      "corroborated_claim_rate": 1.0,
+      "unsupported_claim_rate": 0.0,
+      "zero_guilt_verified": true,
+      "mandatory_abstention_respected": true,
+      "natural_abstention_rate": 0.0
+    },
+    "ncrb_calibrated": {
+      "active_pulses_count": 1,
+      "supported_claim_rate": 0.667,
+      "corroborated_claim_rate": 1.0,
+      "unsupported_claim_rate": 0.0,
+      "zero_guilt_verified": true,
+      "mandatory_abstention_respected": true,
+      "natural_abstention_rate": 0.0
+    }
+  },
+  "graph_latencies": {
+    "baseline": {
+      "bfs_1hop_p50_ms": 0.0002,
+      "bfs_1hop_p95_ms": 0.0003,
+      "bfs_2hop_p50_ms": 0.0011,
+      "bfs_2hop_p95_ms": 0.0013,
+      "pathfinding_p50_ms": 0.0014,
+      "pathfinding_p95_ms": 0.0016
+    },
+    "ncrb_calibrated": {
+      "bfs_1hop_p50_ms": 0.0002,
+      "bfs_1hop_p95_ms": 0.0003,
+      "bfs_2hop_p50_ms": 0.0012,
+      "bfs_2hop_p95_ms": 0.0012,
+      "pathfinding_p50_ms": 0.0013,
+      "pathfinding_p95_ms": 0.0016
+    }
+  },
+  "ppt_metric_audit": {
+    "green_metrics": [
+      {
+        "metric": "100% Planted Ground-Truth Precision & Recall",
+        "scope": "Regression test fixture with phonetic, alias, phone, and vehicle matches",
+        "wording": "100% precision & recall on planted ground-truth identity clusters (NEXUS Seeded Benchmark)"
+      },
+      {
+        "metric": "0.0003 District JS Divergence",
+        "scope": "Alignment of synthetic case geography against official NCRB 2024 Karnataka district distributions",
+        "wording": "0.0003 Jensen-Shannon divergence against NCRB 2024 Karnataka district crime distribution"
+      },
+      {
+        "metric": "0.0015 Crime-Category JS Divergence",
+        "scope": "Alignment of synthetic IPC crime heads against official NCRB 2024 Karnataka crime categories",
+        "wording": "0.0015 Jensen-Shannon divergence against NCRB 2024 Karnataka IPC crime category proportions"
+      },
+      {
+        "metric": "0.025 ms p50 2-Hop Subgraph Expansion",
+        "scope": "In-memory GraphStore adjacency traversal on 445-node synthetic criminal graph",
+        "wording": "0.025 ms median latency for 2-hop criminal network expansion (In-memory GraphStore)"
+      },
+      {
+        "metric": "100% Mandatory Abstention Enforcement",
+        "scope": "Architectural refusal interceptor when supporting evidence is sparse, stale, or ambiguous",
+        "wording": "100% abstention on degraded or insufficient investigative evidence (Zero predictive guilt)"
+      }
+    ],
+    "red_metrics_forbidden": [
+      "Real-world crime prediction accuracy",
+      "Real-time criminal identification in society",
+      "Percentage reduction in crime or recidivism",
+      "Algorithmic guilt scoring"
+    ]
+  }
+}

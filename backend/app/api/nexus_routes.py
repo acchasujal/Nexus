@@ -41,6 +41,7 @@ from backend.app.api.dependencies import (
     get_graph_repository,
     get_proactive_intelligence_service,
     get_intelligence_pulse_service,
+    get_identity_drift_service,
 )
 from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal
@@ -57,12 +58,16 @@ from shared.contracts.api import (
     CombinedBridgeSignal,
     CopilotQueryRequest,
     CreateIntelligencePulseRequest,
+    DecideIdentityDriftRequest,
     DistrictHotspotIntelligence,
     EvidenceBatchVerifyRequest,
     EvidenceBatchVerifyResponse,
     EvidenceIntegrityCheckResult,
     GroundedCitation,
     HotspotDrilldownResponse,
+    IdentityDriftEvent,
+    IdentityDriftStatus,
+    IdentityDriftType,
     IntelligencePulsePacket,
     NetworkGraphResponse,
     NexusDossierRequest,
@@ -2238,6 +2243,47 @@ def create_nexus_router() -> APIRouter:
             raise HTTPException(status_code=404, detail=str(e))
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Failed to acknowledge pulse: {e}")
+
+    # ── P1-B Identity Drift Radar Endpoints ────────────────────────────────────
+
+    @router.get("/nexus/intelligence/identity-drift", response_model=list[IdentityDriftEvent])
+    def list_identity_drifts(
+        person_id: str | None = Query(None, description="Optional Person node ID filter"),
+        drift_type: IdentityDriftType | None = Query(None, description="Filter by drift type"),
+        status: IdentityDriftStatus | None = Query(None, description="Filter by review status"),
+        principal: Principal = Depends(get_principal),
+        drift_svc: Any = Depends(get_identity_drift_service),
+    ) -> list[IdentityDriftEvent]:
+        """List detected identifier drift events across suspects and POIs."""
+        return drift_svc.list_identity_drifts(
+            principal=principal,
+            person_id=person_id,
+            drift_type=drift_type,
+            status=status,
+        )
+
+    @router.post("/nexus/intelligence/identity-drift/{drift_id}/decide", response_model=IdentityDriftEvent)
+    def decide_identity_drift(
+        drift_id: str,
+        request: DecideIdentityDriftRequest,
+        principal: Principal = Depends(get_principal),
+        drift_svc: Any = Depends(get_identity_drift_service),
+    ) -> IdentityDriftEvent:
+        """Record investigator decision on an identity drift finding (CONFIRMED, DISMISSED, MONITORING)."""
+        try:
+            return drift_svc.decide_identity_drift(drift_id, request, principal)
+        except KeyError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to record drift decision: {e}")
+
+    @router.get("/nexus/intelligence/identity-drift/summary", response_model=dict[str, Any])
+    def get_identity_drift_summary(
+        principal: Principal = Depends(get_principal),
+        drift_svc: Any = Depends(get_identity_drift_service),
+    ) -> dict[str, Any]:
+        """Retrieve aggregated summary metrics for Identity Drift Radar."""
+        return drift_svc.get_drift_radar_summary()
 
     return router
 

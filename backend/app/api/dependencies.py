@@ -238,4 +238,19 @@ def get_intelligence_pulse_service(
     return pulse_svc
 
 
+def get_identity_drift_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_service: AuditService = Depends(get_audit_service),
+) -> Any:
+    """Return the shared or per-request IdentityDriftService instance."""
+    drift_svc = getattr(request.app.state, "identity_drift_service", None)
+    if drift_svc is not None:
+        return drift_svc
+    from backend.app.services.identity_drift_service import IdentityDriftService
+    drift_svc = IdentityDriftService(repo, audit_service=audit_service)
+    request.app.state.identity_drift_service = drift_svc
+    return drift_svc
+
+
 
