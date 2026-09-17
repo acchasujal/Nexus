@@ -1,0 +1,1176 @@
+{
+  "_metadata": {
+    "generated_at": "2026-09-17T12:05:39.083225+00:00",
+    "generator": "scripts/ncrb/extract_ncrb_calibration.py",
+    "ncrb_publication_year": 2024,
+    "state_focus": "Karnataka",
+    "calibration_version": "1.0.0",
+    "provenance_model": {
+      "NCRB_DERIVED": "Directly read from NCRB table cell",
+      "NCRB_INFERRED": "Computed from NCRB cells via explicit formula",
+      "SYNTHETIC_ASSUMPTION": "Design choice; not supported by available NCRB files"
+    }
+  },
+  "source_files": {
+    "1DistrictwiseIPCCrimes2024.xlsx": {
+      "file": "1DistrictwiseIPCCrimes2024.xlsx",
+      "sha256": "41a4270149aa44561c508cbba62f4c26799a375b1edb8baa1db33b399e6ff121",
+      "sheet": "District Data Report",
+      "state_marker_row": 339,
+      "state": "Karnataka",
+      "district_rows": "340-377",
+      "total_row": 378,
+      "group_columns": {
+        "women_children_total": "col30",
+        "human_body_total": "col73",
+        "against_state_total": "col76",
+        "public_tranquility_total": "col101",
+        "property_total": "col124",
+        "documents_forgery_total": "col138",
+        "miscellaneous_total": "col153",
+        "other_ipc": "col154",
+        "grand_total": "col155"
+      }
+    },
+    "2DistrictwiseSLLCrimes2024.xlsx": {
+      "file": "2DistrictwiseSLLCrimes2024.xlsx",
+      "sha256": "9800f505564ca26d10f025e7e432ba44abdd65e6009cbb397662ef5a997a6122",
+      "sheet": "District Data Report",
+      "state": "Karnataka",
+      "key_columns": {
+        "arms_act_total": "col23 (The Arms Act, 1959 Total)",
+        "ndps_total": "col44 (The NDPS Act, 1985 Total)"
+      }
+    },
+    "9DistrictwiseCyberCrimes2024.xlsx": {
+      "file": "9DistrictwiseCyberCrimes2024.xlsx",
+      "sha256": "20aa987a34cc692f3d5c272e92e37e003d56167a6fa17f90cddde1162712dd47",
+      "sheet": "District Data Report",
+      "state": "Karnataka",
+      "key_column": "col59 = Total Cyber Crimes (A. IT Act + B. IPC Cyber + C. SLL Cyber)"
+    },
+    "TABLE17B13.xlsx": {
+      "file": "TABLE17B13.xlsx",
+      "sha256": "35f86df80dbfb466238a51087aaba9ee9753a4a7e196fb0ec9fcb60aa42b00bf",
+      "sheet": "CIIReport",
+      "scope": "ALL-INDIA aggregate (not Karnataka-specific)",
+      "total_row": 186,
+      "row_label": "Total Cognizable IPC/BNS crimes",
+      "column_mapping": {
+        "col3": "Cases Reported during the year",
+        "col5": "Total Cases for Investigation",
+        "col21": "Cases Charge sheeted Total",
+        "col27": "Cases Pending at year end",
+        "col28": "Chargesheeting Rate",
+        "col29": "Pendency Percentage"
+      }
+    }
+  },
+  "extracted_parameters": {
+    "karnataka_ipc": {
+      "source": {
+        "file": "1DistrictwiseIPCCrimes2024.xlsx",
+        "sha256": "41a4270149aa44561c508cbba62f4c26799a375b1edb8baa1db33b399e6ff121",
+        "sheet": "District Data Report",
+        "state_marker_row": 339,
+        "state": "Karnataka",
+        "district_rows": "340-377",
+        "total_row": 378,
+        "group_columns": {
+          "women_children_total": "col30",
+          "human_body_total": "col73",
+          "against_state_total": "col76",
+          "public_tranquility_total": "col101",
+          "property_total": "col124",
+          "documents_forgery_total": "col138",
+          "miscellaneous_total": "col153",
+          "other_ipc": "col154",
+          "grand_total": "col155"
+        }
+      },
+      "karnataka_ipc_group_totals": {
+        "type": "NCRB_DERIVED",
+        "grand_total": 138784,
+        "groups": {
+          "women_children": 10673,
+          "human_body": 37927,
+          "against_state": 1,
+          "public_tranquility": 4342,
+          "property": 30805,
+          "documents_forgery": 7241,
+          "miscellaneous": 38643,
+          "other_ipc": 9152
+        },
+        "note": "Groups verified to sum exactly to grand_total (difference=0)"
+      },
+      "karnataka_ipc_group_weights": {
+        "type": "NCRB_INFERRED",
+        "formula": "group_total / karnataka_ipc_grand_total",
+        "denominator": 138784,
+        "denominator_label": "Karnataka Total Cognizable IPC/BNS crimes 2024",
+        "weights": {
+          "women_children": 0.07690367765736685,
+          "human_body": 0.27328078164629926,
+          "against_state": 7.205441549458151e-06,
+          "public_tranquility": 0.03128602720774729,
+          "property": 0.22196362693105834,
+          "documents_forgery": 0.05217460225962647,
+          "miscellaneous": 0.27843987779571133,
+          "other_ipc": 0.065944201060641
+        }
+      },
+      "karnataka_district_ipc_weights": {
+        "type": "NCRB_INFERRED",
+        "formula": "district_ipc_total / karnataka_ipc_grand_total",
+        "denominator": 138784,
+        "denominator_label": "Karnataka Total Cognizable IPC/BNS crimes 2024",
+        "weights": {
+          "Bagalkot": 0.01598887479824764,
+          "Bengaluru City": 0.2501369033894397,
+          "Bengaluru District": 0.05502075167166244,
+          "Belagavi District": 0.03213626931058335,
+          "Ballari": 0.014389266774267927,
+          "Bidar": 0.021443394051187458,
+          "Vijayapura": 0.021652351856121743,
+          "Chikkaballapura": 0.019461897625086464,
+          "Chamarajnagar": 0.014634251786949505,
+          "Chikkamagaluru": 0.019087214664514643,
+          "Chitradurga": 0.03189128429790178,
+          "Dakshina Kannada": 0.013034643762969795,
+          "Davanagere": 0.022668319114595343,
+          "Dharwad": 0.007681000691722389,
+          "Gadag": 0.00771702789946968,
+          "Kalaburgi": 0.01885664053493198,
+          "Hassan": 0.03672613557758819,
+          "Haveri": 0.017638920913073553,
+          "Hubballi Dharwad City": 0.013085081853816002,
+          "KGF": 0.005663477057874107,
+          "Kodagu": 0.010800956882637769,
+          "Kolar": 0.016298708784874338,
+          "Koppal": 0.01278245330873876,
+          "Mandya": 0.03143734148028591,
+          "Mangaluru City": 0.015153043578510491,
+          "Mysuru City": 0.018179329029282914,
+          "Mysuru District": 0.03519858196910307,
+          "Raichur": 0.020160825455383904,
+          "KRailways": 0.006225501498731842,
+          "Ramanagara": 0.028893820613327185,
+          "Shimoga": 0.033058565828914,
+          "Tumakuru": 0.045768964722158176,
+          "Udupi": 0.019505130274383213,
+          "Uttara Kannada": 0.018568422872953655,
+          "Yadgiri": 0.011399008531242795,
+          "Belagavi City": 0.0124654138805626,
+          "Kalaburgi City": 0.013027438321420337,
+          "Vijayanagara": 0.012162785335485359
+        }
+      },
+      "districts_raw": [
+        {
+          "district": "Bagalkot",
+          "ipc_total": 2219,
+          "women_children": 204,
+          "human_body": 750,
+          "property": 404,
+          "miscellaneous": 572,
+          "other_ipc": 54
+        },
+        {
+          "district": "Bengaluru City",
+          "ipc_total": 34715,
+          "women_children": 2223,
+          "human_body": 5816,
+          "property": 11531,
+          "miscellaneous": 7895,
+          "other_ipc": 3802
+        },
+        {
+          "district": "Bengaluru District",
+          "ipc_total": 7636,
+          "women_children": 433,
+          "human_body": 2111,
+          "property": 2110,
+          "miscellaneous": 2115,
+          "other_ipc": 182
+        },
+        {
+          "district": "Belagavi District",
+          "ipc_total": 4460,
+          "women_children": 344,
+          "human_body": 1410,
+          "property": 646,
+          "miscellaneous": 1401,
+          "other_ipc": 249
+        },
+        {
+          "district": "Ballari",
+          "ipc_total": 1997,
+          "women_children": 195,
+          "human_body": 696,
+          "property": 445,
+          "miscellaneous": 399,
+          "other_ipc": 56
+        },
+        {
+          "district": "Bidar",
+          "ipc_total": 2976,
+          "women_children": 184,
+          "human_body": 1151,
+          "property": 462,
+          "miscellaneous": 866,
+          "other_ipc": 98
+        },
+        {
+          "district": "Vijayapura",
+          "ipc_total": 3005,
+          "women_children": 267,
+          "human_body": 1144,
+          "property": 507,
+          "miscellaneous": 674,
+          "other_ipc": 128
+        },
+        {
+          "district": "Chikkaballapura",
+          "ipc_total": 2701,
+          "women_children": 210,
+          "human_body": 809,
+          "property": 452,
+          "miscellaneous": 677,
+          "other_ipc": 285
+        },
+        {
+          "district": "Chamarajnagar",
+          "ipc_total": 2031,
+          "women_children": 237,
+          "human_body": 740,
+          "property": 268,
+          "miscellaneous": 580,
+          "other_ipc": 100
+        },
+        {
+          "district": "Chikkamagaluru",
+          "ipc_total": 2649,
+          "women_children": 251,
+          "human_body": 764,
+          "property": 344,
+          "miscellaneous": 800,
+          "other_ipc": 353
+        },
+        {
+          "district": "Chitradurga",
+          "ipc_total": 4426,
+          "women_children": 558,
+          "human_body": 1194,
+          "property": 612,
+          "miscellaneous": 1348,
+          "other_ipc": 378
+        },
+        {
+          "district": "Dakshina Kannada",
+          "ipc_total": 1809,
+          "women_children": 116,
+          "human_body": 396,
+          "property": 261,
+          "miscellaneous": 757,
+          "other_ipc": 187
+        },
+        {
+          "district": "Davanagere",
+          "ipc_total": 3146,
+          "women_children": 295,
+          "human_body": 743,
+          "property": 672,
+          "miscellaneous": 815,
+          "other_ipc": 332
+        },
+        {
+          "district": "Dharwad",
+          "ipc_total": 1066,
+          "women_children": 66,
+          "human_body": 381,
+          "property": 159,
+          "miscellaneous": 316,
+          "other_ipc": 47
+        },
+        {
+          "district": "Gadag",
+          "ipc_total": 1071,
+          "women_children": 86,
+          "human_body": 333,
+          "property": 239,
+          "miscellaneous": 190,
+          "other_ipc": 77
+        },
+        {
+          "district": "Kalaburgi",
+          "ipc_total": 2617,
+          "women_children": 197,
+          "human_body": 900,
+          "property": 604,
+          "miscellaneous": 656,
+          "other_ipc": 44
+        },
+        {
+          "district": "Hassan",
+          "ipc_total": 5097,
+          "women_children": 364,
+          "human_body": 1802,
+          "property": 689,
+          "miscellaneous": 1863,
+          "other_ipc": 127
+        },
+        {
+          "district": "Haveri",
+          "ipc_total": 2448,
+          "women_children": 179,
+          "human_body": 583,
+          "property": 652,
+          "miscellaneous": 624,
+          "other_ipc": 120
+        },
+        {
+          "district": "Hubballi Dharwad City",
+          "ipc_total": 1816,
+          "women_children": 201,
+          "human_body": 597,
+          "property": 355,
+          "miscellaneous": 369,
+          "other_ipc": 129
+        },
+        {
+          "district": "KGF",
+          "ipc_total": 786,
+          "women_children": 60,
+          "human_body": 264,
+          "property": 171,
+          "miscellaneous": 140,
+          "other_ipc": 100
+        },
+        {
+          "district": "Kodagu",
+          "ipc_total": 1499,
+          "women_children": 92,
+          "human_body": 524,
+          "property": 208,
+          "miscellaneous": 474,
+          "other_ipc": 78
+        },
+        {
+          "district": "Kolar",
+          "ipc_total": 2262,
+          "women_children": 148,
+          "human_body": 713,
+          "property": 372,
+          "miscellaneous": 611,
+          "other_ipc": 231
+        },
+        {
+          "district": "Koppal",
+          "ipc_total": 1774,
+          "women_children": 198,
+          "human_body": 548,
+          "property": 339,
+          "miscellaneous": 471,
+          "other_ipc": 90
+        },
+        {
+          "district": "Mandya",
+          "ipc_total": 4363,
+          "women_children": 314,
+          "human_body": 1515,
+          "property": 563,
+          "miscellaneous": 1697,
+          "other_ipc": 83
+        },
+        {
+          "district": "Mangaluru City",
+          "ipc_total": 2103,
+          "women_children": 140,
+          "human_body": 513,
+          "property": 296,
+          "miscellaneous": 918,
+          "other_ipc": 84
+        },
+        {
+          "district": "Mysuru City",
+          "ipc_total": 2523,
+          "women_children": 112,
+          "human_body": 556,
+          "property": 515,
+          "miscellaneous": 1023,
+          "other_ipc": 145
+        },
+        {
+          "district": "Mysuru District",
+          "ipc_total": 4885,
+          "women_children": 375,
+          "human_body": 1649,
+          "property": 759,
+          "miscellaneous": 1723,
+          "other_ipc": 121
+        },
+        {
+          "district": "Raichur",
+          "ipc_total": 2798,
+          "women_children": 326,
+          "human_body": 873,
+          "property": 704,
+          "miscellaneous": 467,
+          "other_ipc": 83
+        },
+        {
+          "district": "KRailways",
+          "ipc_total": 864,
+          "women_children": 11,
+          "human_body": 52,
+          "property": 769,
+          "miscellaneous": 3,
+          "other_ipc": 26
+        },
+        {
+          "district": "Ramanagara",
+          "ipc_total": 4010,
+          "women_children": 280,
+          "human_body": 1431,
+          "property": 736,
+          "miscellaneous": 1311,
+          "other_ipc": 73
+        },
+        {
+          "district": "Shimoga",
+          "ipc_total": 4588,
+          "women_children": 413,
+          "human_body": 1543,
+          "property": 670,
+          "miscellaneous": 1337,
+          "other_ipc": 201
+        },
+        {
+          "district": "Tumakuru",
+          "ipc_total": 6352,
+          "women_children": 442,
+          "human_body": 2222,
+          "property": 1119,
+          "miscellaneous": 2063,
+          "other_ipc": 141
+        },
+        {
+          "district": "Udupi",
+          "ipc_total": 2707,
+          "women_children": 154,
+          "human_body": 543,
+          "property": 444,
+          "miscellaneous": 1076,
+          "other_ipc": 271
+        },
+        {
+          "district": "Uttara Kannada",
+          "ipc_total": 2577,
+          "women_children": 290,
+          "human_body": 691,
+          "property": 311,
+          "miscellaneous": 797,
+          "other_ipc": 304
+        },
+        {
+          "district": "Yadgiri",
+          "ipc_total": 1582,
+          "women_children": 205,
+          "human_body": 541,
+          "property": 253,
+          "miscellaneous": 344,
+          "other_ipc": 35
+        },
+        {
+          "district": "Belagavi City",
+          "ipc_total": 1730,
+          "women_children": 146,
+          "human_body": 426,
+          "property": 414,
+          "miscellaneous": 445,
+          "other_ipc": 123
+        },
+        {
+          "district": "Kalaburgi City",
+          "ipc_total": 1808,
+          "women_children": 158,
+          "human_body": 478,
+          "property": 452,
+          "miscellaneous": 425,
+          "other_ipc": 115
+        },
+        {
+          "district": "Vijayanagara",
+          "ipc_total": 1688,
+          "women_children": 199,
+          "human_body": 525,
+          "property": 298,
+          "miscellaneous": 401,
+          "other_ipc": 100
+        }
+      ]
+    },
+    "karnataka_sll": {
+      "source": {
+        "file": "2DistrictwiseSLLCrimes2024.xlsx",
+        "sha256": "9800f505564ca26d10f025e7e432ba44abdd65e6009cbb397662ef5a997a6122",
+        "sheet": "District Data Report",
+        "state": "Karnataka",
+        "key_columns": {
+          "arms_act_total": "col23 (The Arms Act, 1959 Total)",
+          "ndps_total": "col44 (The NDPS Act, 1985 Total)"
+        }
+      },
+      "karnataka_sll_totals": {
+        "type": "NCRB_DERIVED",
+        "ndps_total": 4165,
+        "arms_act_total": 282,
+        "note": "SLL crimes are separate from IPC/BNS crimes; must not be mixed with IPC denominators"
+      },
+      "karnataka_district_ndps_weights": {
+        "type": "NCRB_INFERRED",
+        "formula": "district_ndps_total / karnataka_ndps_total",
+        "denominator": 4165,
+        "denominator_label": "Karnataka Total NDPS Act 2024 cases",
+        "weights": {
+          "Bagalkot": 0.004321728691476591,
+          "Bengaluru City": 0.11884753901560624,
+          "Bengaluru District": 0.01800720288115246,
+          "Belagavi District": 0.012004801920768308,
+          "Ballari": 0.006962785114045618,
+          "Bidar": 0.005762304921968787,
+          "Vijayapura": 0.0067226890756302525,
+          "Chikkaballapura": 0.00624249699879952,
+          "Chamarajnagar": 0.008883553421368547,
+          "Chikkamagaluru": 0.05450180072028812,
+          "Chitradurga": 0.015846338535414166,
+          "Dakshina Kannada": 0.01056422569027611,
+          "Davanagere": 0.041536614645858345,
+          "Dharwad": 0.004561824729891957,
+          "Gadag": 0.005522208883553421,
+          "Kalaburgi": 0.005282112845138055,
+          "Hassan": 0.031212484993997598,
+          "Haveri": 0.004561824729891957,
+          "Hubballi Dharwad City": 0.05858343337334934,
+          "KGF": 0.00624249699879952,
+          "Kodagu": 0.020648259303721488,
+          "Kolar": 0.00936374549819928,
+          "Koppal": 0.0028811524609843936,
+          "Mandya": 0.01368547418967587,
+          "Mangaluru City": 0.26746698679471786,
+          "Mysuru City": 0.010324129651860744,
+          "Mysuru District": 0.006482593037214886,
+          "Raichur": 0.004801920768307323,
+          "KRailways": 0.014165666266506602,
+          "Ramanagara": 0.012004801920768308,
+          "Shimoga": 0.09123649459783914,
+          "Tumakuru": 0.026650660264105643,
+          "Udupi": 0.029531812725090038,
+          "Uttara Kannada": 0.020648259303721488,
+          "Yadgiri": 0.0016806722689075631,
+          "Belagavi City": 0.013205282112845138,
+          "Kalaburgi City": 0.012725090036014406,
+          "Vijayanagara": 0.0163265306122449
+        }
+      },
+      "districts_raw": [
+        {
+          "district": "Bagalkot",
+          "arms_act": 3,
+          "ndps": 18
+        },
+        {
+          "district": "Bengaluru City",
+          "arms_act": 109,
+          "ndps": 495
+        },
+        {
+          "district": "Bengaluru District",
+          "arms_act": 9,
+          "ndps": 75
+        },
+        {
+          "district": "Belagavi District",
+          "arms_act": 3,
+          "ndps": 50
+        },
+        {
+          "district": "Ballari",
+          "arms_act": 1,
+          "ndps": 29
+        },
+        {
+          "district": "Bidar",
+          "arms_act": 2,
+          "ndps": 24
+        },
+        {
+          "district": "Vijayapura",
+          "arms_act": 9,
+          "ndps": 28
+        },
+        {
+          "district": "Chikkaballapura",
+          "arms_act": 8,
+          "ndps": 26
+        },
+        {
+          "district": "Chamarajnagar",
+          "arms_act": 8,
+          "ndps": 37
+        },
+        {
+          "district": "Chikkamagaluru",
+          "arms_act": 13,
+          "ndps": 227
+        },
+        {
+          "district": "Chitradurga",
+          "arms_act": 2,
+          "ndps": 66
+        },
+        {
+          "district": "Dakshina Kannada",
+          "arms_act": 4,
+          "ndps": 44
+        },
+        {
+          "district": "Davanagere",
+          "arms_act": 0,
+          "ndps": 173
+        },
+        {
+          "district": "Dharwad",
+          "arms_act": 0,
+          "ndps": 19
+        },
+        {
+          "district": "Gadag",
+          "arms_act": 0,
+          "ndps": 23
+        },
+        {
+          "district": "Kalaburgi",
+          "arms_act": 6,
+          "ndps": 22
+        },
+        {
+          "district": "Hassan",
+          "arms_act": 6,
+          "ndps": 130
+        },
+        {
+          "district": "Haveri",
+          "arms_act": 2,
+          "ndps": 19
+        },
+        {
+          "district": "Hubballi Dharwad City",
+          "arms_act": 10,
+          "ndps": 244
+        },
+        {
+          "district": "KGF",
+          "arms_act": 5,
+          "ndps": 26
+        },
+        {
+          "district": "Kodagu",
+          "arms_act": 6,
+          "ndps": 86
+        },
+        {
+          "district": "Kolar",
+          "arms_act": 9,
+          "ndps": 39
+        },
+        {
+          "district": "Koppal",
+          "arms_act": 0,
+          "ndps": 12
+        },
+        {
+          "district": "Mandya",
+          "arms_act": 1,
+          "ndps": 57
+        },
+        {
+          "district": "Mangaluru City",
+          "arms_act": 2,
+          "ndps": 1114
+        },
+        {
+          "district": "Mysuru City",
+          "arms_act": 3,
+          "ndps": 43
+        },
+        {
+          "district": "Mysuru District",
+          "arms_act": 1,
+          "ndps": 27
+        },
+        {
+          "district": "Raichur",
+          "arms_act": 0,
+          "ndps": 20
+        },
+        {
+          "district": "KRailways",
+          "arms_act": 1,
+          "ndps": 59
+        },
+        {
+          "district": "Ramanagara",
+          "arms_act": 6,
+          "ndps": 50
+        },
+        {
+          "district": "Shimoga",
+          "arms_act": 20,
+          "ndps": 380
+        },
+        {
+          "district": "Tumakuru",
+          "arms_act": 3,
+          "ndps": 111
+        },
+        {
+          "district": "Udupi",
+          "arms_act": 6,
+          "ndps": 123
+        },
+        {
+          "district": "Uttara Kannada",
+          "arms_act": 14,
+          "ndps": 86
+        },
+        {
+          "district": "Yadgiri",
+          "arms_act": 2,
+          "ndps": 7
+        },
+        {
+          "district": "Belagavi City",
+          "arms_act": 3,
+          "ndps": 55
+        },
+        {
+          "district": "Kalaburgi City",
+          "arms_act": 4,
+          "ndps": 53
+        },
+        {
+          "district": "Vijayanagara",
+          "arms_act": 1,
+          "ndps": 68
+        }
+      ]
+    },
+    "karnataka_cyber": {
+      "source": {
+        "file": "9DistrictwiseCyberCrimes2024.xlsx",
+        "sha256": "20aa987a34cc692f3d5c272e92e37e003d56167a6fa17f90cddde1162712dd47",
+        "sheet": "District Data Report",
+        "state": "Karnataka",
+        "key_column": "col59 = Total Cyber Crimes (A. IT Act + B. IPC Cyber + C. SLL Cyber)"
+      },
+      "karnataka_cyber_totals": {
+        "type": "NCRB_DERIVED",
+        "total_cyber_from_districts": 21993,
+        "total_cyber_state_row": 21993,
+        "note": "Cyber crimes are a SUBSET of SLL (IT Act) and IPC; they cross-cut the IPC/SLL boundary"
+      },
+      "karnataka_district_cyber_weights": {
+        "type": "NCRB_INFERRED",
+        "formula": "district_cyber_total / karnataka_cyber_total (district sum)",
+        "denominator": 21993,
+        "denominator_label": "Sum of Karnataka district cyber crime totals 2024",
+        "weights": {
+          "Bagalkot": 0.00213704360478334,
+          "Bengaluru City": 0.7984813349702178,
+          "Bengaluru District": 0.03837584686036466,
+          "Belagavi District": 0.002955485836402492,
+          "Ballari": 0.005365343518392215,
+          "Bidar": 0.0018642295275769563,
+          "Vijayapura": 0.0036375210294184515,
+          "Chikkaballapura": 0.008593643432001091,
+          "Chamarajnagar": 0.0010912563088255353,
+          "Chikkamagaluru": 0.004183149183831219,
+          "Chitradurga": 0.0033647069522120673,
+          "Dakshina Kannada": 0.004728777338243987,
+          "Davanagere": 0.006456599827217751,
+          "Dharwad": 0.0030918928750056835,
+          "Gadag": 0.003046423862137953,
+          "Kalaburgi": 0.0015004774246351112,
+          "Hassan": 0.005956440685672714,
+          "Haveri": 0.00568362660846633,
+          "Hubballi Dharwad City": 0.010912563088255355,
+          "KGF": 0.004410494248169872,
+          "Kodagu": 0.0037284590551539126,
+          "Kolar": 0.002637202746328377,
+          "Koppal": 0.0012276633474287274,
+          "Mandya": 0.003046423862137953,
+          "Mangaluru City": 0.006229254762879098,
+          "Mysuru City": 0.011821943345609967,
+          "Mysuru District": 0.0020915745919156095,
+          "Raichur": 0.0009548492702223434,
+          "KRailways": 0.0,
+          "Ramanagara": 0.01073068703678443,
+          "Shimoga": 0.005592688582730869,
+          "Tumakuru": 0.014641022143409267,
+          "Udupi": 0.00923020961214932,
+          "Uttara Kannada": 0.004365025235302141,
+          "Yadgiri": 0.0008639112444868822,
+          "Belagavi City": 0.0046378393125085255,
+          "Kalaburgi City": 0.0013640703860319193,
+          "Vijayanagara": 0.0010003182830900742
+        }
+      },
+      "districts_raw": [
+        {
+          "district": "Bagalkot",
+          "total_cyber": 47
+        },
+        {
+          "district": "Bengaluru City",
+          "total_cyber": 17561
+        },
+        {
+          "district": "Bengaluru District",
+          "total_cyber": 844
+        },
+        {
+          "district": "Belagavi District",
+          "total_cyber": 65
+        },
+        {
+          "district": "Ballari",
+          "total_cyber": 118
+        },
+        {
+          "district": "Bidar",
+          "total_cyber": 41
+        },
+        {
+          "district": "Vijayapura",
+          "total_cyber": 80
+        },
+        {
+          "district": "Chikkaballapura",
+          "total_cyber": 189
+        },
+        {
+          "district": "Chamarajnagar",
+          "total_cyber": 24
+        },
+        {
+          "district": "Chikkamagaluru",
+          "total_cyber": 92
+        },
+        {
+          "district": "Chitradurga",
+          "total_cyber": 74
+        },
+        {
+          "district": "Dakshina Kannada",
+          "total_cyber": 104
+        },
+        {
+          "district": "Davanagere",
+          "total_cyber": 142
+        },
+        {
+          "district": "Dharwad",
+          "total_cyber": 68
+        },
+        {
+          "district": "Gadag",
+          "total_cyber": 67
+        },
+        {
+          "district": "Kalaburgi",
+          "total_cyber": 33
+        },
+        {
+          "district": "Hassan",
+          "total_cyber": 131
+        },
+        {
+          "district": "Haveri",
+          "total_cyber": 125
+        },
+        {
+          "district": "Hubballi Dharwad City",
+          "total_cyber": 240
+        },
+        {
+          "district": "KGF",
+          "total_cyber": 97
+        },
+        {
+          "district": "Kodagu",
+          "total_cyber": 82
+        },
+        {
+          "district": "Kolar",
+          "total_cyber": 58
+        },
+        {
+          "district": "Koppal",
+          "total_cyber": 27
+        },
+        {
+          "district": "Mandya",
+          "total_cyber": 67
+        },
+        {
+          "district": "Mangaluru City",
+          "total_cyber": 137
+        },
+        {
+          "district": "Mysuru City",
+          "total_cyber": 260
+        },
+        {
+          "district": "Mysuru District",
+          "total_cyber": 46
+        },
+        {
+          "district": "Raichur",
+          "total_cyber": 21
+        },
+        {
+          "district": "KRailways",
+          "total_cyber": 0
+        },
+        {
+          "district": "Ramanagara",
+          "total_cyber": 236
+        },
+        {
+          "district": "Shimoga",
+          "total_cyber": 123
+        },
+        {
+          "district": "Tumakuru",
+          "total_cyber": 322
+        },
+        {
+          "district": "Udupi",
+          "total_cyber": 203
+        },
+        {
+          "district": "Uttara Kannada",
+          "total_cyber": 96
+        },
+        {
+          "district": "Yadgiri",
+          "total_cyber": 19
+        },
+        {
+          "district": "Belagavi City",
+          "total_cyber": 102
+        },
+        {
+          "district": "Kalaburgi City",
+          "total_cyber": 30
+        },
+        {
+          "district": "Vijayanagara",
+          "total_cyber": 22
+        }
+      ]
+    },
+    "case_disposal": {
+      "source": {
+        "file": "TABLE17B13.xlsx",
+        "sha256": "35f86df80dbfb466238a51087aaba9ee9753a4a7e196fb0ec9fcb60aa42b00bf",
+        "sheet": "CIIReport",
+        "scope": "ALL-INDIA aggregate (not Karnataka-specific)",
+        "total_row": 186,
+        "row_label": "Total Cognizable IPC/BNS crimes",
+        "column_mapping": {
+          "col3": "Cases Reported during the year",
+          "col5": "Total Cases for Investigation",
+          "col21": "Cases Charge sheeted Total",
+          "col27": "Cases Pending at year end",
+          "col28": "Chargesheeting Rate",
+          "col29": "Pendency Percentage"
+        }
+      },
+      "all_india_disposal_raw": {
+        "type": "NCRB_DERIVED",
+        "reported": 198355,
+        "total_for_investigation": 282191,
+        "chargesheeted": 142300,
+        "pending": 94662,
+        "chargesheeting_rate_pct": 76.0,
+        "pendency_pct": 33.5
+      },
+      "nexus_case_status_weights": {
+        "type": "NCRB_INFERRED",
+        "scope_warning": "All-India proxy; Karnataka-specific disposal data not in current files",
+        "formula": "fraction = category_count / total_for_investigation",
+        "denominator": 282191,
+        "denominator_label": "All-India Total Cases for Investigation 2024",
+        "nexus_mapping": {
+          "CHARGESHEET_FILED": {
+            "ncrb_source": "Cases Charge sheeted (col21)",
+            "ncrb_value": 142300,
+            "weight": 0.5043
+          },
+          "INVESTIGATION_IN_PROGRESS": {
+            "ncrb_source": "Cases Pending at year end (col27)",
+            "ncrb_value": 94662,
+            "weight": 0.3355
+          },
+          "CLOSED_NO_EVIDENCE": {
+            "ncrb_source": "Computed: total - chargesheeted - pending",
+            "ncrb_value": 45229,
+            "weight": 0.1603
+          }
+        },
+        "note": "NCRB disposal states (FR False, Mistake of Fact, True-Insufficient-Evidence, Abated) are collapsed into CLOSED_NO_EVIDENCE. OPEN (newly registered, not yet processed) is not directly represented in the disposal table and is treated as a SYNTHETIC_ASSUMPTION."
+      }
+    },
+    "nexus_crime_category_mapping": {
+      "type": "NCRB_INFERRED",
+      "scope_warning": "IPC groups → NEXUS crime categories. SLL crimes (NDPS, Arms) are mapped from a separate register and cannot be directly combined with IPC weights without double-counting risk. They are modeled as scenario-specific overlays.",
+      "ipc_group_to_nexus_category": {
+        "property": {
+          "nexus_category": "Theft & Property Crime",
+          "ipc_group": "property",
+          "ipc_weight": 0.22196362693105834
+        },
+        "human_body": {
+          "nexus_category": "Violence & Bodily Harm",
+          "ipc_group": "human_body",
+          "ipc_weight": 0.27328078164629926
+        },
+        "women_children": {
+          "nexus_category": "Offences Against Women & Children",
+          "ipc_group": "women_children",
+          "ipc_weight": 0.07690367765736685
+        },
+        "miscellaneous": {
+          "nexus_category": "Miscellaneous IPC",
+          "ipc_group": "miscellaneous",
+          "ipc_weight": 0.27843987779571133
+        },
+        "other_ipc": {
+          "nexus_category": "Other IPC",
+          "ipc_group": "other_ipc",
+          "ipc_weight": 0.065944201060641
+        },
+        "documents_forgery": {
+          "nexus_category": "Fraud & Forgery",
+          "ipc_group": "documents_forgery",
+          "ipc_weight": 0.05217460225962647
+        },
+        "public_tranquility": {
+          "nexus_category": "Public Order",
+          "ipc_group": "public_tranquility",
+          "ipc_weight": 0.03128602720774729
+        }
+      },
+      "sll_overlays": {
+        "narcotics_ndps": {
+          "type": "NCRB_INFERRED",
+          "description": "NDPS Act cases as scenario overlay on top of IPC crime mix",
+          "karnataka_ndps_total": 4165,
+          "note": "Applied as separate scenario dimension; not mixed into IPC weight vector"
+        },
+        "arms_trafficking": {
+          "type": "NCRB_INFERRED",
+          "description": "Arms Act cases as scenario overlay",
+          "karnataka_arms_total": 282
+        },
+        "cyber_fraud": {
+          "type": "NCRB_INFERRED",
+          "description": "Cyber crimes (IT Act + IPC cyber + SLL cyber) as scenario overlay",
+          "karnataka_cyber_total": 21993
+        }
+      }
+    }
+  },
+  "synthetic_assumptions": [
+    {
+      "parameter": "accused_gender_weights",
+      "type": "SYNTHETIC_ASSUMPTION",
+      "reason": "NCRB does not provide accused/arrested-person gender distribution in the 19 downloaded files. TABLE files cover metropolitan cities (TABLE3B13 = crime against women rates, not accused gender). A design prior of ~88% male is commonly cited in literature but cannot be sourced to the current file set.",
+      "value_used": {
+        "male": 0.88,
+        "female": 0.11,
+        "other": 0.01
+      },
+      "source_attempted": "None of the 19 NCRB files provide accused gender breakdown for Karnataka",
+      "recommendation": "Obtain NCRB Table 10A (Persons Arrested by Age and Sex) for a defensible source"
+    },
+    {
+      "parameter": "accused_age_band_weights",
+      "type": "SYNTHETIC_ASSUMPTION",
+      "reason": "NCRB provides age-disaggregated arrest data in Table 10 (Persons Arrested) but this table is not in the 19 downloaded files. 10DistrictwiseMissingPersons2024.xlsx provides MISSING PERSON age data, which cannot be used as accused age proxy.",
+      "value_used": {
+        "18-25": 0.3,
+        "25-35": 0.35,
+        "35-45": 0.2,
+        "45-55": 0.1,
+        "55+": 0.05
+      },
+      "source_attempted": "Age bands sourced from general criminological literature (accused peak 18-35)",
+      "recommendation": "Obtain NCRB Table 10A for defensible accused age distribution"
+    },
+    {
+      "parameter": "victim_gender_weights",
+      "type": "SYNTHETIC_ASSUMPTION",
+      "reason": "10DistrictwiseMissingPersons2024 provides MISSING PERSON gender breakdowns which is a specific scenario. Victim gender for general IPC crimes is not available in current files without per-crime-type disaggregation.",
+      "value_used": {
+        "male": 0.55,
+        "female": 0.44,
+        "other": 0.01
+      },
+      "source_attempted": "TABLE3B13 covers metropolitan cities crime-against-women rate only",
+      "recommendation": "Obtain NCRB Table 5A (Victims of IPC Crimes) for accurate victim gender weights"
+    },
+    {
+      "parameter": "missing_person_victim_age_weights",
+      "type": "NCRB_INFERRED",
+      "source_file": "10DistrictwiseMissingPersons2024.xlsx",
+      "source_scope": "Karnataka, 2024",
+      "reason": "Used ONLY for missing-person case scenarios. Bengaluru City total missing: Male=2704, Female=3534. Karnataka total from state row provides age-band fractions for missing-person victim profiles.",
+      "bengaluru_city_raw": {
+        "male_total": 2704,
+        "female_total": 3534
+      },
+      "applicable_scenario": "MISSING_PERSON cases only; NOT applied to general victim demographics"
+    },
+    {
+      "parameter": "karnataka_name_pools",
+      "type": "SYNTHETIC_ASSUMPTION",
+      "reason": "NCRB aggregate crime tables contain no personal name distribution. Karnataka is a multi-linguistic state with Kannada, Tamil, Urdu, and Telugu communities. Name pools are constructed as SYNTHETIC REALISM INPUT based on demographic knowledge, not NCRB data.",
+      "design_intent": "Reflect Karnataka's multilingual population for investigative realism"
+    },
+    {
+      "parameter": "bns_section_to_crime_category_mapping",
+      "type": "SYNTHETIC_ASSUMPTION",
+      "reason": "TABLE1B44 (IPC/BNS Crimes Crime-Head-wise) contains column headers that reference section numbers within crime-head labels (e.g., 'Rape (Section 64 to Section 71 BNS / Section 376 IPC)'). However, the table provides CRIME COUNTS by metropolitan city, not a canonical crime-head → section mapping. A manually curated mapping is required and is labeled as SYNTHETIC ASSUMPTION with explicit rationale per entry.",
+      "table1b44_finding": "TABLE1B44 Row4 headers DO contain BNS/IPC section references within crime-head labels. These are used to INFORM the manual mapping but the mapping itself is curated."
+    },
+    {
+      "parameter": "cross_jurisdiction_network_axes",
+      "type": "SYNTHETIC_ASSUMPTION",
+      "reason": "NCRB aggregate crime counts cannot establish that criminal networks traverse specific geographic axes. The Bengaluru↔Mangaluru and Bengaluru↔Hubballi axes in NEXUS are SYNTHETIC SCENARIO TOPOLOGY, not NCRB-derived relationships."
+    },
+    {
+      "parameter": "criminal_network_topology",
+      "type": "SYNTHETIC_ASSUMPTION",
+      "reason": "Degree distribution, community sizes, bridge frequency, component sizes, clustering coefficients, temporal activity patterns, communication burst behavior, and transaction fan-out/fan-in are all synthetic network realism assumptions. NCRB does not provide criminal network topology data."
+    }
+  ],
+  "validation": {
+    "ipc_groups_sum_to_total": true,
+    "district_ipc_weights_sum": 1.0,
+    "district_ndps_weights_sum": 1.0,
+    "district_cyber_weights_sum": 1.0
+  }
+}

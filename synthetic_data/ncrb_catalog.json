@@ -1,0 +1,360 @@
+{
+  "_metadata": {
+    "purpose": "Machine-readable provenance catalog for NCRB 2024 calibration data used in NEXUS synthetic data generation",
+    "calibration_version": "1.0.0",
+    "ncrb_publication_year": 2024,
+    "state_focus": "Karnataka",
+    "extraction_script": "scripts/ncrb/extract_ncrb_calibration.py",
+    "runtime_module": "synthetic_data/ncrb_calibration.py",
+    "provenance_model": {
+      "NCRB_DERIVED": "Directly read from a specific NCRB table cell with exact row/column",
+      "NCRB_INFERRED": "Computed from NCRB cells via an explicit, documented formula",
+      "SYNTHETIC_ASSUMPTION": "Design choice not supported by available NCRB files"
+    },
+    "last_extraction": "2026-09-17T12:05:39Z"
+  },
+
+  "source_files": [
+    {
+      "filename": "1DistrictwiseIPCCrimes2024.xlsx",
+      "description": "Districtwise IPC/BNS Crimes - 2024 (All India, all districts)",
+      "sha256": "41a4270149aa44561c508cbba62f4c26799a375b1edb8baa1db33b399e6ff121",
+      "size_bytes": 735752,
+      "sheet": "District Data Report",
+      "total_rows": 1087,
+      "total_cols": 156,
+      "karnataka_state_marker_row": 339,
+      "karnataka_district_rows": "340-377",
+      "karnataka_total_row": 378,
+      "group_aggregate_columns": {
+        "col30": "Total Offences against Women and Children (group aggregate)",
+        "col73": "Total Offences affecting Human Body (group aggregate)",
+        "col76": "Total Offences against State",
+        "col101": "Total Offences against Public Tranquility",
+        "col124": "Total Offences against Property",
+        "col138": "Total Offences Relating to Documents & Property",
+        "col153": "Total Miscellaneous IPC/BNS Crimes",
+        "col154": "Other IPC/BNS crimes",
+        "col155": "Grand Total Cognizable IPC/BNS crimes"
+      },
+      "used_for": [
+        "KARNATAKA_IPC_CRIME_CATEGORY_WEIGHTS",
+        "NEXUS_DISTRICT_IPC_WEIGHTS",
+        "_KARNATAKA_ALL_DISTRICT_IPC_WEIGHTS"
+      ]
+    },
+    {
+      "filename": "2DistrictwiseSLLCrimes2024.xlsx",
+      "description": "Districtwise SLL Crimes - 2024 (All India, all districts)",
+      "sha256": "9800f505564ca26d10f025e7e432ba44abdd65e6009cbb397662ef5a997a6122",
+      "size_bytes": 443342,
+      "sheet": "District Data Report",
+      "total_rows": 1086,
+      "total_cols": 95,
+      "karnataka_state_marker_row": 338,
+      "key_columns": {
+        "col23": "Arms Act 1959 Total",
+        "col44": "NDPS Act 1985 Total"
+      },
+      "used_for": [
+        "KARNATAKA_DISTRICT_NDPS_RAW",
+        "NEXUS_DISTRICT_NDPS_WEIGHTS"
+      ],
+      "important_note": "SLL crimes are a SEPARATE register from IPC/BNS. Do NOT sum with IPC totals without explicit mixed-register documentation."
+    },
+    {
+      "filename": "9DistrictwiseCyberCrimes2024.xlsx",
+      "description": "Districtwise Cyber Crimes - 2024 (All India)",
+      "sha256": "20aa987a34cc692f3d5c272e92e37e003d56167a6fa17f90cddde1162712dd47",
+      "size_bytes": 268758,
+      "sheet": "District Data Report",
+      "total_rows": 1087,
+      "total_cols": 60,
+      "karnataka_state_marker_row": 339,
+      "key_column": {
+        "col59": "Total Cyber Crimes (A. IT Act + B. IPC Cyber + C. SLL Cyber)"
+      },
+      "used_for": [
+        "KARNATAKA_DISTRICT_CYBER_RAW",
+        "NEXUS_DISTRICT_CYBER_WEIGHTS"
+      ],
+      "important_note": "Cyber crimes cross-cut both IPC and SLL registers. The col59 total is a combined count and must NOT be added to IPC or SLL totals separately."
+    },
+    {
+      "filename": "TABLE17B13.xlsx",
+      "description": "Police Disposal of IPC Crimes (Crime Head-wise) - National aggregate",
+      "sha256": "35f86df80dbfb466238a51087aaba9ee9753a4a7e196fb0ec9fcb60aa42b00bf",
+      "size_bytes": 43723,
+      "sheet": "CIIReport",
+      "total_rows": 187,
+      "scope": "ALL-INDIA AGGREGATE (not Karnataka-specific)",
+      "key_row": {
+        "row": 186,
+        "label": "Total Cognizable IPC/BNS crimes"
+      },
+      "key_columns": {
+        "col3": "Cases Reported during the year = 198,355",
+        "col5": "Total Cases for Investigation = 282,191",
+        "col21": "Cases Charge Sheeted Total = 142,300",
+        "col27": "Cases Pending at year end = 94,662",
+        "col28": "Chargesheeting Rate = 76.0%",
+        "col29": "Pendency Percentage = 33.5%"
+      },
+      "used_for": ["NEXUS_CASE_STATUS_WEIGHTS"],
+      "scope_caveat": "Used as all-India proxy for Karnataka case status weights. Karnataka-specific disposal data requires TABLE17B23 or state-level breakdowns not in current files."
+    },
+    {
+      "filename": "TABLE17B23.xlsx",
+      "description": "Police Disposal of IPC/BNS Crimes in Metropolitan Cities",
+      "sha256": "96bda4f889b242a53cc889a4e61fa3f478c2d86f6d63606939dfbae3bf74f939",
+      "size_bytes": 18693,
+      "sheet": "CIIReport",
+      "scope": "19 METROPOLITAN CITIES (Bengaluru City not in the 19 listed)",
+      "used_for": [],
+      "note": "Not used for calibration. Metropolitan cities listed do not include Bengaluru City in 2024 publication."
+    },
+    {
+      "filename": "TABLE1B44.xlsx",
+      "description": "IPC/BNS Crimes (Crime Head-wise & City-wise) - 2024",
+      "sha256": "c10bb05d93fa1aadd6724b1dd3d66bfaafff5e6656718ec8957c4abffe084537",
+      "size_bytes": 243643,
+      "finding": "Column headers in Row4 contain BNS/IPC section references embedded in crime-head labels (e.g., 'Rape (Section 64 to Section 71 BNS / Section 376 IPC)'). The table provides CRIME COUNTS by metropolitan city, NOT a canonical crime-head to section mapping.",
+      "used_for": ["NEXUS_BNS_SECTIONS_BY_CATEGORY (informed, not sourced)"],
+      "note": "NEXUS_BNS_SECTIONS_BY_CATEGORY is a SYNTHETIC_ASSUMPTION mapping informed by the section references visible in TABLE1B44 headers, but the table itself cannot be the canonical source."
+    },
+    {
+      "filename": "10DistrictwiseMissingPersons2024.xlsx",
+      "description": "Districtwise Missing Persons - 2024",
+      "sha256": "c27211dacec4fd50f435cbc023416d55af07161aee2f09c93f370b3ad1b240dc",
+      "size_bytes": 154325,
+      "karnataka_bengaluru_city_row": 339,
+      "extracted_values": {
+        "Bengaluru City Male Missing": 2704,
+        "Bengaluru City Female Missing": 3534
+      },
+      "used_for": ["MISSING_PERSON_BENGALURU_GENDER_WEIGHTS"],
+      "scope": "APPLICABLE ONLY to missing-person case scenarios. NOT used for general victim demographics."
+    },
+    {
+      "filename": "TABLE1B54.xlsx",
+      "description": "SLL Crimes (Crime Head-wise, State-wise) - 2024",
+      "sha256": "3a8808584ff836aaffbd131b0a4342edc4a2cfbcd019db99b11506757ee4b09f",
+      "size_bytes": 76246,
+      "used_for": [],
+      "note": "Available for future calibration of SLL crime-head composition."
+    },
+    {
+      "filename": "TABLE1C44.xlsx",
+      "description": "Violent Crimes (Crime Head-wise, City-wise) - 2024",
+      "sha256": "6787384557590e899ef6c025af4834e8e917251ee1ffd1aacdcb572748fedf1a",
+      "size_bytes": 15029,
+      "used_for": [],
+      "note": "Available for future calibration of violent crime sub-type distribution."
+    },
+    {
+      "filename": "TABLE2B14.xlsx",
+      "description": "Murder Cases in Metropolitan Cities - 2024",
+      "sha256": "20e70ff7fed244b1e1feae94a7685f68de775eb9537239f1c3daf897d1f63507",
+      "size_bytes": 12225,
+      "used_for": [],
+      "note": "Available for murder scenario calibration."
+    },
+    {
+      "filename": "TABLE2B24.xlsx",
+      "description": "Motives of Murder in Metropolitan Cities - 2024",
+      "sha256": "143304ef92b31fd5780ff61491b445114d929269b37595ddd950d18976b990d8",
+      "size_bytes": 17523,
+      "used_for": [],
+      "note": "Available for future motive-tagged murder scenario generation."
+    },
+    {
+      "filename": "TABLE2D16.xlsx",
+      "description": "Kidnapping & Abduction Cases - 2024",
+      "sha256": "6eed673012e2f81e0c4ee64870e9c93a521a8b98f22c41af591b805073983097",
+      "size_bytes": 12373,
+      "used_for": [],
+      "note": "Available for K&A scenario calibration."
+    },
+    {
+      "filename": "TABLE2D29.xlsx",
+      "description": "Child Victims of Kidnapping & Abduction - 2024",
+      "sha256": "279a2da00ebe1acd435c7e80b9f5b0f74445603e82ab728ddb37d098a48e4f8f",
+      "size_bytes": 20641,
+      "used_for": [],
+      "note": "Child victim age for K&A scenarios."
+    },
+    {
+      "filename": "TABLE3B13.xlsx",
+      "description": "Crime against Women (IPC/BNS+SLL) in 34 Metropolitan Cities - 2024",
+      "sha256": "7797f8ef1916786f2402ebe44c920ff9b24dab80ae64a9c578ee686b74198756",
+      "size_bytes": 12428,
+      "finding": "Provides crime-against-women RATE per city, 3-year trend, chargesheeting rate. Does NOT provide accused gender breakdown.",
+      "used_for": [],
+      "note": "Not suitable as accused gender source. Useful for future women-specific crime rate calibration."
+    },
+    {
+      "filename": "TABLE3B23.xlsx",
+      "description": "IPC/BNS Crimes against Women by type - 2024",
+      "sha256": "6c017d8d84803f4f88b97ee826720aa24f174f726b2893ffad5907c9b9f3b1a2",
+      "size_bytes": 84584,
+      "used_for": [],
+      "note": "Available for detailed women-crime sub-type weights."
+    },
+    {
+      "filename": "TABLE4B13.xlsx",
+      "description": "Crime against Children (IPC/BNS+SLL) - 2024",
+      "sha256": "69b6db8d5fcc332d60ccda47a63f1781179fe7949cd49334de670e0fc8fb6c6b",
+      "size_bytes": 13220,
+      "used_for": [],
+      "note": "Available for child-crime scenario calibration."
+    },
+    {
+      "filename": "TABLE4B23.xlsx",
+      "description": "IPC/BNS Crimes against Children by type - 2024",
+      "sha256": "43b672f09ef92656c1fcc4ad3ec02b4c8dfbd63b7a3110829d1252ec2f873408",
+      "size_bytes": 61722,
+      "used_for": [],
+      "note": "Available for detailed children-crime sub-type weights."
+    },
+    {
+      "filename": "TABLE8B13.xlsx",
+      "description": "Economic Offences in Metropolitan Cities - 2024",
+      "sha256": "e21850e90ab434b4971d65f4bbecf033ce62485c360770b2af05bc7f12167086",
+      "size_bytes": 12457,
+      "used_for": [],
+      "note": "Available for financial crime scenario calibration."
+    },
+    {
+      "filename": "TABLE9B23.xlsx",
+      "description": "Cyber Crimes - IT Act Case Types - 2024",
+      "sha256": "d88f42b1d76f404552faf908032e625fe8a4f1c32efccfbe3a5a0ae703da0b12",
+      "size_bytes": 34631,
+      "used_for": [],
+      "note": "Available for cyber crime sub-type distribution calibration."
+    }
+  ],
+
+  "calibration_parameters": [
+    {
+      "parameter": "KARNATAKA_IPC_CRIME_CATEGORY_WEIGHTS",
+      "type": "NCRB_INFERRED",
+      "source_file": "1DistrictwiseIPCCrimes2024.xlsx",
+      "source_sheet": "District Data Report",
+      "source_row": 378,
+      "source_description": "Karnataka Total row",
+      "formula": "group_total_col / 138784",
+      "denominator": 138784,
+      "denominator_label": "Karnataka Total Cognizable IPC/BNS crimes 2024 (col155)",
+      "verification": "8 groups sum exactly to 138784 (difference=0)",
+      "categories": {
+        "Miscellaneous IPC": {"col": 153, "raw_value": 38643, "weight": 0.2784},
+        "Violence & Bodily Harm": {"col": 73, "raw_value": 37927, "weight": 0.2733},
+        "Theft & Property Crime": {"col": 124, "raw_value": 30805, "weight": 0.2220},
+        "Offences Against Women & Children": {"col": 30, "raw_value": 10673, "weight": 0.0769},
+        "Other IPC": {"col": 154, "raw_value": 9152, "weight": 0.0659},
+        "Fraud & Forgery": {"col": 138, "raw_value": 7241, "weight": 0.0522},
+        "Public Order": {"col": 101, "raw_value": 4342, "weight": 0.0313},
+        "Offences Against the State": {"col": 76, "raw_value": 1, "weight": 0.0000}
+      }
+    },
+    {
+      "parameter": "NEXUS_DISTRICT_IPC_WEIGHTS",
+      "type": "NCRB_INFERRED",
+      "source_file": "1DistrictwiseIPCCrimes2024.xlsx",
+      "formula": "sum(ncrb_district_ipc_totals for nexus_district_group) / total_in_6_nexus_districts",
+      "nexus_mapping": {
+        "Bengaluru City": ["Bengaluru City (row 341)"],
+        "Bengaluru Rural": ["Bengaluru District (row 342)"],
+        "Mysuru": ["Mysuru City (row 366)", "Mysuru District (row 367)"],
+        "Mangaluru": ["Mangaluru City (row 365)", "Dakshina Kannada (row 352)"],
+        "Hubballi-Dharwad": ["Hubballi Dharwad City (row 358)", "Dharwad (row 354)"],
+        "Belagavi": ["Belagavi District (row 343)", "Belagavi City (row 376)"]
+      }
+    },
+    {
+      "parameter": "NEXUS_DISTRICT_NDPS_WEIGHTS",
+      "type": "NCRB_INFERRED",
+      "source_file": "2DistrictwiseSLLCrimes2024.xlsx",
+      "key_finding": "Mangaluru City = 1,114 NDPS cases (highest in Karnataka state, 26.7% of total). This reflects the documented coastal narcotics trafficking nexus and is a real NCRB-grounded finding."
+    },
+    {
+      "parameter": "NEXUS_DISTRICT_CYBER_WEIGHTS",
+      "type": "NCRB_INFERRED",
+      "source_file": "9DistrictwiseCyberCrimes2024.xlsx",
+      "key_finding": "Bengaluru City = 17,561 cyber cases = 79.9% of Karnataka cyber total."
+    },
+    {
+      "parameter": "NEXUS_CASE_STATUS_WEIGHTS",
+      "type": "NCRB_INFERRED",
+      "source_file": "TABLE17B13.xlsx",
+      "scope": "ALL-INDIA proxy (Karnataka-specific disposal data not available in current files)",
+      "ncrb_to_nexus_mapping": {
+        "CHARGESHEET_FILED": "col21 (Cases Chargesheeted) / col5 (Total for Investigation) = 142300/282191 = 0.504",
+        "INVESTIGATION_IN_PROGRESS": "col27 (Pending at year end) / col5 = 94662/282191 = 0.335",
+        "OPEN": "Remainder (disposal categories not mapped to above) = 0.160 -- reclassified as OPEN for NEXUS operational meaning"
+      }
+    },
+    {
+      "parameter": "NCRB_ACCUSED_GENDER_WEIGHTS",
+      "type": "SYNTHETIC_ASSUMPTION",
+      "reason": "NCRB Table 10A (Persons Arrested by Age and Sex) not in 19 downloaded files. TABLE3B13 covers metropolitan crime-against-women RATES, not accused gender. Values are design priors.",
+      "recommendation": "Obtain NCRB Table 10A for defensible source."
+    },
+    {
+      "parameter": "NCRB_ACCUSED_AGE_BANDS",
+      "type": "SYNTHETIC_ASSUMPTION",
+      "reason": "NCRB Table 10A not in current files. 10DistrictwiseMissingPersons2024 provides MISSING PERSON age data which cannot serve as accused age proxy.",
+      "recommendation": "Obtain NCRB Table 10A for defensible source."
+    },
+    {
+      "parameter": "NCRB_VICTIM_GENDER_WEIGHTS",
+      "type": "SYNTHETIC_ASSUMPTION",
+      "reason": "NCRB Table 5A (Victims of IPC Crimes) not in current files. TABLE3B13 covers metropolitan cities crime-against-women rate, not general victim gender.",
+      "recommendation": "Obtain NCRB Table 5A."
+    },
+    {
+      "parameter": "MISSING_PERSON_BENGALURU_GENDER_WEIGHTS",
+      "type": "NCRB_INFERRED",
+      "source_file": "10DistrictwiseMissingPersons2024.xlsx",
+      "applicable_scope": "MISSING_PERSON case scenarios ONLY",
+      "values": {"male": 0.434, "female": 0.566}
+    },
+    {
+      "parameter": "NEXUS_BNS_SECTIONS_BY_CATEGORY",
+      "type": "SYNTHETIC_ASSUMPTION",
+      "reason": "TABLE1B44 headers contain section references but provide crime counts by city, not a canonical section mapping. Manually curated and labeled as such.",
+      "table1b44_finding": "Row4 column headers embed BNS/IPC section numbers within crime-head labels (e.g., 'Rape (Section 64 to Section 71 BNS)') — informative but not authoritative."
+    },
+    {
+      "parameter": "KARNATAKA_MALE_FIRST_NAMES",
+      "type": "SYNTHETIC_ASSUMPTION",
+      "reason": "NCRB aggregate tables contain no personal name distribution. Name pools are synthetic realism inputs reflecting Karnataka's multilingual demographics."
+    },
+    {
+      "parameter": "cross_jurisdiction_network_axes",
+      "type": "SYNTHETIC_ASSUMPTION",
+      "reason": "NCRB aggregate crime counts cannot establish that criminal networks traverse specific geographic axes. The Bengaluru-Mangaluru and Bengaluru-Hubballi axes are synthetic scenario topology, not NCRB-derived relationships."
+    }
+  ],
+
+  "assumptions": [
+    "Accused gender (88% male) is a design prior, NOT NCRB-derived",
+    "Accused age distribution (peak 18-35) is a design prior, NOT NCRB-derived",
+    "Victim gender (55% male) is a design prior, NOT NCRB-derived",
+    "BNS section mapping is manually curated, informed by TABLE1B44 headers but NOT sourced from them",
+    "Name pools are synthetic realism inputs, NOT NCRB-derived",
+    "Criminal network topology (degree, clustering, community size) is NOT NCRB-derived",
+    "Cross-jurisdiction network axes are synthetic scenario assumptions, NOT NCRB-derived",
+    "NEXUS_CASE_STATUS_WEIGHTS use all-India proxy for Karnataka (Karnataka-specific unavailable)",
+    "SLL crime weights are NOT mixed into IPC probability vectors to prevent double-counting"
+  ],
+
+  "limitations": [
+    "NCRB Table 10A (Persons Arrested by Age and Sex) not available — accused age/gender remain assumptions",
+    "NCRB Table 5A (Victims of IPC Crimes) not available — victim gender remains assumption",
+    "Karnataka-specific case disposal data not available — all-India proxy used for status weights",
+    "District-level crime data is for 2024 only — multi-year trend calibration not possible with current files",
+    "Cyber crime data cross-cuts IPC and SLL registers — combined Bengaluru cyber figure includes both",
+    "9 of 19 NCRB files are unused in current calibration (TABLE1C44, TABLE2B14, TABLE2B24, TABLE2D16, TABLE2D29, TABLE3B23, TABLE4B13, TABLE4B23, TABLE8B13, TABLE9B23) — available for future enhancement"
+  ]
+}

@@ -22,6 +22,10 @@ from synthetic_data.configs import (
     choose_weighted,
     utc_now,
 )
+from synthetic_data.ncrb_calibration import (
+    KARNATAKA_IPC_CRIME_CATEGORY_WEIGHTS,
+    NEXUS_DISTRICT_IPC_WEIGHTS,
+)
 
 
 class ReferenceCatalog(BaseModel):
@@ -248,8 +252,9 @@ def build_case_blueprints(
     ]
 
     for case_index in range(config.case_count):
-        district = config.districts[case_index % len(config.districts)]
-        station_name = _DISTRICT_STATIONS[district][case_index % len(_DISTRICT_STATIONS[district])]
+        # NCRB_INFERRED: weighted district from Karnataka IPC district weights
+        district = choose_weighted(rng, NEXUS_DISTRICT_IPC_WEIGHTS)
+        station_name = _DISTRICT_STATIONS.get(district, ("Central PS", "North PS", "South PS"))[case_index % len(_DISTRICT_STATIONS.get(district, ("Central PS",)))]
         location = references.locations[(case_index * 7) % len(references.locations)]
         court = references.courts[case_index % len(references.courts)]
         unit = next(unit for unit in references.units if unit.properties["unit_name"] == station_name)
@@ -257,7 +262,8 @@ def build_case_blueprints(
         sections = section_groups[case_index % len(section_groups)]
         crime_head = references.crime_heads[case_index % len(references.crime_heads)]
         crime_sub_head = references.crime_sub_heads[case_index % len(references.crime_sub_heads)]
-        offence_category = offence_categories[case_index % len(offence_categories)]
+        # NCRB_INFERRED: weighted crime category from Karnataka IPC group weights
+        offence_category = choose_weighted(rng, KARNATAKA_IPC_CRIME_CATEGORY_WEIGHTS)
         case_stage = case_stages[case_index % len(case_stages)]
         reported_at = timestamp_for_index(base_now, case_index, step_hours=14)
         incident_at = reported_at - timedelta(hours=rng.randint(1, 72))

@@ -21,6 +21,12 @@ from synthetic_data.configs import (
     utc_now,
 )
 from synthetic_data.factories.case_factory import CaseBlueprint
+from synthetic_data.ncrb_calibration import (
+    NCRB_ACCUSED_AGE_BANDS,
+    NCRB_ACCUSED_GENDER_WEIGHTS,
+    NCRB_VICTIM_AGE_BANDS,
+    NCRB_VICTIM_GENDER_WEIGHTS,
+)
 
 
 class CaseRoleAssignment(BaseModel):

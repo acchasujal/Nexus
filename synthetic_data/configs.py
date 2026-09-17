@@ -106,8 +106,17 @@ except ImportError:  # pragma: no cover - deterministic fallback for local envir
             return " ".join(words).capitalize() + "."
 
 
+class DatasetProfile(str, Enum):
+    BASELINE = "baseline"
+    GROUND_TRUTH = "ground_truth"
+    NCRB_CALIBRATED = "ncrb_calibrated"
+    ADVERSARIAL = "adversarial"
+    DEMO = "demo"
+
+
 class SyntheticDataConfig(BaseModel):
     seed: int = 42
+    profile: DatasetProfile = DatasetProfile.NCRB_CALIBRATED
     case_count: int = 500
     person_count: int = 900
     officer_count: int = 150
@@ -271,13 +280,6 @@ def default_offence_categories() -> tuple[str, ...]:
         "forgery",
         "harassment",
         "narcotics",
-    )
-
-
-def clock_type_choices() -> tuple[ClockType, ...]:
-    return (
-        ClockType.INVESTIGATION_60_DAY,
-        ClockType.INVESTIGATION_90_DAY,
-        ClockType.DOCUMENT_SUPPLY,
-        ClockType.FURTHER_INVESTIGATION,
+        "cyber_fraud",
+        "hawala_money_laundering",
     )
