@@ -258,6 +258,27 @@ export const apiClient = {
       anchored_event_count: number
     }>(`/api/v1/audit/anchors/${encodeURIComponent(anchorId)}/verify`),
 
+  getAuditEventProof: (eventId: string, anchorId?: string) =>
+    apiFetch<{
+      verified: boolean
+      event_id: string
+      event_hash: string
+      anchor_id: string
+      block_index: number
+      block_hash: string
+      root_hash: string
+      leaf_index: number
+      total_leaves: number
+      proof: Array<{ sibling_hash: string; direction: string }>
+      ledger_id: string
+      participant: string
+      anchored_at: string
+      event_type?: string
+      actor_id?: string
+      timestamp?: string
+    }>(`/api/v1/audit/${encodeURIComponent(eventId)}/proof${anchorId ? `?anchor_id=${encodeURIComponent(anchorId)}` : ''}`),
+
+
   // Ingestion
   ingestFiles: (files: { fir?: File, cdr?: File, bank?: File, intelligence?: File }) => {
     const formData = new FormData()

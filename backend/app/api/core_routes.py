@@ -818,4 +818,22 @@ def create_core_router() -> APIRouter:
             raise HTTPException(status_code=404, detail="Anchor not found.")
         return result.to_dict()
 
+    @router.get("/audit/{event_id}/proof")
+    def get_audit_event_merkle_proof(
+        event_id: str,
+        anchor_id: str | None = None,
+        principal: Principal = Depends(get_principal),
+        anchor_svc: Any = Depends(get_audit_anchor_service),
+    ) -> dict[str, Any]:
+        """Generate a Section 63 BSA compliant Merkle inclusion proof for a specific audit event against the anchored blockchain ledger."""
+        if not principal.can_view_audit_log():
+            raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges to view audit cryptographic proofs.")
+
+        proof_data = anchor_svc.get_event_proof(event_id, anchor_id=anchor_id)
+        if proof_data is None:
+            raise HTTPException(status_code=404, detail=f"No blockchain anchor found containing audit event '{event_id}'.")
+
+        return proof_data
+
     return router
+

@@ -22,7 +22,11 @@ import json
 import logging
 from typing import Any, Sequence
 
-from backend.app.core.crypto.merkle import compute_merkle_root
+from backend.app.core.crypto.merkle import (
+    compute_merkle_root,
+    generate_merkle_proof,
+    verify_merkle_proof,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -321,3 +325,84 @@ class PermissionedLedger:
             chain_valid=True,
             anchored_event_count=anchor.event_count,
         )
+
+    def generate_audit_inclusion_proof(
+        self,
+        event_hash: str,
+        anchor_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Find the anchor containing event_hash and generate a Merkle audit inclusion proof."""
+        target_entry: tuple[int, AuditAnchorRecord] | None = None
+        leaf_idx: int = -1
+
+        if anchor_id:
+            entry = self.get_anchor(anchor_id)
+            if entry and event_hash in entry[1].event_hashes:
+                target_entry = entry
+                leaf_idx = entry[1].event_hashes.index(event_hash)
+        else:
+            # Search across all anchored blocks in reverse order
+            for blk in reversed(self.chain):
+                for anc in blk.anchors:
+                    if event_hash in anc.event_hashes:
+                        target_entry = (blk.index, anc)
+                        leaf_idx = anc.event_hashes.index(event_hash)
+                        break
+                if target_entry:
+                    break
+
+        if not target_entry or leaf_idx < 0:
+            return None
+
+        block_index, anchor = target_entry
+        block = self.chain[block_index]
+        proof_steps = generate_merkle_proof(anchor.event_hashes, leaf_idx)
+        verified = verify_merkle_proof(event_hash, proof_steps, anchor.root_hash)
+
+        return {
+            "verified": verified,
+            "event_hash": event_hash,
+            "anchor_id": anchor.anchor_id,
+            "block_index": block_index,
+            "block_hash": block.block_hash,
+            "root_hash": anchor.root_hash,
+            "leaf_index": leaf_idx,
+            "total_leaves": len(anchor.event_hashes),
+            "proof": proof_steps,
+            "ledger_id": self.ledger_id,
+            "participant": anchor.creator_participant,
+            "anchored_at": anchor.anchored_at,
+        }
+
+    def verify_audit_inclusion_proof(
+        self,
+        event_hash: str,
+        proof: Sequence[dict[str, str]],
+        anchor_id: str,
+    ) -> dict[str, Any]:
+        """Verify an arbitrary inclusion proof against an anchored block's root hash."""
+        entry = self.get_anchor(anchor_id)
+        if not entry:
+            return {
+                "verified": False,
+                "reason": f"Anchor '{anchor_id}' not found in ledger.",
+                "event_hash": event_hash,
+                "anchor_id": anchor_id,
+                "root_hash": "",
+            }
+
+        block_index, anchor = entry
+        block = self.chain[block_index]
+        verified = verify_merkle_proof(event_hash, proof, anchor.root_hash)
+
+        return {
+            "verified": verified,
+            "reason": "Merkle inclusion proof matches anchored root hash." if verified else "Merkle inclusion proof failed to match anchored root hash.",
+            "event_hash": event_hash,
+            "anchor_id": anchor.anchor_id,
+            "root_hash": anchor.root_hash,
+            "block_index": block_index,
+            "block_hash": block.block_hash,
+            "ledger_id": self.ledger_id,
+        }
+

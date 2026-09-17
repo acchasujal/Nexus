@@ -10,6 +10,10 @@ import {
   Blocks,
   RefreshCw,
   PlusCircle,
+  FileCode,
+  Network,
+  Scale,
+  X,
 } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -57,6 +61,30 @@ interface AnchorVerificationState {
   reason?: string
   error?: string
 }
+
+interface MerkleProofState {
+  loading: boolean
+  data?: {
+    verified: boolean
+    event_id: string
+    event_hash: string
+    anchor_id: string
+    block_index: number
+    block_hash: string
+    root_hash: string
+    leaf_index: number
+    total_leaves: number
+    proof: Array<{ sibling_hash: string; direction: string }>
+    ledger_id: string
+    participant: string
+    anchored_at: string
+    event_type?: string
+    actor_id?: string
+    timestamp?: string
+  }
+  error?: string
+}
+
 
 function formatAuditDetails(details?: Record<string, unknown>): React.ReactNode {
   if (!details || Object.keys(details).length === 0) {
@@ -205,14 +233,51 @@ export default function Audit() {
     }
   }
 
+  const [selectedProof, setSelectedProof] = useState<MerkleProofState | null>(null)
+  const [selectedProofEventId, setSelectedProofEventId] = useState<string | null>(null)
+
+  const handleInspectProof = async (eventId: string) => {
+    setSelectedProofEventId(eventId)
+    setSelectedProof({ loading: true })
+    try {
+      const res = await apiClient.getAuditEventProof(eventId)
+      setSelectedProof({
+        loading: false,
+        data: res,
+      })
+    } catch (err: unknown) {
+      setSelectedProof({
+        loading: false,
+        error: err instanceof Error ? err.message : 'Failed to retrieve Merkle proof',
+      })
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto w-full">
+      {/* Statutory Section 63 BSA Compliance Banner */}
+      <div className="p-3.5 bg-neutral-900 border border-neutral-800 rounded-lg text-xs text-neutral-300 flex items-start gap-3 shadow-sm">
+        <Scale className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+        <div className="space-y-0.5">
+          <span className="font-bold text-neutral-100 flex items-center gap-2">
+            Section 63 Bharatiya Sakshya Adhiniyam (BSA) 2023 Statutory Compliance
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              LEGAL CERTIFICATE
+            </span>
+          </span>
+          <p className="text-[11px] text-neutral-400 leading-relaxed">
+            All electronic investigative actions are canonically serialized with SHA-256 integrity digests, chronologically chained, and batched into RFC 6962 prefix-hardened binary Merkle tree roots anchored to the append-only permissioned ledger. Zero citizen PII is committed to ledger blocks.
+          </p>
+        </div>
+      </div>
+
       {/* Header */}
       <PageHeader
         icon={ShieldCheck}
         title="Immutable Audit Trail &amp; Permissioned Blockchain Ledger"
         subtitle="Cryptographically sealed audit history, canonical SHA-256 digests, and Merkle root anchoring to an append-only permissioned block chain."
       />
+
 
       {/* Permissioned Blockchain Anchors Section */}
       <SectionCard
@@ -444,6 +509,15 @@ export default function Audit() {
                                 Note: {verifyInfo.reason}
                               </div>
                             )}
+                            <div className="pt-2 border-t border-neutral-800 flex items-center justify-between">
+                              <button
+                                onClick={() => handleInspectProof(log.id)}
+                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-semibold bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 transition-colors"
+                              >
+                                <FileCode className="h-3.5 w-3.5 text-blue-400" />
+                                Inspect Merkle Inclusion Proof (Sec. 63 BSA)
+                              </button>
+                            </div>
                           </div>
                         )}
                       </td>
@@ -455,6 +529,108 @@ export default function Audit() {
           </table>
         </div>
       </SectionCard>
+
+      {/* Merkle Inclusion Proof Modal */}
+      {selectedProof && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-xl max-w-2xl w-full p-5 space-y-4 shadow-2xl text-neutral-100 font-mono text-xs">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Network className="h-4 w-4 text-blue-400" />
+                <span className="font-bold text-sm text-neutral-100">
+                  Section 63 BSA Merkle Audit Inclusion Certificate
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedProof(null)
+                  setSelectedProofEventId(null)
+                }}
+                className="text-neutral-400 hover:text-white p-1 rounded transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {selectedProof.loading ? (
+              <div className="py-8 text-center text-blue-400 animate-pulse">
+                Evaluating cryptographic Merkle path against permissioned ledger blocks...
+              </div>
+            ) : selectedProof.error ? (
+              <div className="p-3 bg-red-950/40 border border-red-800 text-red-300 rounded-lg">
+                <AlertTriangle className="h-4 w-4 inline mr-1 text-red-400" />
+                {selectedProof.error}
+              </div>
+            ) : selectedProof.data ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-neutral-950 border border-neutral-800">
+                  <span className="text-neutral-400">Proof Verification Status:</span>
+                  {selectedProof.data.verified ? (
+                    <span className="inline-flex items-center gap-1.5 font-bold text-emerald-400">
+                      <CheckCircle2 className="h-4 w-4" /> MATHEMATICALLY VERIFIED
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 font-bold text-red-400">
+                      <AlertTriangle className="h-4 w-4" /> VERIFICATION FAILED
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="p-2 bg-neutral-950 border border-neutral-800 rounded">
+                    <span className="text-neutral-500 block">Event ID:</span>
+                    <span className="text-neutral-200">{selectedProof.data.event_id}</span>
+                  </div>
+                  <div className="p-2 bg-neutral-950 border border-neutral-800 rounded">
+                    <span className="text-neutral-500 block">Ledger Block Index:</span>
+                    <span className="text-neutral-200">Block #{selectedProof.data.block_index}</span>
+                  </div>
+                  <div className="p-2 bg-neutral-950 border border-neutral-800 rounded">
+                    <span className="text-neutral-500 block">Anchor ID:</span>
+                    <span className="text-neutral-200">{selectedProof.data.anchor_id}</span>
+                  </div>
+                  <div className="p-2 bg-neutral-950 border border-neutral-800 rounded">
+                    <span className="text-neutral-500 block">Leaf Index in Batch:</span>
+                    <span className="text-neutral-200">
+                      Index {selectedProof.data.leaf_index + 1} of {selectedProof.data.total_leaves}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-1 text-[11px]">
+                  <span className="text-neutral-500 block">Anchored Merkle Batch Root:</span>
+                  <div className="p-2 bg-neutral-950 border border-neutral-800 rounded break-all text-blue-300 font-semibold select-all">
+                    {selectedProof.data.root_hash}
+                  </div>
+                </div>
+
+                <div className="space-y-1 text-[11px]">
+                  <span className="text-neutral-500 block">
+                    Merkle Audit Path Steps ({selectedProof.data.proof.length} sibling hashes):
+                  </span>
+                  <div className="max-h-36 overflow-y-auto space-y-1.5 p-2 bg-neutral-950 border border-neutral-800 rounded">
+                    {selectedProof.data.proof.map((step, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-[10px]">
+                        <span className="px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-300 font-bold uppercase">
+                          Step {idx + 1} ({step.direction})
+                        </span>
+                        <span className="text-neutral-400 break-all select-all font-mono">
+                          {step.sibling_hash}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2 text-[10px] text-neutral-500 italic">
+                  Statutory Rule: Section 63 BSA 2023 admissibility requires unbroken cryptographic proof demonstrating zero post-creation modification.
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+

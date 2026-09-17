@@ -137,3 +137,52 @@ class AuditAnchorService:
         )
 
         return result
+
+    def get_event_proof(
+        self,
+        event_id: str,
+        anchor_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Retrieve the canonical audit event, extract its integrity hash, and build its Merkle inclusion proof."""
+        event = self._audit.get_event(event_id)
+        if not event:
+            return None
+
+        event_hash = event.get("integrity_hash")
+        if not event_hash:
+            return None
+
+        proof_data = self._ledger.generate_audit_inclusion_proof(event_hash, anchor_id=anchor_id)
+        if not proof_data:
+            return None
+
+        proof_data["event_id"] = event_id
+        proof_data["event_type"] = event.get("event_type")
+        proof_data["actor_id"] = event.get("actor_id")
+        proof_data["timestamp"] = event.get("timestamp")
+        return proof_data
+
+    def verify_event_proof(
+        self,
+        event_id: str,
+        proof: list[dict[str, str]],
+        anchor_id: str,
+    ) -> dict[str, Any]:
+        """Verify an arbitrary inclusion proof for an event against the specified ledger anchor."""
+        event = self._audit.get_event(event_id)
+        if not event or not event.get("integrity_hash"):
+            return {
+                "verified": False,
+                "reason": f"Event '{event_id}' not found or does not have an integrity hash.",
+                "event_id": event_id,
+                "anchor_id": anchor_id,
+            }
+
+        res = self._ledger.verify_audit_inclusion_proof(
+            event_hash=event["integrity_hash"],
+            proof=proof,
+            anchor_id=anchor_id,
+        )
+        res["event_id"] = event_id
+        return res
+

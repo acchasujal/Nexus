@@ -33,7 +33,11 @@ from backend.app.core.blockchain.ledger import (
     PermissionedLedger,
 )
 from backend.app.core.crypto.audit_integrity import verify_audit_event_integrity
-from backend.app.core.crypto.merkle import compute_merkle_root
+from backend.app.core.crypto.merkle import (
+    compute_merkle_root,
+    generate_merkle_proof,
+    verify_merkle_proof,
+)
 from backend.app.main import create_app
 from backend.app.services.audit_anchor_service import AuditAnchorService
 from backend.app.services.audit_service import AuditEventType, AuditService
@@ -264,3 +268,74 @@ def test_blockchain_anchor_api_endpoints() -> None:
 
     anon_verify = client.get(f"/api/v1/audit/anchors/{anchor_id}/verify")
     assert anon_verify.status_code == 403
+
+
+# 7. Merkle Inclusion Proofs (Section 63 BSA Verifiable Tamper-Evidence)
+def test_merkle_inclusion_proof_generation_and_verification() -> None:
+    leaves = [f"{i:02x}" * 32 for i in range(1, 9)]
+    root = compute_merkle_root(leaves)
+
+    for idx, leaf in enumerate(leaves):
+        proof = generate_merkle_proof(leaves, idx)
+        assert len(proof) > 0
+        valid = verify_merkle_proof(leaf, proof, root)
+        assert valid is True
+
+        # Tampered leaf fails verification
+        tampered_leaf = "0" * 64
+        assert verify_merkle_proof(tampered_leaf, proof, root) is False
+
+        # Tampered sibling in proof fails verification
+        tampered_proof = [dict(p) for p in proof]
+        tampered_proof[0]["sibling_hash"] = "9" * 64
+        assert verify_merkle_proof(leaf, tampered_proof, root) is False
+
+
+def test_audit_event_merkle_proof_api() -> None:
+    app = create_app()
+    client = TestClient(app)
+    sp_token = _make_demo_token("officer_sp", "SP")
+
+    # Seed an audit event through an action
+    action_resp = client.post(
+        "/api/v1/nexus/resolution/RC-1/decision",
+        json={"decision": "CONFIRM", "decided_by": "Investigating Officer"},
+        headers={"Authorization": f"Bearer {sp_token}"},
+    )
+    assert action_resp.status_code == 200
+
+    # Retrieve audit events to find event ID
+    audit_resp = client.get(
+        "/api/v1/audit",
+        headers={"Authorization": f"Bearer {sp_token}"},
+    )
+    assert audit_resp.status_code == 200
+    events = audit_resp.json()
+    assert len(events) > 0
+    target_event = events[0]
+    event_id = target_event["id"]
+
+    # Anchor the batch
+    anchor_resp = client.post(
+        "/api/v1/audit/anchors",
+        headers={"Authorization": f"Bearer {sp_token}"},
+    )
+    assert anchor_resp.status_code == 200
+
+    # Request Merkle inclusion proof for this event
+    proof_resp = client.get(
+        f"/api/v1/audit/{event_id}/proof",
+        headers={"Authorization": f"Bearer {sp_token}"},
+    )
+    assert proof_resp.status_code == 200
+    proof_data = proof_resp.json()
+
+    assert proof_data["verified"] is True
+    assert proof_data["event_id"] == event_id
+    assert "event_hash" in proof_data
+    assert "anchor_id" in proof_data
+    assert "root_hash" in proof_data
+    assert "proof" in proof_data
+    assert isinstance(proof_data["proof"], list)
+    assert proof_data["block_index"] >= 1
+
