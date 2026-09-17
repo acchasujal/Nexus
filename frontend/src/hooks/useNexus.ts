@@ -309,4 +309,15 @@ export function useDigitalShadowSummary() {
   })
 }
 
+// ── P2 Case DNA Explainable Structural Similarity Hooks ─────────────────────
+
+export function useCaseDNA(caseId?: string, topK?: number) {
+  return useQuery({
+    queryKey: ['nexus', 'intelligence', 'case-dna', caseId, topK],
+    queryFn: () => (caseId ? apiClient.getCaseDNA(caseId, topK) : Promise.resolve(null)),
+    enabled: Boolean(caseId),
+  })
+}
+
+
 

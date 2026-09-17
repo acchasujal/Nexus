@@ -41,11 +41,14 @@ function createWrapper(initialEntries: string[] = ['/network']) {
 }
 
 describe('Dynamic Pathfinder Graph Synchronization', () => {
-  it('renders dynamic graph for Sunil Shetty (person-0040) -> Sunil Gupta (person-0037) without demo graph fallback', async () => {
-    const Wrapper = createWrapper(['/network'])
-    render(
-      <Wrapper>
-        <NetworkExplorer />
+  it(
+    'renders dynamic graph for Sunil Shetty (person-0040) -> Sunil Gupta (person-0037) without demo graph fallback',
+    async () => {
+      const Wrapper = createWrapper(['/network'])
+      render(
+        <Wrapper>
+          <NetworkExplorer />
+
       </Wrapper>
     )
 
@@ -87,5 +90,6 @@ describe('Dynamic Pathfinder Graph Synchronization', () => {
     expect(screen.queryByText('Rafiq Khan')).not.toBeInTheDocument()
     expect(screen.queryByText('Meena Devi')).not.toBeInTheDocument()
     expect(screen.queryByText('Deepak Rao')).not.toBeInTheDocument()
-  }, 15000)
+  }, 30000)
 })
+

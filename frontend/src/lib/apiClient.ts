@@ -467,7 +467,18 @@ export const apiClient = {
     ),
   getDigitalShadowSummary: () =>
     apiFetch<Record<string, any>>('/api/v1/nexus/intelligence/digital-shadow/summary'),
+
+  // ── P2 Case DNA Explainable Structural Similarity Methods ─────────────────
+  getCaseDNA: (caseId: string, topK?: number) => {
+    const params = new URLSearchParams()
+    if (topK) params.append('top_k', String(topK))
+    const qs = params.toString()
+    return apiFetch<import('@shared/contracts/api').CaseDNAMatchResponse>(
+      qs ? `/api/v1/nexus/intelligence/case-dna/${encodeURIComponent(caseId)}?${qs}` : `/api/v1/nexus/intelligence/case-dna/${encodeURIComponent(caseId)}`
+    )
+  },
 }
+
 
 
 

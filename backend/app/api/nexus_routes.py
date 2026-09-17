@@ -44,6 +44,7 @@ from backend.app.api.dependencies import (
     get_identity_drift_service,
     get_network_adaptation_service,
     get_digital_shadow_service,
+    get_case_dna_service,
 )
 from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal
@@ -58,7 +59,10 @@ from backend.app.services.copilot_service import CopilotService
 from shared.contracts.api import (
     AcknowledgePulseRequest,
     AdaptationReviewStatus,
+    CaseDNA,
+    CaseDNAMatchResponse,
     CombinedBridgeSignal,
+
     CopilotQueryRequest,
     CreateIntelligencePulseRequest,
     DecideDigitalShadowRequest,
@@ -2375,7 +2379,20 @@ def create_nexus_router() -> APIRouter:
         """Retrieve aggregated summary metrics for Digital Shadow Radar."""
         return shadow_svc.get_digital_shadow_summary()
 
+    # ── P2 Case DNA Structural Similarity Endpoints ──────────────────────────
+
+    @router.get("/nexus/intelligence/case-dna/{case_id}", response_model=CaseDNAMatchResponse)
+    def match_case_dna_endpoint(
+        case_id: str,
+        top_k: int = Query(10, ge=1, le=50, description="Maximum number of similar cases to return"),
+        principal: Principal = Depends(get_principal),
+        dna_svc: Any = Depends(get_case_dna_service),
+    ) -> CaseDNAMatchResponse:
+        """Find structurally similar cases via explainable 5-vector Case DNA matching."""
+        return dna_svc.get_case_dna_matches(case_id=case_id, top_k=top_k, principal=principal)
+
     return router
+
 
 
 

@@ -283,5 +283,21 @@ def get_digital_shadow_service(
     return shadow_svc
 
 
+def get_case_dna_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_service: AuditService = Depends(get_audit_service),
+) -> Any:
+    """Return the shared or per-request CaseDNAService instance."""
+    dna_svc = getattr(request.app.state, "case_dna_service", None)
+    if dna_svc is not None:
+        return dna_svc
+    from backend.app.services.case_dna_service import CaseDNAService
+    dna_svc = CaseDNAService(repo, audit_service=audit_service)
+    request.app.state.case_dna_service = dna_svc
+    return dna_svc
+
+
+
 
 

@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom'
 import {
   Layers, Network, Users, Share2, AlertTriangle, ShieldCheck, Inbox,
   Flame, Radio, GitBranch, ArrowRight, ExternalLink, RefreshCw,
-  MapPin, GitFork, Globe,
+  MapPin, GitFork, Globe, Dna,
 } from 'lucide-react'
 import {
   useIntelligenceHotspots,
@@ -29,8 +29,10 @@ import { MetricCard } from '@/components/ui/MetricCard'
 import { IdentityDriftRadarSection } from '@/components/nexus/IdentityDriftRadarSection'
 import { NetworkAdaptationSection } from '@/components/nexus/NetworkAdaptationSection'
 import { DigitalShadowSection } from '@/components/nexus/DigitalShadowSection'
+import { CaseDNASection } from '@/components/nexus/CaseDNASection'
 
-type HubTab = 'hotspots' | 'radar' | 'drift' | 'adaptation' | 'shadow' | 'combined' | 'communities'
+type HubTab = 'hotspots' | 'radar' | 'dna' | 'drift' | 'adaptation' | 'shadow' | 'combined' | 'communities'
+
 
 interface CommunityItem {
   community_id?: string
@@ -172,6 +174,18 @@ export default function Patterns() {
         </button>
 
         <button
+          onClick={() => setActiveTab('dna')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === 'dna'
+              ? 'border-indigo-600 text-indigo-900 bg-indigo-50/50'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+          }`}
+        >
+          <Dna className="h-4 w-4 text-indigo-600" />
+          Case DNA (P2)
+        </button>
+
+        <button
           onClick={() => setActiveTab('drift')}
           className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === 'drift'
@@ -182,6 +196,7 @@ export default function Patterns() {
           <Share2 className="h-4 w-4 text-cyan-600" />
           Identity Drift Radar (P1-B)
         </button>
+
 
         <button
           onClick={() => setActiveTab('adaptation')}
@@ -516,10 +531,16 @@ export default function Patterns() {
         </div>
       )}
 
+      {/* TAB 2.5: CASE DNA (P2) */}
+      {activeTab === 'dna' && (
+        <CaseDNASection />
+      )}
+
       {/* TAB 3: IDENTITY DRIFT RADAR (P1-B) */}
       {activeTab === 'drift' && (
         <IdentityDriftRadarSection />
       )}
+
 
       {/* TAB 4: NETWORK ADAPTATION RADAR (P1-C) */}
       {activeTab === 'adaptation' && (

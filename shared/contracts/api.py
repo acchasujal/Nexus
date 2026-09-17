@@ -910,3 +910,30 @@ class DecideDigitalShadowRequest(BaseModel):
     lifecycle_state: DigitalShadowLifecycle
     note: str | None = None
 
+
+# ── P2 Case DNA Explainable Structural Similarity Contracts ──────────────────
+
+class CaseDNA(BaseModel):
+    case_pair: list[str]  # [case_a_id, case_b_id]
+    case_a_title: str
+    case_b_title: str
+    overall_similarity: float
+    structure_similarity: float      # Graph topology & modularity similarity
+    communication_similarity: float  # CDR burst & frequency profile
+    financial_similarity: float      # Peeling chain & transaction flow similarity
+    location_similarity: float       # Geographic spatial overlap
+    temporal_similarity: float       # Modus operandi timing match
+    shared_entities: list[str] = Field(default_factory=list)
+    explanation: str
+    evidence_refs: list[str] = Field(default_factory=list)
+    derivation_class: str = "DERIVED"
+
+
+class CaseDNAMatchResponse(BaseModel):
+    target_case_id: str
+    similar_cases: list[CaseDNA] = Field(default_factory=list)
+    average_similarity: float = 0.0
+    highest_similarity: float = 0.0
+    top_shared_entities: list[str] = Field(default_factory=list)
+
+

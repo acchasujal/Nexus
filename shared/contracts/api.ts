@@ -998,6 +998,33 @@ export interface DecideDigitalShadowRequest {
   note?: string | null
 }
 
+// ── P2 Case DNA Explainable Structural Similarity Contracts ──────────────────
+
+export interface CaseDNA {
+  case_pair: string[]
+  case_a_title: string
+  case_b_title: string
+  overall_similarity: number
+  structure_similarity: number
+  communication_similarity: number
+  financial_similarity: number
+  location_similarity: number
+  temporal_similarity: number
+  shared_entities: string[]
+  explanation: string
+  evidence_refs: string[]
+  derivation_class: string
+}
+
+export interface CaseDNAMatchResponse {
+  target_case_id: string
+  similar_cases: CaseDNA[]
+  average_similarity: number
+  highest_similarity: number
+  top_shared_entities: string[]
+}
+
+
 
 
 
