@@ -90,6 +90,10 @@ class AuditEventType(str, Enum):
     BLOCKCHAIN_VERIFIED = "blockchain_verified"
     BLOCKCHAIN_VERIFICATION_FAILED = "blockchain_verification_failed"
 
+    # Cross-Jurisdiction Intelligence Pulse (P1-A)
+    INTELLIGENCE_PULSE_DISPATCHED = "intelligence_pulse_dispatched"
+    INTELLIGENCE_PULSE_ACKNOWLEDGED = "intelligence_pulse_acknowledged"
+
 
 class AuditService:
     """Application-layer service for writing and querying audit logs."""

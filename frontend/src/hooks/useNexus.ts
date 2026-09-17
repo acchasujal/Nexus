@@ -197,4 +197,36 @@ export function useNetworkPulses(priority?: string, caseId?: string) {
   })
 }
 
+// ── P1-A Cross-Jurisdiction Intelligence Pulse Dissemination Hooks ───────────
+
+export function useIntelligencePulseInbox(caseId?: string, district?: string) {
+  return useQuery({
+    queryKey: ['nexus', 'intelligence', 'pulses', 'inbox', caseId, district],
+    queryFn: () => apiClient.getIntelligencePulseInbox(caseId, district),
+  })
+}
+
+export function useDispatchIntelligencePulse() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (req: import('@shared/contracts/api').CreateIntelligencePulseRequest) =>
+      apiClient.dispatchIntelligencePulse(req),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['nexus', 'intelligence', 'pulses'] })
+    },
+  })
+}
+
+export function useAcknowledgeIntelligencePulse() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ packetId, req }: { packetId: string; req: import('@shared/contracts/api').AcknowledgePulseRequest }) =>
+      apiClient.acknowledgeIntelligencePulse(packetId, req),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['nexus', 'intelligence', 'pulses'] })
+    },
+  })
+}
+
+
 

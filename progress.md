@@ -8,7 +8,7 @@ This document is the **single source of truth** for ongoing engineering, capabil
 
 | Metric / Subsystem | Current Measured Status | Target Requirement | Status |
 |---|---|---|---|
-| **Backend Test Suite** | **713 / 713 passing** (`pytest`) | 100% pass rate | ✅ VERIFIED GREEN |
+| **Backend Test Suite** | **717 / 717 passing** (`pytest`) | 100% pass rate | ✅ VERIFIED GREEN |
 | **Frontend Test Suite** | **114 / 114 passing** (`vitest`) | 100% pass rate | ✅ VERIFIED GREEN |
 | **Backend Code Quality** | **0 errors / clean** (`ruff check`) | 0 lint errors | ✅ VERIFIED CLEAN |
 | **Frontend Typecheck / Build** | **0 errors / clean build** (`tsc && vite build`) | 0 TypeScript errors | ✅ VERIFIED CLEAN |
@@ -26,6 +26,7 @@ This document is the **single source of truth** for ongoing engineering, capabil
 - **P0-D:** Implement `EvidenceAssessmentService` (`SUPPORTS`, `CONFLICTS`, `MISSING`, `INFERRED`, `VERIFIED`). (✅ COMPLETED)
 - **P0-E:** Implement `EarlyWarningService` with constrained forecast scopes & mandatory abstention gate. (✅ COMPLETED)
 - **P0-F:** Implement `VerificationPlanner` for role-aware investigation actions. (✅ COMPLETED)
+- **P1-A:** Implement `IntelligencePulseService` cross-jurisdiction intelligence pulse routing, authorization gating, SHA-256 sealing, duplicate suppression & inbox actioning. (✅ COMPLETED)
 
 ---
 
@@ -48,7 +49,7 @@ This document is the **single source of truth** for ongoing engineering, capabil
 | **Evidence Assessment** | `proactive_intelligence_service.py` | ✅ CURRENT | NEW PROTOTYPE | Formal 5-state epistemic model (`SUPPORTS` to `VERIFIED`) with rationale. |
 | **Early Warning & Abstention**| `proactive_intelligence_service.py` | ✅ CURRENT | NEW PROTOTYPE | Constrained operational state forecasting; mandatory abstention on sparse data. |
 | **Next Best Verification** | `proactive_intelligence_service.py` | ✅ CURRENT | NEW PROTOTYPE | Role-aware missing evidence resolution suggestions and action workflows. |
-| **Intelligence Pulse** | `IntelligencePulseService` | ⏳ NEW PROTOTYPE | P1 (ROADMAP) | Cross-case/branch routing packets with authorization & ACK. |
+| **Intelligence Pulse** | `IntelligencePulseService` | ✅ CURRENT | NEW PROTOTYPE | Cross-case/branch routing packets with authorization, SHA-256 seals, duplicate suppression & ACK. |
 | **Identity Drift** | `IdentityDriftService` | ⏳ NEW PROTOTYPE | P1 (ROADMAP) | Identifier transition radar (phone, IMEI, vehicle, alias). |
 | **Network Adaptation** | `NetworkAdaptationService` | ⏳ NEW PROTOTYPE | P1 (ROADMAP) | Intermediary replacement, bridge substitution detection. |
 | **Digital Shadow / SOCMINT** | Controlled digital evidence | ⏳ NEW PROTOTYPE | P1 (ROADMAP) | Governed public digital identifier fusion with lifecycle states. |
@@ -62,6 +63,7 @@ This document is the **single source of truth** for ongoing engineering, capabil
 
 | Date | Milestone / Action | Deliverables | Verification Status |
 |---|---|---|---|
+| 2026-09-17 | Metrics Audit, Benchmarking & PPT Evidence | Implemented standardized benchmarking framework (`scripts/benchmarks/`) with high-resolution timing, warmups, and percentile aggregation ($N \ge 30$). Measured Graph Scaling (up to 50k nodes), ER Robustness, NetworkDiff, Network Pulse, Evidence Assessment, Early Warning & Abstention, Evidence Integrity (SHA-256), RBAC Security, and End-to-End Latency. Produced machine-readable `artifacts/benchmarks/current_metrics.json` and canonical `docs/BENCHMARKS.md`. | ✅ 713/713 Backend Tests, 114/114 Frontend Tests, 0 Lint Errors, 64 Verified Metrics |
 | 2026-09-17 | Production UX, Trust & Lead Repair | Fixed Lead accept/reject persistence and officer notes; resolved source record lookup (`SRC-FIR-141`); redesigned Login to restrained enterprise aesthetic; removed hackathon branding and inappropriate demo strings from Header, Sidebar, ErrorBoundary, and Settings. | ✅ 713/713 Backend Tests, 114/114 Frontend Tests, Clean Build |
 | 2026-09-17 | P0 Proactive Intelligence Implementation | Implemented `ProactiveIntelligenceService` covering graph snapshots, network diff, structural significance pulse filtering, 5-state evidence assessments, constrained early warning with mandatory abstention, next-best verification planner, and UI pulse queue panel. | ✅ 713/713 Backend Tests Passed, 114/114 Frontend Tests Passed |
 | 2026-09-17 | Single Source of Truth Transformation | Consolidated canonical docs; archived `NEXUS.md`, `PROBLEM_AND_DOMAIN.md`, `PROJECT_OVERVIEW.md`, `PRODUCTION_DEMO_DATA.md` to `docs/archive/`; established DEC-007 through DEC-012; updated `AGENTS.md` and `README.md`. | ✅ PASSED |

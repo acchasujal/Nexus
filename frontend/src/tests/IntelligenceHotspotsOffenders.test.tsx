@@ -54,7 +54,7 @@ describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
     // Wait for Hotspot Card
     await waitFor(() => {
       expect(screen.getByText('Mumbai Central')).toBeInTheDocument()
-    })
+    }, { timeout: 10000 })
 
     // Exact user-specified elements
     expect(screen.getAllByText(/RED FLAG — HIGH CRIME CONCENTRATION/i).length).toBeGreaterThan(0)

@@ -862,4 +862,56 @@ export interface NetworkDiffResponse {
   summary: Record<string, any>
 }
 
+// ── P1-A Cross-Jurisdiction Intelligence Pulse Routing Contracts ─────────────
+
+export type PulseDeliveryStatus = 
+  | 'DISPATCHED'
+  | 'DELIVERED'
+  | 'ACKNOWLEDGED'
+  | 'ACTIONED'
+  | 'REJECTED'
+
+export type PulseSecurityClassification = 
+  | 'RESTRICTED'
+  | 'CONFIDENTIAL'
+  | 'SECRET'
+
+export interface IntelligencePulsePacket {
+  packet_id: string
+  origin_case_id: string
+  origin_district: string
+  origin_officer_id: string
+  target_case_id: string
+  target_district: string
+  target_role: UserRole
+  headline: string
+  summary: string
+  shared_entities: string[]
+  evidence_refs: string[]
+  packet_hash: string
+  security_classification: PulseSecurityClassification
+  dispatched_at: string
+  delivery_status: PulseDeliveryStatus
+  acknowledged_at?: string | null
+  acknowledged_by?: string | null
+  acknowledgment_note?: string | null
+}
+
+export interface CreateIntelligencePulseRequest {
+  origin_case_id: string
+  target_case_id: string
+  target_district: string
+  headline: string
+  summary: string
+  shared_entities?: string[]
+  evidence_refs?: string[]
+  security_classification?: PulseSecurityClassification
+}
+
+export interface AcknowledgePulseRequest {
+  decision: 'ACKNOWLEDGE' | 'ACTION' | 'REJECT'
+  note?: string | null
+}
+
+
 

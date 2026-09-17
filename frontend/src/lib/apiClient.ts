@@ -378,6 +378,31 @@ export const apiClient = {
       qs ? `/api/v1/nexus/pulses?${qs}` : '/api/v1/nexus/pulses'
     )
   },
+
+  // ── P1-A Cross-Jurisdiction Intelligence Pulse Dissemination Methods ─────
+  getIntelligencePulseInbox: (caseId?: string, district?: string) => {
+    const params = new URLSearchParams()
+    if (caseId) params.append('case_id', caseId)
+    if (district) params.append('district', district)
+    const qs = params.toString()
+    return apiFetch<import('@shared/contracts/api').IntelligencePulsePacket[]>(
+      qs ? `/api/v1/nexus/intelligence/pulses/inbox?${qs}` : '/api/v1/nexus/intelligence/pulses/inbox'
+    )
+  },
+  dispatchIntelligencePulse: (req: import('@shared/contracts/api').CreateIntelligencePulseRequest) =>
+    apiFetch<import('@shared/contracts/api').IntelligencePulsePacket>('/api/v1/nexus/intelligence/pulses/dispatch', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    }),
+  acknowledgeIntelligencePulse: (packetId: string, req: import('@shared/contracts/api').AcknowledgePulseRequest) =>
+    apiFetch<import('@shared/contracts/api').IntelligencePulsePacket>(
+      `/api/v1/nexus/intelligence/pulses/${encodeURIComponent(packetId)}/acknowledge`,
+      {
+        method: 'POST',
+        body: JSON.stringify(req),
+      }
+    ),
 }
+
 
 

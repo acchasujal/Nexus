@@ -728,3 +728,57 @@ class NetworkDiffResponse(BaseModel):
     summary: dict[str, Any] = Field(default_factory=dict)
 
 
+# ── P1-A Cross-Jurisdiction Intelligence Pulse Routing Contracts ─────────────
+
+class PulseDeliveryStatus(str, Enum):
+    DISPATCHED = "DISPATCHED"
+    DELIVERED = "DELIVERED"
+    ACKNOWLEDGED = "ACKNOWLEDGED"
+    ACTIONED = "ACTIONED"
+    REJECTED = "REJECTED"
+
+
+class PulseSecurityClassification(str, Enum):
+    RESTRICTED = "RESTRICTED"
+    CONFIDENTIAL = "CONFIDENTIAL"
+    SECRET = "SECRET"
+
+
+class IntelligencePulsePacket(BaseModel):
+    packet_id: str
+    origin_case_id: str
+    origin_district: str
+    origin_officer_id: str
+    target_case_id: str
+    target_district: str
+    target_role: UserRole = UserRole.INVESTIGATOR
+    headline: str
+    summary: str
+    shared_entities: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    packet_hash: str
+    security_classification: PulseSecurityClassification = PulseSecurityClassification.RESTRICTED
+    dispatched_at: str = Field(default_factory=lambda: _utcnow().isoformat())
+    delivery_status: PulseDeliveryStatus = PulseDeliveryStatus.DISPATCHED
+    acknowledged_at: str | None = None
+    acknowledged_by: str | None = None
+    acknowledgment_note: str | None = None
+
+
+class CreateIntelligencePulseRequest(BaseModel):
+    origin_case_id: str
+    target_case_id: str
+    target_district: str
+    headline: str
+    summary: str
+    shared_entities: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    security_classification: PulseSecurityClassification = PulseSecurityClassification.RESTRICTED
+
+
+class AcknowledgePulseRequest(BaseModel):
+    decision: str  # ACKNOWLEDGE, ACTION, REJECT
+    note: str | None = None
+
+
+

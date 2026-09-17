@@ -40,6 +40,7 @@ from backend.app.api.dependencies import (
     get_request_id,
     get_graph_repository,
     get_proactive_intelligence_service,
+    get_intelligence_pulse_service,
 )
 from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal
@@ -52,14 +53,17 @@ from backend.app.db.ingestion.pipeline import CsvIngestionPipeline
 from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.copilot_service import CopilotService
 from shared.contracts.api import (
+    AcknowledgePulseRequest,
     CombinedBridgeSignal,
     CopilotQueryRequest,
+    CreateIntelligencePulseRequest,
     DistrictHotspotIntelligence,
     EvidenceBatchVerifyRequest,
     EvidenceBatchVerifyResponse,
     EvidenceIntegrityCheckResult,
     GroundedCitation,
     HotspotDrilldownResponse,
+    IntelligencePulsePacket,
     NetworkGraphResponse,
     NexusDossierRequest,
     NexusDossierResponse,
@@ -2194,7 +2198,49 @@ def create_nexus_router() -> APIRouter:
         )
         return pulses
 
+    # ── P1-A Cross-Jurisdiction Intelligence Pulse Dissemination Endpoints ─────
+
+    @router.post("/nexus/intelligence/pulses/dispatch", response_model=IntelligencePulsePacket)
+    def dispatch_intelligence_pulse(
+        request: CreateIntelligencePulseRequest,
+        principal: Principal = Depends(get_principal),
+        pulse_svc: Any = Depends(get_intelligence_pulse_service),
+    ) -> IntelligencePulsePacket:
+        """Dispatch a cryptographically sealed cross-jurisdiction intelligence packet."""
+        try:
+            return pulse_svc.dispatch_pulse(request, principal)
+        except PermissionError as e:
+            raise HTTPException(status_code=403, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to dispatch intelligence pulse: {e}")
+
+    @router.get("/nexus/intelligence/pulses/inbox", response_model=list[IntelligencePulsePacket])
+    def list_intelligence_pulses_inbox(
+        case_id: str | None = Query(None, description="Filter by case ID"),
+        district: str | None = Query(None, description="Filter by jurisdiction district"),
+        principal: Principal = Depends(get_principal),
+        pulse_svc: Any = Depends(get_intelligence_pulse_service),
+    ) -> list[IntelligencePulsePacket]:
+        """Retrieve incoming cross-case intelligence pulses authorized for the authenticated officer."""
+        return pulse_svc.list_inbox_pulses(principal, case_id=case_id, district=district)
+
+    @router.post("/nexus/intelligence/pulses/{packet_id}/acknowledge", response_model=IntelligencePulsePacket)
+    def acknowledge_intelligence_pulse(
+        packet_id: str,
+        request: AcknowledgePulseRequest,
+        principal: Principal = Depends(get_principal),
+        pulse_svc: Any = Depends(get_intelligence_pulse_service),
+    ) -> IntelligencePulsePacket:
+        """Record officer acknowledgment or action on an incoming intelligence pulse."""
+        try:
+            return pulse_svc.acknowledge_pulse(packet_id, request, principal)
+        except KeyError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to acknowledge pulse: {e}")
+
     return router
+
 
 
 

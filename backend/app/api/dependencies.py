@@ -222,3 +222,20 @@ def get_proactive_intelligence_service(
     return proactive_svc
 
 
+def get_intelligence_pulse_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_service: AuditService = Depends(get_audit_service),
+    auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+) -> Any:
+    """Return the shared or per-request IntelligencePulseService instance."""
+    pulse_svc = getattr(request.app.state, "intelligence_pulse_service", None)
+    if pulse_svc is not None:
+        return pulse_svc
+    from backend.app.services.intelligence_pulse_service import IntelligencePulseService
+    pulse_svc = IntelligencePulseService(repo, audit_service=audit_service, auth_policy=auth_policy)
+    request.app.state.intelligence_pulse_service = pulse_svc
+    return pulse_svc
+
+
+

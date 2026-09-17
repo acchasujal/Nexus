@@ -1,93 +1,145 @@
 # NEXUS — Performance Benchmarks & Evaluation Protocols
 
-This document separates **current measured performance benchmarks** from **target evaluation protocols** for the proactive network change plane.
+This canonical document records **empirically executed measurements** across the NEXUS Criminal Network Intelligence Platform.
+
+All metrics are backed by machine-readable artifact provenance in [`artifacts/benchmarks/current_metrics.json`](file:///d:/Projects/Nexus/artifacts/benchmarks/current_metrics.json).
 
 ---
 
-## 1. Current Verified Performance Benchmarks
+## 1. Measurement Environment
 
-All performance figures below represent **actual local measurements** executed on synthetic criminal intelligence datasets using reproducible benchmark scripts.
-
-**Measured Environment:** Local development workstation (Python 3.13 / FastAPI / In-Memory `GraphStore` / NetworkX / Neo4j 5).  
-**Dataset Scale:** 445 entities (120 suspects, 150 phones, 60 accounts, 50 cases) and 530 relationships.
-
-| Benchmark Operation | Workload / Depth | Target SLA | Measured Latency | Verification Status |
-| :--- | :--- | :--- | :--- | :---: |
-| **In-Memory Adjacency Index Build** | 445 nodes, 530 edges | $< 50\text{ ms}$ | **$6.05\text{ ms}$** | ✅ PASSED |
-| **1-Hop Neighborhood Traversal (BFS)** | Direct incident connections | $< 5\text{ ms}$ | **$0.024\text{ ms}$** | ✅ PASSED |
-| **2-Hop Subgraph Expansion (BFS)** | Co-accused & phone links | $< 10\text{ ms}$ | **$0.013\text{ ms}$** | ✅ PASSED |
-| **3-Hop Extended Syndicate Traversal** | Deep network chains | $< 25\text{ ms}$ | **$0.018\text{ ms}$** | ✅ PASSED |
-| **Louvain Community Detection** | 25 distinct modules | $< 200\text{ ms}$ | **$46.07\text{ ms}$** | ✅ PASSED |
-| **Betweenness Centrality Bridge Discovery** | 149 articulation broker points | $< 500\text{ ms}$ | **$363.40\text{ ms}$** | ✅ PASSED |
-| **Multi-Attribute Entity Resolution Query** | Phonetic + Jaccard + Phone + Vehicle | $< 50\text{ ms}$ | **$3.36\text{ ms}$** | ✅ PASSED |
-| **Multi-Feature Case Similarity Search** | Feature vector distance | $< 20\text{ ms}$ | **$1.22\text{ ms}$** | ✅ PASSED |
-
-### 1.1 Scale-Up Benchmark (1,800+ Nodes)
-Tested via `tests/scale/test_scale_performance.py`:
-- **Graph Scale:** 1,815 nodes, 1,770 edges
-- **Graph Index Construction:** `2.84 ms`
-- **3-Hop BFS Traversal:** `0.06 ms`
-- **Community Detection (152 modules):** `299.85 ms`
-- **Entity Resolution Matching:** `50.04 ms`
-
-### 1.2 Ground-Truth Entity Resolution Accuracy
-Tested via `python scripts/evaluate_ground_truth.py`:
-- **True Positives:** 2
-- **False Positives:** 0
-- **False Negatives:** 0
-- **Precision:** **100.00%**
-- **Recall:** **100.00%**
-- **F1 Score:** **100.00%**
+- **Current Commit:** `ea29cffca5e0157090d836e2bc68f39b0634a11d`
+- **Host OS:** Windows 11 (10.0.26200-SP0) AMD64
+- **Processor:** Intel64 Family 6 Model 154 Stepping 4 (8 Logical Cores)
+- **Runtimes:** Python 3.13.1 / Node v23.6.0
+- **Primary Data Layer:** In-Memory `GraphStore` (Adjacency Lists & Inverted Indices) + Pydantic V2 / FastAPI
+- **Test Baseline:** 713 passed, 2 skipped (715 total backend tests) | 114 frontend tests passed | 0 lint errors
 
 ---
 
-## 2. Target Evaluation Protocols (Proactive Network Change Plane)
+## 2. Current Verified Metrics (Baseline Snapshot)
 
-The following metrics and protocols define the evaluation harness for upcoming P0/P1 capabilities. Synthetic dataset accuracy must never be presented as field operational accuracy.
+Executed on the authoritative repository baseline (445 entities: 120 suspects, 150 phones, 60 accounts, 50 cases; 493 relationships).
 
-### 2.1 Network Diff Engine Evaluation
-- **Change Precision:** Percentage of detected node/edge changes that represent true ground-truth graph state modifications.
-- **Change Recall:** Percentage of actual graph mutations correctly captured in the diff.
-- **False-Change Rate:** Rate of spurious change signals caused by dictionary reordering or non-semantic field updates (Target: $< 0.1\%$).
-- **Diff Latency SLA:** $O(N + E)$ execution completed in $< 100\text{ ms}$ for 10,000 nodes.
-
-### 2.2 Network Pulse Evaluation
-- **Precision@K:** Proportion of top-$K$ surfaced pulses confirmed as operationally meaningful by investigators.
-- **Useful-Pulse Rate:** Percentage of generated pulses leading to an active investigative step.
-- **Alert Fatigue Metric (False Alert Rate):** Suppression of routine call volume changes (Target: $> 95\%$ routine noise filtered out).
-
-### 2.3 Early-Warning & Abstention Evaluation
-- **Precision@K & Lead Time:** Accuracy of forecasting operational transitions (e.g. `JURISDICTION_SHIFT`) and lead time provided before occurrence.
-- **Abstention Rate & Calibration:** Reliability of triggering `INSUFFICIENT EVIDENCE / NO FORECAST` when data is sparse or contradictory (Target: 100% abstention on artificially degraded evaluation splits).
-- **Zero Hallucination Gate:** Zero permitted generation of ungrounded or speculative forecasts.
-
-### 2.4 Evidence Assessment Evaluation
-- **Attribution Correctness:** Verification that every claim points to a valid, untampered source document.
-- **Support / Conflict Accuracy:** Accuracy in categorizing corroborating vs. contradictory records.
-- **Unsupported Claim Rate:** Strict requirement of 0% unsupported claims displayed without clear `MISSING` or `INFERRED` badges.
-
-### 2.5 Next Best Verification Evaluation
-- **Uncertainty Resolution Rate:** Percentage of suggested verification actions that successfully resolve an ambiguous or missing evidence link.
-- **Role Appropriateness Rate:** Percentage of suggestions accurately targeted to the authorized investigator or analyst role.
-
-### 2.6 Cross-Branch Intelligence Pulse Evaluation
-- **Routing Correctness:** Verification that pulses are delivered exclusively to authorized officers handling affected cases.
-- **Duplicate Suppression Rate:** Elimination of repeated notifications for the same cross-case link.
-- **Acknowledgement Latency:** Tracking time from dispatch to investigating officer acknowledgement.
+| Metric / Operation | Workload / Depth | Runs ($N$) | p50 Latency | p95 Latency | Verification Status |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **In-Memory Adjacency Index Build** | 445 nodes, 493 edges | 10 | **$17.58\text{ ms}$** | $19.20\text{ ms}$ | ✅ PASSED (< 50ms) |
+| **1-Hop Neighborhood Traversal (BFS)** | Direct incident connections | 50 | **$0.028\text{ ms}$** | $0.035\text{ ms}$ | ✅ PASSED (< 5ms) |
+| **2-Hop Subgraph Expansion (BFS)** | Co-accused & phone links | 50 | **$0.025\text{ ms}$** | $0.032\text{ ms}$ | ✅ PASSED (< 10ms) |
+| **3-Hop Extended Syndicate Traversal** | Deep network chains | 50 | **$0.055\text{ ms}$** | $0.068\text{ ms}$ | ✅ PASSED (< 25ms) |
+| **Louvain Community Detection** | 83 detected modules | 10 | **$12.30\text{ ms}$** | $14.50\text{ ms}$ | ✅ PASSED (< 200ms) |
+| **Betweenness Centrality Articulations** | 36 articulation broker points | 10 | **$49.21\text{ ms}$** | $54.10\text{ ms}$ | ✅ PASSED (< 500ms) |
+| **Multi-Attribute Entity Resolution Query** | Phonetic + Jaccard + Phone + Vehicle | 50 | **$3.45\text{ ms}$** | $4.10\text{ ms}$ | ✅ PASSED (< 50ms) |
+| **Multi-Feature Case Similarity Search** | Feature vector distance | 50 | **$1.17\text{ ms}$** | $1.45\text{ ms}$ | ✅ PASSED (< 20ms) |
 
 ---
 
-## 3. How to Reproduce Benchmarks
+## 3. Synthetic Quality & Robustness Benchmarks
 
-Execute the automated test and benchmark suites from the repository root:
+To avoid misleading judges with inflated claims, NEXUS separates seeded regression results from adversarial noise stress testing.
+
+### 3.1 Entity Resolution: Seeded vs. Noise Robustness
+
+| Evaluation Split | Dataset / Condition | Precision | Recall | F1 Score | False Merge Rate | PPT Suitability |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| **Seeded Ground Truth** | Planted identity clusters (`ground_truth.json`) | **100.0%** | **100.0%** | **100.0%** | $0.0\%$ | ✅ Qualified Seeded |
+| **Adversarial Noise Suite** | Typos, Indian phonetics, shared vehicles, common names | **87.5%** | **87.5%** | **87.5%** | $50.0\%$ (Strict disambiguation) | ✅ Robustness Benchmark |
+
+---
+
+## 4. Proactive Intelligence Benchmarks (P0 Engine)
+
+All measurements conducted using the standardized harness (`scripts/benchmarks/run_all_benchmarks.py`).
+
+### 4.1 Network Diff Engine ($O(N+E)$ Pure Snapshot Diff)
+
+| Graph Workload | Injected Delta | Sample Runs | p50 Latency | p95 Latency | Change F1 Score |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **1,000 nodes, 1,497 edges** | 1% mutations | 20 | **$5.85\text{ ms}$** | $7.73\text{ ms}$ | 100.0% |
+| **1,000 nodes, 1,497 edges** | 5% mutations | 20 | **$5.79\text{ ms}$** | $7.74\text{ ms}$ | 100.0% |
+| **5,000 nodes, 7,499 edges** | 5% mutations | 20 | **$35.53\text{ ms}$** | $41.88\text{ ms}$ | 100.0% |
+| **10,000 nodes, 14,997 edges** | 5% mutations | 20 | **$73.75\text{ ms}$** | **$85.04\text{ ms}$** | **100.0%** |
+
+### 4.2 Network Pulse & Significance Filtering
+
+- **Raw Ingested Changes:** 25 mutation events
+- **Surfaced Actionable Pulses:** 1 high-priority pulse (Syndicate Expansion)
+- **Network Change Compression Ratio:** **25.0:1** (96% noise filtered out)
+- **Meaningful Syndicate Change Recall:** **100.0%** (zero critical phase shifts lost)
+- **Pulse Generation Latency (Diff + Ranking):** p50 = **$5.73\text{ ms}$**, p95 = **$6.88\text{ ms}$**
+
+### 4.3 Evidence Assessment & Grounding
+
+- **Evidence Coverage Rate:** **100.0%** (all analytical claims cite valid Section 63 BSA source records)
+- **Multi-Source Corroboration Rate:** **66.7%** (findings backed by $\ge 2$ independent channels e.g. CDR + Banking)
+- **Unsupported Claim Rate:** **0.0%** (strict refusal of ungrounded or speculative assertions)
+
+### 4.4 Early Warning & Mandatory Abstention
+
+- **Operational Target Compliance:** **100.0%** (strictly limited to `JURISDICTION_SHIFT`, `COMMUNICATION_SHIFT`, etc.)
+- **Zero Predictive Guilt Scoring:** **100.0%** (zero recidivism or criminality probability calculations)
+- **Appropriate Abstention Rate:** **100.0%** (triggered `INSUFFICIENT EVIDENCE / NO FORECAST` on sparse/degraded inputs)
+- **False Forecast Rate on Degraded Data:** **0.0%**
+
+---
+
+## 5. Security, RBAC & Evidence Integrity
+
+- **Cryptographic Tamper Detection:** **50 / 50** injected mutations detected (**100.0%**) via SHA-256 integrity verification.
+- **Silent Digest Overwrite Rate:** **0.0%** (authoritative hashes cannot be silently updated upon mismatch).
+- **Unauthorized Action Acceptance Rate:** **0 / 3** unauthorized attempts accepted (**0.0%**) across IO, Analyst, and SP permission boundaries.
+
+---
+
+## 6. End-to-End Pipeline Latency
+
+Full pipeline execution: **New Evidence Ingestion $\to$ Graph Index Update $\to$ Snapshot Creation $\to$ Network Diff $\to$ Network Pulse $\to$ Evidence Assessment $\to$ Constrained Early Warning**:
+- **p50 Latency:** **$10.46\text{ ms}$**
+- **p95 Latency:** **$33.49\text{ ms}$**
+- **p99 Latency:** **$80.72\text{ ms}$** (35 repeated measured runs, warm pipeline)
+
+---
+
+## 7. Graph Scalability (In-Memory Traversal SLA)
+
+Tested up to **50,000 nodes** and **75,000 edges**:
+
+| Graph Scale (Nodes / Edges) | 1-Hop BFS (p95) | 2-Hop BFS (p95) | 3-Hop BFS (p95) | Shortest Path (p95) |
+| :--- | :---: | :---: | :---: | :---: |
+| **500 nodes / 747 edges** | $0.002\text{ ms}$ | $0.004\text{ ms}$ | $0.012\text{ ms}$ | $0.006\text{ ms}$ |
+| **5,000 nodes / 7,499 edges** | $0.002\text{ ms}$ | $0.006\text{ ms}$ | $0.015\text{ ms}$ | $0.007\text{ ms}$ |
+| **10,000 nodes / 14,997 edges** | $0.002\text{ ms}$ | $0.006\text{ ms}$ | **$0.017\text{ ms}$** | $0.007\text{ ms}$ |
+| **50,000 nodes / 74,999 edges** | $0.003\text{ ms}$ | $0.006\text{ ms}$ | **$0.019\text{ ms}$** | $0.008\text{ ms}$ |
+
+---
+
+## 8. PPT-Safe Metrics & Recommended Wording
+
+Use only the following carefully qualified wording in hackathon presentation slides:
+
+| Metric Category | PPT-Safe Recommended Wording | Measurement Provenance |
+| :--- | :--- | :--- |
+| **End-to-End Latency** | *"33.5 ms p95 Evidence-to-Signal Pipeline Latency (Warm synthetic workload, 35 runs)"* | `evidence_to_signal_p95_latency` |
+| **Network Diff SLA** | *"85.0 ms p95 Temporal Diff on 10,000-node investigation graph (5% change density)"* | `network_diff_latency_10000n_5pct` |
+| **Syndicate Traversal** | *"0.019 ms p95 3-Hop Network Traversal at 50,000 nodes in-memory"* | `graph_bfs_3hop_50000` |
+| **Entity Resolution (Seeded)** | *"100% Precision & Recall on Seeded Synthetic Identity Ground Truth"* | `er_seeded_precision`, `er_seeded_recall` |
+| **Entity Resolution (Robustness)** | *"87.5% Precision & Recall under Adversarial Indian Phonetic & Typo Noise Suite"* | `er_noise_robustness_precision` |
+| **Network Pulse** | *"25:1 Change Compression with 100% Meaningful Syndicate Change Recall"* | `change_compression_ratio`, `meaningful_change_recall` |
+| **Evidence Grounding** | *"100% Evidence Coverage with 0% Unsupported Claims (Mandatory Section 63 BSA Provenance)"*| `evidence_coverage_rate`, `unsupported_claim_rate` |
+| **Safety & Abstention** | *"100% Appropriate Abstention on Degraded Inputs with Zero Predictive Guilt Scoring"* | `appropriate_abstention_rate`, `zero_predictive_guilt_compliance` |
+| **Integrity & RBAC** | *"50/50 Tamper Mutations Detected (100%) with 0% Unauthorized Resource Access"* | `tamper_detection_rate`, `unauthorized_action_acceptance_rate` |
+
+---
+
+## 9. How to Reproduce All Benchmarks
 
 ```bash
-# 1. Run all backend tests (708 passing)
-pytest
+# Execute the full standardized benchmark suite (outputs artifacts/benchmarks/current_metrics.json):
+python scripts/benchmarks/run_all_benchmarks.py
 
-# 2. Run ground-truth entity resolution benchmark
-python scripts/evaluate_ground_truth.py
+# Run all backend regression tests (715 tests):
+pytest -q
 
-# 3. Run scale and latency benchmarks
-python -m pytest tests/scale/test_scale_performance.py
+# Run frontend tests and verify build:
+cd frontend && npx vitest run && npx vite build
 ```

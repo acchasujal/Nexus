@@ -17,6 +17,7 @@ import { ErrorState } from '@/components/ErrorState'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import { MarkdownContent } from '@/components/nexus/MarkdownContent'
 import { EvidenceDossierActions } from '@/components/EvidenceDossierActions'
+import { CrossJurisdictionPulseSection } from '@/components/nexus/CrossJurisdictionPulseSection'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { FilterPills, type FilterPillOption } from '@/components/ui/FilterPills'
 
@@ -342,6 +343,9 @@ export default function LeadInbox() {
           </section>
         </div>
       )}
+
+      {/* P1-A Cross-Jurisdiction Intelligence Pulse Dissemination Conduit */}
+      <CrossJurisdictionPulseSection currentCaseId={caseIdParam} />
 
       {/* Forensic Evidence Drawer */}
       <EvidenceDrawer
