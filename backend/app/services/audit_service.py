@@ -98,6 +98,10 @@ class AuditEventType(str, Enum):
     IDENTITY_DRIFT_VIEWED = "identity_drift_viewed"
     IDENTITY_DRIFT_DECIDED = "identity_drift_decided"
 
+    # Network Adaptation Engine (P1-C)
+    NETWORK_ADAPTATION_VIEWED = "network_adaptation_viewed"
+    NETWORK_ADAPTATION_DECIDED = "network_adaptation_decided"
+
 
 class AuditService:
     """Application-layer service for writing and querying audit logs."""

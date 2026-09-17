@@ -253,4 +253,19 @@ def get_identity_drift_service(
     return drift_svc
 
 
+def get_network_adaptation_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_service: AuditService = Depends(get_audit_service),
+) -> Any:
+    """Return the shared or per-request NetworkAdaptationService instance."""
+    adapt_svc = getattr(request.app.state, "network_adaptation_service", None)
+    if adapt_svc is not None:
+        return adapt_svc
+    from backend.app.services.network_adaptation_service import NetworkAdaptationService
+    adapt_svc = NetworkAdaptationService(repo, audit_service=audit_service)
+    request.app.state.network_adaptation_service = adapt_svc
+    return adapt_svc
+
+
 

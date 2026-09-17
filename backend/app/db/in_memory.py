@@ -70,6 +70,7 @@ class InMemoryBackendRepository:
         self.batches: dict[str, dict[str, Any]] = {}
         self.intelligence_pulses: dict[str, dict[str, Any]] = {}
         self.identity_drifts: dict[str, dict[str, Any]] = {}
+        self.network_adaptations: dict[str, dict[str, Any]] = {}
         self.state_path = state_path
 
         self._load_artifact(artifact_path or self._default_artifact_path())
@@ -87,6 +88,7 @@ class InMemoryBackendRepository:
         self.batches.clear()
         self.intelligence_pulses.clear()
         self.identity_drifts.clear()
+        self.network_adaptations.clear()
         self._load_artifact(self._default_artifact_path())
         if self.state_path and self.state_path.exists():
             try:

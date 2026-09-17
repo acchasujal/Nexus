@@ -819,3 +819,47 @@ class IdentityDriftEvent(BaseModel):
 class DecideIdentityDriftRequest(BaseModel):
     status: IdentityDriftStatus
     note: str | None = None
+
+
+# ── P1-C Network Adaptation Engine Contracts ─────────────────────────────────
+
+class NetworkAdaptationType(str, Enum):
+    INTERMEDIARY_REPLACEMENT = "INTERMEDIARY_REPLACEMENT"
+    BRIDGE_SUBSTITUTION = "BRIDGE_SUBSTITUTION"
+    FINANCIAL_REROUTING = "FINANCIAL_REROUTING"
+    COMMUNITY_RECONNECTION = "COMMUNITY_RECONNECTION"
+
+
+class AdaptationReviewStatus(str, Enum):
+    DETECTED = "DETECTED"
+    CONFIRMED = "CONFIRMED"
+    DISMISSED = "DISMISSED"
+    MONITORING = "MONITORING"
+
+
+class NetworkAdaptationEvent(BaseModel):
+    adaptation_id: str
+    adaptation_type: NetworkAdaptationType
+    primary_entity_id: str
+    primary_entity_name: str
+    secondary_entity_id: str
+    secondary_entity_name: str
+    substitute_intermediary_id: str | None = None
+    substitute_intermediary_name: str | None = None
+    previous_path: list[str] = Field(default_factory=list)
+    new_path: list[str] = Field(default_factory=list)
+    detected_at: str = Field(default_factory=lambda: _utcnow().isoformat())
+    time_lag_days: int | None = None
+    structural_significance: float = 0.85
+    corroborating_context: str
+    evidence_refs: list[str] = Field(default_factory=list)
+    derivation_class: str = "DERIVED"
+    review_status: AdaptationReviewStatus = AdaptationReviewStatus.DETECTED
+    investigator_note: str | None = None
+    decided_at: str | None = None
+    decided_by: str | None = None
+
+
+class DecideNetworkAdaptationRequest(BaseModel):
+    status: AdaptationReviewStatus
+    note: str | None = None

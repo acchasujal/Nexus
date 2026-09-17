@@ -42,6 +42,7 @@ from backend.app.api.dependencies import (
     get_proactive_intelligence_service,
     get_intelligence_pulse_service,
     get_identity_drift_service,
+    get_network_adaptation_service,
 )
 from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal
@@ -55,10 +56,12 @@ from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.copilot_service import CopilotService
 from shared.contracts.api import (
     AcknowledgePulseRequest,
+    AdaptationReviewStatus,
     CombinedBridgeSignal,
     CopilotQueryRequest,
     CreateIntelligencePulseRequest,
     DecideIdentityDriftRequest,
+    DecideNetworkAdaptationRequest,
     DistrictHotspotIntelligence,
     EvidenceBatchVerifyRequest,
     EvidenceBatchVerifyResponse,
@@ -69,6 +72,8 @@ from shared.contracts.api import (
     IdentityDriftStatus,
     IdentityDriftType,
     IntelligencePulsePacket,
+    NetworkAdaptationEvent,
+    NetworkAdaptationType,
     NetworkGraphResponse,
     NexusDossierRequest,
     NexusDossierResponse,
@@ -2284,6 +2289,45 @@ def create_nexus_router() -> APIRouter:
     ) -> dict[str, Any]:
         """Retrieve aggregated summary metrics for Identity Drift Radar."""
         return drift_svc.get_drift_radar_summary()
+
+    # ── P1-C Network Adaptation Radar Endpoints ───────────────────────────────
+
+    @router.get("/nexus/intelligence/network-adaptation", response_model=list[NetworkAdaptationEvent])
+    def list_network_adaptations(
+        adaptation_type: NetworkAdaptationType | None = Query(None, description="Filter by adaptation type"),
+        status: AdaptationReviewStatus | None = Query(None, description="Filter by review status"),
+        principal: Principal = Depends(get_principal),
+        adapt_svc: Any = Depends(get_network_adaptation_service),
+    ) -> list[NetworkAdaptationEvent]:
+        """List structural criminal network adaptation and intermediary rerouting events."""
+        return adapt_svc.list_adaptations(
+            principal=principal,
+            adaptation_type=adaptation_type,
+            status=status,
+        )
+
+    @router.post("/nexus/intelligence/network-adaptation/{adaptation_id}/decide", response_model=NetworkAdaptationEvent)
+    def decide_network_adaptation(
+        adaptation_id: str,
+        request: DecideNetworkAdaptationRequest,
+        principal: Principal = Depends(get_principal),
+        adapt_svc: Any = Depends(get_network_adaptation_service),
+    ) -> NetworkAdaptationEvent:
+        """Record investigator review decision on a network adaptation finding."""
+        try:
+            return adapt_svc.decide_adaptation(adaptation_id, request, principal)
+        except KeyError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to record adaptation decision: {e}")
+
+    @router.get("/nexus/intelligence/network-adaptation/summary", response_model=dict[str, Any])
+    def get_network_adaptation_summary(
+        principal: Principal = Depends(get_principal),
+        adapt_svc: Any = Depends(get_network_adaptation_service),
+    ) -> dict[str, Any]:
+        """Retrieve aggregated summary metrics for Network Adaptation Radar."""
+        return adapt_svc.get_adaptation_radar_summary()
 
     return router
 

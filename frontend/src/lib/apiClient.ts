@@ -424,6 +424,27 @@ export const apiClient = {
     ),
   getIdentityDriftSummary: () =>
     apiFetch<Record<string, any>>('/api/v1/nexus/intelligence/identity-drift/summary'),
+
+  // ── P1-C Network Adaptation Radar Methods ──────────────────────────────────
+  getNetworkAdaptations: (adaptationType?: string, status?: string) => {
+    const params = new URLSearchParams()
+    if (adaptationType) params.append('adaptation_type', adaptationType)
+    if (status) params.append('status', status)
+    const qs = params.toString()
+    return apiFetch<import('@shared/contracts/api').NetworkAdaptationEvent[]>(
+      qs ? `/api/v1/nexus/intelligence/network-adaptation?${qs}` : '/api/v1/nexus/intelligence/network-adaptation'
+    )
+  },
+  decideNetworkAdaptation: (adaptationId: string, req: import('@shared/contracts/api').DecideNetworkAdaptationRequest) =>
+    apiFetch<import('@shared/contracts/api').NetworkAdaptationEvent>(
+      `/api/v1/nexus/intelligence/network-adaptation/${encodeURIComponent(adaptationId)}/decide`,
+      {
+        method: 'POST',
+        body: JSON.stringify(req),
+      }
+    ),
+  getNetworkAdaptationSummary: () =>
+    apiFetch<Record<string, any>>('/api/v1/nexus/intelligence/network-adaptation/summary'),
 }
 
 

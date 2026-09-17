@@ -254,3 +254,31 @@ export function useIdentityDriftSummary() {
     queryFn: () => apiClient.getIdentityDriftSummary(),
   })
 }
+
+// ── P1-C Network Adaptation Radar Hooks ─────────────────────────────────────
+
+export function useNetworkAdaptations(adaptationType?: string, status?: string) {
+  return useQuery({
+    queryKey: ['nexus', 'intelligence', 'network-adaptation', adaptationType, status],
+    queryFn: () => apiClient.getNetworkAdaptations(adaptationType, status),
+  })
+}
+
+export function useDecideNetworkAdaptation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ adaptationId, req }: { adaptationId: string; req: import('@shared/contracts/api').DecideNetworkAdaptationRequest }) =>
+      apiClient.decideNetworkAdaptation(adaptationId, req),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['nexus', 'intelligence', 'network-adaptation'] })
+    },
+  })
+}
+
+export function useNetworkAdaptationSummary() {
+  return useQuery({
+    queryKey: ['nexus', 'intelligence', 'network-adaptation', 'summary'],
+    queryFn: () => apiClient.getNetworkAdaptationSummary(),
+  })
+}
+

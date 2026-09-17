@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom'
 import {
   Layers, Network, Users, Share2, AlertTriangle, ShieldCheck, Inbox,
   Flame, Radio, GitBranch, ArrowRight, ExternalLink, RefreshCw,
-  MapPin,
+  MapPin, GitFork,
 } from 'lucide-react'
 import {
   useIntelligenceHotspots,
@@ -27,8 +27,9 @@ import { ErrorState } from '@/components/ErrorState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { IdentityDriftRadarSection } from '@/components/nexus/IdentityDriftRadarSection'
+import { NetworkAdaptationSection } from '@/components/nexus/NetworkAdaptationSection'
 
-type HubTab = 'hotspots' | 'radar' | 'drift' | 'combined' | 'communities'
+type HubTab = 'hotspots' | 'radar' | 'drift' | 'adaptation' | 'combined' | 'communities'
 
 interface CommunityItem {
   community_id?: string
@@ -179,6 +180,18 @@ export default function Patterns() {
         >
           <Share2 className="h-4 w-4 text-cyan-600" />
           Identity Drift Radar (P1-B)
+        </button>
+
+        <button
+          onClick={() => setActiveTab('adaptation')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === 'adaptation'
+              ? 'border-indigo-600 text-indigo-900 bg-indigo-50/50'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+          }`}
+        >
+          <GitFork className="h-4 w-4 text-indigo-600" />
+          Network Adaptation Radar (P1-C)
         </button>
 
         <button
@@ -495,7 +508,12 @@ export default function Patterns() {
         <IdentityDriftRadarSection />
       )}
 
-      {/* TAB 4: COMBINED CROSS-DISTRICT BRIDGES */}
+      {/* TAB 4: NETWORK ADAPTATION RADAR (P1-C) */}
+      {activeTab === 'adaptation' && (
+        <NetworkAdaptationSection />
+      )}
+
+      {/* TAB 5: COMBINED CROSS-DISTRICT BRIDGES */}
       {activeTab === 'combined' && (
         <div className="space-y-6">
           {isBridgeLoading ? (
