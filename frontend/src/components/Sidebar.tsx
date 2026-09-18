@@ -44,73 +44,88 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const navItems = [
+  const navGroups = [
     {
-      name: 'Network Explorer',
-      to: '/network',
-      icon: Network,
-      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+      label: 'INTELLIGENCE',
+      items: [
+        {
+          name: 'Intelligence Center',
+          to: '/intelligence',
+          icon: Layers,
+          roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+        },
+        {
+          name: 'Lead Inbox',
+          to: '/leads',
+          icon: Inbox,
+          roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+        },
+        {
+          name: 'Investigation Worklist',
+          to: '/worklist',
+          icon: LayoutDashboard,
+          roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+        },
+      ]
     },
     {
-      name: 'Entity Fusion',
-      to: '/fusion',
-      icon: GitMerge,
-      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+      label: 'INVESTIGATION',
+      items: [
+        {
+          name: 'Network Explorer',
+          to: '/network',
+          icon: Network,
+          roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+        },
+        {
+          name: 'Entity Search',
+          to: '/entities',
+          icon: Users,
+          roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+        },
+        {
+          name: 'Entity Fusion',
+          to: '/fusion',
+          icon: GitMerge,
+          roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+        },
+        {
+          name: 'Timeline & Events',
+          to: '/timeline',
+          icon: Clock,
+          roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+        },
+        {
+          name: 'Evidence & Provenance',
+          to: '/evidence',
+          icon: FileText,
+          roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+        },
+      ]
     },
     {
-      name: 'Lead Inbox',
-      to: '/leads',
-      icon: Inbox,
-      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+      label: 'ASSIST',
+      items: [
+        {
+          name: 'Investigator Copilot',
+          to: '/copilot',
+          icon: MessageSquareCode,
+          roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
+        },
+      ]
     },
     {
-      name: 'Investigation Worklist',
-      to: '/worklist',
-      icon: LayoutDashboard,
-      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
-    },
-    {
-      name: 'Entity Search',
-      to: '/entities',
-      icon: Users,
-      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
-    },
-    {
-      name: 'Timeline & Events',
-      to: '/timeline',
-      icon: Clock,
-      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
-    },
-    {
-      name: 'Evidence & Provenance',
-      to: '/evidence',
-      icon: FileText,
-      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
-    },
-    {
-      name: 'Intelligence & Hotspots',
-      to: '/patterns',
-      icon: Layers,
-      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
-    },
-    {
-      name: 'Investigator Copilot',
-      to: '/copilot',
-      icon: MessageSquareCode,
-      roles: ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
-    },
-    {
-      name: 'Audit & Integrity',
-      to: '/audit',
-      icon: ShieldCheck,
-      roles: ['SUPERVISOR', 'ADMIN', 'SHO', 'SP']
-    },
+      label: 'GOVERNANCE',
+      items: [
+        {
+          name: 'Audit & Integrity',
+          to: '/audit',
+          icon: ShieldCheck,
+          roles: ['SUPERVISOR', 'ADMIN', 'SHO', 'SP']
+        },
+      ]
+    }
   ]
-
-  const filteredNavItems = navItems.filter((item) => {
-    if (!role) return false
-    return item.roles.includes(role)
-  })
 
   return (
     <>
@@ -164,28 +179,46 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         )}
 
-        {/* Primary Navigation */}
-        <nav className={`flex-1 space-y-1 py-4 overflow-y-auto ${collapsed ? 'px-1' : 'px-3'}`}>
-          {filteredNavItems.map((item) => {
-            const Icon = item.icon
+        {/* Primary Grouped Navigation */}
+        <nav className={`flex-1 py-3 overflow-y-auto space-y-4 ${collapsed ? 'px-1' : 'px-3'}`}>
+          {navGroups.map((group) => {
+            const filteredItems = group.items.filter((item) => {
+              if (!role) return false
+              return item.roles.includes(role)
+            })
+
+            if (filteredItems.length === 0) return null
+
             return (
-              <NavLink
-                key={item.name}
-                to={item.to}
-                onClick={onClose}
-                title={collapsed ? item.name : undefined}
-                className={({ isActive }) => `
-                  flex items-center rounded-lg text-sm font-medium transition-all
-                  ${collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
-                  ${isActive 
-                    ? 'bg-blue-600 text-white font-bold shadow-sm' 
-                    : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
-                  }
-                `}
-              >
-                <Icon className={`h-4 w-4 shrink-0 ${!collapsed ? 'mr-3' : ''}`} />
-                {!collapsed && item.name}
-              </NavLink>
+              <div key={group.label} className="space-y-1">
+                {!collapsed && (
+                  <div className="px-3 text-[10px] font-extrabold uppercase tracking-wider text-neutral-400">
+                    {group.label}
+                  </div>
+                )}
+                {filteredItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <NavLink
+                      key={item.name}
+                      to={item.to}
+                      onClick={onClose}
+                      title={collapsed ? item.name : undefined}
+                      className={({ isActive }) => `
+                        flex items-center rounded-lg text-xs font-medium transition-all
+                        ${collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2'}
+                        ${isActive 
+                          ? 'bg-blue-600 text-white font-bold shadow-xs' 
+                          : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
+                        }
+                      `}
+                    >
+                      <Icon className={`h-4 w-4 shrink-0 ${!collapsed ? 'mr-3' : ''}`} />
+                      {!collapsed && item.name}
+                    </NavLink>
+                  )
+                })}
+              </div>
             )
           })}
         </nav>

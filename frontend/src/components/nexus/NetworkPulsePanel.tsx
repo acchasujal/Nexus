@@ -1,11 +1,17 @@
 import { useState } from 'react'
-import { Activity, AlertTriangle, ShieldCheck, FileCheck, ArrowRight, Eye, RefreshCw } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import {
+  Activity, AlertTriangle, ShieldCheck, FileCheck, ArrowRight,
+  Eye, RefreshCw, ChevronDown, ChevronUp, Network, Clock, ExternalLink,
+  HelpCircle,
+} from 'lucide-react'
 import { useNetworkPulses } from '@/hooks/useNexus'
 import type { NetworkPulseItem } from '@shared/contracts/api'
 
 export function NetworkPulsePanel() {
   const { data: pulses = [], isLoading, refetch } = useNetworkPulses()
   const [selectedPulse, setSelectedPulse] = useState<NetworkPulseItem | null>(null)
+  const [isWhyExpanded, setIsWhyExpanded] = useState<boolean>(true)
 
   if (isLoading) {
     return (
@@ -25,9 +31,9 @@ export function NetworkPulsePanel() {
         <div className="flex items-center gap-2">
           <Activity className="h-5 w-5 text-indigo-600 animate-pulse" />
           <div>
-            <h3 className="text-sm font-bold text-neutral-900">Proactive Network Pulse Queue</h3>
+            <h3 className="text-sm font-bold text-neutral-900">Network Pulse Queue</h3>
             <p className="text-[11px] text-neutral-500">
-              Structural change intelligence &amp; evidence sufficiency review
+              Proactive structural change intelligence, evidence assessment &amp; operational early warnings
             </p>
           </div>
         </div>
@@ -37,7 +43,7 @@ export function NetworkPulsePanel() {
           </span>
           <button
             onClick={() => void refetch()}
-            className="p-1.5 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-md transition"
+            className="p-1.5 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-md transition cursor-pointer"
             title="Refresh network pulses"
           >
             <RefreshCw className="h-3.5 w-3.5" />
@@ -98,7 +104,7 @@ export function NetworkPulsePanel() {
           {active && (
             <div className="lg:col-span-2 space-y-3.5">
               {/* Pulse Summary Banner */}
-              <div className="p-3 bg-neutral-50 rounded-lg border border-neutral-200 space-y-1">
+              <div className="p-3 bg-neutral-50 rounded-lg border border-neutral-200 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
                     <ShieldCheck className="h-4 w-4 text-emerald-600" />
@@ -111,6 +117,68 @@ export function NetworkPulsePanel() {
                 <p className="text-[11px] text-neutral-600">
                   Affected Entities: {active.affected_entities.join(', ')} | Affected Cases: {active.affected_cases.join(', ')}
                 </p>
+
+                {/* Primary Action Buttons */}
+                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-neutral-200/60">
+                  {active.affected_entities.length > 0 && (
+                    <Link
+                      to={`/network?node_id=${encodeURIComponent(active.affected_entities[0])}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition shadow-2xs cursor-pointer"
+                    >
+                      <Network className="h-3 w-3" />
+                      Inspect Network
+                    </Link>
+                  )}
+                  <Link
+                    to="/timeline"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 font-bold text-[11px] transition shadow-2xs cursor-pointer"
+                  >
+                    <Clock className="h-3 w-3" />
+                    View Timeline
+                  </Link>
+                  {active.affected_cases.length > 0 && (
+                    <Link
+                      to={`/cases/${encodeURIComponent(active.affected_cases[0])}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 font-bold text-[11px] transition shadow-2xs cursor-pointer"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Open Case ({active.affected_cases[0]})
+                    </Link>
+                  )}
+                </div>
+              </div>
+
+              {/* Expandable "Why This Appeared" grounded section */}
+              <div className="rounded-lg border border-neutral-200 bg-white overflow-hidden text-xs">
+                <button
+                  onClick={() => setIsWhyExpanded(!isWhyExpanded)}
+                  className="w-full flex items-center justify-between p-2.5 bg-neutral-50 hover:bg-neutral-100 transition text-left cursor-pointer font-bold text-neutral-800"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <HelpCircle className="h-3.5 w-3.5 text-indigo-600" />
+                    Why this appeared (Deterministic Signal Grounding)
+                  </span>
+                  {isWhyExpanded ? <ChevronUp className="h-4 w-4 text-neutral-500" /> : <ChevronDown className="h-4 w-4 text-neutral-500" />}
+                </button>
+                {isWhyExpanded && (
+                  <div className="p-3 space-y-2 border-t border-neutral-200 bg-indigo-50/20">
+                    <p className="text-[11px] text-neutral-700 leading-relaxed">
+                      {active.signal_headline}. This pulse was triggered deterministically because structural network analysis detected shifts across {active.affected_entities.length} monitored entities and {active.affected_cases.length} intersecting criminal investigations.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] text-neutral-600 pt-1">
+                      <div className="p-2 rounded bg-white border border-neutral-200 space-y-0.5">
+                        <div className="font-bold text-neutral-800">Graph Trigger Scope:</div>
+                        <div>Priority level: <strong>{active.review_priority.replace('_', ' ')}</strong></div>
+                        <div>Supporting records: <strong>{active.evidence_refs.length} provenance items</strong></div>
+                      </div>
+                      <div className="p-2 rounded bg-white border border-neutral-200 space-y-0.5">
+                        <div className="font-bold text-neutral-800">Evidence Baseline:</div>
+                        <div>Assessed claims: <strong>{active.assessment.length} verifiable points</strong></div>
+                        <div>Support level: <strong>{Math.round(active.support_level * 100)}% grounding</strong></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Evidence Assessment (SUPPORTS, CONFLICTS, MISSING) */}
@@ -145,21 +213,24 @@ export function NetworkPulsePanel() {
                 </div>
               </div>
 
-              {/* Early Warning & Constrained Forecast */}
+              {/* Operational Early Warning */}
               {active.forecast && (
                 <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-200 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
                       <AlertTriangle className="h-3.5 w-3.5 text-indigo-600" />
-                      Early Warning Forecast: {active.forecast.target_state}
+                      Operational Early Warning: {active.forecast.target_state}
                     </span>
                     {active.forecast.abstained ? (
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
                         ABSTAINED (Insufficient Evidence)
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
-                        Confidence: {Math.round(active.forecast.support_level * 100)}%
+                      <span
+                        className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 inline-flex items-center gap-1 cursor-help"
+                        title="Proportion of required evidence claims currently supported by available records within this pulse scope."
+                      >
+                        Evidence support: {Math.round(active.forecast.support_level * 100)}%
                       </span>
                     )}
                   </div>

@@ -47,9 +47,9 @@ export function HotspotDrilldownModal({
         <div className="flex items-start justify-between border-b border-neutral-200 bg-neutral-50 px-4 sm:px-6 py-4 sm:py-5">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-900 border border-red-200">
-                <AlertTriangle className="h-3.5 w-3.5 text-red-600" />
-                RED FLAG HOTSPOT
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                High Concentration
               </span>
               <h2 id="drilldown-title" className="text-lg sm:text-xl font-bold text-neutral-900">
                 District: {district}
@@ -57,15 +57,15 @@ export function HotspotDrilldownModal({
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-neutral-600">
               <span>
-                <strong>Cases:</strong> {drilldown?.case_count ?? '...'} registered
+                <strong>Cases:</strong> {isLoading ? 'Loading...' : (drilldown?.case_count ?? '...')} registered
               </span>
               <span>•</span>
               <span>
                 <strong>Crime Concentration:</strong>{' '}
                 <span className="font-bold text-red-800 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">
-                  {drilldown?.concentration_multiplier ?? '...'}× baseline
+                  {isLoading ? '...' : (drilldown?.concentration_multiplier ?? '...')}× baseline
                 </span>{' '}
-                (baseline: {drilldown?.baseline_cases ?? '...'} cases/dist)
+                (baseline: {isLoading ? '...' : (drilldown?.baseline_cases ?? '...')} cases/dist)
               </span>
               <span>•</span>
               <span className="text-emerald-800 font-bold flex items-center gap-1">
@@ -95,7 +95,7 @@ export function HotspotDrilldownModal({
             }`}
           >
             <FileText className="h-4 w-4" />
-            Underlying Cases ({drilldown?.cases.length ?? 0})
+            Underlying Cases ({isLoading ? 'Loading...' : (drilldown?.cases.length ?? 0)})
           </button>
           <button
             onClick={() => setActiveTab('entities')}
@@ -106,7 +106,7 @@ export function HotspotDrilldownModal({
             }`}
           >
             <Users className="h-4 w-4" />
-            Accused &amp; Entities ({drilldown?.entities.length ?? 0})
+            Accused &amp; Entities ({isLoading ? 'Loading...' : (drilldown?.entities.length ?? 0)})
           </button>
           <button
             onClick={() => setActiveTab('offenders')}
@@ -117,7 +117,7 @@ export function HotspotDrilldownModal({
             }`}
           >
             <AlertTriangle className="h-4 w-4 text-amber-600" />
-            Repeat Offenders ({drilldown?.repeat_offenders.length ?? 0})
+            Repeat-Case Entities ({isLoading ? 'Loading...' : (drilldown?.repeat_offenders.length ?? 0)})
           </button>
           <button
             onClick={() => setActiveTab('links')}
@@ -128,7 +128,7 @@ export function HotspotDrilldownModal({
             }`}
           >
             <Network className="h-4 w-4 text-purple-600" />
-            Cross-Case Links ({drilldown?.cross_case_links.length ?? 0})
+            Cross-Case Links ({isLoading ? 'Loading...' : (drilldown?.cross_case_links.length ?? 0)})
           </button>
           <button
             onClick={() => setActiveTab('evidence')}
@@ -139,7 +139,7 @@ export function HotspotDrilldownModal({
             }`}
           >
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            Forensic Evidence ({drilldown?.evidence.length ?? 0})
+            Forensic Evidence ({isLoading ? 'Loading...' : (drilldown?.evidence.length ?? 0)})
           </button>
         </div>
 

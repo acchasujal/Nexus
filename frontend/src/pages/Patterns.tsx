@@ -1,23 +1,29 @@
 /**
  * frontend/src/pages/Patterns.tsx
  *
- * NEXUS Criminal Network Intelligence Hub:
- * 1. Crime Hotspots (dynamic baseline multiplier, dominant categories, drilldown)
- * 2. Repeat Offender Radar (entity-resolved aliases, district spread, shared phones/entities, non-guilt status)
- * 3. Combined Cross-District Bridge Signals (Hotspot ↔ Repeat Offender intersection)
- * 4. Network Modules & Centrality Bridges (Louvain communities, betweenness brokers)
+ * NEXUS Intelligence Center:
+ * 1. Network Pulse (Proactive Network Change Intelligence & Evidence Sufficiency)
+ * 2. Identity Drift Radar
+ * 3. Network Adaptation Radar
+ * 4. Case DNA Explainable Structural Similarity
+ * 5. Cross-District Bridges (Hotspot ↔ Repeat-Case intersection)
+ * 6. Digital Shadow / Authorized SOCMINT Corroboration
+ * 7. Network Communities & Connectors (Louvain modules, betweenness brokers)
+ * 8. Crime Hotspots (Concentration density, drilldown)
+ * 9. Repeat-Case Entities (Entity-resolved aliases, district spread)
  */
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Layers, Network, Users, Share2, AlertTriangle, ShieldCheck, Inbox,
   Flame, Radio, GitBranch, ArrowRight, ExternalLink, RefreshCw,
-  MapPin, GitFork, Globe, Dna,
+  MapPin, GitFork, Globe, Dna, Activity,
 } from 'lucide-react'
 import {
   useIntelligenceHotspots,
   useRepeatOffenderRadar,
   useCombinedBridgeSignals,
+  useNetworkPulses,
 } from '@/hooks/useNexus'
 import { apiClient } from '@/lib/apiClient'
 import { HotspotDrilldownModal } from '@/components/nexus/HotspotDrilldownModal'
@@ -30,8 +36,10 @@ import { IdentityDriftRadarSection } from '@/components/nexus/IdentityDriftRadar
 import { NetworkAdaptationSection } from '@/components/nexus/NetworkAdaptationSection'
 import { DigitalShadowSection } from '@/components/nexus/DigitalShadowSection'
 import { CaseDNASection } from '@/components/nexus/CaseDNASection'
+import { NetworkPulsePanel } from '@/components/nexus/NetworkPulsePanel'
+import { IntelligenceSummaryMetrics } from '@/components/nexus/IntelligenceSummaryMetrics'
 
-type HubTab = 'hotspots' | 'radar' | 'dna' | 'drift' | 'adaptation' | 'shadow' | 'combined' | 'communities'
+type HubTab = 'pulse' | 'drift' | 'adaptation' | 'dna' | 'combined' | 'shadow' | 'communities' | 'hotspots' | 'radar'
 
 
 interface CommunityItem {
@@ -51,12 +59,17 @@ interface BridgeItem {
 }
 
 export default function Patterns() {
-  const [activeTab, setActiveTab] = useState<HubTab>('hotspots')
+  const [activeTab, setActiveTab] = useState<HubTab>('pulse')
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null)
   const [minCasesFilter, setMinCasesFilter] = useState<number>(2)
   const [evidenceDrawerId, setEvidenceDrawerId] = useState<string | null>(null)
 
   // Intelligence queries
+  const {
+    data: pulses,
+    refetch: refetchPulses,
+  } = useNetworkPulses()
+
   const {
     data: hotspots,
     isLoading: isHotspotsLoading,
@@ -105,6 +118,7 @@ export default function Patterns() {
 
   const handleRefreshAll = async () => {
     await Promise.all([
+      refetchPulses(),
       refetchHotspots(),
       refetchRadar(),
       refetchBridges(),
@@ -117,8 +131,8 @@ export default function Patterns() {
       {/* Header */}
       <PageHeader
         icon={Layers}
-        title="Criminal Network Intelligence Hub &amp; Crime Hotspots"
-        subtitle="Dynamic crime concentration density, resolved repeat offender radar, cross-district syndicate bridges, and graph modularity."
+        title="Intelligence Center"
+        subtitle="Proactive network change intelligence, evidence assessment, operational early warnings, and verification workflows."
         actions={
           <>
             <button
@@ -143,12 +157,99 @@ export default function Patterns() {
       <div className="flex items-start gap-2.5 text-xs text-blue-900 bg-blue-50/70 border border-blue-200/80 p-3.5 rounded-xl">
         <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
         <span>
-          <strong className="text-blue-950 font-bold">Investigative Use Only (MHA / NCRB Standard):</strong> All crime concentration multipliers, repeat offender signals, and cross-district bridge alerts are computed via deterministic graph algorithms to guide investigative prioritisation. They do not constitute a finding of guilt or legal proof.
+          <strong className="text-blue-950 font-bold">Investigative Use Only (MHA / NCRB Standard):</strong> All network pulse detections, crime concentration multipliers, and cross-district bridge alerts are computed via deterministic graph algorithms to guide investigative prioritisation. They do not constitute a finding of guilt or legal proof.
         </span>
       </div>
 
+      {/* Real Intelligence Summary Metrics */}
+      <IntelligenceSummaryMetrics />
+
       {/* Primary Tab Navigation */}
       <div className="flex items-center border-b border-neutral-200 gap-1 overflow-x-auto whitespace-nowrap sm:flex-wrap">
+        <button
+          onClick={() => setActiveTab('pulse')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === 'pulse'
+              ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+          }`}
+        >
+          <Activity className="h-4 w-4 text-indigo-600" />
+          Network Pulse ({pulses?.length ?? 0})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('drift')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === 'drift'
+              ? 'border-cyan-600 text-cyan-900 bg-cyan-50/50'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+          }`}
+        >
+          <Share2 className="h-4 w-4 text-cyan-600" />
+          Identity Drift
+        </button>
+
+        <button
+          onClick={() => setActiveTab('adaptation')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === 'adaptation'
+              ? 'border-indigo-600 text-indigo-900 bg-indigo-50/50'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+          }`}
+        >
+          <GitFork className="h-4 w-4 text-indigo-600" />
+          Network Adaptation
+        </button>
+
+        <button
+          onClick={() => setActiveTab('dna')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === 'dna'
+              ? 'border-indigo-600 text-indigo-900 bg-indigo-50/50'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+          }`}
+        >
+          <Dna className="h-4 w-4 text-indigo-600" />
+          Case DNA
+        </button>
+
+        <button
+          onClick={() => setActiveTab('combined')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === 'combined'
+              ? 'border-purple-600 text-purple-800 bg-purple-50/50'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+          }`}
+        >
+          <GitBranch className="h-4 w-4 text-purple-600" />
+          Cross-District Bridges ({bridgeSignals?.length ?? 0})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('shadow')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === 'shadow'
+              ? 'border-sky-600 text-sky-900 bg-sky-50/50'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+          }`}
+        >
+          <Globe className="h-4 w-4 text-sky-600" />
+          Digital Shadow
+        </button>
+
+        <button
+          onClick={() => setActiveTab('communities')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === 'communities'
+              ? 'border-blue-600 text-blue-800 bg-blue-50/50'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+          }`}
+        >
+          <Users className="h-4 w-4 text-blue-600" />
+          Network Communities &amp; Connectors ({communities.length + graphBridges.length})
+        </button>
+
         <button
           onClick={() => setActiveTab('hotspots')}
           className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
@@ -170,118 +271,246 @@ export default function Patterns() {
           }`}
         >
           <Radio className="h-4 w-4 text-amber-600" />
-          Repeat Offender Radar ({repeatOffenders?.length ?? 0})
-        </button>
-
-        <button
-          onClick={() => setActiveTab('dna')}
-          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
-            activeTab === 'dna'
-              ? 'border-indigo-600 text-indigo-900 bg-indigo-50/50'
-              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
-          }`}
-        >
-          <Dna className="h-4 w-4 text-indigo-600" />
-          Case DNA (P2)
-        </button>
-
-        <button
-          onClick={() => setActiveTab('drift')}
-          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
-            activeTab === 'drift'
-              ? 'border-cyan-600 text-cyan-900 bg-cyan-50/50'
-              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
-          }`}
-        >
-          <Share2 className="h-4 w-4 text-cyan-600" />
-          Identity Drift Radar (P1-B)
-        </button>
-
-
-        <button
-          onClick={() => setActiveTab('adaptation')}
-          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
-            activeTab === 'adaptation'
-              ? 'border-indigo-600 text-indigo-900 bg-indigo-50/50'
-              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
-          }`}
-        >
-          <GitFork className="h-4 w-4 text-indigo-600" />
-          Network Adaptation Radar (P1-C)
-        </button>
-
-        <button
-          onClick={() => setActiveTab('shadow')}
-          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
-            activeTab === 'shadow'
-              ? 'border-sky-600 text-sky-900 bg-sky-50/50'
-              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
-          }`}
-        >
-          <Globe className="h-4 w-4 text-sky-600" />
-          Digital Shadow / SOCMINT (P1-D)
-        </button>
-
-        <button
-          onClick={() => setActiveTab('combined')}
-          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
-            activeTab === 'combined'
-              ? 'border-purple-600 text-purple-800 bg-purple-50/50'
-              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
-          }`}
-        >
-          <GitBranch className="h-4 w-4 text-purple-600" />
-          Combined Cross-District Bridges ({bridgeSignals?.length ?? 0})
-        </button>
-
-        <button
-          onClick={() => setActiveTab('communities')}
-          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${
-            activeTab === 'communities'
-              ? 'border-blue-600 text-blue-800 bg-blue-50/50'
-              : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
-          }`}
-        >
-          <Users className="h-4 w-4 text-blue-600" />
-          Network Modules &amp; Brokers ({communities.length + graphBridges.length})
+          Repeat-Case Entities ({repeatOffenders?.length ?? 0})
         </button>
       </div>
 
-      {/* TAB 1: CRIME HOTSPOTS */}
-      {activeTab === 'hotspots' && (
+      {/* TAB 1: NETWORK PULSE (DEFAULT) */}
+      {activeTab === 'pulse' && (
+        <NetworkPulsePanel />
+      )}
+
+      {/* TAB 2: IDENTITY DRIFT RADAR */}
+      {activeTab === 'drift' && (
+        <IdentityDriftRadarSection />
+      )}
+
+      {/* TAB 3: NETWORK ADAPTATION RADAR */}
+      {activeTab === 'adaptation' && (
+        <NetworkAdaptationSection />
+      )}
+
+      {/* TAB 4: CASE DNA */}
+      {activeTab === 'dna' && (
+        <CaseDNASection />
+      )}
+
+      {/* TAB 5: CROSS-DISTRICT BRIDGES */}
+      {activeTab === 'combined' && (
         <div className="space-y-6">
-          {/* Summary Metrics */}
-          {hotspots && hotspots.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <MetricCard
-                label="Flagged Hotspots"
-                value={hotspots.length}
-                icon={Flame}
-                badge={{ text: `${hotspots.filter(h => h.alert_level === 'RED').length} Red Flag`, variant: 'danger' }}
-                subtext="High concentration districts"
-              />
-              <MetricCard
-                label="Baseline Density"
-                value={hotspots[0]?.baseline_cases ?? 25}
-                icon={MapPin}
-                subtext="Average cases per district"
-              />
-              <MetricCard
-                label="Max Concentration Surge"
-                value={`${Math.max(...hotspots.map((h) => h.concentration_multiplier), 0)}×`}
-                icon={AlertTriangle}
-                badge={{ text: 'Baseline Multiplier', variant: 'warning' }}
-                subtext="Highest ratio vs baseline"
-              />
-              <MetricCard
-                label="Evidence Grounding"
-                value="100%"
-                icon={ShieldCheck}
-                badge={{ text: 'Verified', variant: 'success' }}
-                subtext="Backed by verified records"
-              />
+          {isBridgeLoading ? (
+            <LoadingSkeleton layout="card" />
+          ) : bridgeError ? (
+            <ErrorState message="Failed to load cross-district bridges." onRetry={() => void refetchBridges()} />
+          ) : !bridgeSignals || bridgeSignals.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-12 text-center text-neutral-500">
+              No cross-district repeat-case bridges detected across current hotspots.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {bridgeSignals.map((signal) => (
+                <div
+                  key={signal.signal_id}
+                  className="rounded-xl border border-purple-200 bg-white p-5 sm:p-6 shadow-xs space-y-4 hover:border-purple-300 transition-all"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-purple-50 text-purple-900 border border-purple-200">
+                        {signal.alert_title}
+                      </span>
+                      <h3 className="text-base font-bold text-neutral-900">
+                        Primary District: {signal.primary_district} ({signal.primary_district_cases} cases)
+                      </h3>
+                    </div>
+
+                    <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
+                      Evidence-Backed Bridge
+                    </span>
+                  </div>
+
+                  {/* Formatted Explanation Block */}
+                  <div className="p-4 rounded-xl bg-purple-50/40 border border-purple-200 space-y-2 text-xs">
+                    <p className="text-sm font-bold text-neutral-900 leading-relaxed">
+                      {signal.explanation}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-4 text-neutral-700 pt-1">
+                      <span>
+                        <strong>Hotspot Cases:</strong> {signal.primary_district_cases} FIRs
+                      </span>
+                      <span>•</span>
+                      <span>
+                        <strong>Repeat-Case Entities in Area:</strong> {signal.repeat_offender_count} entities
+                      </span>
+                      <span>•</span>
+                      <span>
+                        <strong>Cross-District Target:</strong> {signal.secondary_districts?.join(', ')}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bridging Repeat-Case Entities Details */}
+                  <div className="space-y-2">
+                    <div className="text-xs font-bold text-neutral-800">Bridging repeat-case entities:</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {signal.bridging_offender_details?.map((b) => (
+                        <div
+                          key={b.person_id}
+                          className="p-3 rounded-lg border border-neutral-200 bg-neutral-50 flex items-center justify-between text-xs shadow-2xs"
+                        >
+                          <div>
+                            <div className="font-bold text-neutral-900">{b.name}</div>
+                            <div className="text-[11px] text-neutral-600">
+                              Bridges {b.home_district} ↔ {b.external_districts.join(', ')} ({b.case_count} cases)
+                            </div>
+                          </div>
+                          <Link
+                            to={`/network?node_id=${encodeURIComponent(b.person_id)}`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors cursor-pointer"
+                          >
+                            Explore
+                            <ExternalLink className="h-3 w-3" />
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-neutral-100">
+                    <div className="text-xs text-neutral-500 font-medium">
+                      Status: Actionable network bridge lead for multi-jurisdictional inquiry.
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSelectedDistrict(signal.primary_district)}
+                        className="px-3.5 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-800 text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        Inspect District Cases
+                      </button>
+                      <Link
+                        to="/leads"
+                        className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        View in Lead Inbox
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* TAB 6: DIGITAL SHADOW */}
+      {activeTab === 'shadow' && (
+        <DigitalShadowSection />
+      )}
+
+      {/* TAB 7: NETWORK COMMUNITIES & CONNECTORS */}
+      {activeTab === 'communities' && (
+        <div className="space-y-6">
+          {isGraphAlgoLoading ? (
+            <div className="text-center py-12 text-neutral-500">Computing graph algorithms &amp; community modules...</div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Detected Communities */}
+              <div className="rounded-xl border border-neutral-200/90 bg-white p-5 space-y-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                  <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
+                    <Users className="h-4 w-4 text-blue-600" />
+                    Detected Network Modules / Communities ({communities.length})
+                  </h2>
+                  <span className="text-xs text-neutral-500 font-medium">Modularity Clustering</span>
+                </div>
+
+                <div className="space-y-3">
+                  {communities.length === 0 ? (
+                    <p className="text-xs text-neutral-500">No community clusters identified in graph.</p>
+                  ) : (
+                    communities.map((comm) => (
+                      <div
+                        key={comm.community_id}
+                        className="p-3.5 rounded-lg border border-neutral-200 bg-neutral-50 space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-neutral-900">
+                            Community #{comm.community_id}
+                          </span>
+                          <span className="text-xs font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                            {comm.size} Members
+                          </span>
+                        </div>
+                        <p className="text-xs text-neutral-600">{comm.reason}</p>
+                        {comm.top_influencer_id && (
+                          <div className="text-[11px] text-neutral-500 flex items-center justify-between pt-1">
+                            <span>Key Influencer: <code className="font-mono text-neutral-800">{comm.top_influencer_id}</code></span>
+                            <Link
+                              to={`/network?node_id=${encodeURIComponent(comm.top_influencer_id)}`}
+                              className="text-blue-700 font-bold hover:underline inline-flex items-center gap-0.5"
+                            >
+                              Focus <ArrowRight className="h-3 w-3" />
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Detected Betweenness Bridges */}
+              <div className="rounded-xl border border-neutral-200/90 bg-white p-5 space-y-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                  <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
+                    <GitBranch className="h-4 w-4 text-purple-600" />
+                    Bridge Nodes &amp; Articulation Points ({graphBridges.length})
+                  </h2>
+                  <span className="text-xs text-neutral-500 font-medium">Betweenness Centrality</span>
+                </div>
+
+                <div className="space-y-3">
+                  {graphBridges.length === 0 ? (
+                    <p className="text-xs text-neutral-500">No articulation bridge nodes detected.</p>
+                  ) : (
+                    graphBridges.map((b) => (
+                      <div
+                        key={b.node_id}
+                        className="p-3.5 rounded-lg border border-purple-200 bg-purple-50/40 space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-neutral-900">
+                            {b.label || b.node_id}
+                          </span>
+                          <span className="text-xs font-bold text-purple-900 bg-purple-100 px-2 py-0.5 rounded border border-purple-200">
+                            {b.criticality || 'HIGH'} Criticality
+                          </span>
+                        </div>
+                        <p className="text-xs text-neutral-700 font-medium">{b.reason}</p>
+                        <div className="flex items-center justify-between text-[11px] text-neutral-500 pt-1">
+                          <span>
+                            Betweenness Centrality: <strong>{b.betweenness_score?.toFixed(3) ?? 'N/A'}</strong> (Top 0.1% in graph)
+                          </span>
+                          <Link
+                            to={`/network?node_id=${encodeURIComponent(b.node_id || '')}`}
+                            className="text-purple-700 font-bold hover:underline inline-flex items-center gap-0.5"
+                          >
+                            Inspect Node <ArrowRight className="h-3 w-3" />
+                          </Link>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 8: CRIME HOTSPOTS */}
+      {activeTab === 'hotspots' && (
+        <div className="space-y-6">
 
           {isHotspotsLoading ? (
             <LoadingSkeleton layout="card" />
@@ -304,7 +533,7 @@ export default function Patterns() {
                       <div className="flex items-center justify-between gap-2">
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-red-100 text-red-950 border border-red-200 tracking-wide">
                           <AlertTriangle className="h-3.5 w-3.5 text-red-600" />
-                          RED FLAG — HIGH CRIME CONCENTRATION
+                          High Concentration — Review Required
                         </span>
                         <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                           Evidence-backed: Yes
@@ -442,7 +671,7 @@ export default function Patterns() {
                       <div className="flex items-center justify-between">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-950 border border-amber-200 tracking-wide">
                           <Radio className="h-3 w-3 text-amber-600 animate-pulse" />
-                          REPEAT-OFFENDER SIGNAL
+                          Repeat-Case Signal
                         </span>
                         <span className="text-xs font-bold text-red-900 bg-red-50 px-2 py-0.5 rounded border border-red-200">
                           {offender.case_count} distinct cases
@@ -526,209 +755,6 @@ export default function Patterns() {
                   </div>
                 )
               })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 2.5: CASE DNA (P2) */}
-      {activeTab === 'dna' && (
-        <CaseDNASection />
-      )}
-
-      {/* TAB 3: IDENTITY DRIFT RADAR (P1-B) */}
-      {activeTab === 'drift' && (
-        <IdentityDriftRadarSection />
-      )}
-
-
-      {/* TAB 4: NETWORK ADAPTATION RADAR (P1-C) */}
-      {activeTab === 'adaptation' && (
-        <NetworkAdaptationSection />
-      )}
-
-      {/* TAB 5: DIGITAL SHADOW / SOCMINT (P1-D) */}
-      {activeTab === 'shadow' && (
-        <DigitalShadowSection />
-      )}
-
-      {/* TAB 6: COMBINED CROSS-DISTRICT BRIDGES */}
-      {activeTab === 'combined' && (
-        <div className="space-y-6">
-          {isBridgeLoading ? (
-            <LoadingSkeleton layout="card" />
-          ) : bridgeError ? (
-            <ErrorState message="Failed to load cross-district bridges." onRetry={() => void refetchBridges()} />
-          ) : !bridgeSignals || bridgeSignals.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-12 text-center text-neutral-500">
-              No cross-district repeat offender bridges detected across current hotspots.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {bridgeSignals.map((signal) => (
-                <div
-                  key={signal.signal_id}
-                  className="rounded-xl border border-purple-200 bg-white p-5 sm:p-6 shadow-xs space-y-4 hover:border-purple-300 transition-all"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-purple-50 text-purple-900 border border-purple-200">
-                        {signal.alert_title}
-                      </span>
-                      <h3 className="text-base font-bold text-neutral-900">
-                        Primary District: {signal.primary_district} ({signal.primary_district_cases} cases)
-                      </h3>
-                    </div>
-
-                    <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
-                      Evidence-Backed Bridge
-                    </span>
-                  </div>
-
-                  {/* Formatted Explanation Block */}
-                  <div className="p-4 rounded-xl bg-purple-50/40 border border-purple-200 space-y-2 text-xs">
-                    <p className="text-sm font-bold text-neutral-900 leading-relaxed">
-                      {signal.explanation}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-4 text-neutral-700 pt-1">
-                      <span>
-                        <strong>Hotspot Cases:</strong> {signal.primary_district_cases} FIRs
-                      </span>
-                      <span>•</span>
-                      <span>
-                        <strong>Repeat Offenders in Area:</strong> {signal.repeat_offender_count} suspects
-                      </span>
-                      <span>•</span>
-                      <span>
-                        <strong>Connected Districts:</strong>{' '}
-                        {signal.connected_districts.map((d) => d.district).join(', ')}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Bridging Suspects Details */}
-                  <div className="space-y-2">
-                    <div className="text-xs font-bold text-neutral-800">Bridging repeat offenders:</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {signal.bridging_offender_details?.map((b) => (
-                        <div
-                          key={b.person_id}
-                          className="p-3 rounded-lg border border-neutral-200 bg-neutral-50 flex items-center justify-between text-xs shadow-2xs"
-                        >
-                          <div>
-                            <div className="font-bold text-neutral-900">{b.name}</div>
-                            <div className="text-[11px] text-neutral-600">
-                              Bridges {b.home_district} ↔ {b.external_districts.join(', ')} ({b.case_count} cases)
-                            </div>
-                          </div>
-                          <Link
-                            to={`/network?node_id=${encodeURIComponent(b.person_id)}`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors cursor-pointer"
-                          >
-                            Explore
-                            <ExternalLink className="h-3 w-3" />
-                          </Link>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-neutral-100">
-                    <div className="text-xs text-neutral-500 font-medium">
-                      Status: Actionable network bridge lead for multi-jurisdictional inquiry.
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setSelectedDistrict(signal.primary_district)}
-                        className="px-3.5 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-800 text-xs font-bold transition-colors cursor-pointer"
-                      >
-                        Inspect District Cases
-                      </button>
-                      <Link
-                        to="/leads"
-                        className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer"
-                      >
-                        View in Lead Inbox
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 4: NETWORK MODULES & BROKERS */}
-      {activeTab === 'communities' && (
-        <div className="space-y-6">
-          {isGraphAlgoLoading ? (
-            <div className="text-center py-12 text-neutral-500">Computing graph algorithms &amp; community modules...</div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Detected Communities */}
-              <div className="rounded-xl border border-neutral-200/90 bg-white p-5 space-y-4 shadow-xs">
-                <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-                  <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
-                    <Users className="h-4 w-4 text-blue-600" />
-                    Detected Network Modules / Communities ({communities.length})
-                  </h2>
-                  <span className="text-xs text-neutral-500 font-medium">Modularity Clustering</span>
-                </div>
-
-                <div className="space-y-3">
-                  {communities.length === 0 ? (
-                    <p className="text-xs text-neutral-500">No multi-member communities detected.</p>
-                  ) : (
-                    communities.map((c, idx) => (
-                      <div key={c.community_id || idx} className="rounded-lg bg-neutral-50 p-3.5 border border-neutral-200/80 space-y-1.5 shadow-2xs">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                            {c.community_id}
-                          </span>
-                          <span className="text-xs text-neutral-800 font-bold">{c.size} Associated Entities</span>
-                        </div>
-                        <p className="text-xs text-neutral-700">{c.reason}</p>
-                        <div className="text-[11px] text-neutral-600 font-mono">
-                          Top Hub Entity: <code className="text-neutral-900 font-bold">{c.top_influencer_id}</code>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Critical Bridge Nodes */}
-              <div className="rounded-xl border border-neutral-200/90 bg-white p-5 space-y-4 shadow-xs">
-                <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-                  <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
-                    <Share2 className="h-4 w-4 text-amber-600" />
-                    Bridge Nodes &amp; Articulation Points ({graphBridges.length})
-                  </h2>
-                  <span className="text-xs text-neutral-500 font-medium">Betweenness Centrality</span>
-                </div>
-
-                <div className="space-y-3">
-                  {graphBridges.length === 0 ? (
-                    <p className="text-xs text-neutral-500">No critical bridge conduits detected.</p>
-                  ) : (
-                    graphBridges.map((b, idx) => (
-                      <div key={b.node_id || idx} className="rounded-lg bg-amber-50/50 p-3.5 border border-amber-200/80 space-y-1.5 shadow-2xs">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-amber-950 font-mono">
-                            {b.label || b.node_id}
-                          </span>
-                          <span className="text-xs text-amber-900 font-bold">
-                            Score: {b.betweenness_score ? b.betweenness_score.toFixed(3) : 'High'}
-                          </span>
-                        </div>
-                        <p className="text-xs text-amber-900/80">{b.reason || 'Acts as a critical bridge broker between disjoint sub-graphs.'}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
             </div>
           )}
         </div>

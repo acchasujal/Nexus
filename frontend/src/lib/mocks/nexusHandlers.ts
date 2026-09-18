@@ -1134,6 +1134,76 @@ export const nexusHandlers = [
       },
     ])
   }),
+
+  // P0 Network Pulses
+  http.get(/\/api\/v1\/nexus\/pulses(\?.*)?$/, () => {
+    return HttpResponse.json([
+      {
+        pulse_id: 'PULSE-2026-001',
+        snapshot_id: 'snap-current',
+        timestamp: '2026-03-02T10:00:00Z',
+        signal_headline: 'Cross-District Bridge Formation in Mumbai Central',
+        review_priority: 'CRITICAL_REVIEW',
+        affected_entities: ['person-0040', 'person-0037'],
+        affected_cases: ['FIR-2026-141', 'FIR-2026-207'],
+        evidence_refs: ['EVD-FIR-141', 'EVD-CDR-01'],
+        action_window: 'Next 48 Hours',
+        support_level: 0.85,
+        assessment: [
+          {
+            claim_id: 'claim-1',
+            evidence_ref: 'EVD-FIR-141',
+            source_quality: 0.95,
+            freshness_days: 2,
+            state: 'SUPPORTS',
+            rationale: 'Named co-accused in active NDPS FIR.',
+          },
+          {
+            claim_id: 'claim-2',
+            evidence_ref: 'EVD-CDR-01',
+            source_quality: 0.88,
+            freshness_days: 1,
+            state: 'SUPPORTS',
+            rationale: 'Direct telecommunication link across district boundary.',
+          },
+        ],
+        forecast: {
+          target_state: 'JURISDICTION_SHIFT',
+          support_level: 0.85,
+          abstained: false,
+          suggested_verification: 'Verify telecom subscriber address with Pune City nodal officer.',
+        },
+        verification_plan: [
+          {
+            verification_id: 'ver-1',
+            target_claim: 'Cross-district coordination',
+            missing_evidence_type: 'Tower Location Data',
+            responsible_role: 'Investigating Officer',
+            status: 'PENDING',
+            recommended_action: 'Subpoena cell site location records for Pune transit period.',
+          },
+        ],
+      },
+    ])
+  }),
+
+  // P0 Proactive Diff
+  http.get(/\/api\/v1\/nexus\/diff(\?.*)?$/, () => {
+    return HttpResponse.json({
+      diff_id: 'DIFF-2026-001',
+      before_snapshot_id: 'snap-baseline-v1',
+      after_snapshot_id: 'snap-current',
+      timestamp: '2026-03-02T10:00:00Z',
+      added_nodes: [
+        { id: 'person-0040', label: 'Ramesh Hegde', entity_type: 'Person' },
+      ],
+      removed_nodes: [],
+      added_edges: [
+        { id: 'e-bridge-1', source_id: 'person-0040', target_id: 'case-0141', edge_type: 'ACCUSED_IN' },
+      ],
+      removed_edges: [],
+    })
+  }),
 ]
 
 

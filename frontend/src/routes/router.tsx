@@ -42,7 +42,21 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/worklist" replace />,
+        element: <Navigate to="/intelligence" replace />,
+      },
+      {
+        path: 'intelligence',
+        element: (
+          <RoleGuard allowedRoles={allRoles}>
+            <Suspense fallback={<LoadingSkeleton layout="table" />}>
+              <Patterns />
+            </Suspense>
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'patterns',
+        element: <Navigate to="/intelligence" replace />,
       },
       {
         path: 'worklist',
@@ -90,16 +104,6 @@ export const router = createBrowserRouter([
           <RoleGuard allowedRoles={allRoles}>
             <Suspense fallback={<LoadingSkeleton layout="table" />}>
               <Entities />
-            </Suspense>
-          </RoleGuard>
-        ),
-      },
-      {
-        path: 'patterns',
-        element: (
-          <RoleGuard allowedRoles={allRoles}>
-            <Suspense fallback={<LoadingSkeleton layout="table" />}>
-              <Patterns />
             </Suspense>
           </RoleGuard>
         ),
@@ -180,7 +184,7 @@ export const router = createBrowserRouter([
   // Fallback Route
   {
     path: '*',
-    element: <Navigate to="/worklist" replace />,
+    element: <Navigate to="/intelligence" replace />,
   },
 ], {
   future: {

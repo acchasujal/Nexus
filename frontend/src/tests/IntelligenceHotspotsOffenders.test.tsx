@@ -40,16 +40,23 @@ describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
   })
 
 
-  it('renders Crime Hotspots tab by default with RED FLAG concentration cards', async () => {
+  it('renders Network Pulse tab by default and switches to Crime Hotspots tab with concentration cards', async () => {
     renderPatterns()
 
-    // Tab buttons
+    // Default tab is Network Pulse
+    expect(screen.getByRole('button', { name: /Network Pulse/i })).toBeInTheDocument()
+
+    // Tab buttons exist
     expect(screen.getByRole('button', { name: /Crime Hotspots/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Repeat Offender Radar/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Combined Cross-District Bridges/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Repeat-Case Entities/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Cross-District Bridges/i })).toBeInTheDocument()
 
     // Compliance banner
     expect(screen.getByText(/Investigative Use Only/i)).toBeInTheDocument()
+
+    // Switch to Crime Hotspots tab
+    const hotspotsTab = screen.getByRole('button', { name: /Crime Hotspots/i })
+    fireEvent.click(hotspotsTab)
 
     // Wait for Hotspot Card
     await waitFor(() => {
@@ -57,7 +64,7 @@ describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
     }, { timeout: 10000 })
 
     // Exact user-specified elements
-    expect(screen.getAllByText(/RED FLAG — HIGH CRIME CONCENTRATION/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/High Concentration — Review Required/i).length).toBeGreaterThan(0)
     expect(screen.getByText(/3.4× baseline/i)).toBeInTheDocument()
     expect(screen.getByText('87')).toBeInTheDocument()
     expect(screen.getByText('Narcotics')).toBeInTheDocument()
@@ -68,6 +75,10 @@ describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
 
   it('opens district drilldown modal when clicking drill into cases', async () => {
     renderPatterns()
+
+    // Switch to Crime Hotspots tab
+    const hotspotsTab = screen.getByRole('button', { name: /Crime Hotspots/i })
+    fireEvent.click(hotspotsTab)
 
     await waitFor(() => {
       expect(screen.getByText('Mumbai Central')).toBeInTheDocument()
@@ -101,10 +112,10 @@ describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
     })
   })
 
-  it('renders Repeat Offender Radar tab with resolved aliases and non-guilt compliance status', async () => {
+  it('renders Repeat-Case Entities tab with resolved aliases and non-guilt compliance status', async () => {
     renderPatterns()
 
-    const radarTab = screen.getByRole('button', { name: /Repeat Offender Radar/i })
+    const radarTab = screen.getByRole('button', { name: /Repeat-Case Entities/i })
     fireEvent.click(radarTab)
 
     // Wait for Radar Card
@@ -113,7 +124,7 @@ describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
     })
 
     // Exact user-specified elements
-    expect(screen.getAllByText(/REPEAT-OFFENDER SIGNAL/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Repeat-Case Signal/i).length).toBeGreaterThan(0)
     expect(screen.getByText('Ramesh H.')).toBeInTheDocument()
     expect(screen.getByText('R. Hegde')).toBeInTheDocument()
     expect(screen.getByText(/3 districts \(Mumbai Central, Pune City, Thane\)/i)).toBeInTheDocument()
@@ -125,10 +136,10 @@ describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
     expect(screen.getByText(/Status: Investigative lead — not a finding of guilt\./i)).toBeInTheDocument()
   })
 
-  it('renders Combined Cross-District Bridges tab with bridge detection alerts', async () => {
+  it('renders Cross-District Bridges tab with bridge detection alerts', async () => {
     renderPatterns()
 
-    const bridgeTab = screen.getByRole('button', { name: /Combined Cross-District Bridges/i })
+    const bridgeTab = screen.getByRole('button', { name: /Cross-District Bridges/i })
     fireEvent.click(bridgeTab)
 
     await waitFor(() => {
@@ -141,10 +152,10 @@ describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
     expect(screen.getByText(/Bridges Mumbai Central ↔ Pune City, Thane/i)).toBeInTheDocument()
   })
 
-  it('switches to Network Modules & Brokers tab and renders communities', async () => {
+  it('switches to Network Communities & Connectors tab and renders communities', async () => {
     renderPatterns()
 
-    const commTab = screen.getByRole('button', { name: /Network Modules & Brokers/i })
+    const commTab = screen.getByRole('button', { name: /Network Communities & Connectors/i })
     fireEvent.click(commTab)
 
     expect(await screen.findByText(/Detected Network Modules \/ Communities/i, {}, { timeout: 10000 })).toBeInTheDocument()

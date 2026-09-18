@@ -49,6 +49,7 @@ export function useSnapshotDiff(enabled: boolean) {
     queryFn: () => apiClient.getSnapshotDiff(),
     enabled,
     retry: false,
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -58,6 +59,7 @@ export function useEntityNetwork(entityId: string | null, depth: number = 2, ena
     queryFn: () => apiClient.getEntityNetwork(entityId!, depth),
     enabled: Boolean(enabled && entityId && entityId.trim() !== ''),
     retry: false,
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -67,6 +69,7 @@ export function useCaseNetworkData(caseId: string | null, depth: number = 2, ena
     queryFn: () => apiClient.getCaseNetwork(caseId!, depth),
     enabled: Boolean(enabled && caseId && caseId.trim() !== ''),
     retry: false,
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -92,6 +95,7 @@ export function useLeads() {
   return useQuery({
     queryKey: ['nexus', 'leads'],
     queryFn: () => apiClient.getLeads(),
+    staleTime: 30 * 1000,
   })
 }
 
@@ -148,6 +152,7 @@ export function useIntelligenceHotspots() {
   return useQuery({
     queryKey: ['nexus', 'intelligence', 'hotspots'],
     queryFn: () => apiClient.getIntelligenceHotspots(),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -156,6 +161,7 @@ export function useHotspotDrilldown(district: string | null, enabled: boolean = 
     queryKey: ['nexus', 'intelligence', 'hotspots', district],
     queryFn: () => apiClient.getHotspotDrilldown(district!),
     enabled: Boolean(enabled && district && district.trim() !== ''),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -163,6 +169,7 @@ export function useRepeatOffenderRadar(minCases: number = 2, topK: number = 50) 
   return useQuery({
     queryKey: ['nexus', 'intelligence', 'offenders', minCases, topK],
     queryFn: () => apiClient.getRepeatOffenderRadar(minCases, topK),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -170,6 +177,7 @@ export function useCombinedBridgeSignals() {
   return useQuery({
     queryKey: ['nexus', 'intelligence', 'combined'],
     queryFn: () => apiClient.getCombinedBridgeSignals(),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -179,6 +187,7 @@ export function useSnapshots(caseScope?: string) {
   return useQuery({
     queryKey: ['nexus', 'snapshots', caseScope],
     queryFn: () => apiClient.getSnapshots(caseScope),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -187,6 +196,7 @@ export function useProactiveDiff(before = 'snap-baseline-v1', after = 'snap-curr
     queryKey: ['nexus', 'proactive-diff', before, after],
     queryFn: () => apiClient.getProactiveDiff(before, after),
     enabled,
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -194,6 +204,7 @@ export function useNetworkPulses(priority?: string, caseId?: string) {
   return useQuery({
     queryKey: ['nexus', 'pulses', priority, caseId],
     queryFn: () => apiClient.getPulses(priority, caseId),
+    staleTime: 2 * 60 * 1000,
   })
 }
 
@@ -234,6 +245,7 @@ export function useIdentityDrifts(personId?: string, driftType?: string, status?
   return useQuery({
     queryKey: ['nexus', 'intelligence', 'identity-drift', personId, driftType, status],
     queryFn: () => apiClient.getIdentityDrifts(personId, driftType, status),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -252,6 +264,7 @@ export function useIdentityDriftSummary() {
   return useQuery({
     queryKey: ['nexus', 'intelligence', 'identity-drift', 'summary'],
     queryFn: () => apiClient.getIdentityDriftSummary(),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -261,6 +274,7 @@ export function useNetworkAdaptations(adaptationType?: string, status?: string) 
   return useQuery({
     queryKey: ['nexus', 'intelligence', 'network-adaptation', adaptationType, status],
     queryFn: () => apiClient.getNetworkAdaptations(adaptationType, status),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -279,6 +293,7 @@ export function useNetworkAdaptationSummary() {
   return useQuery({
     queryKey: ['nexus', 'intelligence', 'network-adaptation', 'summary'],
     queryFn: () => apiClient.getNetworkAdaptationSummary(),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -288,6 +303,7 @@ export function useDigitalShadows(personId?: string, platform?: string, lifecycl
   return useQuery({
     queryKey: ['nexus', 'intelligence', 'digital-shadow', personId, platform, lifecycleState],
     queryFn: () => apiClient.getDigitalShadows(personId, platform, lifecycleState),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -306,6 +322,7 @@ export function useDigitalShadowSummary() {
   return useQuery({
     queryKey: ['nexus', 'intelligence', 'digital-shadow', 'summary'],
     queryFn: () => apiClient.getDigitalShadowSummary(),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -316,6 +333,7 @@ export function useCaseDNA(caseId?: string, topK?: number) {
     queryKey: ['nexus', 'intelligence', 'case-dna', caseId, topK],
     queryFn: () => (caseId ? apiClient.getCaseDNA(caseId, topK) : Promise.resolve(null)),
     enabled: Boolean(caseId),
+    staleTime: 5 * 60 * 1000,
   })
 }
 

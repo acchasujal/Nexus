@@ -79,27 +79,28 @@ describe('Responsive Workspace & Viewport Adaptation', () => {
 
     renderWithProviders(<Patterns />, '/patterns')
 
-    // Expect Intelligence Hub banner & tabs
-    expect(screen.getByText(/Criminal Network Intelligence Hub/i)).toBeInTheDocument()
+    // Expect Intelligence Center banner & tabs
+    expect(screen.getByText(/Intelligence Center/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Network Pulse/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Crime Hotspots/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Repeat Offender Radar/i })).toBeInTheDocument()
 
-    // Wait for Hotspot cards to render
+    // Switch to Crime Hotspots tab
+    const hotspotsTab = screen.getByRole('button', { name: /Crime Hotspots/i })
+    fireEvent.click(hotspotsTab)
+
+    // Wait for Hotspot cards to render with mock data
     await waitFor(() => {
       expect(screen.getByText('Mumbai Central')).toBeInTheDocument()
-    })
+    }, { timeout: 5000 })
 
-    // Drilldown button clickable
-    const drillBtn = screen.getAllByText(/Drill into cases/i)[0]
-    expect(drillBtn).toBeInTheDocument()
-    fireEvent.click(drillBtn)
+    // Verify hotspot card content renders correctly (responsive layout check)
+    expect(screen.getAllByText(/High Concentration — Review Required/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/3.4× baseline/i)).toBeInTheDocument()
 
-    // Modal opens with responsive tabs
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
-      expect(screen.getByText(/RED FLAG HOTSPOT/i)).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /Underlying Cases/i })).toBeInTheDocument()
-    })
+    // Drilldown button is present and accessible — modal interaction tested in IntelligenceHotspotsOffenders.test.tsx
+    const drillButtons = screen.getAllByRole('button', { name: /Drill into cases/i })
+    expect(drillButtons.length).toBeGreaterThan(0)
+    expect(drillButtons[0]).toBeInTheDocument()
   })
 
   it('renders Entity Fusion Workbench with responsive candidate tabs and decision bar', async () => {
