@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/apiClient'
+import type { NodeContextResponse } from '@shared/contracts/api'
 
 export interface NetworkNode {
   id: string
@@ -10,6 +11,7 @@ export interface NetworkNode {
     [key: string]: unknown
   }
   properties?: Record<string, unknown>
+  context?: NodeContextResponse
 }
 
 export interface NetworkEdge {
@@ -31,13 +33,15 @@ export interface NetworkEdge {
 export interface NetworkResponse {
   nodes: NetworkNode[]
   edges: NetworkEdge[]
+  case_id?: string
+  depth?: number
 }
 
-export function useCaseNetwork(caseId?: string) {
+export function useCaseNetwork(caseId?: string, depth: number = 1) {
   return useQuery<NetworkResponse>({
-    queryKey: ['case-network', caseId],
+    queryKey: ['case-network', caseId, depth],
     queryFn: async () => {
-      const res = await apiFetch<Record<string, unknown>>(`/api/v1/network/cases/${caseId}`)
+      const res = await apiFetch<Record<string, unknown>>(`/api/v1/network/cases/${caseId}?depth=${depth}`)
       const rawNodes = (res.nodes as Record<string, unknown>[] | undefined) ?? []
       const rawEdges = (res.edges as Record<string, unknown>[] | undefined) ?? []
 
@@ -61,6 +65,7 @@ export function useCaseNetwork(caseId?: string) {
           id: String(n.id),
           type: nodeType,
           label: nodeLabel,
+          context: n.context as NodeContextResponse | undefined,
           data: {
             label: nodeLabel,
             ...(typeof n.data === 'object' && n.data ? (n.data as Record<string, unknown>) : {}),
@@ -135,7 +140,12 @@ export function useCaseNetwork(caseId?: string) {
         }
       })
 
-      return { nodes, edges }
+      return {
+        nodes,
+        edges,
+        case_id: res.case_id ? String(res.case_id) : undefined,
+        depth: typeof res.depth === 'number' ? res.depth : depth,
+      }
     },
     enabled: Boolean(caseId),
     staleTime: 0,

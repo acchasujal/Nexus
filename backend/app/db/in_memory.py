@@ -26,6 +26,8 @@ from shared.contracts.api import (
     InvestigationDetailResponse,
     InvestigationSummaryResponse,
     NetworkGraphResponse,
+    NodeContextResponse,
+    NodePresenceType,
 )
 
 logger = logging.getLogger(__name__)
@@ -580,63 +582,239 @@ class InMemoryBackendRepository:
 
     # ── Subgraph & Network Visualizer ─────────────────────────────────────────
 
-    def get_case_network(self, case_id: str, depth: int = 2) -> NetworkGraphResponse:
-        """Extract a multi-hop neighborhood graph centered around a case or entity."""
+    # ── Subgraph & Network Visualizer ─────────────────────────────────────────
+
+    def get_case_network(
+        self,
+        case_id: str,
+        depth: int = 1,
+        principal: Any | None = None,
+    ) -> NetworkGraphResponse:
+        """Extract an investigator-controlled neighborhood graph centered around a case.
+        
+        Semantics:
+          depth=0: Case Only (strict case scope, 0-hop)
+          depth=1: Direct relationships (direct accused, direct evidence, direct case links)
+          depth=2: Expanded intelligence (2-hop syndicate, CDR contacts, bridge brokers)
+          depth=3: Extended intelligence (3-hop network)
+        """
+        # 1. Resolve case_id to canonical node ID
+        root_id: str | None = None
+        if case_id in self.nodes:
+            root_id = case_id
+        else:
+            for nid, n in self.nodes.items():
+                if n.get("properties", {}).get("fir_number") == case_id:
+                    root_id = str(nid)
+                    break
+
+        if not root_id or root_id not in self.nodes:
+            return NetworkGraphResponse(
+                nodes=[],
+                edges=[],
+                total_nodes=0,
+                total_edges=0,
+                case_id=case_id,
+                depth=depth,
+            )
+
+        root_node = self.nodes[root_id]
+        root_props = root_node.get("properties", {})
+        root_fir = str(root_props.get("fir_number") or root_id)
+
+        # 2. BFS traversal tracking distance and parent/edge for shortest path reconstruction
+        visited_nodes: set[str] = {root_id}
+        distance: dict[str, int] = {root_id: 0}
+        # predecessor[nid] = (parent_id, edge_dict)
+        predecessor: dict[str, tuple[str, dict[str, Any]]] = {}
+
+        if depth > 0:
+            current_level = [root_id]
+            for current_depth in range(1, depth + 1):
+                next_level: list[str] = []
+                for nid in current_level:
+                    for edge in self.incident_edges.get(nid, []):
+                        src = str(edge.get("source_id", ""))
+                        tgt = str(edge.get("target_id", ""))
+                        nbr = tgt if src == nid else src
+                        if not nbr or nbr not in self.nodes:
+                            continue
+                        if nbr not in visited_nodes:
+                            visited_nodes.add(nbr)
+                            distance[nbr] = current_depth
+                            predecessor[nbr] = (nid, edge)
+                            next_level.append(nbr)
+                current_level = next_level
+                if not current_level:
+                    break
+
+        # 3. Build response nodes with deterministic NodeContextResponse
         store = self.to_graph_store()
-        visited_nodes: set[str] = {case_id}
-        frontier: set[str] = {case_id}
-
-        for _ in range(depth):
-            next_frontier: set[str] = set()
-            for nid in frontier:
-                for edge in store.adj.get(nid, []):
-                    if edge.target_id not in visited_nodes:
-                        visited_nodes.add(edge.target_id)
-                        next_frontier.add(edge.target_id)
-                for edge in store.radj.get(nid, []):
-                    if edge.source_id not in visited_nodes:
-                        visited_nodes.add(edge.source_id)
-                        next_frontier.add(edge.source_id)
-            frontier = next_frontier
-
-        # Build response nodes and edges
         resp_nodes: list[GraphNodeResponse] = []
+
         for nid in visited_nodes:
             n_data = self.nodes.get(nid)
             if not n_data:
                 continue
             props = n_data.get("properties", {})
+            entity_type = str(n_data.get("entity_type", "Unknown"))
             label = (
                 props.get("full_name")
                 or props.get("fir_number")
                 or props.get("phone_number")
                 or props.get("account_number")
+                or props.get("evidence_number")
                 or props.get("name")
                 or nid
             )
             in_deg = len(store.radj.get(nid, []))
             out_deg = len(store.adj.get(nid, []))
 
+            # Deterministic context calculation
+            if nid == root_id:
+                context = NodeContextResponse(
+                    presence_type=NodePresenceType.DIRECT_CASE,
+                    reason=f"Target investigation case {root_fir}.",
+                    source_ids=[root_fir],
+                    relationship_types=[],
+                    distance_from_case=0,
+                    path=[root_id],
+                    readable_path=root_fir,
+                )
+            else:
+                # Reconstruct path from root_id to nid
+                path_node_ids: list[str] = []
+                path_edges: list[dict[str, Any]] = []
+                curr = nid
+                while curr != root_id and curr in predecessor:
+                    path_node_ids.append(curr)
+                    parent, edge_used = predecessor[curr]
+                    path_edges.append(edge_used)
+                    curr = parent
+                path_node_ids.append(root_id)
+                path_node_ids.reverse()
+                path_edges.reverse()
+
+                dist = distance.get(nid, len(path_node_ids) - 1)
+                incoming_edge = path_edges[-1] if path_edges else {}
+                edge_type = str(incoming_edge.get("edge_type", "CONNECTED_TO"))
+                prov = incoming_edge.get("provenance", {}) or {}
+                source_type = str(prov.get("source_type", ""))
+                source_id = str(prov.get("source_id", ""))
+                extracted_fact = str(prov.get("extracted_fact", ""))
+                edge_props = incoming_edge.get("properties", {}) or {}
+
+                rel_types = [edge_type]
+                src_ids: list[str] = [source_id] if source_id else []
+
+                if dist == 1:
+                    if entity_type in ("Evidence", "EVIDENCE") or edge_type == "HAS_EVIDENCE":
+                        presence_type = NodePresenceType.EVIDENCE
+                        ev_num = str(props.get("evidence_number") or label)
+                        reason = f"Direct evidence item ({ev_num}) seized and indexed under {root_fir}."
+                        if ev_num and ev_num not in src_ids:
+                            src_ids.insert(0, ev_num)
+                        if root_fir not in src_ids:
+                            src_ids.append(root_fir)
+                    elif edge_type in ("ACCUSED_IN", "INVOLVED_IN"):
+                        presence_type = NodePresenceType.DIRECT_CASE
+                        reason = f"Named as accused directly in {root_fir}."
+                        if root_fir not in src_ids:
+                            src_ids.append(root_fir)
+                    elif edge_type == "VICTIM_IN":
+                        presence_type = NodePresenceType.DIRECT_CASE
+                        reason = f"Complainant / victim registered in {root_fir}."
+                        if root_fir not in src_ids:
+                            src_ids.append(root_fir)
+                    else:
+                        presence_type = NodePresenceType.DIRECT_CASE
+                        reason = f"Direct relationship ({edge_type}) attached to {root_fir}."
+                        if root_fir not in src_ids:
+                            src_ids.append(root_fir)
+                else:
+                    # Multi-hop expansion (dist >= 2)
+                    if source_type == "INTEL_REPORT" or source_id.startswith("INTEL") or edge_type in ("CO_ACCUSED", "MEMBER_OF", "AFFILIATED_WITH"):
+                        presence_type = NodePresenceType.INTELLIGENCE_EXPANSION
+                        if extracted_fact:
+                            reason = f"Intelligence expansion via {source_id or 'intel report'}: {extracted_fact}."
+                        else:
+                            reason = f"Reached through intelligence network association ({source_id or 'INTEL'})."
+                    elif source_type == "CDR" or source_id.startswith("CDR") or edge_props.get("channel") in ("VOICE_CALL", "SMS") or edge_type in ("CALLED", "COMMUNICATED_WITH"):
+                        presence_type = NodePresenceType.CDR_CONNECTION
+                        if extracted_fact:
+                            reason = f"Telecommunications link via {source_id or 'CDR'}: {extracted_fact}."
+                        else:
+                            call_count = edge_props.get("call_count", "")
+                            count_text = f" ({call_count} calls)" if call_count else ""
+                            reason = f"Telecommunications contact{count_text} logged in {source_id or 'CDR sweep'}."
+                    elif entity_type in ("Case", "CASE") or edge_type in ("ACCUSED_IN", "INVOLVED_IN", "VICTIM_IN", "HAS_EVIDENCE"):
+                        presence_type = NodePresenceType.CROSS_CASE
+                        other_fir = str(props.get("fir_number") or source_id or nid)
+                        reason = f"Cross-case bridge connection linked to case {other_fir}."
+                        if other_fir not in src_ids:
+                            src_ids.append(other_fir)
+                    elif source_type in ("BANK_TXN", "BANK") or edge_props.get("amount") or edge_type in ("TRANSFERRED_TO", "TRANSACTION"):
+                        presence_type = NodePresenceType.INTELLIGENCE_EXPANSION
+                        amt = edge_props.get("amount")
+                        amt_text = f" (INR {amt})" if amt else ""
+                        reason = f"Financial transaction trail{amt_text} logged under {source_id or 'banking records'}."
+                    else:
+                        presence_type = NodePresenceType.OTHER
+                        reason = extracted_fact or f"Connected entity in expanded graph ({dist} hops from case)."
+
+                # Build readable path
+                path_labels: list[str] = []
+                for p_idx, step_nid in enumerate(path_node_ids):
+                    step_n = self.nodes.get(step_nid, {})
+                    step_props = step_n.get("properties", {})
+                    step_lbl = str(
+                        step_props.get("full_name")
+                        or step_props.get("fir_number")
+                        or step_props.get("phone_number")
+                        or step_props.get("account_number")
+                        or step_props.get("evidence_number")
+                        or step_props.get("name")
+                        or step_nid
+                    )
+                    if p_idx > 0:
+                        step_edge = path_edges[p_idx - 1]
+                        step_doc = str(step_edge.get("provenance", {}).get("source_id") or step_edge.get("edge_type") or "rel")
+                        path_labels.append(f"[{step_doc}]")
+                    path_labels.append(step_lbl)
+                readable_path = " → ".join(path_labels)
+
+                context = NodeContextResponse(
+                    presence_type=presence_type,
+                    reason=reason,
+                    source_ids=src_ids,
+                    relationship_types=rel_types,
+                    distance_from_case=dist,
+                    path=path_node_ids,
+                    readable_path=readable_path,
+                )
+
             resp_nodes.append(
                 GraphNodeResponse(
                     id=nid,
-                    entity_type=n_data.get("entity_type", "Unknown"),
+                    entity_type=entity_type,
                     label=label,
                     properties=props,
                     degree=in_deg + out_deg,
                     confidence=float(props.get("confidence", 1.0)),
+                    context=context,
                 )
             )
 
+        # 4. Build response edges (only between visited nodes)
         resp_edges: list[GraphEdgeResponse] = []
         for e in self.edges:
             src = str(e.get("source_id"))
             tgt = str(e.get("target_id"))
             if src in visited_nodes and tgt in visited_nodes:
-                prov = e.get("provenance") or {}
+                prov = dict(e.get("provenance") or {})
                 if not prov.get("source_id") and e.get("source_record_id"):
                     prov["source_id"] = e["source_record_id"]
-                
+
                 resp_edges.append(
                     GraphEdgeResponse(
                         id=str(e.get("id", f"{src}-{tgt}")),
@@ -654,6 +832,8 @@ class InMemoryBackendRepository:
             edges=resp_edges,
             total_nodes=len(resp_nodes),
             total_edges=len(resp_edges),
+            case_id=root_fir,
+            depth=depth,
         )
 
     # ── Audit Logging ─────────────────────────────────────────────────────────

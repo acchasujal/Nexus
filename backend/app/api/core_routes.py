@@ -215,7 +215,7 @@ def create_core_router() -> APIRouter:
     @router.get("/cases/{case_id}/network", response_model=NetworkGraphResponse)
     def case_network(
         case_id: str,
-        depth: int = Query(2, ge=1, le=4),
+        depth: int = Query(1, ge=0, le=3, description="BFS depth for case network: 0=Case only, 1=Direct relationships, 2=Expanded intelligence, 3=Extended intelligence"),
         principal: Principal = Depends(get_principal),
         service: InvestigationService = Depends(get_case_service),
         request_id: str = Depends(get_request_id),

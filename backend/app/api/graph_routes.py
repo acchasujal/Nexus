@@ -61,7 +61,7 @@ def create_graph_router(repository: GraphRepository) -> APIRouter:
     @router.get("/cases/{case_id}/network", response_model=GraphNetworkResponse)
     def case_network(
         case_id: str,
-        depth: int = Query(2, ge=1, le=4, description="BFS depth for neighborhood"),
+        depth: int = Query(1, ge=0, le=3, description="BFS depth for neighborhood (0=Case only, 1=Direct, 2=Expanded, 3=Extended)"),
     ) -> Any:
         """Get the network graph around a specific case."""
         return graph_svc.get_case_network(case_id, depth=depth)

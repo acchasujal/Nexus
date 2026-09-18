@@ -31,7 +31,10 @@ import {
   Move,
   ExternalLink,
   ShieldCheck,
+  Compass,
+  HelpCircle,
 } from 'lucide-react'
+import type { NodePresenceType } from '@shared/contracts/api'
 
 interface NetworkAnalysisPanelProps {
   caseId: string
@@ -64,12 +67,75 @@ const LAYER_CONFIG: Record<string, { label: string; ring: string }> = {
   law: { label: 'Law', ring: 'border-indigo-400 text-indigo-900' },
 }
 
+const PRESENCE_CONFIG: Record<string, { label: string; badge: string; dot: string; description: string }> = {
+  DIRECT_CASE: {
+    label: 'Direct Case Entity',
+    badge: 'bg-blue-100 text-blue-800 border-blue-200',
+    dot: 'bg-blue-600',
+    description: 'Direct FIR accused, complainant, or case-registered record',
+  },
+  INTELLIGENCE_EXPANSION: {
+    label: 'Intelligence Expansion',
+    badge: 'bg-purple-100 text-purple-800 border-purple-200',
+    dot: 'bg-purple-600 border border-dashed border-purple-300',
+    description: 'Multi-hop syndicate intelligence corroboration',
+  },
+  CDR_CONNECTION: {
+    label: 'CDR / Telecom Bridge',
+    badge: 'bg-amber-100 text-amber-800 border-amber-200',
+    dot: 'bg-amber-600',
+    description: 'Telecommunications Call Detail Record connection',
+  },
+  CROSS_CASE: {
+    label: 'Cross-Case Link',
+    badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    dot: 'bg-emerald-600',
+    description: 'Entity linking across distinct FIR jurisdictions',
+  },
+  EVIDENCE: {
+    label: 'Evidentiary Seizure',
+    badge: 'bg-teal-100 text-teal-800 border-teal-200',
+    dot: 'bg-teal-600',
+    description: 'Seized physical or electronic evidence item',
+  },
+  OTHER: {
+    label: 'Context Node',
+    badge: 'bg-neutral-100 text-neutral-800 border-neutral-200',
+    dot: 'bg-neutral-600',
+    description: 'Graph context entity',
+  },
+}
+
+const SCOPE_DEFINITIONS: Record<number, { label: string; short: string; description: string }> = {
+  0: {
+    label: 'Case Only (Strict)',
+    short: '0 Hops',
+    description: 'Isolated Case Root node without entity expansion',
+  },
+  1: {
+    label: 'Direct Relationships (1 Hop)',
+    short: '1 Hop',
+    description: 'Directly accused individuals, complainants, and immediate evidence',
+  },
+  2: {
+    label: 'Expanded Intelligence (2 Hops)',
+    short: '2 Hops',
+    description: 'Syndicate co-conspirators, financial routes, and CDR bridges',
+  },
+  3: {
+    label: 'Extended Intelligence (3 Hops)',
+    short: '3 Hops',
+    description: 'Wide multi-tier criminal syndicate network and secondary accounts',
+  },
+}
+
 export function NetworkAnalysisPanel({
   caseId,
   selectedEntityId,
   onEntitySelect,
 }: NetworkAnalysisPanelProps) {
-  const { data: graphData, isLoading, error, refetch } = useCaseNetwork(caseId)
+  const [depth, setDepth] = useState<number>(1)
+  const { data: graphData, isLoading, error, refetch } = useCaseNetwork(caseId, depth)
   const [viewMode, setViewMode] = useState<ViewMode>('graph')
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
   const [evidenceDrawerEdgeId, setEvidenceDrawerEdgeId] = useState<string | null>(null)
@@ -132,6 +198,7 @@ export function NetworkAnalysisPanel({
       properties: n.properties,
       timestamp: (n.properties?.timestamp || n.properties?.occurred_at || n.properties?.created_at || n.properties?.date || (n.data as Record<string, unknown>)?.occurred_at) as string,
       badges: (n.properties?.badges as string[]) || [],
+      context: n.context,
     }))
   }, [visibleNodes])
 
@@ -258,18 +325,91 @@ export function NetworkAnalysisPanel({
         </div>
       )}
 
+      {/* Network Scope Control Bar & Header */}
+      <div className="bg-white border border-neutral-200 rounded-radius-md p-3 shadow-2xs space-y-2.5 print:hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Left: Case Scope & Breadcrumb */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-neutral-100 border border-neutral-200 text-xs font-mono font-bold text-neutral-800">
+              <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />
+              CASE: {graphData?.case_id || caseId}
+            </span>
+            <div className="h-4 w-px bg-neutral-200" />
+            <span className="text-xs font-semibold text-neutral-700">
+              Scope: <span className="text-blue-700 font-bold">{SCOPE_DEFINITIONS[depth]?.label ?? `${depth} Hops`}</span>
+            </span>
+            <span className="text-caption text-neutral-500">
+              ({visibleNodes.length} entities • {d3Edges.length} relationships)
+            </span>
+            <Link
+              to={`/network?case_id=${encodeURIComponent(caseId)}&snapshot=before`}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md hover:bg-blue-100 transition-colors shadow-2xs ml-1"
+              title="View this case in Global Multi-Case Network Explorer"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              <span>Global Explorer</span>
+            </Link>
+          </div>
+
+          {/* Right: Depth Control Segmented Buttons */}
+          <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-radius-md border border-neutral-200" role="group" aria-label="Investigation network depth">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 px-2 flex items-center gap-1">
+              <Compass className="h-3.5 w-3.5 text-blue-600" /> Network Scope
+            </span>
+            {[0, 1, 2, 3].map((lvl) => (
+              <button
+                key={lvl}
+                onClick={() => setDepth(lvl)}
+                aria-pressed={depth === lvl}
+                className={`px-3 py-1 rounded text-xs font-bold transition-all ${
+                  depth === lvl
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-neutral-600 hover:bg-neutral-200/70 hover:text-neutral-900'
+                }`}
+                title={SCOPE_DEFINITIONS[lvl]?.description}
+              >
+                {lvl === 0 ? 'Case Only' : `${lvl} ${lvl === 1 ? 'Hop' : 'Hops'}`}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Provenance Indicators Legend */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-neutral-100 pt-2 text-[11px] text-neutral-600">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Context:</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-blue-600 inline-block" />
+              <span className="font-medium text-neutral-700">Direct Case</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-purple-600 inline-block" />
+              <span className="font-medium text-neutral-700">Expanded Intel</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-amber-600 inline-block" />
+              <span className="font-medium text-neutral-700">CDR Link</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 inline-block" />
+              <span className="font-medium text-neutral-700">Cross-Case</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-teal-600 inline-block" />
+              <span className="font-medium text-neutral-700">Evidence</span>
+            </span>
+          </div>
+
+          <div className="text-[11px] text-neutral-500 italic">
+            {SCOPE_DEFINITIONS[depth]?.description}
+          </div>
+        </div>
+      </div>
+
       {/* View Mode Toggle & Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div className="flex items-center gap-3">
           <p className="text-small text-neutral-600">{graphDescription}</p>
-          <Link
-            to={`/network?case_id=${encodeURIComponent(caseId)}&snapshot=before`}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md hover:bg-blue-100 transition-colors shadow-2xs"
-            title="View this case in Global Multi-Case Network Explorer"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            <span>Open in Global Explorer</span>
-          </Link>
         </div>
 
         <div
@@ -569,6 +709,80 @@ export function NetworkAnalysisPanel({
               </div>
 
               <div className="mt-4 space-y-4">
+                {/* Deterministic Entity Provenance & Why It Is Shown */}
+                <div className="p-3 bg-white border border-blue-200/90 rounded-radius-md shadow-2xs space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-caption font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <HelpCircle className="h-4 w-4 text-blue-600" aria-hidden="true" /> Why is this entity shown?
+                    </h4>
+                    {inspectTarget.context?.presence_type && (
+                      <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide border ${
+                        PRESENCE_CONFIG[inspectTarget.context.presence_type]?.badge ?? 'bg-neutral-100 text-neutral-800 border-neutral-200'
+                      }`}>
+                        {PRESENCE_CONFIG[inspectTarget.context.presence_type]?.label ?? inspectTarget.context.presence_type.replaceAll('_', ' ')}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Reason Text */}
+                  <div className="p-2.5 bg-blue-50/70 border border-blue-100 rounded text-neutral-800 text-small font-medium leading-relaxed">
+                    {inspectTarget.context?.reason || (
+                      inspectTarget.type === 'case'
+                        ? 'Root case entity representing the primary FIR investigation scope.'
+                        : 'Direct relationship node associated with this case.'
+                    )}
+                  </div>
+
+                  {/* Metadata: Distance, Sources, Path */}
+                  <div className="space-y-1.5 text-caption text-neutral-600 pt-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-500">Distance from Case:</span>
+                      <span className="font-bold text-neutral-900">
+                        {inspectTarget.context?.distance_from_case !== undefined
+                          ? `${inspectTarget.context.distance_from_case} ${inspectTarget.context.distance_from_case === 1 ? 'hop' : 'hops'}`
+                          : inspectTarget.type === 'case'
+                          ? '0 hops (Root)'
+                          : 'Direct'}
+                      </span>
+                    </div>
+
+                    {inspectTarget.context?.source_ids && inspectTarget.context.source_ids.length > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-neutral-500">Source Records:</span>
+                        <div className="flex gap-1 flex-wrap justify-end">
+                          {inspectTarget.context.source_ids.map((srcId) => (
+                            <code key={srcId} className="px-1.5 py-0.5 bg-neutral-100 border border-neutral-200 rounded font-mono text-[9px] text-neutral-800 font-bold">
+                              {srcId}
+                            </code>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {inspectTarget.context?.relationship_types && inspectTarget.context.relationship_types.length > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-neutral-500">Relationships:</span>
+                        <div className="flex gap-1 flex-wrap justify-end">
+                          {inspectTarget.context.relationship_types.map((relType) => (
+                            <span key={relType} className="px-1.5 py-0.5 bg-neutral-100 rounded text-[9px] text-neutral-700 font-semibold">
+                              {relType}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {inspectTarget.context?.readable_path && (
+                      <div className="border-t border-neutral-100 pt-1.5 mt-1">
+                        <span className="text-neutral-500 text-[10px] block mb-1">Authoritative Graph Path:</span>
+                        <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded font-mono text-[10px] text-neutral-800 break-all leading-relaxed">
+                          {inspectTarget.context.readable_path}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div>
                   <h4 className="text-caption font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
                     <Layers className="h-4 w-4" aria-hidden="true" /> Attributes

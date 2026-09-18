@@ -76,6 +76,25 @@ class EvidenceItemResponse(BaseModel):
 
 # ── Graph & Network ───────────────────────────────────────────────────────────
 
+class NodePresenceType(str, Enum):
+    DIRECT_CASE = "DIRECT_CASE"
+    INTELLIGENCE_EXPANSION = "INTELLIGENCE_EXPANSION"
+    CDR_CONNECTION = "CDR_CONNECTION"
+    CROSS_CASE = "CROSS_CASE"
+    EVIDENCE = "EVIDENCE"
+    OTHER = "OTHER"
+
+
+class NodeContextResponse(BaseModel):
+    presence_type: NodePresenceType
+    reason: str
+    source_ids: list[str] = Field(default_factory=list)
+    relationship_types: list[str] = Field(default_factory=list)
+    distance_from_case: int = 0
+    path: list[str] = Field(default_factory=list)
+    readable_path: str = ""
+
+
 class GraphNodeResponse(BaseModel):
     id: str
     entity_type: str
@@ -83,6 +102,7 @@ class GraphNodeResponse(BaseModel):
     properties: dict[str, Any] = Field(default_factory=dict)
     degree: int = 0
     confidence: float = 1.0
+    context: NodeContextResponse | None = None
 
 
 class GraphEdgeResponse(BaseModel):
@@ -100,6 +120,8 @@ class NetworkGraphResponse(BaseModel):
     edges: list[GraphEdgeResponse]
     total_nodes: int
     total_edges: int
+    case_id: str | None = None
+    depth: int | None = None
 
 
 # ── Entity Resolution ─────────────────────────────────────────────────────────

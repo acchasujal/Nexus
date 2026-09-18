@@ -69,9 +69,34 @@ class InvestigationService:
         self,
         case_id: str,
         principal: Principal,
-        depth: int = 2,
+        depth: int = 1,
         request_id: str | None = None,
     ) -> NetworkGraphResponse:
+        from fastapi import HTTPException
+        from backend.app.auth.policy import DEMO_OFFICER_CASE_ASSIGNMENTS, DEMO_SHO_DISTRICTS, DEMO_SHO_STATIONS
+        from backend.app.config import get_settings
+        from shared.contracts.api import UserRole
+
+        settings = get_settings()
+        if principal.is_anonymous and settings.is_production and settings.auth_mode != "demo":
+            raise HTTPException(status_code=401, detail="Authentication required to explore case network.")
+
+        officer = principal.get_officer_identity()
+        if not principal.is_anonymous and principal.role in (UserRole.INVESTIGATOR, UserRole.IO):
+            assigned_cases = DEMO_OFFICER_CASE_ASSIGNMENTS.get(officer.officer_id, set())
+            cid = case_id
+            nodes = getattr(self._repo, "nodes", {})
+            if cid not in nodes:
+                for nid, n in nodes.items():
+                    if n.get("properties", {}).get("fir_number") == case_id:
+                        cid = str(nid)
+                        break
+            if cid not in assigned_cases and case_id not in assigned_cases:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Officer {officer.officer_id} is not authorized to access case {case_id} network."
+                )
+
         self._audit.record(
             AuditEventType.NETWORK_EXPLORED,
             actor_id=principal.user_id,
@@ -79,7 +104,7 @@ class InvestigationService:
             request_id=request_id,
             details={"depth": depth},
         )
-        return self._repo.get_case_network(case_id, depth=depth)
+        return self._repo.get_case_network(case_id, depth=depth, principal=principal)
 
     # ── Backward-compatibility aliases ───────────────────────────────────────
     def list_worklist(self, principal: Principal, request_id: str | None = None) -> list[Any]:

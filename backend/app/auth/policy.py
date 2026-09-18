@@ -49,6 +49,8 @@ DEMO_OFFICER_CASE_ASSIGNMENTS: dict[str, set[str]] = {
         "case-0001",
         "case-0009",
         "case-0010",
+        "case-0016",
+        "FIR-2026-495",
         "CASE-141",
         "CASE-207",
         "CASE-305",
@@ -56,6 +58,7 @@ DEMO_OFFICER_CASE_ASSIGNMENTS: dict[str, set[str]] = {
         "CASE-501",
         "CASE-502",
     },
+    "OFFICER-UNASSIGNED": set(),
 }
 
 # Stations supervised by SHO (Station House Officer) in demo mode

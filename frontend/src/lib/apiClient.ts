@@ -164,7 +164,7 @@ export const apiClient = {
   },
 
   // Network Explorer
-  getCaseNetwork: (caseId: string, depth = 2) => {
+  getCaseNetwork: (caseId: string, depth = 1) => {
     return apiFetch<NetworkGraphResponse>(`/api/v1/network/cases/${encodeURIComponent(caseId)}?depth=${depth}`)
   },
   getEntityProfile: (entityId: string) => {

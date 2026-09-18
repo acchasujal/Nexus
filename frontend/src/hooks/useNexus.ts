@@ -63,7 +63,7 @@ export function useEntityNetwork(entityId: string | null, depth: number = 2, ena
   })
 }
 
-export function useCaseNetworkData(caseId: string | null, depth: number = 2, enabled: boolean = true) {
+export function useCaseNetworkData(caseId: string | null, depth: number = 1, enabled: boolean = true) {
   return useQuery({
     queryKey: ['cases', 'network', caseId, depth],
     queryFn: () => apiClient.getCaseNetwork(caseId!, depth),

@@ -180,3 +180,29 @@ This document is the **single source of truth** for material architectural, secu
 - **Alternatives Considered:**
   - *Full automated identity merging from social handles:* Severe risk of false citizen implication.
 - **Consequences:** Preserves civil liberties, complies with DPDP Act 2023, and delivers verifiable digital corroboration.
+
+---
+
+## DEC-013 — Explicit Investigation Graph Depth Control & Deterministic Entity Provenance
+- **Date:** 2026-09-18
+- **Status:** Accepted & Implemented
+- **Decision:**
+  1. Default the Case Network endpoint (`/api/v1/network/cases/{case_id}`) and frontend Explorer to `depth=1` (direct case entities, accused, and direct evidence).
+  2. Provide explicit investigator-controlled graph expansion via safe query parameter `depth: int = Query(1, ge=0, le=3)`:
+     - `depth=0`: Root case entity only (strict isolate).
+     - `depth=1`: Direct case entities (accused, complainants, direct evidence).
+     - `depth=2`: Expanded multi-hop intelligence (syndicate operatives, financial conduits, CDR bridges).
+     - `depth=3`: Extended intelligence network (secondary accounts, multi-tier criminal cells).
+  3. Enrich all node responses with deterministic `NodeContextResponse` containing:
+     - `presence_type` (`DIRECT_CASE`, `INTELLIGENCE_EXPANSION`, `CDR_CONNECTION`, `CROSS_CASE`, `EVIDENCE`, `OTHER`).
+     - `reason`: Grounded natural language fact derived from edge evidentiary provenance.
+     - `source_ids`: Underlying statutory records (FIRs, CDRs, bank statements, intelligence notes).
+     - `relationship_types`: Direct or path relationship types.
+     - `distance_from_case`: Exact topological hop distance from case root.
+     - `path` & `readable_path`: Authoritative traversal breadcrumbs.
+  4. Never generate or hallucinate context reasons via LLM; all reasons must be deterministically constructed from verifiable graph edge provenance.
+- **Reason:** Defaulting to multi-hop depth=2 caused cases (e.g. `FIR-2026-495`) to show wider syndicate entities (e.g. `Pradeep Iyer`, `Ramesh Hegde`) without visual differentiation, risking confusion between direct accused persons and multi-hop intelligence entities.
+- **Alternatives Considered:**
+  - *Removing multi-hop capability:* Rejected; multi-hop syndicate detection is essential for dismantling criminal networks.
+  - *LLM-generated context explanations:* Rejected; violates deterministic evidence grounding and introduces hallucination risk.
+- **Consequences:** Investigators have full control over network scope; direct accused entities and multi-hop intelligence are clearly and visually distinguished; all presence is explainable with verifiable Section 63 BSA evidence citations.

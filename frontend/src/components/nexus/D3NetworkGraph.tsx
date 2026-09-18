@@ -19,8 +19,9 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import * as d3 from 'd3'
 import {
   ZoomIn, ZoomOut, Maximize2, RefreshCw,
-  Sliders, Play, Pause, RotateCcw, X, Link as LinkIcon, Layers, FileText,
+  Sliders, Play, Pause, RotateCcw, X, Link as LinkIcon, Layers, FileText, Compass,
 } from 'lucide-react'
+import type { NodeContextResponse } from '@shared/contracts/api'
 
 export interface D3GraphNode extends d3.SimulationNodeDatum {
   id: string
@@ -31,6 +32,7 @@ export interface D3GraphNode extends d3.SimulationNodeDatum {
   case_ids?: string[]
   badges?: string[]
   properties?: Record<string, unknown>
+  context?: NodeContextResponse | null
   isDelta?: boolean
   timestamp?: string
   start?: string
@@ -118,6 +120,16 @@ const ENTITY_SYMBOLS: Record<string, d3.SymbolType> = {
   Dependency: d3.symbolWye,
   Vehicle: d3.symbolDiamond,
   vehicle: d3.symbolDiamond,
+}
+
+// Presence ring color and dash styling for investigator-controlled depth exploration
+const PRESENCE_RING_CONFIG: Record<string, { stroke: string; dash?: string }> = {
+  DIRECT_CASE: { stroke: '#2563eb' }, // Royal Blue (Direct FIR accused / evidence)
+  INTELLIGENCE_EXPANSION: { stroke: '#8b5cf6', dash: '3,3' }, // Violet dashed (Expanded intelligence / syndicate)
+  CDR_CONNECTION: { stroke: '#f59e0b' }, // Amber (CDR call bridge / telecom)
+  CROSS_CASE: { stroke: '#10b981' }, // Emerald (Cross-case syndicate nexus)
+  EVIDENCE: { stroke: '#0d9488' }, // Teal (Physical / Digital Evidence seizure)
+  OTHER: { stroke: '#64748b' }, // Slate
 }
 
 function getNodeSymbolPath(type: string, area: number): string {
@@ -534,13 +546,28 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
           if (highlightDelta && d.isDelta) return '#10b981'
           const communityBadge = (d.badges || []).find((b) => b.startsWith('COMMUNITY-'))
           if (communityBadge && COMMUNITY_STROKES[communityBadge]) return COMMUNITY_STROKES[communityBadge]
+          if (d.context?.presence_type && PRESENCE_RING_CONFIG[d.context.presence_type]) {
+            return PRESENCE_RING_CONFIG[d.context.presence_type].stroke
+          }
           if (neighborhood?.has(d.id)) {
             const rawType = String(d.entity_type || d.type || 'Person')
             return (ENTITY_CONFIG[rawType] ?? ENTITY_CONFIG.Person).stroke
           }
           return 'none'
         })
-        .attr('stroke-width', (d) => (activeNodeId === d.id || (highlightDelta && d.isDelta) ? 4.5 : neighborhood?.has(d.id) ? 3.0 : 2.0))
+        .attr('stroke-dasharray', (d) => {
+          if (highlightDelta && d.isDelta) return '4,3'
+          if (d.context?.presence_type && PRESENCE_RING_CONFIG[d.context.presence_type]?.dash) {
+            return PRESENCE_RING_CONFIG[d.context.presence_type].dash!
+          }
+          return null
+        })
+        .attr('stroke-width', (d) => {
+          if (activeNodeId === d.id || (highlightDelta && d.isDelta)) return 4.5
+          if (neighborhood?.has(d.id)) return 3.0
+          if (d.context?.presence_type) return 2.5
+          return 2.0
+        })
         .attr('opacity', (d) => {
           if (isRegionActive) return regionNodeSet.has(d.id) ? 1.0 : 0.2
           if (!activeNodeId) return 1.0
@@ -965,13 +992,24 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
         if (highlightDelta && d.isDelta) return '#10b981'
         const communityBadge = (d.badges || []).find((b) => b.startsWith('COMMUNITY-'))
         if (communityBadge && COMMUNITY_STROKES[communityBadge]) return COMMUNITY_STROKES[communityBadge]
+        if (d.context?.presence_type && PRESENCE_RING_CONFIG[d.context.presence_type]) {
+          return PRESENCE_RING_CONFIG[d.context.presence_type].stroke
+        }
         return 'none'
+      })
+      .attr('stroke-dasharray', (d) => {
+        if (highlightDelta && d.isDelta) return '4,3'
+        if (d.context?.presence_type && PRESENCE_RING_CONFIG[d.context.presence_type]?.dash) {
+          return PRESENCE_RING_CONFIG[d.context.presence_type].dash!
+        }
+        return null
       })
       .attr('stroke-width', (d) => {
         if (isPathActive && pathNodeSet.has(d.id)) return 4
-        return activeNodeId === d.id || (highlightDelta && d.isDelta) ? 3.5 : 2.5
+        if (activeNodeId === d.id || (highlightDelta && d.isDelta)) return 3.5
+        if (d.context?.presence_type) return 2.5
+        return 2.5
       })
-      .attr('stroke-dasharray', (d) => (highlightDelta && d.isDelta ? '4,3' : null))
       .attr('opacity', (d) => {
         if (isPathActive) {
           return pathNodeSet.has(d.id) ? 1.0 : 0.15
@@ -1329,6 +1367,47 @@ export const D3NetworkGraph: React.FC<D3NetworkGraphProps> = ({
               </span>
               <span className="font-bold text-blue-800">{activeNodeConnections.length} Relationships</span>
             </div>
+
+            {/* Investigative Presence & Grounded Reason */}
+            {activeSelectedNode.context && (
+              <div className="space-y-1 pt-1">
+                <div className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider flex items-center justify-between">
+                  <span className="flex items-center gap-1"><Compass className="h-3 w-3 text-blue-600" /> Investigation Context</span>
+                  <span className={`text-[8.5px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide ${
+                    activeSelectedNode.context.presence_type === 'DIRECT_CASE'
+                      ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                      : activeSelectedNode.context.presence_type === 'INTELLIGENCE_EXPANSION'
+                      ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                      : activeSelectedNode.context.presence_type === 'CDR_CONNECTION'
+                      ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                      : activeSelectedNode.context.presence_type === 'CROSS_CASE'
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      : 'bg-teal-100 text-teal-800 border border-teal-200'
+                  }`}>
+                    {activeSelectedNode.context.presence_type.replaceAll('_', ' ')}
+                  </span>
+                </div>
+                <div className="bg-blue-50/70 p-2.5 rounded-lg border border-blue-100 space-y-1.5 text-[11px]">
+                  <div className="text-neutral-800 font-medium leading-relaxed">
+                    {activeSelectedNode.context.reason}
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] text-neutral-600 border-t border-blue-100/80 pt-1">
+                    <span>Scope Distance: <strong className="text-neutral-900">{activeSelectedNode.context.distance_from_case} {activeSelectedNode.context.distance_from_case === 1 ? 'hop' : 'hops'}</strong></span>
+                    {activeSelectedNode.context.source_ids.length > 0 && (
+                      <span className="font-mono text-[9px] truncate max-w-[120px]" title={activeSelectedNode.context.source_ids.join(', ')}>
+                        Src: {activeSelectedNode.context.source_ids[0]}
+                      </span>
+                    )}
+                  </div>
+                  {activeSelectedNode.context.readable_path && (
+                    <div className="text-[9px] text-neutral-600 border-t border-blue-100/80 pt-1 truncate" title={activeSelectedNode.context.readable_path}>
+                      <span className="font-semibold text-neutral-700">Path: </span>
+                      <span className="font-mono text-neutral-800">{activeSelectedNode.context.readable_path}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Dynamic Attributes */}
             {activeSelectedNode.properties && Object.keys(activeSelectedNode.properties).length > 0 && (

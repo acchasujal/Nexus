@@ -90,6 +90,24 @@ export interface EvidenceItemResponse {
   provenance: EvidenceProvenanceContract
 }
 
+export type NodePresenceType =
+  | 'DIRECT_CASE'
+  | 'INTELLIGENCE_EXPANSION'
+  | 'CDR_CONNECTION'
+  | 'CROSS_CASE'
+  | 'EVIDENCE'
+  | 'OTHER'
+
+export interface NodeContextResponse {
+  presence_type: NodePresenceType
+  reason: string
+  source_ids: string[]
+  relationship_types: string[]
+  distance_from_case: number
+  path: string[]
+  readable_path?: string
+}
+
 export interface GraphNodeResponse {
   id: string
   entity_type: string
@@ -97,6 +115,7 @@ export interface GraphNodeResponse {
   properties: Record<string, any>
   degree: number
   confidence: number
+  context?: NodeContextResponse
 }
 
 export interface GraphEdgeResponse {
@@ -114,6 +133,8 @@ export interface NetworkGraphResponse {
   edges: GraphEdgeResponse[]
   total_nodes: number
   total_edges: number
+  case_id?: string
+  depth?: number
 }
 
 export interface EntityResolutionQuery {
