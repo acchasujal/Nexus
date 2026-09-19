@@ -99,10 +99,23 @@ def resolve_officer_identity(
     name: str | None = None,
 ) -> OfficerIdentity:
     """Deterministically resolve a canonical OfficerIdentity from authentication credentials."""
+    # 1. Match by canonical badge number (e.g. KA-1001, KA-1002, KA-1003, KA-1000)
+    badge_roles: dict[str, UserRole] = {
+        "KA-1001": UserRole.IO,
+        "KA-1002": UserRole.SHO,
+        "KA-1003": UserRole.SP,
+        "KA-1000": UserRole.ADMIN,
+    }
+    matched_role = badge_roles.get(user_id.upper())
+    if matched_role and matched_role in CANONICAL_DEMO_OFFICERS:
+        return CANONICAL_DEMO_OFFICERS[matched_role]
+
     canonical_demo = CANONICAL_DEMO_OFFICERS.get(role)
 
+    is_custom_badge = user_id.upper().startswith("KA-") and user_id.upper() not in badge_roles
+
     # Check if user_id or sub matches a demo username pattern (e.g. officer_io, dev-io, user-001)
-    is_demo_user = (
+    is_demo_user = not is_custom_badge and (
         user_id.startswith("officer_")
         or user_id.startswith("dev-")
         or user_id in ("user-001", "anonymous")
@@ -122,8 +135,8 @@ def resolve_officer_identity(
 
     # Custom / production officer fallback
     resolved_id = officer_id or f"OFFICER-{user_id.upper()}"
-    resolved_badge = badge_number or f"BDG-{user_id[-4:].upper()}"
-    resolved_name = name or user_id.replace("_", " ").title()
+    resolved_badge = badge_number or (user_id.upper() if user_id.upper().startswith("KA-") else f"BDG-{user_id[-4:].upper()}")
+    resolved_name = name or (f"Officer {user_id.upper()}" if user_id.upper().startswith("KA-") else user_id.replace("_", " ").title())
 
     return OfficerIdentity(
         officer_id=resolved_id,

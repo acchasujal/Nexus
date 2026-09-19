@@ -225,7 +225,14 @@ export function EvidenceDrawer({ relationshipId, evidenceId, onClose }: Evidence
                     )}
                   </div>
                 ) : (
-                  <p className="text-xs text-neutral-500 italic">Hash not available for this legacy record.</p>
+                  <div className="rounded-md border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-900 space-y-1">
+                    <span className="font-bold uppercase tracking-wider text-[10px] text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
+                      LEGACY — NOT HASH-SEALED
+                    </span>
+                    <p className="text-[11px] text-amber-800 mt-1">
+                      Pre-existing physical or legacy record ingested prior to automated Section 63 BSA electronic hash-sealing protocol.
+                    </p>
+                  </div>
                 )}
               </section>
             </div>

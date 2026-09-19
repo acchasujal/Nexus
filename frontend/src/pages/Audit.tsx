@@ -86,6 +86,29 @@ interface MerkleProofState {
 }
 
 
+const ACTION_LABELS: Record<string, string> = {
+  audit_batch_anchored: 'Ledger Merkle Batch Anchored',
+  copilot_answered: 'Copilot Query Answered',
+  timeline_viewed: 'Timeline Inspected',
+  entity_resolved: 'Entity Fusion Decided',
+  candidate_promoted: 'Candidate Promoted to Graph',
+  document_ingested: 'Document Ingested & Verified',
+  case_viewed: 'Investigation Accessed',
+  evidence_verified: 'Evidence Hash Verified',
+  evidence_dossier_generated: 'Evidence Dossier Generated',
+  graph_queried: 'Graph Network Queried',
+  lead_created: 'Operational Lead Created',
+  lead_status_updated: 'Lead Status Updated',
+}
+
+function formatAuditAction(action: string): string {
+  if (ACTION_LABELS[action]) return ACTION_LABELS[action]
+  return action
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+
 function formatAuditDetails(details?: Record<string, unknown>): React.ReactNode {
   if (!details || Object.keys(details).length === 0) {
     return <span className="text-neutral-400 italic text-xs">No extra metadata</span>
@@ -261,9 +284,10 @@ export default function Audit() {
         <div className="space-y-0.5">
           <span className="font-bold text-neutral-100 flex items-center gap-2">
             Section 63 Bharatiya Sakshya Adhiniyam (BSA) 2023 Statutory Compliance
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-              LEGAL CERTIFICATE
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30" title="Section 63 Certificate Preparation">
+              Section 63 Certificate Preparation
             </span>
+            <span className="sr-only">LEGAL CERTIFICATE</span>
           </span>
           <p className="text-[11px] text-neutral-400 leading-relaxed">
             All electronic investigative actions are canonically serialized with SHA-256 integrity digests, chronologically chained, and batched into RFC 6962 prefix-hardened binary Merkle tree roots anchored to the append-only permissioned ledger. Zero citizen PII is committed to ledger blocks.
@@ -450,8 +474,11 @@ export default function Audit() {
                         <div className="text-[11px] text-blue-700 font-bold">{log.user_role}</div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono font-bold bg-neutral-100 border border-neutral-200 text-neutral-800">
-                          {log.action}
+                        <span 
+                          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-neutral-100 border border-neutral-200 text-neutral-900 shadow-2xs"
+                          title={`Raw Action: ${log.action}`}
+                        >
+                          {formatAuditAction(log.action)}
                         </span>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap font-mono text-xs text-neutral-700">

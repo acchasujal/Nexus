@@ -141,7 +141,7 @@ export function CrossJurisdictionPulseSection({
             <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
               Cross-Jurisdiction Intelligence Pulse Conduit
               <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800">
-                P1-A Active
+                Pulse Active
               </span>
             </h3>
             <p className="text-xs text-neutral-500">

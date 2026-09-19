@@ -527,7 +527,7 @@ export function DocumentIngestionPanel({ onUploadSuccess, defaultCaseId = '' }: 
               ) : (
                 <>
                   <Sparkles className="h-3.5 w-3.5" />
-                  <span>{extractionResult ? 'Re-extract Candidates' : 'Extract Candidates (P1-B)'}</span>
+                  <span>{extractionResult ? 'Re-extract Candidates' : 'Extract Candidates'}</span>
                 </>
               )}
             </button>

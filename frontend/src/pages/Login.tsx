@@ -8,14 +8,14 @@ import {
   ShieldAlert, 
   UserCheck, 
   Shield, 
-  Lock, 
   User, 
   Eye, 
   EyeOff, 
   Loader2, 
   AlertCircle,
   KeyRound,
-  ArrowRight
+  ArrowRight,
+  ChevronDown,
 } from 'lucide-react'
 
 interface OfficerProfile {
@@ -94,11 +94,32 @@ export default function Login() {
     if (e) e.preventDefault()
     
     const targetUsername = (overrideCreds?.username || username).trim()
-    const targetRole = overrideCreds?.role || selectedRole
-    
+    let targetRole = overrideCreds?.role || selectedRole
+
     if (!targetUsername) {
       setErrorMessage('Please enter your Officer ID or Service Number.')
       return
+    }
+
+    // Auto-resolve known officer duty profile from badge ID if not explicitly specified
+    if (!targetRole && targetUsername) {
+      const u = targetUsername.toLowerCase()
+      const matchingOfficer = AUTHORIZED_OFFICERS.find(
+        (o) => o.badge.toLowerCase() === u ||
+               o.id.toLowerCase() === u ||
+               o.role.toLowerCase() === u
+      )
+      if (matchingOfficer) {
+        targetRole = matchingOfficer.role
+      } else if (u.includes('sho') || u.includes('1002') || u.includes('analyst')) {
+        targetRole = 'SHO'
+      } else if (u.includes('sp') || u.includes('1003') || u.includes('supervisor')) {
+        targetRole = 'SP'
+      } else if (u.includes('admin') || u.includes('1000')) {
+        targetRole = 'ADMIN'
+      } else if (u.includes('io') || u.includes('1001') || u.includes('investigator') || u.startsWith('ka-')) {
+        targetRole = 'IO'
+      }
     }
 
     setIsLoading(true)
@@ -129,36 +150,30 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-900 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="w-full max-w-xl space-y-5">
-        {/* Compliance Header Badge */}
-        <div className="flex justify-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-neutral-700 bg-neutral-800/80 px-3.5 py-1 text-xs font-medium text-neutral-300">
-            <Shield className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
-            <span>Official System · Authorized Access Only</span>
-          </div>
-        </div>
-
-        {/* Main Card */}
-        <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-6 sm:p-8 shadow-xl space-y-6">
-          {/* Brand Header */}
-          <div className="text-center space-y-1.5">
-            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+    <div className="min-h-screen min-h-[100dvh] flex flex-col justify-center items-center bg-neutral-50 text-neutral-800 selection:bg-blue-100 selection:text-blue-900 px-3.5 py-4 sm:p-6 overflow-y-auto">
+      {/* Main Container — Purely Centered Authentication Console */}
+      <main className="w-full max-w-[390px] sm:max-w-[440px] mx-auto flex flex-col items-center my-auto">
+        {/* Authentication Console Card */}
+        <div 
+          role="region" 
+          aria-label="Officer Authentication Form" 
+          className="w-full rounded-xl sm:rounded-2xl border border-neutral-200/80 bg-white p-4 sm:p-5.5 shadow-sm sm:shadow-[0_1px_3px_0_rgb(0_0_0_/_0.04),0_8px_24px_-4px_rgb(0_0_0_/_0.06)] space-y-3 sm:space-y-3.5"
+        >
+          {/* Integrated Brand Emblem & Title */}
+          <div className="text-center pb-2.5 border-b border-neutral-100 space-y-1">
+            <div className="mx-auto inline-flex h-9.5 w-9.5 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs ring-4 ring-blue-50">
               <Network className="h-5 w-5" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              NEXUS
-            </h1>
-            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
-              Investigative Network Intelligence Platform
-            </p>
-          </div>
-
-          {/* Security Notice Banner */}
-          <div className="rounded-lg border border-neutral-800 bg-neutral-900/80 px-3.5 py-2.5 text-center">
-            <p className="text-xs font-medium text-neutral-300 flex items-center justify-center gap-1.5">
-              <Lock className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
-              <span>Restricted Access · All Sessions Cryptographically Audited</span>
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900">
+                NEXUS
+              </h1>
+              <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-blue-700">
+                Investigative Network Intelligence Platform
+              </p>
+            </div>
+            <p className="text-xs text-neutral-500">
+              Officer Authentication Console
             </p>
           </div>
 
@@ -166,28 +181,28 @@ export default function Login() {
           {errorMessage && (
             <div 
               role="alert" 
-              className="flex items-start gap-2.5 rounded-lg border border-red-900/60 bg-red-950/40 p-3 text-xs text-red-200"
+              className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-800 animate-in fade-in duration-150"
               data-testid="login-error-alert"
             >
-              <AlertCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+              <AlertCircle className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />
               <div className="flex-1">
-                <span className="font-semibold block">Authentication Error:</span>
-                <span>{errorMessage}</span>
+                <span className="font-bold block text-xs">Authentication Error:</span>
+                <span className="text-xs leading-normal">{errorMessage}</span>
               </div>
             </div>
           )}
 
           {/* Login Form */}
-          <form onSubmit={(e) => handleSubmit(e)} className="space-y-4">
+          <form onSubmit={(e) => handleSubmit(e)} className="space-y-2.5 sm:space-y-3">
             <div>
               <label 
                 htmlFor="officer-id-input" 
-                className="block text-xs font-semibold uppercase tracking-wider text-neutral-300 mb-1.5"
+                className="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-1"
               >
                 Officer ID / Service Identifier
               </label>
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400">
                   <User className="h-4 w-4" />
                 </div>
                 <input
@@ -200,7 +215,7 @@ export default function Login() {
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="e.g. KA-1001"
                   disabled={isLoading}
-                  className="w-full rounded-lg border border-neutral-700 bg-neutral-900 pl-9 pr-3 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden transition-colors"
+                  className="w-full h-9 sm:h-9.5 rounded-lg border border-neutral-300 bg-white pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition-[border-color,box-shadow] duration-150 shadow-2xs disabled:bg-neutral-100"
                   data-testid="officer-id-input"
                 />
               </div>
@@ -209,12 +224,12 @@ export default function Login() {
             <div>
               <label 
                 htmlFor="password-input" 
-                className="block text-xs font-semibold uppercase tracking-wider text-neutral-300 mb-1.5"
+                className="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-1"
               >
                 Security Passcode / Token
               </label>
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400">
                   <KeyRound className="h-4 w-4" />
                 </div>
                 <input
@@ -226,13 +241,13 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
                   disabled={isLoading}
-                  className="w-full rounded-lg border border-neutral-700 bg-neutral-900 pl-9 pr-10 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden transition-colors"
+                  className="w-full h-9 sm:h-9.5 rounded-lg border border-neutral-300 bg-white pl-9 pr-9 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition-[border-color,box-shadow] duration-150 shadow-2xs disabled:bg-neutral-100"
                   data-testid="password-input"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-neutral-400 hover:text-neutral-200 cursor-pointer"
+                  className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-neutral-400 hover:text-neutral-700 active:scale-90 transition-transform duration-100 cursor-pointer"
                   aria-label={showPassword ? 'Hide passcode' : 'Show passcode'}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -243,7 +258,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-400"
+              className="w-full h-9.5 sm:h-10 flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-sm font-semibold shadow-xs transition-[transform,background-color,box-shadow] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               data-testid="login-submit-button"
             >
               {isLoading ? (
@@ -260,18 +275,55 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Authorized Officer Fast-Select */}
-          <div className="border-t border-neutral-800/80 pt-5 space-y-3">
+          {/* Authorized Officer Duty Profiles — Dropdown on Mobile, Rich Cards on Desktop */}
+          <div className="border-t border-neutral-200/90 pt-2.5 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+              <label 
+                htmlFor="evaluation-profile-select" 
+                className="text-xs font-bold uppercase tracking-wider text-neutral-700 cursor-pointer sm:cursor-default"
+              >
                 Evaluation Workspace Access
-              </span>
+              </label>
               <span className="text-[11px] text-neutral-500">
-                Select profile to sign in
+                <span className="inline sm:hidden">Demo Accounts</span>
+                <span className="hidden sm:inline">Select profile to sign in</span>
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {/* Mobile / Smaller screens: Compact dropdown selector */}
+            <div className="block sm:hidden relative">
+              <select
+                id="evaluation-profile-select"
+                aria-label="Evaluation Workspace Access"
+                value=""
+                onChange={(e) => {
+                  const officer = AUTHORIZED_OFFICERS.find((o) => o.id === e.target.value)
+                  if (officer) handleSelectOfficer(officer)
+                }}
+                disabled={isLoading}
+                data-testid="demo-officer-select-mobile"
+                className="w-full h-9 rounded-lg border border-neutral-300 bg-neutral-50/70 hover:bg-white focus:bg-white pl-3 pr-8 text-xs font-medium text-neutral-800 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition-all shadow-2xs appearance-none cursor-pointer disabled:bg-neutral-100 disabled:cursor-not-allowed"
+              >
+                <option value="" disabled>
+                  Select evaluation account to sign in...
+                </option>
+                {AUTHORIZED_OFFICERS.map((officer) => (
+                  <option
+                    key={officer.id}
+                    value={officer.id}
+                    data-testid={`demo-officer-mobile-${officer.role.toLowerCase()}`}
+                  >
+                    {officer.name} ({officer.role}) · {officer.badge}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-neutral-400">
+                <ChevronDown className="h-4 w-4" />
+              </div>
+            </div>
+
+            {/* Desktop / Larger screens: Rich 2-column officer grid */}
+            <div className="hidden sm:grid sm:grid-cols-2 gap-2">
               {AUTHORIZED_OFFICERS.map((officer) => {
                 const Icon = officer.icon
                 return (
@@ -280,28 +332,29 @@ export default function Login() {
                     type="button"
                     onClick={() => handleSelectOfficer(officer)}
                     disabled={isLoading}
-                    className="group flex flex-col items-start p-3 rounded-lg border border-neutral-800 bg-neutral-900 hover:bg-neutral-850 hover:border-neutral-700 text-left transition-colors cursor-pointer disabled:opacity-50"
+                    className="group flex flex-col items-start p-2 rounded-lg border border-neutral-200 bg-neutral-50/70 hover:bg-blue-50/40 hover:border-blue-300 active:scale-[0.98] text-left transition-[background-color,border-color,transform,box-shadow] duration-150 ease-out cursor-pointer disabled:opacity-50 shadow-2xs"
                     data-testid={`demo-officer-${officer.role.toLowerCase()}`}
+                    aria-label={`Authenticate as ${officer.name} (${officer.role})`}
                   >
-                    <div className="flex items-center gap-2 w-full mb-1">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-neutral-800 border border-neutral-700 text-neutral-300 group-hover:text-white">
-                        <Icon className="h-3.5 w-3.5" />
+                    <div className="flex items-center gap-1.5 w-full mb-0.5">
+                      <div className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded bg-white border border-neutral-200 text-neutral-600 group-hover:text-blue-600 group-hover:border-blue-200 shadow-2xs transition-colors duration-150">
+                        <Icon className="h-3 w-3" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <span className="text-xs font-semibold text-neutral-200 group-hover:text-white truncate block">
+                        <span className="text-xs font-bold text-neutral-900 group-hover:text-blue-900 truncate block transition-colors duration-150">
                           {officer.name}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between w-full text-[11px] text-neutral-400 mt-0.5">
-                      <span className="font-mono text-[10px] text-neutral-300 bg-neutral-800 px-1.5 py-0.5 rounded border border-neutral-700">
+                    <div className="flex items-center justify-between w-full text-xs text-neutral-500">
+                      <span className="font-mono text-[11px] font-semibold text-neutral-700 bg-neutral-200/80 px-1 py-0.2 rounded border border-neutral-300/80">
                         {officer.badge}
                       </span>
-                      <span className="text-neutral-400 text-[10px] font-medium uppercase">
+                      <span className="text-blue-700 bg-blue-50 border border-blue-200/80 px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider">
                         {officer.role}
                       </span>
                     </div>
-                    <p className="text-[10px] text-neutral-500 line-clamp-2 mt-1 leading-tight">
+                    <p className="text-xs text-neutral-500 line-clamp-1 mt-0.5">
                       {officer.scope}
                     </p>
                   </button>
@@ -310,14 +363,10 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Footer Statutory Disclaimers */}
-          <div className="border-t border-neutral-800/80 pt-4 text-center space-y-1">
-            <p className="text-[11px] text-neutral-400 font-medium">
-              Deterministic Graph Analytics · Evidence-Grounded Attribution · Tamper-Proof Audit Logging
-            </p>
-          </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
+
+

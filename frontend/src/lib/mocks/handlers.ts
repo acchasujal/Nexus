@@ -6,7 +6,10 @@ import type {
   CopilotQueryResponse,
   ChatResponse,
   DependencyResponse,
-  DependencyStatus
+  DependencyStatus,
+  AuthLoginRequest,
+  AuthTokenResponse,
+  UserRole,
 } from '@shared/contracts/api'
 
 // In-memory mock database state
@@ -155,6 +158,98 @@ const generate5000Worklist = (): InvestigationSummaryResponse[] => {
 }
 
 export const handlers = [
+  // 0. POST /api/v1/auth/login
+  http.post(/\/api\/v1\/auth\/login/, async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as AuthLoginRequest
+    const u = (body.username || '').toLowerCase().trim()
+    let role: UserRole = body.role as UserRole
+    if (!role) {
+      if (u.includes('sho') || u.includes('ka-1002') || u.includes('analyst')) role = 'SHO'
+      else if (u.includes('sp') || u.includes('ka-1003') || u.includes('supervisor')) role = 'SP'
+      else if (u.includes('admin') || u.includes('ka-1000')) role = 'ADMIN'
+      else role = 'IO'
+    }
+
+    const officerProfiles: Record<string, { name: string; rank: string; badge: string; stationId: string; district: string }> = {
+      IO: {
+        name: 'Inspector Rajesh Kumar',
+        rank: 'Inspector',
+        badge: 'KA-1001',
+        stationId: 'STATION-CYBER-CRIME-BLR',
+        district: 'Bengaluru Central',
+      },
+      INVESTIGATOR: {
+        name: 'Inspector Rajesh Kumar',
+        rank: 'Inspector',
+        badge: 'KA-1001',
+        stationId: 'STATION-CYBER-CRIME-BLR',
+        district: 'Bengaluru Central',
+      },
+      SHO: {
+        name: 'SHO Sunita Sharma',
+        rank: 'Station House Officer',
+        badge: 'KA-1002',
+        stationId: 'STATION-CYBER-CRIME-BLR',
+        district: 'Bengaluru Central',
+      },
+      ANALYST: {
+        name: 'SHO Sunita Sharma',
+        rank: 'Station House Officer',
+        badge: 'KA-1002',
+        stationId: 'STATION-CYBER-CRIME-BLR',
+        district: 'Bengaluru Central',
+      },
+      SP: {
+        name: 'SP Vikram Hegde',
+        rank: 'Superintendent of Police',
+        badge: 'KA-1003',
+        stationId: 'HQ-CID-CYBER-KARNATAKA',
+        district: 'State Cyber Division',
+      },
+      SUPERVISOR: {
+        name: 'SP Vikram Hegde',
+        rank: 'Superintendent of Police',
+        badge: 'KA-1003',
+        stationId: 'HQ-CID-CYBER-KARNATAKA',
+        district: 'State Cyber Division',
+      },
+      ADMIN: {
+        name: 'System Administrator',
+        rank: 'Director of Cyber Intelligence',
+        badge: 'KA-1000',
+        stationId: 'HQ-MHA-NCRB-DELHI',
+        district: 'National Cybercrime Operations',
+      },
+    }
+
+    const canonical = officerProfiles[role] || officerProfiles.IO
+    const isCustomBadge = u.startsWith('ka-') && !['ka-1000', 'ka-1001', 'ka-1002', 'ka-1003'].includes(u)
+    const badgeNumber = isCustomBadge ? body.username.toUpperCase() : canonical.badge
+    const name = isCustomBadge ? `Officer ${body.username.toUpperCase()}` : canonical.name
+
+    const payload = {
+      sub: body.username,
+      email: `${body.username}@nexus.internal`,
+      role: role,
+      officer_id: `OFFICER-${body.username.toUpperCase()}`,
+      badge_number: badgeNumber,
+      name: name,
+      rank: canonical.rank,
+      station_id: canonical.stationId,
+      district: canonical.district,
+      iat: Math.floor(Date.now() / 1000),
+    }
+
+    const token = btoa(JSON.stringify(payload))
+    return HttpResponse.json<AuthTokenResponse>({
+      access_token: token,
+      token_type: 'bearer',
+      user_id: body.username,
+      role: role,
+      expires_in: 86400,
+    })
+  }),
+
   // 1. GET /worklist & /api/v1/investigations
   http.get(/\/worklist|\/api\/v1\/investigations/, async () => {
     await delay(300) // Realistic latency simulation
