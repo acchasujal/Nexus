@@ -8,7 +8,7 @@ This document is the **single source of truth** for ongoing engineering, capabil
 
 | Metric / Subsystem | Current Measured Status | Target Requirement | Status |
 |---|---|---|---|
-| **Backend Test Suite** | **875 / 875 passing** (`pytest`) | 100% pass rate | ✅ VERIFIED GREEN |
+| **Backend Test Suite** | **880 / 880 passing** (`pytest`) | 100% pass rate | ✅ VERIFIED GREEN |
 | **Frontend Test Suite** | **156 / 156 passing** (`vitest`) | 100% pass rate | ✅ VERIFIED GREEN |
 | **Backend Code Quality** | **0 errors / clean** (`ruff check`) | 0 lint errors | ✅ VERIFIED CLEAN |
 | **Frontend Typecheck / Build** | **0 errors / clean build** (`tsc && vite build`) | 0 TypeScript errors | ✅ VERIFIED CLEAN |
