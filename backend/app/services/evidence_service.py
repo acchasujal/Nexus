@@ -57,12 +57,12 @@ def _get_prov(edge: Any) -> dict:
     """
     props = getattr(edge, "properties", {}) or {}
     raw_prov = props.get("provenance") or {}
-    prov = dict(raw_prov) if isinstance(raw_prov, dict) else {}
+    prov = dict(raw_prov) if isinstance(raw_prov, dict) else (raw_prov.model_dump() if hasattr(raw_prov, "model_dump") else {})
     if not prov.get("source_id"):
         sid = (
             prov.get("source_record_id")
-            or getattr(edge, "source_record_id", None)
             or props.get("source_record_id")
+            or getattr(edge, "source_record_id", None)
             or ""
         )
         if sid:

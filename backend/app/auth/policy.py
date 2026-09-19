@@ -118,7 +118,7 @@ class EvidenceAuthorizationPolicy:
 
         # 2. Check edges for evidence ID match or provenance source_id match
         for edge in edges:
-            prov = edge.get("provenance", {})
+            prov = edge.get("provenance", {}) or {}
             src_id = (
                 prov.get("source_id")
                 or prov.get("source_record_id")
