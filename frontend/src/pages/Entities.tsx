@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams, useLocation, Link } from 'react-router-dom'
 import { Users, CheckCircle2, HelpCircle, AlertTriangle, XCircle, Search, ArrowRight, ShieldAlert, Phone, MapPin, Tag } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
+import { maskPhone, maskVehicle } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
 import type { EntityResolutionMatchResponse } from '@shared/contracts/api'
@@ -44,7 +45,19 @@ export default function Entities() {
         address_text: address || undefined,
         confidence_threshold: 0.45,
       })
-      setMatches(response.matches || [])
+      const rawMatches = response.matches || []
+      const HARD_IDS = new Set(['phone', 'phone_number', 'vehicle', 'vehicle_number', 'aadhaar', 'pan', 'account', 'account_number', 'imei'])
+      const sorted = [...rawMatches].sort((a, b) => {
+        const aFields = ((a.matched_fields || (a as any).matched_attributes || []) as string[])
+        const bFields = ((b.matched_fields || (b as any).matched_attributes || []) as string[])
+        const aHasHard = aFields.some((f) => HARD_IDS.has(String(f).toLowerCase()))
+        const bHasHard = bFields.some((f) => HARD_IDS.has(String(f).toLowerCase()))
+        if (aHasHard && !bHasHard) return -1
+        if (!aHasHard && bHasHard) return 1
+        if (aFields.length !== bFields.length) return bFields.length - aFields.length
+        return (b.confidence ?? 0) - (a.confidence ?? 0)
+      })
+      setMatches(sorted)
     } catch (err) {
       console.error('Entity resolution failed:', err)
       setMatches([])
@@ -82,36 +95,47 @@ export default function Entities() {
     })
   }
 
-  const getStatusBadge = (status?: string, confidence?: number) => {
+  const HARD_ID_FIELDS = new Set(['phone', 'phone_number', 'vehicle', 'vehicle_number', 'aadhaar', 'pan', 'account', 'account_number', 'imei'])
+
+  const getStatusBadge = (status?: string, confidence?: number, matchedFields: string[] = []) => {
     const safeConfidence = typeof confidence === 'number' ? Math.round(confidence * 100) : 100
     const safeStatus = String(status || 'MATCHED').toUpperCase()
 
-    switch (safeStatus) {
-      case 'MATCHED':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-200 shadow-2xs">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> MATCHED ({safeConfidence}%)
-          </span>
-        )
-      case 'PROBABLE_MATCH':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-900 border border-amber-200 shadow-2xs">
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-600" /> PROBABLE MATCH ({safeConfidence}%)
-          </span>
-        )
-      case 'REVIEW_REQUIRED':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-800 border border-blue-200 shadow-2xs">
-            <HelpCircle className="h-3.5 w-3.5 text-blue-600" /> REVIEW REQUIRED ({safeConfidence}%)
-          </span>
-        )
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-bold text-neutral-800 border border-neutral-300 shadow-2xs">
-            <XCircle className="h-3.5 w-3.5 text-neutral-500" /> NOT MATCHED
-          </span>
-        )
+    if (safeStatus === 'NOT_MATCHED') {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-bold text-neutral-800 border border-neutral-300 shadow-2xs">
+          <XCircle className="h-3.5 w-3.5 text-neutral-500" /> NOT MATCHED
+        </span>
+      )
     }
+
+    const hasHardId = matchedFields.some((f) => HARD_ID_FIELDS.has(String(f).toLowerCase()))
+    const nonNameFields = matchedFields.filter((f) => !['name', 'full_name', 'alias'].includes(String(f).toLowerCase()))
+
+    // 1. Exact hard identifier match
+    if (hasHardId) {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-200 shadow-2xs">
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> EXACT IDENTIFIER CORROBORATED ({safeConfidence}%)
+        </span>
+      )
+    }
+
+    // 2. Multi-field corroboration (e.g. name + address + role)
+    if (nonNameFields.length >= 1 || matchedFields.length >= 2) {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-800 border border-blue-200 shadow-2xs">
+          <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" /> MULTI-FIELD CORROBORATED ({safeConfidence}%)
+        </span>
+      )
+    }
+
+    // 3. Name match candidate only (unconfirmed without corroborating telemetry)
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-900 border border-amber-200 shadow-2xs">
+        <AlertTriangle className="h-3.5 w-3.5 text-amber-600" /> Candidate — name match only ({safeConfidence}%)
+      </span>
+    )
   }
 
   return (
@@ -234,7 +258,7 @@ export default function Entities() {
                         <h3 className="text-base font-bold text-neutral-900">{canonicalName}</h3>
                         <div className="text-xs text-neutral-500 font-mono mt-0.5">{nodeId}</div>
                       </div>
-                      {getStatusBadge(status, confidence)}
+                      {getStatusBadge(status, confidence, matchedFields)}
                     </div>
 
                     <div className="space-y-2 text-xs">
@@ -262,9 +286,15 @@ export default function Entities() {
                       {Object.keys(properties).length > 0 && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-neutral-100 text-[11px] text-neutral-600">
                           {properties.phone_number && (
-                            <div className="flex items-center gap-1.5 text-neutral-700">
+                            <div className="flex items-center gap-1.5 text-neutral-700" title={`Phone: ${properties.phone_number}`}>
                               <Phone className="h-3 w-3 text-neutral-400" />
-                              <span>{String(properties.phone_number)}</span>
+                              <span>{maskPhone(String(properties.phone_number))}</span>
+                            </div>
+                          )}
+                          {properties.vehicle_number && (
+                            <div className="flex items-center gap-1.5 text-neutral-700" title={`Vehicle: ${properties.vehicle_number}`}>
+                              <Tag className="h-3 w-3 text-neutral-400" />
+                              <span>{maskVehicle(String(properties.vehicle_number))}</span>
                             </div>
                           )}
                           {properties.district && (

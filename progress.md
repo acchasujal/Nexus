@@ -9,7 +9,7 @@ This document is the **single source of truth** for ongoing engineering, capabil
 | Metric / Subsystem | Current Measured Status | Target Requirement | Status |
 |---|---|---|---|
 | **Backend Test Suite** | **791 / 791 passing** (`pytest`) | 100% pass rate | ✅ VERIFIED GREEN |
-| **Frontend Test Suite** | **147 / 147 passing** (`vitest`) | 100% pass rate | ✅ VERIFIED GREEN |
+| **Frontend Test Suite** | **154 / 154 passing** (`vitest`) | 100% pass rate | ✅ VERIFIED GREEN |
 | **Backend Code Quality** | **0 errors / clean** (`ruff check`) | 0 lint errors | ✅ VERIFIED CLEAN |
 | **Frontend Typecheck / Build** | **0 errors / clean build** (`tsc && vite build`) | 0 TypeScript errors | ✅ VERIFIED CLEAN |
 | **Ground-Truth ER Precision** | **100.00%** (`evaluate_ground_truth.py`) | $\ge 95.00\%$ | ✅ VERIFIED PASSED |

@@ -632,7 +632,7 @@ export default function Patterns() {
             <div className="space-y-0.5">
               <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
                 <Radio className="h-4 w-4 text-amber-600" />
-                Repeat-Offender Detection &amp; Entity-Resolved Identity Radar
+                Cross-Case Entity Recurrence &amp; Entity-Resolved Identity Radar
               </h2>
               <p className="text-xs text-neutral-500">
                 Surfaces multi-case accused individuals across spelling variations, aliases, shared phones, and cross-district mobility.
