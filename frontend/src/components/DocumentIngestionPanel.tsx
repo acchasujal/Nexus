@@ -57,6 +57,94 @@ export function DocumentIngestionPanel({ onUploadSuccess, defaultCaseId = '' }: 
   const [activeCandidateTab, setActiveCandidateTab] = useState<'entities' | 'relationships'>('entities')
   const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(null)
 
+  // ── P1-C Investigator Decision State ──────────────────────────────────────
+  const [decisionInProgress, setDecisionInProgress] = useState<string | null>(null)
+  const [decidedCandidates, setDecidedCandidates] = useState<Record<string, { status: string; targetId?: string }>>({})
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean
+    type: 'existing' | 'new' | 'relationship' | 'reject' | 'reject-rel'
+    candidateId: string
+    targetId?: string
+    name?: string
+    entityType?: string
+    notes: string
+  }>({
+    isOpen: false,
+    type: 'new',
+    candidateId: '',
+    notes: '',
+  })
+
+  const handleConfirmDecision = async () => {
+    if (!modalState.candidateId) return
+    const { type, candidateId, targetId, name, entityType, notes } = modalState
+    setDecisionInProgress(candidateId)
+    setErrorMessage(null)
+
+    try {
+      if (type === 'existing' && targetId) {
+        const resp = await apiClient.acceptExistingEntity(candidateId, {
+          target_canonical_id: targetId,
+          case_id: uploadedDoc?.case_id || caseId || undefined,
+          notes: notes || undefined,
+        })
+        setDecidedCandidates((prev) => ({
+          ...prev,
+          [candidateId]: { status: resp.status, targetId: resp.resulting_graph_id || targetId },
+        }))
+      } else if (type === 'new') {
+        const resp = await apiClient.acceptNewEntity(candidateId, {
+          entity_type: entityType || 'Person',
+          canonical_name: name || '',
+          case_id: uploadedDoc?.case_id || caseId || undefined,
+          notes: notes || undefined,
+        })
+        setDecidedCandidates((prev) => ({
+          ...prev,
+          [candidateId]: { status: resp.status, targetId: resp.resulting_graph_id || undefined },
+        }))
+      } else if (type === 'relationship') {
+        const rel = extractionResult?.candidate_relationships.find((r) => r.candidate_relationship_id === candidateId)
+        if (!rel) throw new Error('Relationship not found')
+        const resp = await apiClient.acceptCandidateRelationship(candidateId, {
+          source_canonical_id: targetId || rel.source_candidate_id,
+          target_canonical_id: rel.target_candidate_id,
+          relationship_type: entityType || rel.relationship_type,
+          case_id: uploadedDoc?.case_id || caseId || undefined,
+          notes: notes || undefined,
+        })
+        setDecidedCandidates((prev) => ({
+          ...prev,
+          [candidateId]: { status: resp.status, targetId: resp.resulting_graph_id || undefined },
+        }))
+      } else if (type === 'reject') {
+        const resp = await apiClient.rejectCandidateEntity(candidateId, {
+          reason: notes || 'Investigator rejected candidate during review',
+          notes: notes || undefined,
+        })
+        setDecidedCandidates((prev) => ({
+          ...prev,
+          [candidateId]: { status: resp.status },
+        }))
+      } else if (type === 'reject-rel') {
+        const resp = await apiClient.rejectCandidateRelationship(candidateId, {
+          reason: notes || 'Investigator rejected candidate relationship',
+          notes: notes || undefined,
+        })
+        setDecidedCandidates((prev) => ({
+          ...prev,
+          [candidateId]: { status: resp.status },
+        }))
+      }
+      setModalState((prev) => ({ ...prev, isOpen: false }))
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Promotion failed'
+      setErrorMessage(msg)
+    } finally {
+      setDecisionInProgress(null)
+    }
+  }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0]
@@ -481,6 +569,10 @@ export function DocumentIngestionPanel({ onUploadSuccess, defaultCaseId = '' }: 
                 </div>
               </div>
 
+              <p className="text-[11px] text-neutral-500 italic">
+                P1B outputs are candidate extractions and are not treated by NEXUS as authoritative evidence or confirmed identities.
+              </p>
+
               {/* Tab 1: Candidate Entities */}
               {activeCandidateTab === 'entities' && (
                 <div className="space-y-2">
@@ -572,14 +664,89 @@ export function DocumentIngestionPanel({ onUploadSuccess, defaultCaseId = '' }: 
                                           {match.match_reasons.join(', ')}
                                         </div>
                                       </div>
-                                      <div className="text-right shrink-0">
+                                      <div className="flex items-center space-x-2 shrink-0">
                                         <span className="inline-flex items-center px-2 py-0.5 rounded font-bold text-[10px] bg-blue-50 text-blue-700 border border-blue-100">
                                           {(match.match_score * 100).toFixed(0)}% Match
                                         </span>
+                                        <button
+                                          type="button"
+                                          data-testid={`link-match-${match.canonical_entity_id}`}
+                                          disabled={decisionInProgress !== null || !!decidedCandidates[cand.candidate_id]}
+                                          onClick={() =>
+                                            setModalState({
+                                              isOpen: true,
+                                              type: 'existing',
+                                              candidateId: cand.candidate_id,
+                                              targetId: match.canonical_entity_id,
+                                              name: match.canonical_name,
+                                              entityType: cand.entity_type,
+                                              notes: '',
+                                            })
+                                          }
+                                          className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded text-[10px] font-bold transition-colors"
+                                        >
+                                          Link
+                                        </button>
                                       </div>
                                     </div>
                                   ))}
                                 </div>
+                              </div>
+                            )}
+
+                            {/* P1-C Decision Status or Action Bar */}
+                            {decidedCandidates[cand.candidate_id] ? (
+                              <div className="pt-2 border-t border-neutral-100 flex items-center justify-between">
+                                <span
+                                  className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    decidedCandidates[cand.candidate_id].status.includes('ACCEPTED')
+                                      ? 'bg-emerald-100 text-emerald-900 border border-emerald-200'
+                                      : 'bg-rose-100 text-rose-900 border border-rose-200'
+                                  }`}
+                                >
+                                  {decidedCandidates[cand.candidate_id].status}
+                                  {decidedCandidates[cand.candidate_id].targetId &&
+                                    ` (${decidedCandidates[cand.candidate_id].targetId})`}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="pt-2 border-t border-neutral-100 flex items-center justify-end space-x-2">
+                                <button
+                                  type="button"
+                                  data-testid={`accept-new-${cand.candidate_id}`}
+                                  disabled={decisionInProgress !== null}
+                                  onClick={() =>
+                                    setModalState({
+                                      isOpen: true,
+                                      type: 'new',
+                                      candidateId: cand.candidate_id,
+                                      name: cand.surface_text,
+                                      entityType: cand.entity_type,
+                                      notes: '',
+                                    })
+                                  }
+                                  className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50 text-indigo-700 rounded text-[11px] font-semibold border border-indigo-200 transition-colors"
+                                >
+                                  Accept as New {cand.entity_type}
+                                </button>
+                                <button
+                                  type="button"
+                                  data-testid={`reject-candidate-${cand.candidate_id}`}
+                                  disabled={decisionInProgress !== null}
+                                  onClick={() =>
+                                    setModalState({
+                                      isOpen: true,
+                                      type: 'reject',
+                                      candidateId: cand.candidate_id,
+                                      name: cand.surface_text,
+                                      entityType: cand.entity_type,
+                                      notes: '',
+                                    })
+                                  }
+                                  className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 text-rose-700 rounded text-[11px] font-semibold border border-rose-200 transition-colors"
+                                >
+                                  Reject
+                                </button>
                               </div>
                             )}
                           </div>
@@ -617,6 +784,62 @@ export function DocumentIngestionPanel({ onUploadSuccess, defaultCaseId = '' }: 
                             <span className="text-neutral-400 font-normal">Evidence: </span>
                             "{rel.evidence_text}"
                           </div>
+
+                          {/* P1-C Relationship Decision Status or Action Bar */}
+                          {decidedCandidates[rel.candidate_relationship_id] ? (
+                            <div className="pt-1.5 border-t border-neutral-100 flex items-center justify-between">
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  decidedCandidates[rel.candidate_relationship_id].status === 'ACCEPTED_RELATIONSHIP'
+                                    ? 'bg-emerald-100 text-emerald-900 border border-emerald-200'
+                                    : 'bg-rose-100 text-rose-900 border border-rose-200'
+                                }`}
+                              >
+                                {decidedCandidates[rel.candidate_relationship_id].status}
+                                {decidedCandidates[rel.candidate_relationship_id].targetId &&
+                                  ` (${decidedCandidates[rel.candidate_relationship_id].targetId})`}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="pt-1.5 border-t border-neutral-100 flex items-center justify-end space-x-2">
+                              <button
+                                type="button"
+                                data-testid={`accept-rel-${rel.candidate_relationship_id}`}
+                                disabled={decisionInProgress !== null}
+                                onClick={() =>
+                                  setModalState({
+                                    isOpen: true,
+                                    type: 'relationship',
+                                    candidateId: rel.candidate_relationship_id,
+                                    targetId: rel.source_candidate_id,
+                                    name: `${rel.source_text} -> ${rel.target_text}`,
+                                    entityType: rel.relationship_type,
+                                    notes: '',
+                                  })
+                                }
+                                className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50 text-indigo-700 rounded text-[11px] font-semibold border border-indigo-200 transition-colors"
+                              >
+                                Accept Relationship
+                              </button>
+                              <button
+                                type="button"
+                                data-testid={`reject-rel-${rel.candidate_relationship_id}`}
+                                disabled={decisionInProgress !== null}
+                                onClick={() =>
+                                  setModalState({
+                                    isOpen: true,
+                                    type: 'reject-rel',
+                                    candidateId: rel.candidate_relationship_id,
+                                    name: `${rel.source_text} -> ${rel.target_text}`,
+                                    notes: '',
+                                  })
+                                }
+                                className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 text-rose-700 rounded text-[11px] font-semibold border border-rose-200 transition-colors"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -625,6 +848,90 @@ export function DocumentIngestionPanel({ onUploadSuccess, defaultCaseId = '' }: 
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {modalState.isOpen && (
+        <div
+          data-testid="decision-confirm-modal"
+          className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4"
+        >
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-5 space-y-4 border border-neutral-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start space-x-3">
+              <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg shrink-0">
+                <Shield className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-neutral-900">
+                  Authoritative Graph Promotion Confirmation
+                </h3>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  Confirm your investigative determination. Graph mutations are permanent, signed by your officer badge,
+                  and recorded in the audit trail.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-neutral-50 rounded-lg border border-neutral-200 space-y-1.5 text-xs">
+              <div>
+                <span className="font-semibold text-neutral-700">Action: </span>
+                <span className="font-mono text-neutral-900 uppercase font-bold">{modalState.type}</span>
+              </div>
+              {modalState.name && (
+                <div>
+                  <span className="font-semibold text-neutral-700">Subject: </span>
+                  <span className="font-medium text-neutral-900">{modalState.name}</span>
+                </div>
+              )}
+              {modalState.targetId && (
+                <div>
+                  <span className="font-semibold text-neutral-700">Target Node: </span>
+                  <span className="font-mono text-neutral-900 font-bold">{modalState.targetId}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-neutral-600">
+                Investigator Notes (Optional)
+              </label>
+              <textarea
+                value={modalState.notes}
+                onChange={(e) => setModalState((prev) => ({ ...prev, notes: e.target.value }))}
+                placeholder="Enter justification or provenance notes for court dossier..."
+                rows={2}
+                className="w-full text-xs p-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+              />
+            </div>
+
+            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-neutral-100">
+              <button
+                type="button"
+                disabled={decisionInProgress !== null}
+                onClick={() => setModalState((prev) => ({ ...prev, isOpen: false }))}
+                className="px-3 py-1.5 rounded-lg border border-neutral-300 text-neutral-700 text-xs font-semibold hover:bg-neutral-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                data-testid="confirm-decision-btn"
+                disabled={decisionInProgress !== null}
+                onClick={handleConfirmDecision}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-2xs"
+              >
+                {decisionInProgress ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <span>Confirm Decision</span>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

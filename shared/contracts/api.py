@@ -175,6 +175,8 @@ class CandidateEntity(BaseModel):
     provenance: CandidateProvenance
     resolution_status: CandidateResolutionStatus = CandidateResolutionStatus.UNRESOLVED
     resolution_candidates: list[ResolutionCandidateMatch] = Field(default_factory=list)
+    status: str = "PENDING"  # PENDING | ACCEPTED_EXISTING_ENTITY | ACCEPTED_NEW_ENTITY | REJECTED
+    resulting_graph_id: str | None = None
 
 
 class CandidateRelationship(BaseModel):
@@ -190,7 +192,8 @@ class CandidateRelationship(BaseModel):
     case_id: str | None = None
     source_span: SourceSpan | None = None
     provenance: CandidateProvenance
-    status: str = "CANDIDATE"
+    status: str = "CANDIDATE"  # CANDIDATE | ACCEPTED | REJECTED
+    resulting_edge_id: str | None = None
 
 
 class DocumentExtractionResult(BaseModel):
@@ -205,6 +208,66 @@ class DocumentExtractionResult(BaseModel):
     relationship_count: int = 0
     status: str = "COMPLETED"
     extraction_notes: list[str] = Field(default_factory=list)
+
+
+# ── Investigator Confirmation & Graph Promotion (P1-C) ─────────────────────
+
+class CandidateDecisionAction(str, Enum):
+    ACCEPT_EXISTING = "ACCEPT_EXISTING"
+    ACCEPT_NEW = "ACCEPT_NEW"
+    ACCEPT_RELATIONSHIP = "ACCEPT_RELATIONSHIP"
+    REJECT = "REJECT"
+
+
+class CandidateDecisionStatus(str, Enum):
+    PENDING = "PENDING"
+    ACCEPTED_EXISTING_ENTITY = "ACCEPTED_EXISTING_ENTITY"
+    ACCEPTED_NEW_ENTITY = "ACCEPTED_NEW_ENTITY"
+    ACCEPTED_RELATIONSHIP = "ACCEPTED_RELATIONSHIP"
+    REJECTED = "REJECTED"
+
+
+class AcceptExistingEntityRequest(BaseModel):
+    target_canonical_id: str
+    case_id: str | None = None
+    notes: str | None = None
+
+
+class AcceptNewEntityRequest(BaseModel):
+    entity_type: str
+    canonical_name: str
+    case_id: str | None = None
+    properties: dict[str, Any] = Field(default_factory=dict)
+    notes: str | None = None
+
+
+class AcceptRelationshipRequest(BaseModel):
+    source_canonical_id: str
+    target_canonical_id: str
+    relationship_type: str
+    case_id: str | None = None
+    properties: dict[str, Any] = Field(default_factory=dict)
+    notes: str | None = None
+
+
+class RejectCandidateRequest(BaseModel):
+    reason: str
+    notes: str | None = None
+
+
+class CandidateDecisionResponse(BaseModel):
+    decision_id: str
+    candidate_id: str
+    candidate_type: str  # ENTITY | RELATIONSHIP
+    action: str  # ACCEPT_EXISTING | ACCEPT_NEW | ACCEPT_RELATIONSHIP | REJECT
+    status: str
+    decided_by: str  # officer user_id
+    decided_at: datetime = Field(default_factory=_utcnow)
+    target_id: str | None = None
+    resulting_graph_id: str | None = None
+    reason: str | None = None
+    notes: str | None = None
+    audit_event_id: str | None = None
 
 
 # ── Graph & Network ───────────────────────────────────────────────────────────

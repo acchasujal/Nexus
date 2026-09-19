@@ -48,7 +48,7 @@ def client():
 @pytest.fixture(autouse=True)
 def ensure_clean_test_repo():
     app_repo = getattr(app.state, "repository", None)
-    if app_repo and (not hasattr(app_repo, "nodes") or len(app_repo.nodes) == 0):
+    if app_repo and (not hasattr(app_repo, "nodes") or "person-0001" not in app_repo.nodes):
         app_repo.clear()
 
 
@@ -462,6 +462,38 @@ def test_audit_trail_recorded_for_extraction(client, sp_token):
         ]
         assert len(completed_events) >= 1
         assert completed_events[0]["details"]["entity_count"] > 0
+
+
+def test_document_extraction_failed_audit_event(client, sp_token, monkeypatch):
+    """Verify DOCUMENT_EXTRACTION_FAILED audit event is emitted on unexpected extraction errors."""
+    app_repo = getattr(app.state, "repository", None)
+    text = "Memo detailing suspect."
+    up_res = client.post(
+        "/api/v1/documents",
+        files={"file": ("fail_audit.txt", text.encode("utf-8"), "text/plain")},
+        data={"source_type": DocumentSourceType.POLICE_REPORT.value},
+    )
+    assert up_res.status_code == 200
+    doc_id = up_res.json()["document_id"]
+
+    from backend.app.services.document_extraction_service import DocumentExtractionService
+
+    def mock_fail(*args, **kwargs):
+        raise RuntimeError("Simulated deterministic extraction parser failure")
+
+    monkeypatch.setattr(DocumentExtractionService, "_extract_deterministic_entities", mock_fail)
+
+    ext_res = client.post(f"/api/v1/documents/{doc_id}/extract")
+    assert ext_res.status_code == 500
+
+    if hasattr(app_repo, "audit_events"):
+        fail_events = [
+            e for e in app_repo.audit_events
+            if e.get("event_type") == AuditEventType.DOCUMENT_EXTRACTION_FAILED.value
+            and e.get("entity_id") == doc_id
+        ]
+        assert len(fail_events) >= 1
+        assert "Simulated deterministic extraction parser failure" in fail_events[0]["details"]["error"]
 
 
 def test_strict_no_graph_mutation_invariant(client, sp_token):

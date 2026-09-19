@@ -5,6 +5,10 @@
  */
 
 import type {
+  AcceptExistingEntityRequest,
+  AcceptNewEntityRequest,
+  AcceptRelationshipRequest,
+  CandidateDecisionResponse,
   CandidateEntity,
   CopilotQueryRequest,
   CopilotQueryResponse,
@@ -28,6 +32,7 @@ import type {
   ResolutionCandidate,
   ResolutionCandidateMatch,
   ResolutionDecisionRequest,
+  RejectCandidateRequest,
   EvidenceIntegrityCheckResult,
   ResolutionDecisionResponse,
   SnapshotDiffResponse,
@@ -337,6 +342,41 @@ export const apiClient = {
   },
   getCandidateResolution: (candidateId: string) => {
     return apiFetch<ResolutionCandidateMatch[]>(`/api/v1/candidates/${encodeURIComponent(candidateId)}/resolution`)
+  },
+
+  // ── Candidate Promotion & Graph Mutation (P1-C) ─────────────────────────
+  acceptExistingEntity: (candidateId: string, req: AcceptExistingEntityRequest) => {
+    return apiFetch<CandidateDecisionResponse>(`/api/v1/candidates/${encodeURIComponent(candidateId)}/accept-entity`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+  acceptNewEntity: (candidateId: string, req: AcceptNewEntityRequest) => {
+    return apiFetch<CandidateDecisionResponse>(`/api/v1/candidates/${encodeURIComponent(candidateId)}/accept-new`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+  rejectCandidateEntity: (candidateId: string, req: RejectCandidateRequest) => {
+    return apiFetch<CandidateDecisionResponse>(`/api/v1/candidates/${encodeURIComponent(candidateId)}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+  acceptCandidateRelationship: (relationshipId: string, req: AcceptRelationshipRequest) => {
+    return apiFetch<CandidateDecisionResponse>(`/api/v1/candidate-relationships/${encodeURIComponent(relationshipId)}/accept`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+  rejectCandidateRelationship: (relationshipId: string, req: RejectCandidateRequest) => {
+    return apiFetch<CandidateDecisionResponse>(`/api/v1/candidate-relationships/${encodeURIComponent(relationshipId)}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+  getCandidateDecisions: (candidateId: string) => {
+    return apiFetch<CandidateDecisionResponse[]>(`/api/v1/candidates/${encodeURIComponent(candidateId)}/decisions`)
   },
 
   // ── NEXUS prototype endpoints (frozen M4 contract) ──────────────────────

@@ -23,6 +23,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Query, Response, Fi
 from backend.app.api.dependencies import (
     get_audit_anchor_service,
     get_audit_service,
+    get_candidate_promotion_service,
     get_case_service,
     get_copilot_service,
     get_document_extraction_service,
@@ -52,6 +53,7 @@ from backend.app.core.graph.algorithms.pattern_detection import (
 )
 from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.case_service import InvestigationService
+from backend.app.services.candidate_promotion_service import CandidatePromotionService
 from backend.app.services.copilot_service import CopilotService
 from backend.app.services.document_extraction_service import DocumentExtractionService
 from backend.app.services.document_service import DocumentService
@@ -61,10 +63,14 @@ from backend.app.services.export_service import ExportService
 from backend.app.services.ingestion_service import IngestionService
 from backend.app.db.ingestion.contracts import UploadedSource, SourceType
 from shared.contracts.api import (
+    AcceptExistingEntityRequest,
+    AcceptNewEntityRequest,
+    AcceptRelationshipRequest,
     AuditLogEntry,
     AuthLoginRequest,
     AuthTokenResponse,
     BridgeNodeResponse,
+    CandidateDecisionResponse,
     CandidateEntity,
     CandidateRelationship,
     CommunityResponse,
@@ -90,6 +96,7 @@ from shared.contracts.api import (
     InvestigationSummaryResponse,
     NetworkGraphResponse,
     RepeatOffenderResponse,
+    RejectCandidateRequest,
     ResolutionCandidateMatch,
     SharedClusterResponse,
     TimelineEventResponse,
@@ -935,6 +942,70 @@ def create_core_router() -> APIRouter:
                 raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
 
         return candidate.resolution_candidates
+
+    # ── Candidate Promotion & Graph Mutation (Phase P1-C) ────────────────────
+
+    @router.post("/candidates/{candidate_id}/accept-entity", response_model=CandidateDecisionResponse)
+    def accept_candidate_existing_entity(
+        candidate_id: str,
+        req: AcceptExistingEntityRequest,
+        principal: Principal = Depends(get_principal),
+        promotion_svc: CandidatePromotionService = Depends(get_candidate_promotion_service),
+    ) -> CandidateDecisionResponse:
+        """Link a candidate entity to an existing canonical graph node with investigator confirmation."""
+        return promotion_svc.accept_existing_entity(candidate_id, req, principal)
+
+    @router.post("/candidates/{candidate_id}/accept-new", response_model=CandidateDecisionResponse)
+    def accept_candidate_new_entity(
+        candidate_id: str,
+        req: AcceptNewEntityRequest,
+        principal: Principal = Depends(get_principal),
+        promotion_svc: CandidatePromotionService = Depends(get_candidate_promotion_service),
+    ) -> CandidateDecisionResponse:
+        """Promote a candidate entity into a brand new authoritative graph node."""
+        return promotion_svc.accept_new_entity(candidate_id, req, principal)
+
+    @router.post("/candidates/{candidate_id}/reject", response_model=CandidateDecisionResponse)
+    def reject_candidate_entity(
+        candidate_id: str,
+        req: RejectCandidateRequest,
+        principal: Principal = Depends(get_principal),
+        promotion_svc: CandidatePromotionService = Depends(get_candidate_promotion_service),
+    ) -> CandidateDecisionResponse:
+        """Reject a candidate entity. Zero graph mutation occurs; candidate is marked REJECTED."""
+        return promotion_svc.reject_candidate(candidate_id, req, principal, candidate_type="ENTITY")
+
+    @router.post("/candidate-relationships/{relationship_id}/accept", response_model=CandidateDecisionResponse)
+    def accept_candidate_relationship(
+        relationship_id: str,
+        req: AcceptRelationshipRequest,
+        principal: Principal = Depends(get_principal),
+        promotion_svc: CandidatePromotionService = Depends(get_candidate_promotion_service),
+    ) -> CandidateDecisionResponse:
+        """Promote a candidate relationship into an authoritative graph edge.
+
+        Prerequisite: Both source and target entities must already exist as authoritative nodes.
+        """
+        return promotion_svc.accept_relationship(relationship_id, req, principal)
+
+    @router.post("/candidate-relationships/{relationship_id}/reject", response_model=CandidateDecisionResponse)
+    def reject_candidate_relationship(
+        relationship_id: str,
+        req: RejectCandidateRequest,
+        principal: Principal = Depends(get_principal),
+        promotion_svc: CandidatePromotionService = Depends(get_candidate_promotion_service),
+    ) -> CandidateDecisionResponse:
+        """Reject a candidate relationship. Zero graph mutation occurs; relationship is marked REJECTED."""
+        return promotion_svc.reject_candidate(relationship_id, req, principal, candidate_type="RELATIONSHIP")
+
+    @router.get("/candidates/{candidate_id}/decisions", response_model=list[CandidateDecisionResponse])
+    def get_candidate_decisions(
+        candidate_id: str,
+        principal: Principal = Depends(get_principal),
+        promotion_svc: CandidatePromotionService = Depends(get_candidate_promotion_service),
+    ) -> list[CandidateDecisionResponse]:
+        """Retrieve the review and decision history for a candidate entity or relationship."""
+        return promotion_svc.get_candidate_decisions(candidate_id, principal)
 
     # ── Dossier Export (Phase 5 / BE-05) ────────────────────────────────────
 

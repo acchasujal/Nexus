@@ -246,4 +246,35 @@ This document is the **single source of truth** for material architectural, secu
   - *Direct graph ingestion from text:* Rejected; risks hallucinated or false nodes polluting the evidence network.
   - *Automated entity fusion during extraction:* Rejected; violates judicial and evidentiary standards under Indian law.
 - **Consequences:** Provides an explainable, isolated candidate extraction layer with complete provenance grounding. Prepares the system for investigator-guided P1-C candidate review.
+- **Technical Debt Resolved in P1-C:**
+  - *Mutable-Repository vs. Read-Only Graph Interface:* Formally introduced `ReadOnlyGraphView` (`backend/app/core/graph/read_only_view.py`), which restricts graph queries to safe read-only operations (`get_node`, `get_all_nodes`, `get_neighbors`, `find_nodes_by_property`, `count_nodes`, `count_edges`). `DocumentExtractionService` now receives only `ReadOnlyGraphView` for entity resolution candidate lookups, eliminating architectural mutation exposure.
+
+---
+
+## DEC-016 — Investigator Confirmation → Authoritative Graph Mutation (P1-C)
+- **Date:** 2026-09-19
+- **Status:** Accepted & Implemented (P1-C)
+- **Decision:**
+  1. Establish Phase P1-C controlled promotion lifecycle:
+     $$\text{P1B CANDIDATE} \to \text{INVESTIGATOR REVIEW} \to \text{ACCEPT / REJECT} \to \text{VALIDATION} \to \text{AUTHORITATIVE GRAPH MUTATION} \to \text{PROVENANCE} \to \text{AUDIT} \to \text{REVIEWABLE HISTORY}$$
+  2. **Absolute Promotion Invariant:** No candidate entity or relationship may enter the authoritative case graph without an explicit, authorized, and authenticated investigator decision. Zero automatic promotion, zero automatic identity fusion, zero background ingestion bypass.
+  3. **100% Deterministic Promotion Path:** Zero LLM calls are permitted anywhere in the promotion or mutation path. Candidate data from P1B is treated purely as candidate input; the final graph mutation payload is synthesized, validated, and persisted by deterministic application code.
+  4. **Canonical ID Convention Consistency:** All newly created entities reuse existing canonical NEXUS prefix conventions (`person-XXXX`, `phone-XXXX`, `account-XXXX`, `vehicle-XXXX`, `org-XXXX`, `location-XXXX`). Secondary incompatible naming schemes are strictly barred, ensuring full downstream compatibility with `GraphStore`, Neo4j, graph projections, GraphRAG, and entity resolution.
+  5. **Existing Graph Schema Compatibility:** Linking candidates to existing entities (`link_candidate_to_entity`) preserves canonical graph schemas without injecting arbitrary non-canonical node attributes. Candidate references are merged directly into canonical provenance arrays (`provenance.supporting_documents`).
+  6. **Separation of Powers & Server-Side RBAC (`can_decide_candidate`):**
+     - Anonymous callers are strictly rejected (401/403).
+     - `ANALYST` role has analytical read-only access and is forbidden from executing graph mutations or candidate confirmations (403).
+     - `INVESTIGATOR` / `IO` must be assigned directly to the case (403 if unassigned).
+     - `SUPERVISOR` / `SP` / `ADMIN` have supervisory authority covering divisional/state cases.
+  7. **Edge Deduplication & Evidence Corroboration:** Accepting a candidate relationship where a canonical edge already connects the source and target nodes does NOT create a redundant duplicate edge. It corroborates the existing edge by appending the new document citation and case ID to its provenance records.
+  8. **Strict Transaction Failure & Atomicity Safeguard:** If a mutation fails (simulated graph/repository/Neo4j disk failure):
+     - An HTTP 500 error is returned.
+     - The candidate remains available for review/retry and is NOT marked `ACCEPTED`.
+     - No false-success decision record is persisted.
+     - No successful promotion audit event is emitted; instead, a failure event (`CANDIDATE_PROMOTION_FAILED`) is recorded.
+     - In-flight mutations are safely rolled back, leaving zero partial corruption in the graph.
+  9. **Idempotency & Conflicting Decisions Protection:** Re-submitting an identical decision returns the existing decision idempotently (200 OK). Attempting to accept a candidate that was already rejected (or vice versa) raises an HTTP 409 Conflict.
+- **Reason:** Ensuring that the authoritative investigation graph remains strictly court-admissible, grounded in verifiable physical evidence under Indian law, and free from algorithmic or predictive guilt bias requires an airtight, human-in-the-loop promotion boundary.
+- **Consequences:** The authoritative graph expands with new court-ready nodes and corroborating edges, backed by cryptographic provenance and officer badge attribution, while maintaining complete system stability and backward compatibility.
+
 

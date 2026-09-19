@@ -96,6 +96,7 @@ class PostgresBackendRepository:
         self.batches: dict[str, dict[str, Any]] = {}
         self.documents: dict[str, dict[str, Any]] = {}
         self.candidate_extractions: dict[str, dict[str, Any]] = {}
+        self.candidate_decisions: dict[str, list[dict[str, Any]]] = {}
 
         # 1. Initialize schema
         self._init_schema()
@@ -1136,4 +1137,56 @@ class PostgresBackendRepository:
             for entity in extraction.get("candidate_entities", []):
                 if entity.get("candidate_id") == candidate_id:
                     return entity
+        return None
+
+    def get_candidate_relationship(self, relationship_id: str) -> dict[str, Any] | None:
+        """Retrieve a specific candidate relationship by relationship_id across all extractions."""
+        for extraction in self.candidate_extractions.values():
+            for rel in extraction.get("candidate_relationships", []):
+                if rel.get("candidate_relationship_id") == relationship_id:
+                    return rel
+        return None
+
+    # ── Candidate Review & Investigator Decisions (P1-C) ─────────────────────
+
+    def store_candidate_decision(self, decision: dict[str, Any]) -> dict[str, Any]:
+        """Store an investigator decision on a candidate entity or relationship."""
+        cand_id = str(decision["candidate_id"])
+        self.candidate_decisions.setdefault(cand_id, []).append(decision)
+        return decision
+
+    def get_candidate_decisions(self, candidate_id: str) -> list[dict[str, Any]]:
+        """Retrieve the decision history for a given candidate entity or relationship."""
+        return list(self.candidate_decisions.get(candidate_id, []))
+
+    def update_candidate_entity_status(
+        self,
+        candidate_id: str,
+        status: str,
+        resulting_graph_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Update the review status and resulting authoritative graph ID of a candidate entity."""
+        for extraction in self.candidate_extractions.values():
+            for entity in extraction.get("candidate_entities", []):
+                if entity.get("candidate_id") == candidate_id:
+                    entity["status"] = status
+                    if resulting_graph_id is not None:
+                        entity["resulting_graph_id"] = resulting_graph_id
+                    return entity
+        return None
+
+    def update_candidate_relationship_status(
+        self,
+        relationship_id: str,
+        status: str,
+        resulting_edge_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Update the review status and resulting authoritative edge ID of a candidate relationship."""
+        for extraction in self.candidate_extractions.values():
+            for rel in extraction.get("candidate_relationships", []):
+                if rel.get("candidate_relationship_id") == relationship_id:
+                    rel["status"] = status
+                    if resulting_edge_id is not None:
+                        rel["resulting_edge_id"] = resulting_edge_id
+                    return rel
         return None

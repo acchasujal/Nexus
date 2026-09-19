@@ -190,12 +190,37 @@ def get_document_service(
     return DocumentService(repo, audit_svc)
 
 
+def get_read_only_graph_view(
+    repo: RepositoryType = Depends(get_repository),
+) -> Any:
+    from backend.app.core.graph.read_only_view import ReadOnlyGraphView
+    return ReadOnlyGraphView(repo)
+
+
 def get_document_extraction_service(
     repo: RepositoryType = Depends(get_repository),
     audit_svc: AuditService = Depends(get_audit_service),
+    graph_view: Any = Depends(get_read_only_graph_view),
 ) -> Any:
     from backend.app.services.document_extraction_service import DocumentExtractionService
-    return DocumentExtractionService(repo, audit_svc)
+    return DocumentExtractionService(repo, audit_svc, graph_view=graph_view)
+
+
+def get_graph_mutation_service(
+    repo: RepositoryType = Depends(get_repository),
+) -> Any:
+    from backend.app.services.graph_mutation_service import GraphMutationService
+    return GraphMutationService(repo)
+
+
+def get_candidate_promotion_service(
+    repo: RepositoryType = Depends(get_repository),
+    mutation_svc: Any = Depends(get_graph_mutation_service),
+    audit_svc: AuditService = Depends(get_audit_service),
+    auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+) -> Any:
+    from backend.app.services.candidate_promotion_service import CandidatePromotionService
+    return CandidatePromotionService(repo, mutation_svc, audit_svc, auth_policy)
 
 
 def get_graph_repository(request: Request):

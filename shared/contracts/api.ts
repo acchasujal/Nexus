@@ -177,6 +177,8 @@ export interface CandidateEntity {
   provenance: CandidateProvenance
   resolution_status: CandidateResolutionStatus
   resolution_candidates: ResolutionCandidateMatch[]
+  status?: string | null
+  resulting_graph_id?: string | null
 }
 
 export interface CandidateRelationship {
@@ -192,7 +194,8 @@ export interface CandidateRelationship {
   case_id?: string | null
   source_span?: SourceSpan | null
   provenance: CandidateProvenance
-  status: 'CANDIDATE' | string
+  status: 'CANDIDATE' | 'ACCEPTED' | 'REJECTED' | string
+  resulting_edge_id?: string | null
 }
 
 export interface DocumentExtractionResult {
@@ -207,6 +210,64 @@ export interface DocumentExtractionResult {
   relationship_count: number
   status: string
   extraction_notes: string[]
+}
+
+// ── Investigator Confirmation & Graph Promotion (P1-C) ─────────────────────
+
+export type CandidateDecisionAction =
+  | 'ACCEPT_EXISTING'
+  | 'ACCEPT_NEW'
+  | 'ACCEPT_RELATIONSHIP'
+  | 'REJECT'
+
+export type CandidateDecisionStatus =
+  | 'PENDING'
+  | 'ACCEPTED_EXISTING_ENTITY'
+  | 'ACCEPTED_NEW_ENTITY'
+  | 'ACCEPTED_RELATIONSHIP'
+  | 'REJECTED'
+
+export interface AcceptExistingEntityRequest {
+  target_canonical_id: string
+  case_id?: string | null
+  notes?: string | null
+}
+
+export interface AcceptNewEntityRequest {
+  entity_type: string
+  canonical_name: string
+  case_id?: string | null
+  properties?: Record<string, unknown>
+  notes?: string | null
+}
+
+export interface AcceptRelationshipRequest {
+  source_canonical_id: string
+  target_canonical_id: string
+  relationship_type: string
+  case_id?: string | null
+  properties?: Record<string, unknown>
+  notes?: string | null
+}
+
+export interface RejectCandidateRequest {
+  reason: string
+  notes?: string | null
+}
+
+export interface CandidateDecisionResponse {
+  decision_id: string
+  candidate_id: string
+  candidate_type: 'ENTITY' | 'RELATIONSHIP' | string
+  action: CandidateDecisionAction | string
+  status: CandidateDecisionStatus | string
+  decided_by: string
+  decided_at: string
+  target_id?: string | null
+  resulting_graph_id?: string | null
+  reason?: string | null
+  notes?: string | null
+  audit_event_id?: string | null
 }
 
 export type NodePresenceType =

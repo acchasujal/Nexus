@@ -86,6 +86,13 @@ class AuditEventType(str, Enum):
     DOCUMENT_EXTRACTION_STARTED = "document_extraction_started"
     DOCUMENT_CANDIDATES_EXTRACTED = "document_candidates_extracted"
     CANDIDATE_VIEWED = "candidate_viewed"
+    CANDIDATE_REVIEWED = "candidate_reviewed"
+    CANDIDATE_ACCEPTED = "candidate_accepted"
+    CANDIDATE_REJECTED = "candidate_rejected"
+    ENTITY_PROMOTED = "entity_promoted"
+    ENTITY_LINKED = "entity_linked"
+    RELATIONSHIP_PROMOTED = "relationship_promoted"
+    CANDIDATE_PROMOTION_FAILED = "candidate_promotion_failed"
 
     # Export (BE-05)
     EXPORT_INITIATED = "export_initiated"
@@ -128,7 +135,7 @@ class AuditService:
         entity_type: str | None = None,
         request_id: str | None = None,
         details: dict[str, Any] | None = None,
-    ) -> None:
+    ) -> str | None:
         """Record an audit event without ever throwing exceptions to callers."""
         try:
             # Determine previous_hash safely from the existing repository audit log
@@ -142,6 +149,7 @@ class AuditService:
             payload = {
                 "id": str(uuid.uuid4()),
                 "event_type": event_type.value if hasattr(event_type, "value") else str(event_type),
+                "action": event_type.value if hasattr(event_type, "value") else str(event_type),
                 "actor_id": actor_id,
                 "case_id": case_id,
                 "entity_id": entity_id,
@@ -187,8 +195,10 @@ class AuditService:
                     logger.debug("Optional direct PostgreSQL audit write: %s", db_exc)
 
             logger.info("AUDIT: event=%s actor=%s entity=%s", event_type, actor_id, entity_id or case_id)
+            return payload["id"]
         except Exception as exc:
             logger.error("AuditService.record failed: %s", exc)
+            return None
 
     def get_event(self, event_id: str) -> dict[str, Any] | None:
         """Retrieve a single audit event by ID from the repository."""

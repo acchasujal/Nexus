@@ -40,6 +40,7 @@ from backend.app.db.ingestion.normalization import (
     normalize_account,
     normalize_name,
 )
+from backend.app.core.graph.read_only_view import ReadOnlyGraphView
 from backend.app.services.audit_service import AuditEventType, AuditService
 from shared.contracts.api import (
     CandidateEntity,
@@ -82,6 +83,9 @@ class DocumentExtractionService:
          never performs identity fusion or confirms identities.
       4. Mandatory Evidence: Candidate relationships require explicit textual evidence.
       5. Complete Provenance: Every candidate traces to document ID, SHA-256, and character span.
+
+    Notice:
+      P1B outputs are candidate extractions and are not treated by NEXUS as authoritative evidence or confirmed identities.
     """
 
     def __init__(
@@ -89,10 +93,12 @@ class DocumentExtractionService:
         repository: Any,
         audit_service: AuditService,
         llm_client: BaseLLMClient | None = None,
+        graph_view: ReadOnlyGraphView | None = None,
     ) -> None:
         self.repo = repository
         self.audit = audit_service
         self._llm_client = llm_client
+        self.graph_view = graph_view if graph_view is not None else ReadOnlyGraphView(repository)
 
     def _get_llm(self) -> BaseLLMClient | None:
         if self._llm_client is not None:
@@ -581,8 +587,6 @@ class DocumentExtractionService:
 
         Never mutates the graph, creates nodes, creates edges, or confirms identities.
         """
-        nodes = getattr(self.repo, "nodes", {})
-
         for cand in candidates:
             matches: list[ResolutionCandidateMatch] = []
 
@@ -591,7 +595,7 @@ class DocumentExtractionService:
                 norm_query = cand.normalized_value or normalize_text(cand.surface_text)
                 phon_query = phonetic_normalize(cand.surface_text)
 
-                for nid, node in nodes.items():
+                for nid, node in self.graph_view.iterate_nodes():
                     if node.get("entity_type") not in ("Person", "PERSON"):
                         continue
                     props = node.get("properties", {})
@@ -628,7 +632,7 @@ class DocumentExtractionService:
             # 2. Phone Resolution
             elif cand.entity_type == "PHONE":
                 clean_target = cand.normalized_value or clean_phone(cand.surface_text)
-                for nid, node in nodes.items():
+                for nid, node in self.graph_view.iterate_nodes():
                     if node.get("entity_type") not in ("Phone", "PHONE"):
                         continue
                     props = node.get("properties", {})
@@ -647,7 +651,7 @@ class DocumentExtractionService:
             # 3. Vehicle Resolution
             elif cand.entity_type == "VEHICLE":
                 clean_target = cand.normalized_value or clean_vehicle(cand.surface_text)
-                for nid, node in nodes.items():
+                for nid, node in self.graph_view.iterate_nodes():
                     if node.get("entity_type") not in ("Vehicle", "VEHICLE"):
                         continue
                     props = node.get("properties", {})
@@ -666,7 +670,7 @@ class DocumentExtractionService:
             # 4. Account Resolution
             elif cand.entity_type == "ACCOUNT":
                 clean_target = cand.normalized_value
-                for nid, node in nodes.items():
+                for nid, node in self.graph_view.iterate_nodes():
                     if node.get("entity_type") not in ("Account", "ACCOUNT", "BankAccount"):
                         continue
                     props = node.get("properties", {})
