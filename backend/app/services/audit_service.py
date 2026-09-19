@@ -125,6 +125,13 @@ class AuditEventType(str, Enum):
     # Operational Intelligence Events (A3)
     INTELLIGENCE_EVENT_RECORDED = "intelligence_event_recorded"
 
+    # Verification Tasks (A7)
+    VERIFICATION_TASK_CREATED = "verification_task_created"
+    VERIFICATION_TASK_ASSIGNED = "verification_task_assigned"
+    VERIFICATION_TASK_TRANSITIONED = "verification_task_transitioned"
+    VERIFICATION_TASK_EVIDENCE_ATTACHED = "verification_task_evidence_attached"
+    VERIFICATION_TASK_DECIDED = "verification_task_decided"
+
 
 class AuditService:
     """Application-layer service for writing and querying audit logs."""

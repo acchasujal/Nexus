@@ -1167,6 +1167,7 @@ class IntelligenceEventType(str, Enum):
     SIGNAL_GENERATED = "SIGNAL_GENERATED"
     EVIDENCE_ASSESSED = "EVIDENCE_ASSESSED"
     VERIFICATION_REQUIRED = "VERIFICATION_REQUIRED"
+    VERIFICATION_TASK_CREATED = "VERIFICATION_TASK_CREATED"
     VERIFICATION_COMPLETED = "VERIFICATION_COMPLETED"
     ENTITY_RESOLUTION_DECIDED = "ENTITY_RESOLUTION_DECIDED"
     INVESTIGATOR_DECISION = "INVESTIGATOR_DECISION"
@@ -1238,6 +1239,130 @@ class IntelligenceEventListResponse(BaseModel):
     case_id: str | None = None
     limit: int = 50
     offset: int = 0
+
+
+# ── A7 Persistent Verification Tasks Domain Contracts ────────────────────────
+
+class VerificationTaskStatus(str, Enum):
+    CREATED = "CREATED"
+    ASSIGNED = "ASSIGNED"
+    REQUESTED = "REQUESTED"
+    RECEIVED = "RECEIVED"
+    UNDER_REVIEW = "UNDER_REVIEW"
+    VERIFIED = "VERIFIED"
+    DISMISSED = "DISMISSED"
+
+
+class VerificationTaskDecision(str, Enum):
+    VERIFIED = "VERIFIED"
+    DISMISSED = "DISMISSED"
+
+
+class TaskTransitionHistoryItem(BaseModel):
+    from_status: VerificationTaskStatus
+    to_status: VerificationTaskStatus
+    actor_id: str
+    timestamp: datetime = Field(default_factory=_utcnow)
+    rationale: str | None = None
+
+
+class VerificationTask(BaseModel):
+    """
+    Authoritative domain contract for persistent investigator verification tasks (A7).
+    Bridges proactive intelligence recommendations and investigator evidence collection,
+    strictly without predictive guilt scoring.
+    """
+    # Identity
+    task_id: str
+    case_id: str
+    created_at: datetime = Field(default_factory=_utcnow)
+    updated_at: datetime = Field(default_factory=_utcnow)
+
+    # Origin
+    originating_event_id: str | None = None
+    originating_pulse_id: str | None = None
+    target_claim: str
+    reason: str
+
+    # Verification requirement
+    requested_evidence_type: str
+    verification_action: str
+    expected_outcome: str | None = None
+    evidence_gap: str | None = None
+
+    # Assignment
+    assigned_officer_id: str | None = None
+    assigned_role: UserRole | None = None
+    assigned_at: datetime | None = None
+
+    # Lifecycle
+    status: VerificationTaskStatus = VerificationTaskStatus.CREATED
+    history: list[TaskTransitionHistoryItem] = Field(default_factory=list)
+
+    # Evidence linkage (references only)
+    requested_evidence_ids: list[str] = Field(default_factory=list)
+    received_evidence_ids: list[str] = Field(default_factory=list)
+    supporting_evidence_ids: list[str] = Field(default_factory=list)
+    conflicting_evidence_ids: list[str] = Field(default_factory=list)
+
+    # Decision
+    decision: VerificationTaskDecision | None = None
+    decision_rationale: str | None = None
+    deciding_actor: str | None = None
+    decided_at: datetime | None = None
+
+
+class CreateVerificationTaskRequest(BaseModel):
+    """Request contract to instantiate a persistent verification task."""
+    case_id: str
+    target_claim: str
+    reason: str
+    requested_evidence_type: str
+    verification_action: str
+    expected_outcome: str | None = None
+    evidence_gap: str | None = None
+    originating_event_id: str | None = None
+    originating_pulse_id: str | None = None
+    assigned_officer_id: str | None = None
+    assigned_role: UserRole | None = None
+
+
+class AssignVerificationTaskRequest(BaseModel):
+    """Request contract to assign/reassign a verification task."""
+    assigned_officer_id: str
+    assigned_role: UserRole | None = None
+    rationale: str | None = None
+
+
+class TransitionVerificationTaskRequest(BaseModel):
+    """Request contract to advance task lifecycle state."""
+    target_status: VerificationTaskStatus
+    rationale: str | None = None
+
+
+class AttachEvidenceRequest(BaseModel):
+    """Request contract to link an authoritative evidence record to a verification task."""
+    evidence_id: str
+    relationship_type: str = "SUPPORTING"  # SUPPORTING, CONFLICTING, RECEIVED, REQUESTED
+    notes: str | None = None
+
+
+class DecideVerificationTaskRequest(BaseModel):
+    """Request contract to record final verification outcome."""
+    decision: VerificationTaskDecision
+    rationale: str
+
+
+class VerificationTaskListResponse(BaseModel):
+    """Paginated collection of verification tasks."""
+    tasks: list[VerificationTask]
+    total_count: int
+    case_id: str | None = None
+    status: VerificationTaskStatus | None = None
+    assignee: str | None = None
+    limit: int = 50
+    offset: int = 0
+
 
 
 

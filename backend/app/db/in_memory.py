@@ -78,6 +78,7 @@ class InMemoryBackendRepository:
         self.candidate_extractions: dict[str, dict[str, Any]] = {}
         self.candidate_decisions: dict[str, list[dict[str, Any]]] = {}
         self.intelligence_events: dict[str, dict[str, Any]] = {}
+        self.verification_tasks: dict[str, dict[str, Any]] = {}
         self.state_path = state_path
 
         self._load_artifact(artifact_path or self._default_artifact_path())
@@ -101,6 +102,7 @@ class InMemoryBackendRepository:
         self.candidate_extractions.clear()
         self.candidate_decisions.clear()
         self.intelligence_events.clear()
+        self.verification_tasks.clear()
         self._load_artifact(self._default_artifact_path())
         if self.state_path and self.state_path.exists():
             try:
@@ -261,6 +263,7 @@ class InMemoryBackendRepository:
             self.audit_events = list(raw.get("audit_events", []))
             self.review_candidates = dict(raw.get("review_candidates", {}))
             self.intelligence_events = dict(raw.get("intelligence_events", {}))
+            self.verification_tasks = dict(raw.get("verification_tasks", {}))
         except (json.JSONDecodeError, OSError, ValueError, TypeError) as exc:
             logger.debug("Optional state file loading skipped: %s", exc)
 
@@ -272,6 +275,7 @@ class InMemoryBackendRepository:
             "audit_events": self.audit_events,
             "review_candidates": self.review_candidates,
             "intelligence_events": self.intelligence_events,
+            "verification_tasks": self.verification_tasks,
             "saved_at": _utcnow().isoformat(),
         }
         self.state_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -1075,6 +1079,54 @@ class InMemoryBackendRepository:
 
         filtered.sort(key=_sort_key, reverse=True)
         total_count = len(filtered)
-        paginated = filtered[offset : offset + limit]
-        return paginated, total_count
+        return filtered[offset : offset + limit], len(filtered)
 
+    # ── Persistent Verification Tasks Repository Methods (A7) ────────────────
+
+    def save_verification_task(self, task_record: dict[str, Any]) -> dict[str, Any]:
+        """Store a verification task in the repository."""
+        task_id = str(task_record["task_id"])
+        self.verification_tasks[task_id] = dict(task_record)
+        self._save_state()
+        return self.verification_tasks[task_id]
+
+    def get_verification_task(self, task_id: str) -> dict[str, Any] | None:
+        """Retrieve a verification task by its canonical task ID."""
+        return self.verification_tasks.get(str(task_id))
+
+    def update_verification_task(self, task_record: dict[str, Any]) -> dict[str, Any]:
+        """Update an existing verification task record."""
+        task_id = str(task_record["task_id"])
+        self.verification_tasks[task_id] = dict(task_record)
+        self._save_state()
+        return self.verification_tasks[task_id]
+
+    def list_verification_tasks(
+        self,
+        case_id: str | None = None,
+        assignee: str | None = None,
+        status: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """List and filter verification tasks with pagination."""
+        all_tasks = list(self.verification_tasks.values())
+
+        filtered: list[dict[str, Any]] = []
+        for t in all_tasks:
+            if case_id and t.get("case_id") != case_id:
+                continue
+            if assignee:
+                assigned_officer = t.get("assigned_officer_id")
+                if assigned_officer != assignee:
+                    continue
+            if status:
+                st_val = t.get("status")
+                if hasattr(st_val, "value"):
+                    st_val = st_val.value
+                target_st = status.value if hasattr(status, "value") else str(status)
+                if str(st_val).upper() != target_st.upper():
+                    continue
+            filtered.append(t)
+
+        return filtered[offset : offset + limit], len(filtered)

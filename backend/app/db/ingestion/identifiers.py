@@ -91,6 +91,25 @@ def make_intelligence_event_id(
     return f"intevt-{digest}"
 
 
+def make_verification_task_id(
+    case_id: str,
+    target_claim: str,
+    requested_evidence_type: str,
+    discriminator: str = "",
+) -> str:
+    """Create a stable, deterministic verification task ID (vtask-XXXX)."""
+    parts = (
+        str(case_id).strip(),
+        str(target_claim).strip(),
+        str(requested_evidence_type).strip().upper(),
+        str(discriminator).strip(),
+    )
+    if not str(case_id).strip() or not str(target_claim).strip():
+        raise ValueError("case_id and target_claim must not be empty")
+    digest = _stable_id("verification_task", *parts).replace("-", "")[:12]
+    return f"vtask-{digest}"
+
+
 __all__ = [
     "make_account_id",
     "make_batch_id",
@@ -101,5 +120,7 @@ __all__ = [
     "make_relationship_id",
     "make_source_record_id",
     "make_vehicle_id",
+    "make_verification_task_id",
 ]
+
 

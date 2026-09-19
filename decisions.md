@@ -318,3 +318,25 @@ This document is the **single source of truth** for material architectural, secu
 - **Reason:** Prior to A3, event representations across NEXUS were fragmented across disparate subsystem objects (`Event` graph nodes, `IntelligencePulsePacket`, `AuditEvent`). Unifying the event contract at the domain level provides the structural foundation for reactive intelligence propagation without introducing speculative predictive bias or untracked state transitions.
 - **Consequences:** Provides a clean, typed, canonical event foundation across backend Python and frontend TypeScript contracts while maintaining 100% test passing rates.
 
+---
+
+## DEC-019 — Persistent Verification Tasks Workflow & Domain Contracts (A7)
+- **Date:** 2026-09-20
+- **Status:** Accepted & Implemented (A7)
+- **Decision:**
+  1. **Persistent Task Lifecycle:** Upgrade read-only recommendations (`VerificationActionItem` / `NetworkPulseItem.verification_plan`) into first-class, persistent `VerificationTask` entities governed by an explicit 7-state lifecycle:
+     $$\text{CREATED} \to \text{ASSIGNED} \to \text{REQUESTED} \to \text{RECEIVED} \to \text{UNDER\_REVIEW} \to \text{VERIFIED} \mid \text{DISMISSED}$$
+  2. **Zero Predictive Guilt Constraint:** Maintain strict exclusion of `confidence`, `guilt`, or `risk` scores. Verification tasks represent actionable investigative inquiries to address concrete evidentiary gaps, never automated guilt determinations.
+  3. **Deterministic Canonical Identifier:** Introduce `make_verification_task_id(case_id, target_claim, requested_evidence_type, discriminator)` producing stable `vtask-{hash12}` identifiers.
+  4. **Idempotent Pulse Conversion:** Converting pulse verification recommendations into tasks is strictly idempotent. Repeated calls to `/nexus/verification/tasks/from-pulse/{pulse_id}` reuse existing tasks without generating duplicates.
+  5. **Terminal State Immutability:** Once a task reaches terminal state `VERIFIED` or `DISMISSED`, all subsequent state transitions, reassignments, and evidence attachments are strictly rejected with a domain error.
+  6. **Authoritative Evidence References:** Verification tasks link directly to existing authoritative evidence objects (`requested_evidence_ids`, `received_evidence_ids`, `supporting_evidence_ids`, `conflicting_evidence_ids`). Attempting to attach non-existent evidence IDs is rejected.
+  7. **Reuse Established Case Authorization Policy:** Enforce standard NEXUS case authorization (`can_access_case`) across all task endpoints without inventing ad-hoc role prohibitions.
+  8. **Audit & Intelligence Event Integration:**
+     - Emits Section 63 BSA audit events: `VERIFICATION_TASK_CREATED`, `VERIFICATION_TASK_ASSIGNED`, `VERIFICATION_TASK_TRANSITIONED`, `VERIFICATION_TASK_EVIDENCE_ATTACHED`, `VERIFICATION_TASK_DECIDED`.
+     - Emits A3 `IntelligenceEvent`s: `VERIFICATION_TASK_CREATED` upon task creation and `VERIFICATION_COMPLETED` upon reaching terminal status.
+  9. **Explicit Epistemic Isolation (Zero Graph Mutations):** A7 strictly ends at the verified/dismissed investigator decision. No graph mutation, no snapshot regeneration, no network diff recomputation, and no automated routing occurs in A7. Closed-loop propagation is strictly reserved for Phase A8.
+- **Reason:** Real-world investigative operations require tracking, assigning, and corroborating missing evidence across jurisdictions. Read-only recommendations lacked accountability, audit history, and durable evidentiary linkage.
+- **Consequences:** Empowers investigators with an immutable, verifiable action plan to bridge intelligence gaps while preserving court admissibility under Section 63 BSA.
+
+

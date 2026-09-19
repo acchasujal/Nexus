@@ -46,6 +46,7 @@ from backend.app.api.dependencies import (
     get_digital_shadow_service,
     get_case_dna_service,
     get_intelligence_event_service,
+    get_verification_task_service,
 )
 from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal
@@ -96,6 +97,15 @@ from shared.contracts.api import (
     NetworkDiffResponse,
     NetworkPulseItem,
     ReviewPriority,
+    AssignVerificationTaskRequest,
+    AttachEvidenceRequest,
+    CreateVerificationTaskRequest,
+    DecideVerificationTaskRequest,
+    TransitionVerificationTaskRequest,
+    VerificationTask,
+    VerificationTaskDecision,
+    VerificationTaskListResponse,
+    VerificationTaskStatus,
 )
 from backend.app.services.ingestion_service import IngestionService
 from backend.app.db.ingestion.contracts import UploadedSource, SourceType
@@ -2458,6 +2468,154 @@ def create_nexus_router() -> APIRouter:
             )
         except PermissionError as e:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+    # ── A7 Persistent Verification Tasks Endpoints ───────────────────────────
+
+    @router.post("/nexus/verification/tasks", response_model=VerificationTask, status_code=status.HTTP_201_CREATED)
+    def create_verification_task(
+        request: CreateVerificationTaskRequest,
+        principal: Principal = Depends(get_principal),
+        task_svc: Any = Depends(get_verification_task_service),
+    ) -> VerificationTask:
+        """Create a persistent verification task to resolve an identified evidence gap."""
+        try:
+            return task_svc.create_task(request, principal=principal)
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    @router.post("/nexus/verification/tasks/from-pulse/{pulse_id}", response_model=list[VerificationTask])
+    def create_verification_tasks_from_pulse(
+        pulse_id: str,
+        case_id: str | None = Query(None, description="Optional target case override"),
+        principal: Principal = Depends(get_principal),
+        task_svc: Any = Depends(get_verification_task_service),
+    ) -> list[VerificationTask]:
+        """Idempotently instantiate persistent verification tasks from an active pulse recommendation."""
+        try:
+            return task_svc.create_tasks_from_pulse(pulse_id, case_id=case_id, principal=principal)
+        except KeyError as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    @router.get("/nexus/verification/tasks/{task_id}", response_model=VerificationTask)
+    def get_verification_task(
+        task_id: str,
+        principal: Principal = Depends(get_principal),
+        task_svc: Any = Depends(get_verification_task_service),
+    ) -> VerificationTask:
+        """Retrieve an authoritative verification task by canonical ID."""
+        try:
+            task = task_svc.get_task(task_id, principal=principal)
+            if not task:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"VerificationTask '{task_id}' not found")
+            return task
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+    @router.get("/nexus/verification/tasks", response_model=VerificationTaskListResponse)
+    def list_verification_tasks(
+        case_id: str | None = Query(None, description="Optional case ID filter"),
+        assignee: str | None = Query(None, description="Optional assigned officer filter"),
+        task_status: VerificationTaskStatus | None = Query(None, alias="status", description="Optional lifecycle status filter"),
+        limit: int = Query(50, ge=1, le=200, description="Page limit"),
+        offset: int = Query(0, ge=0, description="Page offset"),
+        principal: Principal = Depends(get_principal),
+        task_svc: Any = Depends(get_verification_task_service),
+    ) -> VerificationTaskListResponse:
+        """Query and filter verification tasks with case RBAC authorization."""
+        try:
+            tasks, total_count = task_svc.list_tasks(
+                case_id=case_id,
+                assignee=assignee,
+                status=task_status,
+                limit=limit,
+                offset=offset,
+                principal=principal,
+            )
+            return VerificationTaskListResponse(
+                tasks=tasks,
+                total_count=total_count,
+                case_id=case_id,
+                status=task_status,
+                assignee=assignee,
+                limit=limit,
+                offset=offset,
+            )
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+    @router.post("/nexus/verification/tasks/{task_id}/assign", response_model=VerificationTask)
+    def assign_verification_task(
+        task_id: str,
+        request: AssignVerificationTaskRequest,
+        principal: Principal = Depends(get_principal),
+        task_svc: Any = Depends(get_verification_task_service),
+    ) -> VerificationTask:
+        """Assign or reassign a verification task to an investigator or team."""
+        try:
+            return task_svc.assign_task(task_id, request, principal=principal)
+        except KeyError as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    @router.post("/nexus/verification/tasks/{task_id}/transition", response_model=VerificationTask)
+    def transition_verification_task(
+        task_id: str,
+        request: TransitionVerificationTaskRequest,
+        principal: Principal = Depends(get_principal),
+        task_svc: Any = Depends(get_verification_task_service),
+    ) -> VerificationTask:
+        """Advance a verification task through the validated lifecycle state machine."""
+        try:
+            return task_svc.transition_task(task_id, request, principal=principal)
+        except KeyError as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    @router.post("/nexus/verification/tasks/{task_id}/evidence", response_model=VerificationTask)
+    def attach_evidence_to_task(
+        task_id: str,
+        request: AttachEvidenceRequest,
+        principal: Principal = Depends(get_principal),
+        task_svc: Any = Depends(get_verification_task_service),
+    ) -> VerificationTask:
+        """Link an authoritative evidence record to a verification task."""
+        try:
+            return task_svc.attach_evidence(task_id, request, principal=principal)
+        except KeyError as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    @router.post("/nexus/verification/tasks/{task_id}/decision", response_model=VerificationTask)
+    def record_verification_task_decision(
+        task_id: str,
+        request: DecideVerificationTaskRequest,
+        principal: Principal = Depends(get_principal),
+        task_svc: Any = Depends(get_verification_task_service),
+    ) -> VerificationTask:
+        """Record a final VERIFIED or DISMISSED decision with rationale on a verification task."""
+        try:
+            return task_svc.decide_task(task_id, request, principal=principal)
+        except KeyError as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     return router
 

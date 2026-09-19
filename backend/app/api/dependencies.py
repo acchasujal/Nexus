@@ -355,6 +355,33 @@ def get_intelligence_event_service(
     return event_svc
 
 
+def get_verification_task_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_service: AuditService = Depends(get_audit_service),
+    evidence_service: Any = Depends(get_evidence_service),
+    intel_svc: Any = Depends(get_intelligence_event_service),
+    auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+    proactive_svc: Any = Depends(get_proactive_intelligence_service),
+) -> Any:
+    """Return the shared or per-request VerificationTaskService instance."""
+    vtask_svc = getattr(request.app.state, "verification_task_service", None)
+    if vtask_svc is not None:
+        return vtask_svc
+    from backend.app.services.verification_task_service import VerificationTaskService
+    vtask_svc = VerificationTaskService(
+        repository=repo,
+        audit_service=audit_service,
+        evidence_service=evidence_service,
+        intelligence_event_service=intel_svc,
+        auth_policy=auth_policy,
+        proactive_intelligence_service=proactive_svc,
+    )
+    request.app.state.verification_task_service = vtask_svc
+    return vtask_svc
+
+
+
 
 
 

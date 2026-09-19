@@ -1237,6 +1237,7 @@ export type IntelligenceEventType =
   | 'SIGNAL_GENERATED'
   | 'EVIDENCE_ASSESSED'
   | 'VERIFICATION_REQUIRED'
+  | 'VERIFICATION_TASK_CREATED'
   | 'VERIFICATION_COMPLETED'
   | 'ENTITY_RESOLUTION_DECIDED'
   | 'INVESTIGATOR_DECISION'
@@ -1294,6 +1295,102 @@ export interface IntelligenceEventListResponse {
   limit: number
   offset: number
 }
+
+// ── A7 Persistent Verification Tasks Domain Contracts ────────────────────────
+
+export type VerificationTaskStatus =
+  | 'CREATED'
+  | 'ASSIGNED'
+  | 'REQUESTED'
+  | 'RECEIVED'
+  | 'UNDER_REVIEW'
+  | 'VERIFIED'
+  | 'DISMISSED'
+
+export type VerificationTaskDecision = 'VERIFIED' | 'DISMISSED'
+
+export interface TaskTransitionHistoryItem {
+  from_status: VerificationTaskStatus
+  to_status: VerificationTaskStatus
+  actor_id: string
+  timestamp: string
+  rationale?: string | null
+}
+
+export interface VerificationTask {
+  task_id: string
+  case_id: string
+  created_at: string
+  updated_at: string
+  originating_event_id?: string | null
+  originating_pulse_id?: string | null
+  target_claim: string
+  reason: string
+  requested_evidence_type: string
+  verification_action: string
+  expected_outcome?: string | null
+  evidence_gap?: string | null
+  assigned_officer_id?: string | null
+  assigned_role?: UserRole | null
+  assigned_at?: string | null
+  status: VerificationTaskStatus
+  history: TaskTransitionHistoryItem[]
+  requested_evidence_ids: string[]
+  received_evidence_ids: string[]
+  supporting_evidence_ids: string[]
+  conflicting_evidence_ids: string[]
+  decision?: VerificationTaskDecision | null
+  decision_rationale?: string | null
+  deciding_actor?: string | null
+  decided_at?: string | null
+}
+
+export interface CreateVerificationTaskRequest {
+  case_id: string
+  target_claim: string
+  reason: string
+  requested_evidence_type: string
+  verification_action: string
+  expected_outcome?: string | null
+  evidence_gap?: string | null
+  originating_event_id?: string | null
+  originating_pulse_id?: string | null
+  assigned_officer_id?: string | null
+  assigned_role?: UserRole | null
+}
+
+export interface AssignVerificationTaskRequest {
+  assigned_officer_id: string
+  assigned_role?: UserRole | null
+  rationale?: string | null
+}
+
+export interface TransitionVerificationTaskRequest {
+  target_status: VerificationTaskStatus
+  rationale?: string | null
+}
+
+export interface AttachEvidenceRequest {
+  evidence_id: string
+  relationship_type?: string
+  notes?: string | null
+}
+
+export interface DecideVerificationTaskRequest {
+  decision: VerificationTaskDecision
+  rationale: string
+}
+
+export interface VerificationTaskListResponse {
+  tasks: VerificationTask[]
+  total_count: number
+  case_id?: string | null
+  status?: VerificationTaskStatus | null
+  assignee?: string | null
+  limit: number
+  offset: number
+}
+
 
 
 
