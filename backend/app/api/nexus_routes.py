@@ -988,6 +988,7 @@ def create_nexus_router() -> APIRouter:
         cdr: UploadFile | None = File(None),
         bank: UploadFile | None = File(None),
         intelligence: UploadFile | None = File(None),
+        surveillance: UploadFile | None = File(None),
         principal: Principal = Depends(get_principal),
         ingestion_service: IngestionService = Depends(get_ingestion_service),
     ) -> NexusIngestResponse:
@@ -1001,8 +1002,10 @@ def create_nexus_router() -> APIRouter:
             uploaded_files.append((bank, SourceType.BANK_TXN, "bank_transactions.csv"))
         if intelligence:
             uploaded_files.append((intelligence, SourceType.INTEL_REPORT, "intelligence_records.csv"))
+        if surveillance:
+            uploaded_files.append((surveillance, SourceType.SURVEILLANCE_REPORT, "surveillance_records.csv"))
 
-        if not any((fir, cdr, bank, intelligence)):
+        if not any((fir, cdr, bank, intelligence, surveillance)):
             raise HTTPException(status_code=422, detail="Upload at least one CSV file.")
 
         sources: list[UploadedSource] = []

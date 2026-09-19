@@ -74,6 +74,202 @@ class EvidenceItemResponse(BaseModel):
     provenance: EvidenceProvenanceContract = Field(default_factory=EvidenceProvenanceContract)
 
 
+# ── Unstructured Document Ingestion (P1-A) ──────────────────────────────────
+
+class DocumentSourceType(str, Enum):
+    FIR_DOCUMENT = "FIR_DOCUMENT"
+    POLICE_REPORT = "POLICE_REPORT"
+    INTELLIGENCE_DOCUMENT = "INTELLIGENCE_DOCUMENT"
+    OTHER_DOCUMENT = "OTHER_DOCUMENT"
+
+
+class ExtractionStatus(str, Enum):
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    EMPTY = "EMPTY"
+
+
+class DocumentExtractionMetadata(BaseModel):
+    page_count: int = 0
+    character_count: int = 0
+    word_count: int = 0
+    extraction_method: str = "deterministic"
+    error_message: str | None = None
+
+
+class DocumentResponse(BaseModel):
+    document_id: str
+    original_filename: str
+    source_type: str
+    mime_type: str
+    content_hash: str  # Deterministic SHA-256 tamper-evident fingerprint
+    uploaded_by: str
+    uploaded_at: datetime
+    case_id: str | None = None
+    extraction_status: ExtractionStatus
+    extraction_metadata: DocumentExtractionMetadata = Field(default_factory=DocumentExtractionMetadata)
+    provenance: EvidenceProvenanceContract = Field(default_factory=EvidenceProvenanceContract)
+
+
+class DocumentTextResponse(BaseModel):
+    document_id: str
+    content_hash: str
+    extracted_text: str
+    extraction_status: ExtractionStatus
+    extraction_metadata: DocumentExtractionMetadata = Field(default_factory=DocumentExtractionMetadata)
+
+
+# ── Candidate Intelligence & Entity Extraction (P1-B) ────────────────────────
+
+class CandidateEntityType(str, Enum):
+    PERSON = "PERSON"
+    PHONE = "PHONE"
+    ACCOUNT = "ACCOUNT"
+    VEHICLE = "VEHICLE"
+    LOCATION = "LOCATION"
+    ORGANIZATION = "ORGANIZATION"
+    DEVICE = "DEVICE"
+    DATE_TIME = "DATE_TIME"
+    EVENT = "EVENT"
+
+
+class CandidateResolutionStatus(str, Enum):
+    UNRESOLVED = "UNRESOLVED"
+    REVIEW_REQUIRED = "REVIEW_REQUIRED"
+    NO_MATCH_FOUND = "NO_MATCH_FOUND"
+
+
+class SourceSpan(BaseModel):
+    start: int
+    end: int
+    page: int | None = None
+
+
+class CandidateProvenance(BaseModel):
+    document_id: str
+    document_sha256: str
+    page: int | None = None
+    source_text_hash: str
+    case_id: str | None = None
+
+
+class ResolutionCandidateMatch(BaseModel):
+    canonical_entity_id: str
+    canonical_name: str
+    entity_type: str
+    match_score: float
+    match_reasons: list[str] = Field(default_factory=list)
+
+
+class CandidateEntity(BaseModel):
+    candidate_id: str
+    entity_type: str
+    surface_text: str
+    normalized_value: str
+    confidence: float
+    source_document_id: str
+    case_id: str | None = None
+    source_span: SourceSpan
+    evidence_text: str
+    extraction_method: str = "DETERMINISTIC"  # DETERMINISTIC | LLM_ASSISTED
+    provenance: CandidateProvenance
+    resolution_status: CandidateResolutionStatus = CandidateResolutionStatus.UNRESOLVED
+    resolution_candidates: list[ResolutionCandidateMatch] = Field(default_factory=list)
+    status: str = "PENDING"  # PENDING | ACCEPTED_EXISTING_ENTITY | ACCEPTED_NEW_ENTITY | REJECTED
+    resulting_graph_id: str | None = None
+
+
+class CandidateRelationship(BaseModel):
+    candidate_relationship_id: str
+    source_candidate_id: str
+    target_candidate_id: str
+    source_text: str
+    target_text: str
+    relationship_type: str
+    confidence: float
+    evidence_text: str
+    source_document_id: str
+    case_id: str | None = None
+    source_span: SourceSpan | None = None
+    provenance: CandidateProvenance
+    status: str = "CANDIDATE"  # CANDIDATE | ACCEPTED | REJECTED
+    resulting_edge_id: str | None = None
+
+
+class DocumentExtractionResult(BaseModel):
+    document_id: str
+    case_id: str | None = None
+    content_hash: str
+    extraction_run_id: str
+    extracted_at: datetime = Field(default_factory=_utcnow)
+    candidate_entities: list[CandidateEntity] = Field(default_factory=list)
+    candidate_relationships: list[CandidateRelationship] = Field(default_factory=list)
+    entity_count: int = 0
+    relationship_count: int = 0
+    status: str = "COMPLETED"
+    extraction_notes: list[str] = Field(default_factory=list)
+
+
+# ── Investigator Confirmation & Graph Promotion (P1-C) ─────────────────────
+
+class CandidateDecisionAction(str, Enum):
+    ACCEPT_EXISTING = "ACCEPT_EXISTING"
+    ACCEPT_NEW = "ACCEPT_NEW"
+    ACCEPT_RELATIONSHIP = "ACCEPT_RELATIONSHIP"
+    REJECT = "REJECT"
+
+
+class CandidateDecisionStatus(str, Enum):
+    PENDING = "PENDING"
+    ACCEPTED_EXISTING_ENTITY = "ACCEPTED_EXISTING_ENTITY"
+    ACCEPTED_NEW_ENTITY = "ACCEPTED_NEW_ENTITY"
+    ACCEPTED_RELATIONSHIP = "ACCEPTED_RELATIONSHIP"
+    REJECTED = "REJECTED"
+
+
+class AcceptExistingEntityRequest(BaseModel):
+    target_canonical_id: str
+    case_id: str | None = None
+    notes: str | None = None
+
+
+class AcceptNewEntityRequest(BaseModel):
+    entity_type: str
+    canonical_name: str
+    case_id: str | None = None
+    properties: dict[str, Any] = Field(default_factory=dict)
+    notes: str | None = None
+
+
+class AcceptRelationshipRequest(BaseModel):
+    source_canonical_id: str
+    target_canonical_id: str
+    relationship_type: str
+    case_id: str | None = None
+    properties: dict[str, Any] = Field(default_factory=dict)
+    notes: str | None = None
+
+
+class RejectCandidateRequest(BaseModel):
+    reason: str
+    notes: str | None = None
+
+
+class CandidateDecisionResponse(BaseModel):
+    decision_id: str
+    candidate_id: str
+    candidate_type: str  # ENTITY | RELATIONSHIP
+    action: str  # ACCEPT_EXISTING | ACCEPT_NEW | ACCEPT_RELATIONSHIP | REJECT
+    status: str
+    decided_by: str  # officer user_id
+    decided_at: datetime = Field(default_factory=_utcnow)
+    target_id: str | None = None
+    resulting_graph_id: str | None = None
+    reason: str | None = None
+    notes: str | None = None
+    audit_event_id: str | None = None
+
+
 # ── Graph & Network ───────────────────────────────────────────────────────────
 
 class NodePresenceType(str, Enum):
@@ -434,7 +630,7 @@ class NexusDossierVerificationResponse(BaseModel):
 
 class IngestRequest(BaseModel):
     """[DEPRECATED] Multi-source ingestion request body for POST /ingest."""
-    source_type: str  # CDR | BANK_TXN | FIR | INTEL_REPORT
+    source_type: str  # CDR | BANK_TXN | FIR | INTEL_REPORT | SURVEILLANCE_REPORT
     file_name: str
     records: list[dict[str, Any]] = Field(default_factory=list)
 

@@ -94,6 +94,9 @@ class PostgresBackendRepository:
         self.audit_events: list[dict[str, Any]] = []
         self.review_candidates: dict[str, dict[str, Any]] = {}
         self.batches: dict[str, dict[str, Any]] = {}
+        self.documents: dict[str, dict[str, Any]] = {}
+        self.candidate_extractions: dict[str, dict[str, Any]] = {}
+        self.candidate_decisions: dict[str, list[dict[str, Any]]] = {}
 
         # 1. Initialize schema
         self._init_schema()
@@ -403,21 +406,49 @@ class PostgresBackendRepository:
                 "properties": dict(edge.properties),
             }
 
+            matched_existing = None
             if eid in existing_edge_ids:
-                edges_reused += 1
                 for existing in self.edges:
                     if str(existing.get("id")) == eid:
-                        existing.update(edge_data)
-                        self.batches[batch_id]["edges"].append(existing)
+                        matched_existing = existing
                         break
+            if matched_existing is None:
+                src_str = str(edge.source_id)
+                tgt_str = str(edge.target_id)
+                etype_str = (edge.edge_type.value if hasattr(edge.edge_type, "value") else str(edge.edge_type)).upper()
+                for existing in self.edges:
+                    if (
+                        str(existing.get("source_id")) == src_str
+                        and str(existing.get("target_id")) == tgt_str
+                        and str(existing.get("edge_type", "")).upper() == etype_str
+                    ):
+                        matched_existing = existing
+                        break
+
+            if matched_existing is not None:
+                edges_reused += 1
+                if str(matched_existing.get("id")) == eid:
+                    matched_existing.update(edge_data)
+                else:
+                    edge_props = matched_existing.setdefault("properties", {})
+                    corroborations = edge_props.setdefault("corroborating_evidence", [])
+                    corroborations.append({
+                        "source_record_id": edge.source_record_id,
+                        "provenance": edge_data["provenance"],
+                        "properties": dict(edge.properties),
+                        "recorded_at": datetime.now(timezone.utc).isoformat(),
+                    })
+                self.batches[batch_id]["edges"].append(matched_existing)
             else:
                 edges_created += 1
                 self.edges.append(edge_data)
                 existing_edge_ids.add(eid)
                 self.batches[batch_id]["edges"].append(edge_data)
 
+            target_eid = str(matched_existing.get("id")) if matched_existing else eid
+            target_props = matched_existing["properties"] if matched_existing else edge_data["properties"]
             edges_to_insert.append((
-                eid,
+                target_eid,
                 str(edge.source_id),
                 str(edge.target_id),
                 edge.edge_type.value if hasattr(edge.edge_type, "value") else str(edge.edge_type),
@@ -428,7 +459,7 @@ class PostgresBackendRepository:
                 edge.derivation_class.value if hasattr(edge.derivation_class, "value") else str(edge.derivation_class),
                 float(edge.confidence),
                 _to_jsonb(edge_data["provenance"]),
-                _to_jsonb(edge_data["properties"]),
+                _to_jsonb(target_props),
             ))
 
         sr_to_insert = []
@@ -657,6 +688,8 @@ class PostgresBackendRepository:
             etype = str(edge.get("edge_type", "LINKED_TO"))
             weight = float(edge.get("weight", 1.0))
             provenance = dict(edge.get("provenance", {}))
+            if not provenance.get("source_id") and edge.get("source_record_id"):
+                provenance["source_id"] = str(edge["source_record_id"])
 
             adj_edge = AdjEdge(
                 source_id=src,
@@ -1087,3 +1120,101 @@ class PostgresBackendRepository:
             reverse=True,
         )
         return [AuditLogEntry(**e) for e in sorted_events[:limit]]
+
+    # ── Document Repository Methods (P1-A) ──────────────────────────────────
+
+    def store_document(self, doc_record: dict[str, Any]) -> dict[str, Any]:
+        """Store or update a document record in repository cache."""
+        doc_id = doc_record["document_id"]
+        self.documents[doc_id] = doc_record
+        return doc_record
+
+    def get_document(self, doc_id: str) -> dict[str, Any] | None:
+        """Retrieve a document record by its ID."""
+        return self.documents.get(doc_id)
+
+    def get_document_by_hash(self, content_hash: str) -> dict[str, Any] | None:
+        """Find an existing document with the identical content hash."""
+        for doc in self.documents.values():
+            if doc.get("content_hash") == content_hash:
+                return doc
+        return None
+
+    def list_documents(self, case_id: str | None = None) -> list[dict[str, Any]]:
+        """List documents, optionally filtered by case_id."""
+        docs = list(self.documents.values())
+        if case_id is not None:
+            docs = [d for d in docs if d.get("case_id") == case_id]
+        return sorted(docs, key=lambda d: str(d.get("uploaded_at", "")), reverse=True)
+
+    # ── Candidate Intelligence & Entity Extraction Methods (P1-B) ───────────
+
+    def store_candidate_extraction(self, extraction_record: dict[str, Any]) -> dict[str, Any]:
+        """Store or update candidate extraction results for a document in repository cache."""
+        doc_id = extraction_record["document_id"]
+        self.candidate_extractions[doc_id] = extraction_record
+        return extraction_record
+
+    def get_candidate_extraction(self, doc_id: str) -> dict[str, Any] | None:
+        """Retrieve candidate extraction results for a document."""
+        return self.candidate_extractions.get(doc_id)
+
+    def get_candidate_entity(self, candidate_id: str) -> dict[str, Any] | None:
+        """Retrieve a specific candidate entity by candidate_id across all extractions."""
+        for extraction in self.candidate_extractions.values():
+            for entity in extraction.get("candidate_entities", []):
+                if entity.get("candidate_id") == candidate_id:
+                    return entity
+        return None
+
+    def get_candidate_relationship(self, relationship_id: str) -> dict[str, Any] | None:
+        """Retrieve a specific candidate relationship by relationship_id across all extractions."""
+        for extraction in self.candidate_extractions.values():
+            for rel in extraction.get("candidate_relationships", []):
+                if rel.get("candidate_relationship_id") == relationship_id:
+                    return rel
+        return None
+
+    # ── Candidate Review & Investigator Decisions (P1-C) ─────────────────────
+
+    def store_candidate_decision(self, decision: dict[str, Any]) -> dict[str, Any]:
+        """Store an investigator decision on a candidate entity or relationship."""
+        cand_id = str(decision["candidate_id"])
+        self.candidate_decisions.setdefault(cand_id, []).append(decision)
+        return decision
+
+    def get_candidate_decisions(self, candidate_id: str) -> list[dict[str, Any]]:
+        """Retrieve the decision history for a given candidate entity or relationship."""
+        return list(self.candidate_decisions.get(candidate_id, []))
+
+    def update_candidate_entity_status(
+        self,
+        candidate_id: str,
+        status: str,
+        resulting_graph_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Update the review status and resulting authoritative graph ID of a candidate entity."""
+        for extraction in self.candidate_extractions.values():
+            for entity in extraction.get("candidate_entities", []):
+                if entity.get("candidate_id") == candidate_id:
+                    entity["status"] = status
+                    if resulting_graph_id is not None:
+                        entity["resulting_graph_id"] = resulting_graph_id
+                    return entity
+        return None
+
+    def update_candidate_relationship_status(
+        self,
+        relationship_id: str,
+        status: str,
+        resulting_edge_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Update the review status and resulting authoritative edge ID of a candidate relationship."""
+        for extraction in self.candidate_extractions.values():
+            for rel in extraction.get("candidate_relationships", []):
+                if rel.get("candidate_relationship_id") == relationship_id:
+                    rel["status"] = status
+                    if resulting_edge_id is not None:
+                        rel["resulting_edge_id"] = resulting_edge_id
+                    return rel
+        return None

@@ -18,13 +18,16 @@ from __future__ import annotations
 from typing import Any
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, File, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Response, File, UploadFile
 
 from backend.app.api.dependencies import (
     get_audit_anchor_service,
     get_audit_service,
+    get_candidate_promotion_service,
     get_case_service,
     get_copilot_service,
+    get_document_extraction_service,
+    get_document_service,
     get_entity_service,
     get_evidence_authorization_policy,
     get_evidence_service,
@@ -50,20 +53,32 @@ from backend.app.core.graph.algorithms.pattern_detection import (
 )
 from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.case_service import InvestigationService
+from backend.app.services.candidate_promotion_service import CandidatePromotionService
 from backend.app.services.copilot_service import CopilotService
+from backend.app.services.document_extraction_service import DocumentExtractionService
+from backend.app.services.document_service import DocumentService
 from backend.app.services.entity_service import EntityService
 from backend.app.services.evidence_service import EvidenceService
 from backend.app.services.export_service import ExportService
 from backend.app.services.ingestion_service import IngestionService
 from backend.app.db.ingestion.contracts import UploadedSource, SourceType
 from shared.contracts.api import (
+    AcceptExistingEntityRequest,
+    AcceptNewEntityRequest,
+    AcceptRelationshipRequest,
     AuditLogEntry,
     AuthLoginRequest,
     AuthTokenResponse,
     BridgeNodeResponse,
+    CandidateDecisionResponse,
+    CandidateEntity,
+    CandidateRelationship,
     CommunityResponse,
     CopilotQueryRequest,
     CopilotQueryResponse,
+    DocumentExtractionResult,
+    DocumentResponse,
+    DocumentTextResponse,
     DossierExportRequest,
     DossierExportResponse,
     EntityProfileResponse,
@@ -81,6 +96,8 @@ from shared.contracts.api import (
     InvestigationSummaryResponse,
     NetworkGraphResponse,
     RepeatOffenderResponse,
+    RejectCandidateRequest,
+    ResolutionCandidateMatch,
     SharedClusterResponse,
     TimelineEventResponse,
     UserRole,
@@ -619,6 +636,7 @@ def create_core_router() -> APIRouter:
         cdr: UploadFile | None = File(None),
         bank: UploadFile | None = File(None),
         intelligence: UploadFile | None = File(None),
+        surveillance: UploadFile | None = File(None),
         principal: Principal = Depends(get_principal),
         ingestion_service: IngestionService = Depends(get_ingestion_service),
         request_id: str = Depends(get_request_id),
@@ -651,6 +669,7 @@ def create_core_router() -> APIRouter:
         await _read_file(cdr, SourceType.CDR)
         await _read_file(bank, SourceType.BANK_TXN)
         await _read_file(intelligence, SourceType.INTEL_REPORT)
+        await _read_file(surveillance, SourceType.SURVEILLANCE_REPORT)
 
         if not sources:
             raise HTTPException(status_code=400, detail="At least one file must be provided.")
@@ -666,6 +685,330 @@ def create_core_router() -> APIRouter:
             return resp
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
+
+    # ── Unstructured Document Ingestion (P1-A) ──────────────────────────────
+
+    @router.post("/documents", response_model=DocumentResponse)
+    async def upload_document(
+        file: UploadFile = File(...),
+        source_type: str = Form("OTHER_DOCUMENT"),
+        case_id: str | None = Form(None),
+        principal: Principal = Depends(get_principal),
+        doc_service: DocumentService = Depends(get_document_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+        request_id: str = Depends(get_request_id),
+    ) -> DocumentResponse:
+        """Upload and extract unstructured evidence document (.pdf, .txt)."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required to upload documents.")
+
+        # If case_id is supplied, verify investigator/officer authorization for the case
+        clean_case_id = case_id.strip() if case_id and case_id.strip() else None
+        if clean_case_id:
+            allowed, reason = auth_policy.can_access_case(principal, clean_case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="Filename missing.")
+
+        lower_filename = file.filename.lower()
+        if not (lower_filename.endswith(".pdf") or lower_filename.endswith(".txt")):
+            raise HTTPException(
+                status_code=415,
+                detail=f"Unsupported file format for '{file.filename}'. Only .pdf and .txt documents are supported.",
+            )
+
+        content = await file.read()
+        if len(content) == 0:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty (0 bytes).")
+        if len(content) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail=f"File '{file.filename}' exceeds 10 MB limit.")
+
+        try:
+            return doc_service.ingest_document(
+                filename=file.filename,
+                data=content,
+                source_type=source_type,
+                uploader_id=principal.user_id,
+                case_id=clean_case_id,
+                request_id=request_id,
+            )
+        except ValueError as val_err:
+            raise HTTPException(status_code=400, detail=str(val_err))
+
+    @router.get("/documents", response_model=list[DocumentResponse])
+    def list_documents(
+        case_id: str | None = Query(None),
+        principal: Principal = Depends(get_principal),
+        doc_service: DocumentService = Depends(get_document_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+    ) -> list[DocumentResponse]:
+        """List documents, enforcing case-level RBAC confidentiality."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required.")
+
+        clean_case_id = case_id.strip() if case_id and case_id.strip() else None
+        if clean_case_id:
+            allowed, reason = auth_policy.can_access_case(principal, clean_case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        all_docs = doc_service.list_documents(case_id=clean_case_id)
+        # Confidentiality filter: only return documents for cases the officer is authorized to view
+        authorized_docs = [
+            doc for doc in all_docs
+            if not doc.case_id or auth_policy.can_access_case(principal, doc.case_id)[0]
+        ]
+        return authorized_docs
+
+    @router.get("/documents/{document_id}", response_model=DocumentResponse)
+    def get_document(
+        document_id: str,
+        principal: Principal = Depends(get_principal),
+        doc_service: DocumentService = Depends(get_document_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+        request_id: str = Depends(get_request_id),
+    ) -> DocumentResponse:
+        """Retrieve document metadata and cryptographic fingerprint, enforcing RBAC."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required.")
+
+        # Check metadata first with suppressed audit
+        doc = doc_service.get_document_metadata(document_id, actor_id=principal.user_id, suppress_audit=True)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Document not found.")
+
+        if doc.case_id:
+            allowed, reason = auth_policy.can_access_case(principal, doc.case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        # Authorized view - record DOCUMENT_VIEWED audit event
+        result = doc_service.get_document_metadata(
+            document_id,
+            actor_id=principal.user_id,
+            request_id=request_id,
+            suppress_audit=False,
+        )
+        return result or doc
+
+    @router.get("/documents/{document_id}/text", response_model=DocumentTextResponse)
+    def get_document_text(
+        document_id: str,
+        principal: Principal = Depends(get_principal),
+        doc_service: DocumentService = Depends(get_document_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+        request_id: str = Depends(get_request_id),
+    ) -> DocumentTextResponse:
+        """Retrieve extracted document text, enforcing RBAC and audit logging."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required.")
+
+        doc = doc_service.get_document_metadata(document_id, actor_id=principal.user_id, suppress_audit=True)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Document not found.")
+
+        if doc.case_id:
+            allowed, reason = auth_policy.can_access_case(principal, doc.case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        # Authorized view - record DOCUMENT_VIEWED audit event
+        text_resp = doc_service.get_document_text(
+            document_id,
+            actor_id=principal.user_id,
+            request_id=request_id,
+            suppress_audit=False,
+        )
+        if not text_resp:
+            raise HTTPException(status_code=404, detail="Document text not found.")
+        return text_resp
+
+    # ── Candidate Intelligence & Entity Extraction (P1-B) ────────────────────
+
+    @router.post("/documents/{document_id}/extract", response_model=DocumentExtractionResult)
+    def extract_document_candidates(
+        document_id: str,
+        force_reextract: bool = Query(False, description="Force re-extraction ignoring cached result"),
+        principal: Principal = Depends(get_principal),
+        doc_service: DocumentService = Depends(get_document_service),
+        extraction_svc: DocumentExtractionService = Depends(get_document_extraction_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+        request_id: str = Depends(get_request_id),
+    ) -> DocumentExtractionResult:
+        """Extract candidate entities and candidate relationships from an authorized document."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required to run document extraction.")
+
+        doc = doc_service.get_document_metadata(document_id, actor_id=principal.user_id, suppress_audit=True)
+        if not doc:
+            raise HTTPException(status_code=404, detail=f"Document '{document_id}' not found.")
+
+        if doc.case_id:
+            allowed, reason = auth_policy.can_access_case(principal, doc.case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        try:
+            return extraction_svc.extract_document_candidates(
+                document_id=document_id,
+                actor_id=principal.user_id,
+                request_id=request_id,
+                force_reextract=force_reextract,
+            )
+        except ValueError as err:
+            raise HTTPException(status_code=404, detail=str(err))
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Extraction failed: {exc}")
+
+    @router.get("/documents/{document_id}/candidates", response_model=DocumentExtractionResult)
+    def get_document_candidates(
+        document_id: str,
+        principal: Principal = Depends(get_principal),
+        doc_service: DocumentService = Depends(get_document_service),
+        extraction_svc: DocumentExtractionService = Depends(get_document_extraction_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+    ) -> DocumentExtractionResult:
+        """Retrieve previously extracted candidate entities and relationships for a document."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required.")
+
+        doc = doc_service.get_document_metadata(document_id, actor_id=principal.user_id, suppress_audit=True)
+        if not doc:
+            raise HTTPException(status_code=404, detail=f"Document '{document_id}' not found.")
+
+        if doc.case_id:
+            allowed, reason = auth_policy.can_access_case(principal, doc.case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        extraction = extraction_svc.get_candidate_extraction(document_id)
+        if not extraction:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No candidate extraction found for document '{document_id}'. Run extraction first.",
+            )
+        return extraction
+
+    @router.get("/candidates/{candidate_id}", response_model=CandidateEntity)
+    def get_candidate_entity(
+        candidate_id: str,
+        principal: Principal = Depends(get_principal),
+        extraction_svc: DocumentExtractionService = Depends(get_document_extraction_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+        audit_svc: AuditService = Depends(get_audit_service),
+        request_id: str = Depends(get_request_id),
+    ) -> CandidateEntity:
+        """Retrieve a specific candidate entity with source span and provenance, enforcing case RBAC."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required.")
+
+        candidate = extraction_svc.get_candidate_entity(candidate_id)
+        if not candidate:
+            raise HTTPException(status_code=404, detail=f"Candidate entity '{candidate_id}' not found.")
+
+        if candidate.case_id:
+            allowed, reason = auth_policy.can_access_case(principal, candidate.case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        audit_svc.record(
+            event_type=AuditEventType.CANDIDATE_VIEWED,
+            actor_id=principal.user_id,
+            case_id=candidate.case_id,
+            entity_id=candidate_id,
+            entity_type="CandidateEntity",
+            request_id=request_id,
+            details={"entity_type": candidate.entity_type, "source_document_id": candidate.source_document_id},
+        )
+        return candidate
+
+    @router.get("/candidates/{candidate_id}/resolution", response_model=list[ResolutionCandidateMatch])
+    def get_candidate_resolution(
+        candidate_id: str,
+        principal: Principal = Depends(get_principal),
+        extraction_svc: DocumentExtractionService = Depends(get_document_extraction_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+    ) -> list[ResolutionCandidateMatch]:
+        """Retrieve candidate resolution matches for investigator review."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required.")
+
+        candidate = extraction_svc.get_candidate_entity(candidate_id)
+        if not candidate:
+            raise HTTPException(status_code=404, detail=f"Candidate entity '{candidate_id}' not found.")
+
+        if candidate.case_id:
+            allowed, reason = auth_policy.can_access_case(principal, candidate.case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        return candidate.resolution_candidates
+
+    # ── Candidate Promotion & Graph Mutation (Phase P1-C) ────────────────────
+
+    @router.post("/candidates/{candidate_id}/accept-entity", response_model=CandidateDecisionResponse)
+    def accept_candidate_existing_entity(
+        candidate_id: str,
+        req: AcceptExistingEntityRequest,
+        principal: Principal = Depends(get_principal),
+        promotion_svc: CandidatePromotionService = Depends(get_candidate_promotion_service),
+    ) -> CandidateDecisionResponse:
+        """Link a candidate entity to an existing canonical graph node with investigator confirmation."""
+        return promotion_svc.accept_existing_entity(candidate_id, req, principal)
+
+    @router.post("/candidates/{candidate_id}/accept-new", response_model=CandidateDecisionResponse)
+    def accept_candidate_new_entity(
+        candidate_id: str,
+        req: AcceptNewEntityRequest,
+        principal: Principal = Depends(get_principal),
+        promotion_svc: CandidatePromotionService = Depends(get_candidate_promotion_service),
+    ) -> CandidateDecisionResponse:
+        """Promote a candidate entity into a brand new authoritative graph node."""
+        return promotion_svc.accept_new_entity(candidate_id, req, principal)
+
+    @router.post("/candidates/{candidate_id}/reject", response_model=CandidateDecisionResponse)
+    def reject_candidate_entity(
+        candidate_id: str,
+        req: RejectCandidateRequest,
+        principal: Principal = Depends(get_principal),
+        promotion_svc: CandidatePromotionService = Depends(get_candidate_promotion_service),
+    ) -> CandidateDecisionResponse:
+        """Reject a candidate entity. Zero graph mutation occurs; candidate is marked REJECTED."""
+        return promotion_svc.reject_candidate(candidate_id, req, principal, candidate_type="ENTITY")
+
+    @router.post("/candidate-relationships/{relationship_id}/accept", response_model=CandidateDecisionResponse)
+    def accept_candidate_relationship(
+        relationship_id: str,
+        req: AcceptRelationshipRequest,
+        principal: Principal = Depends(get_principal),
+        promotion_svc: CandidatePromotionService = Depends(get_candidate_promotion_service),
+    ) -> CandidateDecisionResponse:
+        """Promote a candidate relationship into an authoritative graph edge.
+
+        Prerequisite: Both source and target entities must already exist as authoritative nodes.
+        """
+        return promotion_svc.accept_relationship(relationship_id, req, principal)
+
+    @router.post("/candidate-relationships/{relationship_id}/reject", response_model=CandidateDecisionResponse)
+    def reject_candidate_relationship(
+        relationship_id: str,
+        req: RejectCandidateRequest,
+        principal: Principal = Depends(get_principal),
+        promotion_svc: CandidatePromotionService = Depends(get_candidate_promotion_service),
+    ) -> CandidateDecisionResponse:
+        """Reject a candidate relationship. Zero graph mutation occurs; relationship is marked REJECTED."""
+        return promotion_svc.reject_candidate(relationship_id, req, principal, candidate_type="RELATIONSHIP")
+
+    @router.get("/candidates/{candidate_id}/decisions", response_model=list[CandidateDecisionResponse])
+    def get_candidate_decisions(
+        candidate_id: str,
+        principal: Principal = Depends(get_principal),
+        promotion_svc: CandidatePromotionService = Depends(get_candidate_promotion_service),
+    ) -> list[CandidateDecisionResponse]:
+        """Retrieve the review and decision history for a candidate entity or relationship."""
+        return promotion_svc.get_candidate_decisions(candidate_id, principal)
 
     # ── Dossier Export (Phase 5 / BE-05) ────────────────────────────────────
 

@@ -5,8 +5,16 @@
  */
 
 import type {
+  AcceptExistingEntityRequest,
+  AcceptNewEntityRequest,
+  AcceptRelationshipRequest,
+  CandidateDecisionResponse,
+  CandidateEntity,
   CopilotQueryRequest,
   CopilotQueryResponse,
+  DocumentExtractionResult,
+  DocumentResponse,
+  DocumentTextResponse,
   EntityResolutionQuery,
   EntityResolutionResponse,
   InvestigationDetailResponse,
@@ -22,7 +30,9 @@ import type {
   NexusPathResponse,
   NexusSearchResponse,
   ResolutionCandidate,
+  ResolutionCandidateMatch,
   ResolutionDecisionRequest,
+  RejectCandidateRequest,
   EvidenceIntegrityCheckResult,
   ResolutionDecisionResponse,
   SnapshotDiffResponse,
@@ -293,13 +303,90 @@ export const apiClient = {
     })
   },
 
+  // ── Document Ingestion (P1-A) ───────────────────────────────────────────
+  uploadDocument: (file: File, sourceType: string = 'OTHER_DOCUMENT', caseId?: string) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('source_type', sourceType)
+    if (caseId && caseId.trim()) {
+      formData.append('case_id', caseId.trim())
+    }
+    return apiFetch<DocumentResponse>('/api/v1/documents', {
+      method: 'POST',
+      body: formData,
+    })
+  },
+  getDocument: (documentId: string) => {
+    return apiFetch<DocumentResponse>(`/api/v1/documents/${documentId}`)
+  },
+  getDocumentText: (documentId: string) => {
+    return apiFetch<DocumentTextResponse>(`/api/v1/documents/${documentId}/text`)
+  },
+  listDocuments: (caseId?: string) => {
+    const query = caseId ? `?case_id=${encodeURIComponent(caseId)}` : ''
+    return apiFetch<DocumentResponse[]>(`/api/v1/documents${query}`)
+  },
+
+  // ── Candidate Intelligence & Entity Extraction (P1-B) ───────────────────
+  extractDocumentCandidates: (documentId: string, forceReextract: boolean = false) => {
+    const query = forceReextract ? '?force_reextract=true' : ''
+    return apiFetch<DocumentExtractionResult>(`/api/v1/documents/${encodeURIComponent(documentId)}/extract${query}`, {
+      method: 'POST',
+    })
+  },
+  getDocumentCandidates: (documentId: string) => {
+    return apiFetch<DocumentExtractionResult>(`/api/v1/documents/${encodeURIComponent(documentId)}/candidates`)
+  },
+  getCandidateEntity: (candidateId: string) => {
+    return apiFetch<CandidateEntity>(`/api/v1/candidates/${encodeURIComponent(candidateId)}`)
+  },
+  getCandidateResolution: (candidateId: string) => {
+    return apiFetch<ResolutionCandidateMatch[]>(`/api/v1/candidates/${encodeURIComponent(candidateId)}/resolution`)
+  },
+
+  // ── Candidate Promotion & Graph Mutation (P1-C) ─────────────────────────
+  acceptExistingEntity: (candidateId: string, req: AcceptExistingEntityRequest) => {
+    return apiFetch<CandidateDecisionResponse>(`/api/v1/candidates/${encodeURIComponent(candidateId)}/accept-entity`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+  acceptNewEntity: (candidateId: string, req: AcceptNewEntityRequest) => {
+    return apiFetch<CandidateDecisionResponse>(`/api/v1/candidates/${encodeURIComponent(candidateId)}/accept-new`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+  rejectCandidateEntity: (candidateId: string, req: RejectCandidateRequest) => {
+    return apiFetch<CandidateDecisionResponse>(`/api/v1/candidates/${encodeURIComponent(candidateId)}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+  acceptCandidateRelationship: (relationshipId: string, req: AcceptRelationshipRequest) => {
+    return apiFetch<CandidateDecisionResponse>(`/api/v1/candidate-relationships/${encodeURIComponent(relationshipId)}/accept`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+  rejectCandidateRelationship: (relationshipId: string, req: RejectCandidateRequest) => {
+    return apiFetch<CandidateDecisionResponse>(`/api/v1/candidate-relationships/${encodeURIComponent(relationshipId)}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+  getCandidateDecisions: (candidateId: string) => {
+    return apiFetch<CandidateDecisionResponse[]>(`/api/v1/candidates/${encodeURIComponent(candidateId)}/decisions`)
+  },
+
   // ── NEXUS prototype endpoints (frozen M4 contract) ──────────────────────
-  nexusIngest: (files: { fir?: File, cdr?: File, bank?: File, intelligence?: File }) => {
+  nexusIngest: (files: { fir?: File, cdr?: File, bank?: File, intelligence?: File, surveillance?: File }) => {
     const formData = new FormData()
     if (files.fir) formData.append('fir', files.fir)
     if (files.cdr) formData.append('cdr', files.cdr)
     if (files.bank) formData.append('bank', files.bank)
     if (files.intelligence) formData.append('intelligence', files.intelligence)
+    if (files.surveillance) formData.append('surveillance', files.surveillance)
     
     return apiFetch<NexusIngestResponse>('/api/v1/nexus/ingest', {
       method: 'POST',

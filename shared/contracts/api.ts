@@ -90,6 +90,186 @@ export interface EvidenceItemResponse {
   provenance: EvidenceProvenanceContract
 }
 
+export type DocumentSourceType =
+  | 'FIR_DOCUMENT'
+  | 'POLICE_REPORT'
+  | 'INTELLIGENCE_DOCUMENT'
+  | 'OTHER_DOCUMENT'
+
+export type ExtractionStatus = 'SUCCESS' | 'FAILED' | 'EMPTY'
+
+export interface DocumentExtractionMetadata {
+  page_count: number
+  character_count: number
+  word_count: number
+  extraction_method: string
+  error_message?: string | null
+}
+
+export interface DocumentResponse {
+  document_id: string
+  original_filename: string
+  source_type: string
+  mime_type: string
+  content_hash: string
+  uploaded_by: string
+  uploaded_at: string
+  case_id?: string | null
+  extraction_status: ExtractionStatus
+  extraction_metadata: DocumentExtractionMetadata
+  provenance: EvidenceProvenanceContract
+}
+
+export interface DocumentTextResponse {
+  document_id: string
+  content_hash: string
+  extracted_text: string
+  extraction_status: ExtractionStatus
+  extraction_metadata: DocumentExtractionMetadata
+}
+
+export type CandidateEntityType =
+  | 'PERSON'
+  | 'PHONE'
+  | 'ACCOUNT'
+  | 'VEHICLE'
+  | 'LOCATION'
+  | 'ORGANIZATION'
+  | 'DEVICE'
+  | 'DATE_TIME'
+  | 'EVENT'
+
+export type CandidateResolutionStatus = 'UNRESOLVED' | 'REVIEW_REQUIRED' | 'NO_MATCH_FOUND'
+
+export interface SourceSpan {
+  start: number
+  end: number
+  page?: number | null
+}
+
+export interface CandidateProvenance {
+  document_id: string
+  document_sha256: string
+  page?: number | null
+  source_text_hash: string
+  case_id?: string | null
+}
+
+export interface ResolutionCandidateMatch {
+  canonical_entity_id: string
+  canonical_name: string
+  entity_type: string
+  match_score: number
+  match_reasons: string[]
+}
+
+export interface CandidateEntity {
+  candidate_id: string
+  entity_type: CandidateEntityType | string
+  surface_text: string
+  normalized_value: string
+  confidence: number
+  source_document_id: string
+  case_id?: string | null
+  source_span: SourceSpan
+  evidence_text: string
+  extraction_method: 'DETERMINISTIC' | 'LLM_ASSISTED' | string
+  provenance: CandidateProvenance
+  resolution_status: CandidateResolutionStatus
+  resolution_candidates: ResolutionCandidateMatch[]
+  status?: string | null
+  resulting_graph_id?: string | null
+}
+
+export interface CandidateRelationship {
+  candidate_relationship_id: string
+  source_candidate_id: string
+  target_candidate_id: string
+  source_text: string
+  target_text: string
+  relationship_type: string
+  confidence: number
+  evidence_text: string
+  source_document_id: string
+  case_id?: string | null
+  source_span?: SourceSpan | null
+  provenance: CandidateProvenance
+  status: 'CANDIDATE' | 'ACCEPTED' | 'REJECTED' | string
+  resulting_edge_id?: string | null
+}
+
+export interface DocumentExtractionResult {
+  document_id: string
+  case_id?: string | null
+  content_hash: string
+  extraction_run_id: string
+  extracted_at: string
+  candidate_entities: CandidateEntity[]
+  candidate_relationships: CandidateRelationship[]
+  entity_count: number
+  relationship_count: number
+  status: string
+  extraction_notes: string[]
+}
+
+// ── Investigator Confirmation & Graph Promotion (P1-C) ─────────────────────
+
+export type CandidateDecisionAction =
+  | 'ACCEPT_EXISTING'
+  | 'ACCEPT_NEW'
+  | 'ACCEPT_RELATIONSHIP'
+  | 'REJECT'
+
+export type CandidateDecisionStatus =
+  | 'PENDING'
+  | 'ACCEPTED_EXISTING_ENTITY'
+  | 'ACCEPTED_NEW_ENTITY'
+  | 'ACCEPTED_RELATIONSHIP'
+  | 'REJECTED'
+
+export interface AcceptExistingEntityRequest {
+  target_canonical_id: string
+  case_id?: string | null
+  notes?: string | null
+}
+
+export interface AcceptNewEntityRequest {
+  entity_type: string
+  canonical_name: string
+  case_id?: string | null
+  properties?: Record<string, unknown>
+  notes?: string | null
+}
+
+export interface AcceptRelationshipRequest {
+  source_canonical_id: string
+  target_canonical_id: string
+  relationship_type: string
+  case_id?: string | null
+  properties?: Record<string, unknown>
+  notes?: string | null
+}
+
+export interface RejectCandidateRequest {
+  reason: string
+  notes?: string | null
+}
+
+export interface CandidateDecisionResponse {
+  decision_id: string
+  candidate_id: string
+  candidate_type: 'ENTITY' | 'RELATIONSHIP' | string
+  action: CandidateDecisionAction | string
+  status: CandidateDecisionStatus | string
+  decided_by: string
+  decided_at: string
+  target_id?: string | null
+  resulting_graph_id?: string | null
+  reason?: string | null
+  notes?: string | null
+  audit_event_id?: string | null
+}
+
 export type NodePresenceType =
   | 'DIRECT_CASE'
   | 'INTELLIGENCE_EXPANSION'
@@ -434,7 +614,7 @@ export interface NexusDossierVerificationResponse {
 
 /** Multi-source ingestion request body for POST /ingest. */
 export interface IngestRequest {
-  source_type: 'CDR' | 'BANK_TXN' | 'FIR' | 'INTEL_REPORT'
+  source_type: 'CDR' | 'BANK_TXN' | 'FIR' | 'INTEL_REPORT' | 'SURVEILLANCE_REPORT'
   file_name: string
   records: Record<string, any>[]
 }

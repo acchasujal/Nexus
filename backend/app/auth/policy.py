@@ -119,7 +119,12 @@ class EvidenceAuthorizationPolicy:
         # 2. Check edges for evidence ID match or provenance source_id match
         for edge in edges:
             prov = edge.get("provenance", {}) or {}
-            src_id = prov.get("source_id") or prov.get("source_record_id") or edge.get("source_record_id")
+            src_id = (
+                prov.get("source_id")
+                or prov.get("source_record_id")
+                or edge.get("source_record_id")
+                or ""
+            )
             s_node = edge.get("source_id", "")
             t_node = edge.get("target_id", "")
             e_type = edge.get("edge_type", "")
@@ -379,3 +384,110 @@ class EvidenceAuthorizationPolicy:
                 "district": decision.district,
             },
         )
+
+    def resolve_case_context(self, case_id: str) -> dict[str, Any] | None:
+        """Resolve district and station metadata for a case from repository."""
+        nodes = getattr(self._repo, "nodes", {})
+        if case_id in nodes:
+            node = nodes[case_id]
+            props = node.get("properties", {})
+            return {
+                "case_id": case_id,
+                "district": props.get("district"),
+                "station_name": props.get("station_name") or props.get("police_station"),
+            }
+        return None
+
+    def can_access_case(self, principal: Principal, case_id: str | None) -> tuple[bool, str]:
+        """Check whether an authenticated principal has jurisdictional permission to access a case."""
+        if not case_id:
+            # Unattached document - accessible to authenticated officers
+            return True, "General document without case restriction"
+
+        if principal.is_anonymous:
+            return False, "Unauthenticated callers cannot access case-linked documents."
+
+        role = principal.role
+        officer: OfficerIdentity = principal.get_officer_identity()
+
+        if role == UserRole.ADMIN:
+            return True, "Administrator oversight across all cases"
+
+        if role in (UserRole.SUPERVISOR, UserRole.SP):
+            return True, "Supervisory authority covers state/divisional jurisdiction"
+
+        case_ctx = self.resolve_case_context(case_id)
+
+        if role in (UserRole.INVESTIGATOR, UserRole.IO):
+            assigned_cases = DEMO_OFFICER_CASE_ASSIGNMENTS.get(officer.officer_id, set())
+            if case_id in assigned_cases:
+                return True, f"Investigating Officer assigned directly to case {case_id}"
+            return False, f"Investigating Officer {officer.officer_id} is not assigned to case {case_id}"
+
+        if role == UserRole.SHO:
+            allowed_stations = DEMO_SHO_STATIONS.get(officer.officer_id, set())
+            allowed_districts = DEMO_SHO_DISTRICTS.get(officer.officer_id, set())
+            if case_ctx:
+                district = case_ctx.get("district")
+                station_name = case_ctx.get("station_name")
+                if (station_name and station_name in allowed_stations) or (district and district in allowed_districts):
+                    return True, "Case falls within SHO station/district jurisdiction"
+                return False, f"Case {case_id} is outside SHO station/district jurisdiction"
+            return True, "SHO station jurisdiction default"
+
+        if role == UserRole.ANALYST:
+            analyst_districts = DEMO_SHO_DISTRICTS.get(officer.officer_id, {"Bengaluru Central", "Bengaluru Rural", "Bengaluru Urban"})
+            if case_ctx:
+                district = case_ctx.get("district")
+                if district and district in analyst_districts:
+                    return True, f"Analyst assigned to district {district}"
+                return False, f"Case {case_id} is outside analyst district scope"
+            return True, "Analyst regional scope"
+
+        return False, f"Role {role} is not authorized for case {case_id}"
+
+    def can_decide_candidate(self, principal: Principal, case_id: str | None) -> tuple[bool, str]:
+        """Check whether an authenticated principal is authorized to make authoritative candidate promotion decisions.
+
+        Strict Separation of Powers:
+          - ANALYST role is read-only; cannot perform graph mutations or candidate confirmations.
+          - INVESTIGATOR / IO must be assigned directly to the case.
+          - SUPERVISOR / SP / ADMIN have supervisory or system-level decision authority.
+        """
+        if principal.is_anonymous:
+            return False, "Unauthenticated callers cannot make candidate promotion decisions."
+
+        role = principal.role
+        officer: OfficerIdentity = principal.get_officer_identity()
+
+        # Analysts are strictly read-only
+        if role == UserRole.ANALYST:
+            return False, "ANALYST role has analytical read access only and cannot make authoritative graph promotion decisions."
+
+        if role == UserRole.ADMIN:
+            return True, "Administrator authority across all candidate promotions."
+
+        if role in (UserRole.SUPERVISOR, UserRole.SP):
+            return True, "Supervisory authority covers state/divisional candidate decisions."
+
+        if role in (UserRole.INVESTIGATOR, UserRole.IO):
+            if not case_id:
+                return True, f"Investigating Officer {officer.officer_id} authorized for unattached candidate decision."
+            assigned_cases = DEMO_OFFICER_CASE_ASSIGNMENTS.get(officer.officer_id, set())
+            if case_id in assigned_cases:
+                return True, f"Investigating Officer assigned directly to case {case_id} is authorized."
+            return False, f"Investigating Officer {officer.officer_id} is not assigned to case {case_id} and cannot promote candidates."
+
+        if role == UserRole.SHO:
+            case_ctx = self.resolve_case_context(case_id) if case_id else None
+            allowed_stations = DEMO_SHO_STATIONS.get(officer.officer_id, set())
+            allowed_districts = DEMO_SHO_DISTRICTS.get(officer.officer_id, set())
+            if case_ctx:
+                district = case_ctx.get("district")
+                station_name = case_ctx.get("station_name")
+                if (station_name and station_name in allowed_stations) or (district and district in allowed_districts):
+                    return True, "Case falls within SHO station/district jurisdiction for candidate decision."
+                return False, f"Case {case_id} is outside SHO station/district jurisdiction."
+            return True, "SHO station jurisdiction default for candidate decision."
+
+        return False, f"Role {role} is not authorized to make candidate promotion decisions."

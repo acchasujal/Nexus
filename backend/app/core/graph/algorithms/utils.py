@@ -105,25 +105,44 @@ def build_graph_store(nodes: Iterable[Any], edges: Iterable[Any]) -> GraphStore:
     seen_edges: set[tuple[str, str, str]] = set()
 
     for raw in nodes:
-        if hasattr(raw, "node_id"):          # NodeRecord
+        if isinstance(raw, dict):
+            nid = safe_str(raw.get("id") or raw.get("node_id"))
+            raw_type = raw.get("entity_type", "Unknown")
+            entity_type = raw_type.value if hasattr(raw_type, "value") else str(raw_type)
+            properties = dict(raw.get("properties") or {})
+        elif hasattr(raw, "node_id"):          # NodeRecord
             nid = safe_str(raw.node_id)
+            if hasattr(raw, "entity_type"):
+                entity_type = (
+                    raw.entity_type.value
+                    if hasattr(raw.entity_type, "value")
+                    else str(raw.entity_type)
+                )
+            else:
+                entity_type = raw.entity.entity_type.value
+
+            if hasattr(raw, "properties"):
+                properties = dict(raw.properties)
+            else:
+                properties = dict(raw.entity.properties)
         elif hasattr(raw, "id"):             # Fake/Synthetic node
             nid = safe_str(raw.id)
+            if hasattr(raw, "entity_type"):
+                entity_type = (
+                    raw.entity_type.value
+                    if hasattr(raw.entity_type, "value")
+                    else str(raw.entity_type)
+                )
+            else:
+                entity_type = raw.entity.entity_type.value
+
+            if hasattr(raw, "properties"):
+                properties = dict(raw.properties)
+            else:
+                properties = dict(raw.entity.properties)
         else:                                # Legacy wrapper
             nid = safe_str(raw.entity.id)
-        
-        if hasattr(raw, "entity_type"):
-            entity_type = (
-                raw.entity_type.value
-                if hasattr(raw.entity_type, "value")
-                else str(raw.entity_type)
-            )
-        else:
             entity_type = raw.entity.entity_type.value
-
-        if hasattr(raw, "properties"):
-            properties = dict(raw.properties)
-        else:
             properties = dict(raw.entity.properties)
 
         store.nodes[nid] = NodeRecord(
@@ -133,22 +152,35 @@ def build_graph_store(nodes: Iterable[Any], edges: Iterable[Any]) -> GraphStore:
         )
 
     for raw in edges:
-        etype = (
-            raw.edge_type.value
-            if hasattr(raw.edge_type, "value")
-            else str(raw.edge_type)
-        )
-        src = safe_str(raw.source_id)
-        tgt = safe_str(raw.target_id)
+        if isinstance(raw, dict):
+            raw_etype = raw.get("edge_type", "RELATED_TO")
+            etype = raw_etype.value if hasattr(raw_etype, "value") else str(raw_etype)
+            src = safe_str(raw.get("source_id") or raw.get("source"))
+            tgt = safe_str(raw.get("target_id") or raw.get("target"))
+            props = dict(raw.get("properties") or {})
+            source_rec_id = raw.get("source_record_id")
+            if source_rec_id:
+                if "provenance" not in props:
+                    props["provenance"] = {}
+                if not props["provenance"].get("source_id"):
+                    props["provenance"]["source_id"] = safe_str(source_rec_id)
+            edge_id = props.get("id") or raw.get("id")
+        else:
+            etype = (
+                raw.edge_type.value
+                if hasattr(raw.edge_type, "value")
+                else str(raw.edge_type)
+            )
+            src = safe_str(raw.source_id)
+            tgt = safe_str(raw.target_id)
+            props = dict(raw.properties) if hasattr(raw, "properties") else {}
+            if hasattr(raw, "source_record_id") and raw.source_record_id:
+                if "provenance" not in props:
+                    props["provenance"] = {}
+                if not props["provenance"].get("source_id"):
+                    props["provenance"]["source_id"] = safe_str(raw.source_record_id)
+            edge_id = props.get("id") or getattr(raw, "id", None)
 
-        props = dict(raw.properties) if hasattr(raw, "properties") else {}
-        
-        if hasattr(raw, "source_record_id") and raw.source_record_id:
-            if "provenance" not in props:
-                props["provenance"] = {}
-            if not props["provenance"].get("source_id"):
-                props["provenance"]["source_id"] = safe_str(raw.source_record_id)
-        edge_id = props.get("id") or getattr(raw, "id", None)
         key = (edge_id,) if edge_id else (etype, src, tgt)
         if key in seen_edges:
             continue

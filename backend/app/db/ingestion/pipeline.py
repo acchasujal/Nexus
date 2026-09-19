@@ -25,10 +25,12 @@ from .mappers.bank import map_bank_bundle
 from .mappers.cdr import map_cdr_bundle
 from .mappers.fir import map_fir_bundle
 from .mappers.intelligence import map_intelligence_bundle
+from .mappers.surveillance import map_surveillance_bundle
 from .parsers.bank import parse_bank_source_file
 from .parsers.cdr import parse_cdr_source_file
 from .parsers.fir import parse_fir_source_file
 from .parsers.intelligence import parse_intelligence_source_file
+from .parsers.surveillance import parse_surveillance_source_file, parse_surveillance_source_bytes
 from .resolution.matcher import IdentityClaim, decide_candidates
 from .resolution.registry import IdentityRegistry
 from backend.app.core.graph.enums import ResolutionStatus
@@ -58,6 +60,7 @@ class CsvIngestionPipeline:
             SourceType.CDR: (parse_cdr_source_bytes, map_cdr_bundle),
             SourceType.BANK_TXN: (parse_bank_source_bytes, map_bank_bundle),
             SourceType.INTEL_REPORT: (parse_intelligence_source_bytes, map_intelligence_bundle),
+            SourceType.SURVEILLANCE_REPORT: (parse_surveillance_source_bytes, map_surveillance_bundle),
         }
 
         all_parsed: list[tuple[ParsedSourceBundle, Any]] = []
@@ -126,6 +129,12 @@ class CsvIngestionPipeline:
         source = UploadedSource(source_type=SourceType.INTEL_REPORT, file_name=path_obj.name, data=path_obj.read_bytes())
         return self.ingest_batch([source])
 
+    def ingest_surveillance_csv(self, path: str | Path) -> IngestionBundle:
+        """Ingest one surveillance CSV file."""
+        path_obj = Path(path)
+        source = UploadedSource(source_type=SourceType.SURVEILLANCE_REPORT, file_name=path_obj.name, data=path_obj.read_bytes())
+        return self.ingest_batch([source])
+
     def ingest_directory(self, directory: str | Path) -> IngestionBundle:
         """Ingest recognized trial CSV files from a caller-selected directory."""
         root = Path(directory)
@@ -134,6 +143,7 @@ class CsvIngestionPipeline:
             "cdr_records.csv": SourceType.CDR,
             "bank_transactions.csv": SourceType.BANK_TXN,
             "intelligence_records.csv": SourceType.INTEL_REPORT,
+            "surveillance_records.csv": SourceType.SURVEILLANCE_REPORT,
         }
 
         sources: list[UploadedSource] = []
@@ -208,6 +218,17 @@ class CsvIngestionPipeline:
                     full_name=row.get("subject_name", ""),
                     aliases=[row["raw_alias"]] if row.get("raw_alias") else [],
                     phone_number=row.get("phone", ""),
+                    national_id=row.get("national_id", ""),
+                    source_type=parsed.source_type,
+                ))
+            elif parsed.source_type == SourceType.SURVEILLANCE_REPORT:
+                claims.append(IdentityClaim(
+                    source_record_id=source_record_id,
+                    record_id=record_id,
+                    full_name=row.get("subject_name", ""),
+                    phone_number=row.get("phone_number", ""),
+                    vehicle_number=row.get("vehicle_registration", ""),
+                    address=row.get("location", ""),
                     national_id=row.get("national_id", ""),
                     source_type=parsed.source_type,
                 ))

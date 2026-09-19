@@ -12,6 +12,7 @@ export interface IngestFilesParams {
   cdr?: File
   bank?: File
   intelligence?: File
+  surveillance?: File
 }
 
 export function useIngestFiles() {

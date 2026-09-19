@@ -206,3 +206,92 @@ This document is the **single source of truth** for material architectural, secu
   - *Removing multi-hop capability:* Rejected; multi-hop syndicate detection is essential for dismantling criminal networks.
   - *LLM-generated context explanations:* Rejected; violates deterministic evidence grounding and introduces hallucination risk.
 - **Consequences:** Investigators have full control over network scope; direct accused entities and multi-hop intelligence are clearly and visually distinguished; all presence is explainable with verifiable Section 63 BSA evidence citations.
+
+---
+
+## DEC-014 — Unstructured Document Ingestion Foundation & Tamper-Evident Fingerprinting (P1-A)
+- **Date:** 2026-09-19
+- **Status:** Accepted & Implemented (P1-A)
+- **Decision:**
+  1. Establish an unstructured document ingestion foundation for machine-readable `.pdf` and `.txt` files (FIRs, police memos, intelligence reports).
+  2. Maintain a strict phase boundary:
+     $$\text{DOCUMENT} \to \text{EXTRACTED TEXT} \to \text{VERIFIED DOCUMENT PROVENANCE}$$
+     No automatic graph mutations, no node/relationship generation, and no LLM execution in this phase.
+  3. Enforce deterministic SHA-256 cryptographic document integrity hashing on original bytes. Frame hashing accurately as cryptographic integrity and tamper-evident fingerprinting without making premature or unsupported statutory legal-admissibility claims.
+  4. Preserve document and extracted text confidentiality strictly through existing RBAC (`EvidenceAuthorizationPolicy`). Documents tagged with a `case_id` are confidential and inaccessible/undiscoverable to unauthorized officers across upload, listing, metadata, and text endpoints.
+  5. Employ deterministic text extraction: `pypdf` for machine-readable PDFs (with encryption detection and page-level fallback) and safe encoding decoding for plain text.
+  6. Emit `DOCUMENT_UPLOADED`, `DOCUMENT_VIEWED`, and `DOCUMENT_EXTRACTION_FAILED` through the durable audit trail, avoiding duplicate events during internal service queries.
+- **Reason:** Real-world criminal investigations receive voluminous unstructured filings (FIR PDFs, seizure memos, plain-text intelligence notes). Establishing an authoritative, tamper-evident document intake layer before downstream entity extraction prevents ungrounded graph corruption and ensures strict chain-of-custody tracking.
+- **Alternatives Considered:**
+  - *Direct LLM extraction directly into graph on upload:* Rejected; violates deterministic auditability and risks hallucinations mutating the authoritative graph.
+  - *Storing multi-gigabyte raw binaries directly inside relational SQL columns:* Rejected; decoupled `DocumentService` operates via clean persistence abstraction allowing future blob/object storage backends.
+- **Consequences:** Provides a secure, tamper-evident, RBAC-governed document extraction foundation. Existing CSV ingestion remains 100% unchanged.
+
+---
+
+## DEC-015 — Document Intelligence: Deterministic Candidate Entity & Relationship Extraction (P1-B)
+- **Date:** 2026-09-19
+- **Status:** Accepted & Implemented (P1-B)
+- **Decision:**
+  1. Establish Phase P1-B pipeline:
+     $$\text{DOCUMENT} \to \text{EXTRACTED TEXT} \to \text{CANDIDATE ENTITIES} \to \text{CANDIDATE RESOLUTION} \to \text{CANDIDATE RELATIONSHIPS} \to \text{PROVENANCE} \to \text{STOP}$$
+  2. **Absolute Zero-Mutation Invariant:** P1-B must never mutate the authoritative investigation graph. It has no authority to create, update, or delete nodes or edges, or merge/fuse entities. Enforced and validated via deep graph state equality assertions before and after extraction (`authoritative_graph_before == authoritative_graph_after`).
+  3. **Deterministic Extraction Priority:** Deterministic high-precision candidate extraction operates completely independently. Optional LLM enrichment is strictly non-authoritative and every LLM output must be deterministically validated against source spans.
+  4. **Strictly Read-Only Resolution:** Candidate resolution queries existing canonical graph entities via read-only inspection to identify candidate matches (`REVIEW_REQUIRED` / `NO_MATCH_FOUND`). It never outputs authoritative confirmation or "MATCHED" state.
+  5. **Explicit Evidence Requirement for Relationships:** Candidate relationships are produced only where explicit textual connective evidence exists. Mere paragraph co-occurrence without relational predicates strictly yields zero relationships (unsupported inference guard).
+  6. **Case RBAC & Auditability:** Candidate extraction and retrieval endpoints (`POST /documents/{id}/extract`, `GET /documents/{id}/candidates`, `GET /candidates/{id}`, `GET /candidates/{id}/resolution`) strictly enforce canonical case jurisdiction and record audit events (`DOCUMENT_EXTRACTION_STARTED`, `DOCUMENT_CANDIDATES_EXTRACTED`, `CANDIDATE_VIEWED`).
+  7. **Strict Phase Boundary:** P1-B strictly stops before P1-C. No "Add to Graph", no candidate promotion, and no investigator accept/reject logic is implemented in this phase.
+- **Reason:** Criminal intelligence cannot permit black-box ungrounded entity injection into the authoritative case graph. Establishing an isolated, verifiable candidate layer with explicit provenance and read-only resolution guarantees that human investigators retain constitutional sovereignty over what enters the court-admissible graph.
+- **Alternatives Considered:**
+  - *Direct graph ingestion from text:* Rejected; risks hallucinated or false nodes polluting the evidence network.
+  - *Automated entity fusion during extraction:* Rejected; violates judicial and evidentiary standards under Indian law.
+- **Consequences:** Provides an explainable, isolated candidate extraction layer with complete provenance grounding. Prepares the system for investigator-guided P1-C candidate review.
+- **Technical Debt Resolved in P1-C:**
+  - *Mutable-Repository vs. Read-Only Graph Interface:* Formally introduced `ReadOnlyGraphView` (`backend/app/core/graph/read_only_view.py`), which restricts graph queries to safe read-only operations (`get_node`, `get_all_nodes`, `get_neighbors`, `find_nodes_by_property`, `count_nodes`, `count_edges`). `DocumentExtractionService` now receives only `ReadOnlyGraphView` for entity resolution candidate lookups, eliminating architectural mutation exposure.
+
+---
+
+## DEC-016 — Investigator Confirmation → Authoritative Graph Mutation (P1-C)
+- **Date:** 2026-09-19
+- **Status:** Accepted & Implemented (P1-C)
+- **Decision:**
+  1. Establish Phase P1-C controlled promotion lifecycle:
+     $$\text{P1B CANDIDATE} \to \text{INVESTIGATOR REVIEW} \to \text{ACCEPT / REJECT} \to \text{VALIDATION} \to \text{AUTHORITATIVE GRAPH MUTATION} \to \text{PROVENANCE} \to \text{AUDIT} \to \text{REVIEWABLE HISTORY}$$
+  2. **Absolute Promotion Invariant:** No candidate entity or relationship may enter the authoritative case graph without an explicit, authorized, and authenticated investigator decision. Zero automatic promotion, zero automatic identity fusion, zero background ingestion bypass.
+  3. **100% Deterministic Promotion Path:** Zero LLM calls are permitted anywhere in the promotion or mutation path. Candidate data from P1B is treated purely as candidate input; the final graph mutation payload is synthesized, validated, and persisted by deterministic application code.
+  4. **Canonical ID Convention Consistency:** All newly created entities reuse existing canonical NEXUS prefix conventions (`person-XXXX`, `phone-XXXX`, `account-XXXX`, `vehicle-XXXX`, `org-XXXX`, `location-XXXX`). Secondary incompatible naming schemes are strictly barred, ensuring full downstream compatibility with `GraphStore`, Neo4j, graph projections, GraphRAG, and entity resolution.
+  5. **Existing Graph Schema Compatibility:** Linking candidates to existing entities (`link_candidate_to_entity`) preserves canonical graph schemas without injecting arbitrary non-canonical node attributes. Candidate references are merged directly into canonical provenance arrays (`provenance.supporting_documents`).
+  6. **Separation of Powers & Server-Side RBAC (`can_decide_candidate`):**
+     - Anonymous callers are strictly rejected (401/403).
+     - `ANALYST` role has analytical read-only access and is forbidden from executing graph mutations or candidate confirmations (403).
+     - `INVESTIGATOR` / `IO` must be assigned directly to the case (403 if unassigned).
+     - `SUPERVISOR` / `SP` / `ADMIN` have supervisory authority covering divisional/state cases.
+  7. **Edge Deduplication & Evidence Corroboration:** Accepting a candidate relationship where a canonical edge already connects the source and target nodes does NOT create a redundant duplicate edge. It corroborates the existing edge by appending the new document citation and case ID to its provenance records.
+  8. **Strict Transaction Failure & Atomicity Safeguard:** If a mutation fails (simulated graph/repository/Neo4j disk failure):
+     - An HTTP 500 error is returned.
+     - The candidate remains available for review/retry and is NOT marked `ACCEPTED`.
+     - No false-success decision record is persisted.
+     - No successful promotion audit event is emitted; instead, a failure event (`CANDIDATE_PROMOTION_FAILED`) is recorded.
+     - In-flight mutations are safely rolled back, leaving zero partial corruption in the graph.
+  9. **Idempotency & Conflicting Decisions Protection:** Re-submitting an identical decision returns the existing decision idempotently (200 OK). Attempting to accept a candidate that was already rejected (or vice versa) raises an HTTP 409 Conflict.
+- **Reason:** Ensuring that the authoritative investigation graph remains strictly court-admissible, grounded in verifiable physical evidence under Indian law, and free from algorithmic or predictive guilt bias requires an airtight, human-in-the-loop promotion boundary.
+---
+
+## DEC-017 — Dedicated Surveillance Report Ingestion (P1-D)
+- **Date:** 2026-09-19
+- **Status:** Accepted & Implemented (P1-D)
+- **Decision:**
+  1. **Dedicated First-Class Source Type:** Introduce `SURVEILLANCE_REPORT = "SURVEILLANCE_REPORT"` into the authoritative `SourceType` enum, resolving the audit weakness where field observations were previously absorbed under generic intelligence reports (`INTEL_REPORT`). Existing ingestion behavior for FIR, CDR, BANK_TXN, and INTEL_REPORT remains completely unmodified.
+  2. **Deterministic Data Contract & Normalization:** Implement structured surveillance ingestion (`backend/app/db/ingestion/parsers/surveillance.py` and `mappers/surveillance.py`) handling surveillance records containing `report_id`, `case_id`, `observation_id`, `observed_at`, `subject_name`, `observation_type`, `location`, `vehicle_plate`, `phone_number`, `organization_name`, `summary`, and `source_reference`. Enforce strict ISO-8601 UTC timestamp validation, phone number normalization, vehicle plate uppercase standardization, and required field checks.
+  3. **Reuse of Existing Graph Semantics & Zero Unsupported Inference:**
+     - Map observations strictly into existing Schema V2 node types (`Person`, `Location`, `Vehicle`, `Phone`, `Organization`) and relationship types (`SEEN_AT`, `USED_VEHICLE`, `USED_PHONE`, `ASSOCIATED_WITH`).
+     - Strictly prohibit speculative inferences: observation at a location NEVER infers `OWNS`, `ACCUSED_IN`, `COMMITTED`, or implicit association with other subjects observed at the same location.
+  4. **Multi-Attribute Entity Resolution:** Integrate with the existing deterministic multi-attribute entity registry (`IdentityClaim`). Match canonical entities when evidence permits (phone, vehicle, exact name); flag ambiguous matches as `REVIEW_REQUIRED` without arbitrary or speculative fusion; never use LLMs to decide identity.
+  5. **Edge Deduplication & Evidence Corroboration:** Ingesting an observation connecting two entities that are already linked by an existing canonical edge (`(source_id, target_id, edge_type)`) does NOT create a redundant duplicate edge. The existing edge is corroborated by appending the observation's `EvidenceProvenance` to `corroborating_evidence` and incrementing `edges_reused`.
+  6. **Authoritative Graph Mutation Boundary:** Surveillance ingestion uses the exact same authoritative graph mutation pipeline (`apply_bundle` / `GraphStore` / Neo4j projection). Direct database writes or parallel graph stores are strictly prohibited.
+  7. **RBAC, Audit Trail & Idempotency:**
+     - Ingestion requires authenticated officer principals and enforces existing case jurisdiction policies.
+     - Emits dedicated audit events (`SURVEILLANCE_REPORT_UPLOADED`, `SURVEILLANCE_REPORT_INGESTED`, `SURVEILLANCE_REPORT_INGESTION_FAILED`) preserving officer identity, case ID, source record ID, and cryptographic payload integrity.
+     - Repeated ingestion of the same report is idempotent: duplicate observations reuse existing nodes and corroborate existing edges without creating duplicate entities. Mutation failures cleanly abort with zero partial graph state and emit failure audit records.
+- **Reason:** Field surveillance reports (stakeouts, physical sightings, vehicle tracking, rendezvous logs) provide critical time-stamped ground truth during active investigations. Establishing a dedicated, deterministic ingestion pipeline with full provenance and strict corroboration eliminates ambiguity while preventing speculative bias.
+- **Consequences:** Provides a seamless, court-admissible surveillance ingestion path across backend and frontend, unified within the single authoritative investigation graph.
