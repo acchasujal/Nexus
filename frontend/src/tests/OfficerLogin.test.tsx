@@ -110,10 +110,9 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
     expect(screen.getByTestId('demo-officer-admin')).toBeInTheDocument()
   })
 
-  it('renders centered responsive layout with institutional banner and authentication console', () => {
+  it('renders centered authentication console without standalone header and footer', () => {
     renderLoginWithRouter()
 
-    expect(screen.getByRole('banner')).toBeInTheDocument()
     expect(screen.getByRole('main')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: /Officer Authentication Form/i })).toBeInTheDocument()
     expect(screen.getByText(/Deterministic Graph Analytics/i)).toBeInTheDocument()

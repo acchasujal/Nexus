@@ -16,7 +16,6 @@ import {
   AlertCircle,
   KeyRound,
   ArrowRight,
-  Scale,
 } from 'lucide-react'
 
 interface OfficerProfile {
@@ -130,47 +129,14 @@ export default function Login() {
   }
 
   return (
-    <div className="h-screen max-h-screen flex flex-col justify-between bg-neutral-50 text-neutral-800 selection:bg-blue-100 selection:text-blue-900 overflow-y-auto lg:overflow-hidden">
-      {/* Top Institutional Masthead Bar — Full Width, Consistent Application Typography */}
-      <header className="w-full relative z-20 border-b border-neutral-200/90 bg-white px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 shadow-2xs shrink-0">
-        <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
-              <Network className="h-4 w-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-black tracking-tight text-neutral-900">NCRB Intelligence</span>
-                <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 rounded uppercase tracking-wider">
-                  MHA Portal
-                </span>
-              </div>
-              <p className="text-xs text-neutral-500 font-medium hidden sm:block">
-                Ministry of Home Affairs · National Crime Records Bureau · Women Safety Division
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-semibold text-neutral-700">
-              <Shield className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-              <span>Official Law Enforcement Portal · Authorized Access Only</span>
-            </div>
-            <div className="hidden md:inline-flex items-center gap-1.5 rounded-full border border-amber-200/80 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800">
-              <Scale className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-              <span>Sec. 63 BSA Compliant</span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Container — Centered Authentication Console */}
-      <main className="w-full flex-1 min-h-0 max-w-lg mx-auto px-4 sm:px-6 py-2 sm:py-3 flex flex-col justify-center items-center relative z-10 my-auto">
-        {/* Authentication Console Card — Clean Width & Consistent Typography */}
+    <div className="h-screen max-h-screen flex flex-col justify-center items-center bg-neutral-50 text-neutral-800 selection:bg-blue-100 selection:text-blue-900 p-4 sm:p-6 overflow-y-auto lg:overflow-hidden">
+      {/* Main Container — Purely Centered Authentication Console */}
+      <main className="w-full max-w-[420px] mx-auto flex flex-col items-center">
+        {/* Authentication Console Card */}
         <div 
           role="region" 
           aria-label="Officer Authentication Form" 
-          className="w-full max-w-[420px] rounded-2xl border border-neutral-200/80 bg-white p-5 sm:p-6 shadow-[0_1px_3px_0_rgb(0_0_0_/_0.04),0_8px_24px_-4px_rgb(0_0_0_/_0.06)] space-y-3"
+          className="w-full rounded-2xl border border-neutral-200/80 bg-white p-5 sm:p-6 shadow-[0_1px_3px_0_rgb(0_0_0_/_0.04),0_8px_24px_-4px_rgb(0_0_0_/_0.06)] space-y-3"
         >
           {/* Integrated Brand Emblem & Title */}
           <div className="text-center pb-2.5 border-b border-neutral-100 space-y-1">
@@ -348,25 +314,16 @@ export default function Login() {
           </div>
 
           {/* Card Footer Statutory Disclaimers */}
-          <div className="border-t border-neutral-200/90 pt-2 text-center">
+          <div className="border-t border-neutral-200/90 pt-2 text-center space-y-1">
             <p className="text-xs text-neutral-500 font-medium">
               Deterministic Graph Analytics · Evidence-Grounded Attribution · Tamper-Proof Audit Logging
+            </p>
+            <p className="text-[11px] text-neutral-400">
+              Section 63 BSA (2023) Compliant · Zero Real Citizen PII · Tamper-Evident Ledger Provenance
             </p>
           </div>
         </div>
       </main>
-
-      {/* Page Footer — Full Width, Consistent Application Typography */}
-      <footer className="w-full relative z-20 border-t border-neutral-200/90 bg-white px-4 sm:px-6 lg:px-8 py-2 text-xs text-neutral-500 shadow-2xs shrink-0">
-        <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1">
-          <p className="text-xs text-neutral-500">
-            Smart India Hackathon 2026 · Problem Statement ID: 26189 · Ministry of Home Affairs (MHA)
-          </p>
-          <p className="text-xs text-neutral-400">
-            Section 63 BSA (2023) Compliant · Zero Real Citizen PII · Tamper-Evident Ledger Provenance
-          </p>
-        </div>
-      </footer>
     </div>
   )
 }
