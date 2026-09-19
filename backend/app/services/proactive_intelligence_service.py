@@ -222,7 +222,7 @@ class ProactiveIntelligenceService:
                     verification_id=f"verif-{pulse_id}-1",
                     target_claim="Beneficial subscriber identity corroboration",
                     missing_evidence_type="Section 94 BNSS CAF / Subscriber Registry",
-                    recommended_action="Serve notice to telecom service provider for customer acquisition form.",
+                    recommended_action="Serve notice to telecom service provider for customer acquisition form under Section 94 BNSS.",
                     responsible_role=UserRole.INVESTIGATOR,
                     status="PENDING",
                 )

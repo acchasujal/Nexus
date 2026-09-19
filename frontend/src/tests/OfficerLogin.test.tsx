@@ -49,6 +49,7 @@ function renderLoginWithRouter(initialEntry = '/login') {
         <MemoryRouter initialEntries={[initialEntry]}>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/intelligence" element={<DummyWorklist />} />
             <Route path="/worklist" element={<DummyWorklist />} />
           </Routes>
         </MemoryRouter>
@@ -90,13 +91,13 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders login page with professional branding, inputs, and security notice', () => {
+  it('renders login page with professional branding and inputs', () => {
     renderLoginWithRouter()
 
     // Brand and subtitle
     expect(screen.getByText('NEXUS')).toBeInTheDocument()
     expect(screen.getByText(/Investigative Network Intelligence Platform/i)).toBeInTheDocument()
-    expect(screen.getByText(/Restricted Access · All Sessions Cryptographically Audited/i)).toBeInTheDocument()
+    expect(screen.getByText('Officer Authentication Console')).toBeInTheDocument()
 
     // Inputs
     expect(screen.getByLabelText(/Officer ID \/ Service Identifier/i)).toBeInTheDocument()
@@ -108,6 +109,14 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
     expect(screen.getByTestId('demo-officer-sho')).toBeInTheDocument()
     expect(screen.getByTestId('demo-officer-sp')).toBeInTheDocument()
     expect(screen.getByTestId('demo-officer-admin')).toBeInTheDocument()
+  })
+
+  it('renders clean centered authentication console', () => {
+    renderLoginWithRouter()
+
+    expect(screen.getByRole('main')).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: /Officer Authentication Form/i })).toBeInTheDocument()
+    expect(screen.getByText('Officer Authentication Console')).toBeInTheDocument()
   })
 
   it('authenticates officer successfully and redirects to /worklist', async () => {
@@ -131,6 +140,42 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
     await user.type(idInput, 'KA-1001')
     await user.type(passInput, 'secure-password')
     await user.click(submitBtn)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('worklist-content')).toBeInTheDocument()
+    })
+  })
+
+  it('redirects to relevant user profile when entering KA-xxxx badge in input box', async () => {
+    const user = userEvent.setup()
+
+    const loginSpy = vi.spyOn(apiClient, 'login').mockImplementation(async (req) => {
+      const u = req.username.toUpperCase()
+      const role = req.role || 'IO'
+      return {
+        access_token: 'dummy.jwt.token',
+        token_type: 'bearer',
+        user_id: u,
+        role: role,
+        expires_in: 86400,
+      }
+    })
+
+    renderLoginWithRouter()
+
+    const idInput = screen.getByTestId('officer-id-input')
+    const submitBtn = screen.getByTestId('login-submit-button')
+
+    // Enter KA-1002 (SHO Sunita Sharma) directly without clicking helper cards
+    await user.type(idInput, 'KA-1002')
+    await user.click(submitBtn)
+
+    expect(loginSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        username: 'KA-1002',
+        role: 'SHO',
+      })
+    )
 
     await waitFor(() => {
       expect(screen.getByTestId('worklist-content')).toBeInTheDocument()
@@ -181,6 +226,29 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
     })
   })
 
+  it('authenticates via mobile demo officer dropdown selector', async () => {
+    const user = userEvent.setup()
+
+    vi.spyOn(apiClient, 'login').mockResolvedValueOnce({
+      access_token: 'dummy.jwt.token',
+      token_type: 'bearer',
+      user_id: 'KA-1003',
+      role: 'SP',
+      expires_in: 86400,
+    })
+
+    renderLoginWithRouter()
+
+    const mobileSelect = screen.getByTestId('demo-officer-select-mobile')
+    expect(mobileSelect).toBeInTheDocument()
+
+    await user.selectOptions(mobileSelect, 'KA-1003')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('worklist-content')).toBeInTheDocument()
+    })
+  })
+
   it('displays authenticated officer details in the Header without role-switching dropdown', () => {
     const mockOfficer: OfficerUser = {
       userId: 'officer_io',
@@ -225,5 +293,45 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
 
     expect(localStorage.getItem('nexus_role')).toBeNull()
     expect(localStorage.getItem('nexus_token')).toBeNull()
+  })
+
+  it('authenticates and navigates to /intelligence by default when no previous location is specified', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(apiClient, 'login').mockResolvedValueOnce({
+      access_token: 'dummy.jwt.token',
+      token_type: 'bearer',
+      user_id: 'KA-1001',
+      role: 'IO',
+      expires_in: 86400,
+    })
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/login']}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/intelligence" element={<div data-testid="intelligence-landing">Intelligence Center</div>} />
+              <Route path="/worklist" element={<div data-testid="worklist-landing">Worklist</div>} />
+            </Routes>
+          </MemoryRouter>
+        </AuthProvider>
+      </QueryClientProvider>
+    )
+
+    const idInput = screen.getByTestId('officer-id-input')
+    const submitBtn = screen.getByTestId('login-submit-button')
+
+    await user.type(idInput, 'KA-1001')
+    await user.click(submitBtn)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('intelligence-landing')).toBeInTheDocument()
+      expect(screen.queryByTestId('worklist-landing')).not.toBeInTheDocument()
+    })
   })
 })

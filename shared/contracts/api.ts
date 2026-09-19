@@ -338,6 +338,13 @@ export interface EntityResolutionMatchResponse {
   reason: string
   evidence_breakdown: Record<string, number>
   properties: Record<string, any>
+  search_relevance?: number
+  resolution_state?: string
+  evidence_families?: string[]
+  supporting_factors?: string[]
+  conflicting_factors?: string[]
+  independent_sources?: number
+  explanation?: string
 }
 
 export interface EntityResolutionResponse {

@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { clockStatusToRisk, resolveObjectPath } from '@/lib/utils'
+import { clockStatusToRisk, resolveObjectPath, maskPhone, maskVehicle, maskNationalId, maskAddress } from '@/lib/utils'
 import type { ClockStatus } from '@shared/contracts/api'
 
 describe('clockStatusToRisk', () => {
@@ -55,5 +55,28 @@ describe('resolveObjectPath', () => {
 
   it('handles deeply nested path (3 levels)', () => {
     expect(resolveObjectPath({ a: { b: { c: 42 } } }, 'a.b.c')).toBe(42)
+  })
+})
+
+describe('sensitive data masking helpers (B20)', () => {
+  it('masks phone numbers safely', () => {
+    expect(maskPhone('+91 98201 22334')).toContain('***')
+    expect(maskPhone('+91 98201 22334')).toBe('+91 98***334')
+    expect(maskPhone(null)).toBe('—')
+  })
+
+  it('masks vehicle registration numbers safely', () => {
+    expect(maskVehicle('KA-01-AB-1234')).toBe('KA-01-**-**34')
+    expect(maskVehicle(null)).toBe('—')
+  })
+
+  it('masks national IDs / Aadhaar safely', () => {
+    expect(maskNationalId('1234 5678 9012')).toBe('****-****-9012')
+    expect(maskNationalId(null)).toBe('—')
+  })
+
+  it('partially masks addresses keeping district / locality context', () => {
+    expect(maskAddress('Flat 402, Building 5, Kurla West, Mumbai')).toBe('***, Building 5, Kurla West, Mumbai')
+    expect(maskAddress(null)).toBe('—')
   })
 })

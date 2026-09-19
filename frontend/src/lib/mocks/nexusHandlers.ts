@@ -898,6 +898,16 @@ export const nexusHandlers = [
         matched_node_id: 'person-0040',
         confidence: 0.94,
         status: 'MATCHED',
+        resolution_state: 'STRONGLY_CORROBORATED',
+        evidence_families: ['NAME_FAMILY', 'TELECOM_FAMILY', 'LOCATION_FAMILY'],
+        supporting_factors: [
+          'Exact MSISDN phone match',
+          'Phonetic double-metaphone alignment',
+          'Jurisdictional alignment (Mumbai Central)',
+        ],
+        conflicting_factors: [],
+        independent_sources: 3,
+        explanation: 'Multi-field corroborated across 3 independent families (Name, Telecom, Location).',
         matched_fields: ['full_name', 'phone_number', 'jurisdiction'],
         reason: `Deterministic match on MSISDN +91 98201 22334 and phonetic double-metaphone alignment for "${matchName}".`,
         evidence_breakdown: {
@@ -920,6 +930,15 @@ export const nexusHandlers = [
           matched_node_id: 'person-0037',
           confidence: 0.78,
           status: 'PROBABLE_MATCH',
+          resolution_state: 'STRONGLY_CORROBORATED',
+          evidence_families: ['NAME_FAMILY', 'RELATIONAL_FAMILY'],
+          supporting_factors: [
+            'Secondary alias match (Vikram Bhai)',
+            'Shared financial mule accounts across FIR-141 and FIR-207',
+          ],
+          conflicting_factors: [],
+          independent_sources: 2,
+          explanation: 'Corroborated across 2 independent families (Name, Relational).',
           matched_fields: ['alias', 'co_accused_nexus', 'financial_mule'],
           reason: 'Secondary alias match with shared financial mule accounts across FIR-141 and FIR-207.',
           evidence_breakdown: {

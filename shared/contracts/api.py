@@ -343,6 +343,13 @@ class EntityResolutionMatchResponse(BaseModel):
     reason: str
     evidence_breakdown: dict[str, float] = Field(default_factory=dict)
     properties: dict[str, Any] = Field(default_factory=dict)
+    search_relevance: float = 1.0
+    resolution_state: str = "CANDIDATE_NAME_ONLY"
+    evidence_families: list[str] = Field(default_factory=list)
+    supporting_factors: list[str] = Field(default_factory=list)
+    conflicting_factors: list[str] = Field(default_factory=list)
+    independent_sources: int = 1
+    explanation: str = ""
 
 
 class EntityResolutionResponse(BaseModel):
@@ -551,7 +558,7 @@ class AuditLogEntry(BaseModel):
 class AuthLoginRequest(BaseModel):
     username: str
     password: str | None = None
-    role: UserRole | None = UserRole.INVESTIGATOR
+    role: UserRole | None = None
 
 
 class AuthTokenResponse(BaseModel):

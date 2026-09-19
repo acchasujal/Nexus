@@ -156,13 +156,18 @@ function resolveUserFromTokenOrRole(token: string | null, role: UserRole | null)
 
 function createSessionToken(role: UserRole, username?: string): string {
   const canonical = CANONICAL_OFFICERS[role] || CANONICAL_OFFICERS.INVESTIGATOR
+  const u = (username || '').trim()
+  const isCustomBadge = u.toUpperCase().startsWith('KA-') && !['KA-1000', 'KA-1001', 'KA-1002', 'KA-1003'].includes(u.toUpperCase())
+  const badgeNumber = isCustomBadge ? u.toUpperCase() : canonical.badgeNumber
+  const officerName = isCustomBadge ? `Officer ${u.toUpperCase()}` : canonical.name
+
   const payload = {
     sub: username || canonical.userId,
     email: canonical.email || `${username || canonical.userId}@nexus.internal`,
     role: role,
-    officer_id: canonical.officerId,
-    badge_number: canonical.badgeNumber,
-    name: canonical.name,
+    officer_id: isCustomBadge ? `OFFICER-${u.toUpperCase()}` : canonical.officerId,
+    badge_number: badgeNumber,
+    name: officerName,
     rank: canonical.rank,
     station_id: canonical.stationId,
     district: canonical.district,
@@ -259,7 +264,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (u.includes('sho') || u.includes('ka-1002') || u.includes('analyst')) fallbackRole = 'SHO'
           else if (u.includes('sp') || u.includes('ka-1003') || u.includes('supervisor')) fallbackRole = 'SP'
           else if (u.includes('admin') || u.includes('ka-1000')) fallbackRole = 'ADMIN'
-          else if (u.includes('io') || u.includes('ka-1001') || u.includes('investigator')) fallbackRole = 'IO'
+          else if (u.includes('io') || u.includes('ka-1001') || u.includes('investigator') || u.startsWith('ka-')) fallbackRole = 'IO'
         }
         // If error was an explicit invalid API error with status 401 or 403, re-throw
         if (err && typeof err === 'object' && 'status' in err && (err.status === 401 || err.status === 403)) {

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams, useLocation, Link } from 'react-router-dom'
 import { Users, CheckCircle2, HelpCircle, AlertTriangle, XCircle, Search, ArrowRight, ShieldAlert, Phone, MapPin, Tag } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
+import { maskPhone, maskVehicle } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
 import type { EntityResolutionMatchResponse } from '@shared/contracts/api'
@@ -44,7 +45,19 @@ export default function Entities() {
         address_text: address || undefined,
         confidence_threshold: 0.45,
       })
-      setMatches(response.matches || [])
+      const rawMatches = response.matches || []
+      const HARD_IDS = new Set(['phone', 'phone_number', 'vehicle', 'vehicle_number', 'aadhaar', 'pan', 'account', 'account_number', 'imei'])
+      const sorted = [...rawMatches].sort((a, b) => {
+        const aFields = ((a.matched_fields || (a as any).matched_attributes || []) as string[])
+        const bFields = ((b.matched_fields || (b as any).matched_attributes || []) as string[])
+        const aHasHard = aFields.some((f) => HARD_IDS.has(String(f).toLowerCase()))
+        const bHasHard = bFields.some((f) => HARD_IDS.has(String(f).toLowerCase()))
+        if (aHasHard && !bHasHard) return -1
+        if (!aHasHard && bHasHard) return 1
+        if (aFields.length !== bFields.length) return bFields.length - aFields.length
+        return (b.confidence ?? 0) - (a.confidence ?? 0)
+      })
+      setMatches(sorted)
     } catch (err) {
       console.error('Entity resolution failed:', err)
       setMatches([])
@@ -82,36 +95,82 @@ export default function Entities() {
     })
   }
 
-  const getStatusBadge = (status?: string, confidence?: number) => {
+  const HARD_ID_FIELDS = new Set(['phone', 'phone_number', 'vehicle', 'vehicle_number', 'aadhaar', 'pan', 'account', 'account_number', 'imei', 'national_id'])
+  const NAME_FIELDS = new Set([
+    'name',
+    'full_name',
+    'full_name_exact',
+    'full_name_phonetic',
+    'full_name_prefix',
+    'full_name_token',
+    'full_name_fuzzy',
+    'alias',
+    'aliases',
+    'alias_match',
+    'name_score',
+    'name_similarity',
+  ])
+
+  const getStatusBadge = (
+    status?: string,
+    confidence?: number,
+    matchedFields: string[] = [],
+    resolutionState?: string,
+    evidenceFamilies: string[] = [],
+    conflicts: string[] = []
+  ) => {
     const safeConfidence = typeof confidence === 'number' ? Math.round(confidence * 100) : 100
     const safeStatus = String(status || 'MATCHED').toUpperCase()
 
-    switch (safeStatus) {
-      case 'MATCHED':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-200 shadow-2xs">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> MATCHED ({safeConfidence}%)
-          </span>
-        )
-      case 'PROBABLE_MATCH':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-900 border border-amber-200 shadow-2xs">
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-600" /> PROBABLE MATCH ({safeConfidence}%)
-          </span>
-        )
-      case 'REVIEW_REQUIRED':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-800 border border-blue-200 shadow-2xs">
-            <HelpCircle className="h-3.5 w-3.5 text-blue-600" /> REVIEW REQUIRED ({safeConfidence}%)
-          </span>
-        )
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-bold text-neutral-800 border border-neutral-300 shadow-2xs">
-            <XCircle className="h-3.5 w-3.5 text-neutral-500" /> NOT MATCHED
-          </span>
-        )
+    if (safeStatus === 'NOT_MATCHED' || resolutionState === 'NOT_MATCHED' || resolutionState === 'UNRESOLVED') {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-bold text-neutral-800 border border-neutral-300 shadow-2xs">
+          <XCircle className="h-3.5 w-3.5 text-neutral-500" /> NOT MATCHED
+        </span>
+      )
     }
+
+    if (conflicts.length > 0 || resolutionState === 'AMBIGUOUS_CONFLICT') {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-800 border border-rose-200 shadow-2xs">
+          <AlertTriangle className="h-3.5 w-3.5 text-rose-600" /> AMBIGUOUS / CONFLICT ({safeConfidence}%)
+        </span>
+      )
+    }
+
+    // 1. Exact hard identifier match
+    const hasHardId =
+      matchedFields.some((f) => HARD_ID_FIELDS.has(String(f).toLowerCase())) ||
+      evidenceFamilies.includes('IDENTIFIER_FAMILY') ||
+      resolutionState === 'EXACT_IDENTIFIER_MATCH'
+
+    if (hasHardId) {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-200 shadow-2xs">
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> EXACT IDENTIFIER CORROBORATED ({safeConfidence}%)
+        </span>
+      )
+    }
+
+    // 2. Multi-field corroboration (strictly requires >= 2 orthogonal evidence families)
+    const hasMultiFamily = evidenceFamilies.length >= 2 || resolutionState === 'STRONGLY_CORROBORATED'
+    const nonNameFields = matchedFields.filter((f) => !NAME_FIELDS.has(String(f).toLowerCase()))
+    const hasCorroboratingNonName = nonNameFields.length >= 1 && matchedFields.some((f) => NAME_FIELDS.has(String(f).toLowerCase()))
+
+    if (hasMultiFamily || hasCorroboratingNonName) {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-800 border border-blue-200 shadow-2xs">
+          <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" /> STRONGLY CORROBORATED ({safeConfidence}%)
+        </span>
+      )
+    }
+
+    // 3. Name match candidate only (unconfirmed without corroborating telemetry)
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-900 border border-amber-200 shadow-2xs">
+        <HelpCircle className="h-3.5 w-3.5 text-amber-600" /> Candidate — name match only ({safeConfidence}%)
+      </span>
+    )
   }
 
   return (
@@ -221,7 +280,12 @@ export default function Entities() {
                 const status = m.status || (m as any).match_status || 'MATCHED'
                 const confidence = typeof m.confidence === 'number' ? m.confidence : typeof (m as any).confidence_score === 'number' ? (m as any).confidence_score : 1.0
                 const matchedFields = ((m.matched_fields || (m as any).matched_attributes || (m as any).matched_properties || []) as string[])
-                const reason = m.reason || 'Corroborated cross-case entity match based on shared demographic and telephony attributes.'
+                const resolutionState = m.resolution_state || (m as any).resolution_state
+                const evidenceFamilies = m.evidence_families || (m as any).evidence_families || []
+                const supportingFactors = m.supporting_factors || (m as any).supporting_factors || []
+                const conflictingFactors = m.conflicting_factors || (m as any).conflicting_factors || []
+                const explanation = m.explanation || (m as any).explanation
+                const reason = explanation || m.reason || 'Corroborated cross-case entity match based on shared demographic and telephony attributes.'
                 const properties = m.properties || {}
 
                 return (
@@ -234,18 +298,67 @@ export default function Entities() {
                         <h3 className="text-base font-bold text-neutral-900">{canonicalName}</h3>
                         <div className="text-xs text-neutral-500 font-mono mt-0.5">{nodeId}</div>
                       </div>
-                      {getStatusBadge(status, confidence)}
+                      {getStatusBadge(status, confidence, matchedFields, resolutionState, evidenceFamilies, conflictingFactors)}
                     </div>
 
-                    <div className="space-y-2 text-xs">
+                    <div className="space-y-2.5 text-xs">
                       <div className="text-neutral-700 leading-relaxed">
                         <strong className="text-neutral-900">Match Decision Basis:</strong> {reason}
                       </div>
 
+                      {/* Evidence Families & Factors */}
+                      {(evidenceFamilies.length > 0 || supportingFactors.length > 0 || conflictingFactors.length > 0) && (
+                        <div className="rounded-lg bg-neutral-50 border border-neutral-200/80 p-2.5 space-y-1.5">
+                          <div className="text-[11px] font-bold text-neutral-700 uppercase tracking-wider flex items-center justify-between">
+                            <span>Why This Candidate Appeared</span>
+                            {m.independent_sources && (
+                              <span className="text-[10px] text-neutral-500 font-normal">
+                                {m.independent_sources} independent {m.independent_sources === 1 ? 'family' : 'families'}
+                              </span>
+                            )}
+                          </div>
+
+                          {evidenceFamilies.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1">
+                              {evidenceFamilies.map((fam) => (
+                                <span
+                                  key={fam}
+                                  className="rounded px-1.5 py-0.5 text-[10px] font-bold bg-neutral-200 text-neutral-800"
+                                >
+                                  {fam.replace('_FAMILY', '')}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          {supportingFactors.length > 0 && (
+                            <ul className="text-[11px] text-neutral-600 space-y-0.5 pl-1">
+                              {supportingFactors.map((fact, fIdx) => (
+                                <li key={fIdx} className="flex items-start gap-1">
+                                  <span className="text-emerald-600 font-bold">✓</span>
+                                  <span>{fact}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+
+                          {conflictingFactors.length > 0 && (
+                            <ul className="text-[11px] text-rose-700 space-y-0.5 pl-1 pt-0.5">
+                              {conflictingFactors.map((conflict, cIdx) => (
+                                <li key={cIdx} className="flex items-start gap-1">
+                                  <span className="text-rose-600 font-bold">⚠</span>
+                                  <span>{conflict}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      )}
+
                       {matchedFields.length > 0 && (
                         <div className="flex flex-wrap items-center gap-1.5 pt-1">
                           <span className="text-[11px] font-bold text-neutral-500 mr-1 flex items-center gap-1">
-                            <Tag className="h-3 w-3" /> Corroborated:
+                            <Tag className="h-3 w-3" /> Corroborated Fields:
                           </span>
                           {matchedFields.map((attr) => (
                             <span
@@ -262,9 +375,15 @@ export default function Entities() {
                       {Object.keys(properties).length > 0 && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-neutral-100 text-[11px] text-neutral-600">
                           {properties.phone_number && (
-                            <div className="flex items-center gap-1.5 text-neutral-700">
+                            <div className="flex items-center gap-1.5 text-neutral-700" title={`Phone: ${properties.phone_number}`}>
                               <Phone className="h-3 w-3 text-neutral-400" />
-                              <span>{String(properties.phone_number)}</span>
+                              <span>{maskPhone(String(properties.phone_number))}</span>
+                            </div>
+                          )}
+                          {properties.vehicle_number && (
+                            <div className="flex items-center gap-1.5 text-neutral-700" title={`Vehicle: ${properties.vehicle_number}`}>
+                              <Tag className="h-3 w-3 text-neutral-400" />
+                              <span>{maskVehicle(String(properties.vehicle_number))}</span>
                             </div>
                           )}
                           {properties.district && (

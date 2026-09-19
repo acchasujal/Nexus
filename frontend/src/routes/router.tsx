@@ -59,6 +59,10 @@ export const router = createBrowserRouter([
         element: <Navigate to="/intelligence" replace />,
       },
       {
+        path: 'rollup',
+        element: <Navigate to="/intelligence" replace />,
+      },
+      {
         path: 'worklist',
         element: (
           <RoleGuard allowedRoles={allRoles}>

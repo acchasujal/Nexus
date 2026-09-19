@@ -93,7 +93,7 @@ describe('CaseDNASection (P2)', () => {
 
     expect(screen.getByText(/Case DNA: Explainable Structural Similarity/i)).toBeInTheDocument()
     expect(screen.getByText(/Zero Predictive Guilt/i)).toBeInTheDocument()
-    expect(screen.getByText(/P2 Intelligence Engine/i)).toBeInTheDocument()
+    expect(screen.getByText(/Structural Similarity Engine/i)).toBeInTheDocument()
   })
 
   it('renders summary metrics for target case and top matches', async () => {

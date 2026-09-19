@@ -19,6 +19,15 @@ from backend.app.core.graph.algorithms.utils import GraphStore
 from backend.app.core.graph.enums import ResolutionStatus
 
 
+# Evidence families for epistemic independence
+NAME_FAMILY = "NAME_FAMILY"
+TELECOM_FAMILY = "TELECOM_FAMILY"
+VEHICLE_FAMILY = "VEHICLE_FAMILY"
+IDENTIFIER_FAMILY = "IDENTIFIER_FAMILY"
+LOCATION_FAMILY = "LOCATION_FAMILY"
+RELATIONAL_FAMILY = "RELATIONAL_FAMILY"
+
+
 @dataclass(frozen=True)
 class ResolutionMatch:
     """Represents a resolved candidate entity with evidence."""
@@ -29,6 +38,13 @@ class ResolutionMatch:
     reason: str
     evidence_breakdown: dict[str, float] = field(default_factory=dict)
     properties: dict[str, Any] = field(default_factory=dict)
+    search_relevance: float = 1.0
+    resolution_state: str = "CANDIDATE_NAME_ONLY"
+    evidence_families: list[str] = field(default_factory=list)
+    supporting_factors: list[str] = field(default_factory=list)
+    conflicting_factors: list[str] = field(default_factory=list)
+    independent_sources: int = 1
+    explanation: str = ""
 
 
 def normalize_text(text: str | None) -> str:
@@ -162,13 +178,19 @@ def resolve_person(
         matched_fields: list[str] = []
         evidence_breakdown: dict[str, float] = {}
         reason_parts: list[str] = []
+        supporting_factors: list[str] = []
+        conflicting_factors: list[str] = []
 
         # 1. National ID Check (Definitive 1.0)
         node_id_val = props.get("national_id") or props.get("id_number")
-        if query_id and node_id_val and str(query_id).strip() == str(node_id_val).strip():
-            matched_fields.append("national_id")
-            evidence_breakdown["national_id"] = 1.0
-            reason_parts.append(f"Exact National ID match ({query_id})")
+        if query_id and node_id_val:
+            if str(query_id).strip() == str(node_id_val).strip():
+                matched_fields.append("national_id")
+                evidence_breakdown["national_id"] = 1.0
+                supporting_factors.append(f"Exact National ID match ({query_id})")
+                reason_parts.append(f"Exact National ID match ({query_id})")
+            else:
+                conflicting_factors.append(f"National ID mismatch (query: {query_id} vs record: {node_id_val})")
 
         # 2. Direct Phone Match (1.0)
         node_phones = props.get("phone_numbers") or [props.get("phone_number")] or []
@@ -176,10 +198,14 @@ def resolve_person(
             node_phones = [node_phones]
         node_phones_clean = {clean_phone(p) for p in node_phones if p}
 
-        if query_phone and query_phone in node_phones_clean:
-            matched_fields.append("phone_number")
-            evidence_breakdown["phone_number"] = 1.0
-            reason_parts.append(f"Matching phone ({query_phone})")
+        if query_phone and node_phones_clean:
+            if query_phone in node_phones_clean:
+                matched_fields.append("phone_number")
+                evidence_breakdown["phone_number"] = 1.0
+                supporting_factors.append(f"Matching phone ({query_phone})")
+                reason_parts.append(f"Matching phone ({query_phone})")
+            elif norm_query_name and norm_query_name == norm_node_name:
+                conflicting_factors.append(f"Differing phone MSISDN on record ({next(iter(node_phones_clean))})")
 
         # 3. Vehicle Match (0.85)
         node_vehicles = props.get("vehicles") or [props.get("vehicle_number")] or [props.get("registration_number")] or []
@@ -187,34 +213,64 @@ def resolve_person(
             node_vehicles = [node_vehicles]
         node_vehicles_clean = {clean_vehicle(v) for v in node_vehicles if v}
 
-        if query_vehicle and query_vehicle in node_vehicles_clean:
-            matched_fields.append("vehicle_number")
-            evidence_breakdown["vehicle_number"] = 0.85
-            reason_parts.append(f"Matching vehicle reg ({query_vehicle})")
+        if query_vehicle and node_vehicles_clean:
+            if query_vehicle in node_vehicles_clean:
+                matched_fields.append("vehicle_number")
+                evidence_breakdown["vehicle_number"] = 0.85
+                supporting_factors.append(f"Matching vehicle reg ({query_vehicle})")
+                reason_parts.append(f"Matching vehicle reg ({query_vehicle})")
+            elif norm_query_name and norm_query_name == norm_node_name:
+                conflicting_factors.append("Differing vehicle registration on record")
 
-        # 4. Name Similarity (Exact, Phonetic, Prefix, or Fuzzy Bigram)
+        # 4. Name Similarity (Exact, Phonetic, Word Token Jaccard, or Fuzzy Bigram)
         name_score = 0.0
         if norm_query_name and norm_node_name:
             if norm_query_name == norm_node_name:
                 name_score = 1.0
                 matched_fields.extend(["full_name", "full_name_exact"])
+                supporting_factors.append(f"Exact full-name match '{node_name}'")
                 reason_parts.append(f"Exact name match '{node_name}'")
             elif phon_query_name == phon_node_name:
                 name_score = 1.0
                 matched_fields.extend(["full_name", "full_name_phonetic"])
+                supporting_factors.append(f"Phonetic name match '{node_name}'")
                 reason_parts.append(f"Phonetic name match '{node_name}'")
-            elif norm_query_name in norm_node_name.split() or norm_node_name in norm_query_name.split():
-                name_score = 0.85
-                matched_fields.extend(["full_name", "full_name_prefix"])
-                reason_parts.append(f"Word token match '{node_name}'")
             else:
+                query_words = set(norm_query_name.split())
+                node_words = set(norm_node_name.split())
+                common_words = query_words.intersection(node_words)
+                if not common_words:
+                    phon_query_words = set(phon_query_name.split())
+                    phon_node_words = set(phon_node_name.split())
+                    common_words = phon_query_words.intersection(phon_node_words)
+
                 jaccard = jaccard_similarity(norm_query_name, norm_node_name)
                 phon_jaccard = jaccard_similarity(phon_query_name, phon_node_name)
                 best_sim = max(jaccard, phon_jaccard)
-                if best_sim >= 0.40:
-                    name_score = round(best_sim, 3)
-                    matched_fields.append("full_name_fuzzy")
-                    reason_parts.append(f"Fuzzy name match '{node_name}' (sim={best_sim:.2f})")
+
+                token_sim = 0.0
+                all_words: set[str] = set()
+                if common_words:
+                    all_words = query_words.union(node_words)
+                    token_sim = len(common_words) / len(all_words) if all_words else 0.0
+                    initial_match = any(
+                        (len(qw) == 1 and nw.startswith(qw)) or (len(nw) == 1 and qw.startswith(nw))
+                        for qw in query_words for nw in node_words
+                    )
+                    if initial_match:
+                        token_sim = max(token_sim, 0.48)
+
+                combined_sim = max(token_sim, best_sim)
+                if combined_sim >= min(0.30, confidence_threshold):
+                    name_score = round(combined_sim, 3)
+                    if token_sim >= best_sim and common_words:
+                        matched_fields.append("full_name_token")
+                        supporting_factors.append(f"Word token match ({len(common_words)}/{len(all_words)} words) with '{node_name}'")
+                        reason_parts.append(f"Word token match '{node_name}' ({len(common_words)}/{len(all_words)})")
+                    else:
+                        matched_fields.append("full_name_fuzzy")
+                        supporting_factors.append(f"Fuzzy name match '{node_name}' (sim={best_sim:.2f})")
+                        reason_parts.append(f"Fuzzy name match '{node_name}' (sim={best_sim:.2f})")
 
         # 5. Alias Check
         node_aliases = props.get("aliases") or []
@@ -232,6 +288,7 @@ def resolve_person(
         if alias_match:
             matched_fields.extend(["aliases", "alias_match"])
             evidence_breakdown["alias"] = 1.0
+            supporting_factors.append("Matched known alias/nickname")
             reason_parts.append("Matched known alias/nickname")
 
         if name_score > 0 and "alias" not in evidence_breakdown:
@@ -249,14 +306,68 @@ def resolve_person(
                 if addr_sim >= 0.35:
                     matched_fields.append("address_text")
                     evidence_breakdown["address_text"] = round(0.30 * addr_sim, 3)
+                    supporting_factors.append(f"Corroborating address similarity ({addr_sim:.2f})")
                     reason_parts.append(f"Corroborating address similarity ({addr_sim:.2f})")
                     break
 
-        total_confidence = sum(evidence_breakdown.values())
-        total_confidence = min(1.0, round(total_confidence, 3))
+        # Evidence families aggregation (epistemic orthogonality)
+        matched_families_set: set[str] = set()
+        for f in matched_fields:
+            if f in ("full_name", "full_name_exact", "full_name_phonetic", "full_name_token", "full_name_fuzzy", "aliases", "alias_match"):
+                matched_families_set.add(NAME_FAMILY)
+            elif f in ("phone_number", "phone", "msisdn", "imei"):
+                matched_families_set.add(TELECOM_FAMILY)
+            elif f in ("vehicle_number", "vehicle", "registration_number"):
+                matched_families_set.add(VEHICLE_FAMILY)
+            elif f in ("national_id", "aadhaar", "pan", "passport"):
+                matched_families_set.add(IDENTIFIER_FAMILY)
+            elif f in ("address_text", "address", "district"):
+                matched_families_set.add(LOCATION_FAMILY)
+        evidence_families = sorted(matched_families_set)
+
+        raw_confidence = sum(evidence_breakdown.values())
+        if conflicting_factors:
+            total_confidence = max(0.10, round(raw_confidence * 0.5, 3))
+        else:
+            total_confidence = min(1.0, round(raw_confidence, 3))
+
+        # Resolution state & status tier
+        if conflicting_factors:
+            resolution_state = "AMBIGUOUS_CONFLICT"
+            status = ResolutionStatus.REVIEW_REQUIRED
+            explanation = f"Conflicting evidence detected ({'; '.join(conflicting_factors)}); human review required."
+        elif IDENTIFIER_FAMILY in evidence_families:
+            resolution_state = "EXACT_IDENTIFIER_MATCH"
+            status = ResolutionStatus.MATCHED
+            explanation = "Exact verified national identifier corroborated."
+        elif len(evidence_families) >= 2:
+            resolution_state = "STRONGLY_CORROBORATED"
+            status = ResolutionStatus.MATCHED
+            family_names = [f.replace("_FAMILY", "").title() for f in evidence_families]
+            explanation = f"Multi-field corroborated across {len(evidence_families)} independent families ({', '.join(family_names)})."
+        elif TELECOM_FAMILY in evidence_families:
+            resolution_state = "TELECOM_CORROBORATED"
+            status = ResolutionStatus.MATCHED
+            explanation = "Direct MSISDN telephony match; uncorroborated by independent address or national ID."
+        elif VEHICLE_FAMILY in evidence_families:
+            resolution_state = "VEHICLE_CORROBORATED"
+            status = ResolutionStatus.PROBABLE_MATCH
+            explanation = "Vehicle registration corroborated; demographic review recommended."
+        elif NAME_FAMILY in evidence_families:
+            if "full_name_exact" in matched_fields or "full_name_phonetic" in matched_fields or "alias_match" in matched_fields:
+                resolution_state = "CANDIDATE_NAME_ONLY"
+                status = ResolutionStatus.REVIEW_REQUIRED
+                explanation = "Name match candidate only; lacking independent telecom or address corroboration."
+            else:
+                resolution_state = "CANDIDATE_PARTIAL_NAME"
+                status = ResolutionStatus.REVIEW_REQUIRED
+                explanation = "Partial name/token match candidate only; unconfirmed without corroborating telemetry."
+        else:
+            resolution_state = "UNRESOLVED"
+            status = ResolutionStatus.NOT_MATCHED
+            explanation = "Insufficient evidence to corroborate candidate."
 
         if total_confidence >= confidence_threshold:
-            status = classify_match_status(total_confidence)
             reason = "; ".join(reason_parts) if reason_parts else "Multiple corroborating attributes"
             matches.append(
                 ResolutionMatch(
@@ -267,6 +378,13 @@ def resolve_person(
                     reason=reason,
                     evidence_breakdown=evidence_breakdown,
                     properties=props,
+                    search_relevance=round(raw_confidence, 3),
+                    resolution_state=resolution_state,
+                    evidence_families=evidence_families,
+                    supporting_factors=supporting_factors,
+                    conflicting_factors=conflicting_factors,
+                    independent_sources=max(1, len(evidence_families)),
+                    explanation=explanation,
                 )
             )
 

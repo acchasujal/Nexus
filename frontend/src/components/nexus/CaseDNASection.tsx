@@ -71,7 +71,7 @@ export function CaseDNASection({ initialCaseId = 'CASE-141' }: CaseDNASectionPro
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold text-slate-900">Case DNA: Explainable Structural Similarity</h2>
               <span className="px-2.5 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full border border-indigo-200">
-                P2 Intelligence Engine
+                Structural Similarity Engine
               </span>
               <span className="px-2.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-800 rounded-full border border-emerald-200">
                 Zero Predictive Guilt
@@ -142,13 +142,13 @@ export function CaseDNASection({ initialCaseId = 'CASE-141' }: CaseDNASectionPro
           <MetricCard
             label="Highest Structural Similarity"
             value={`${(caseDNAData.highest_similarity * 100).toFixed(1)}%`}
-            subtext="Top mathematical match"
+            subtext="Closest structural match"
             icon={GitCompare}
           />
           <MetricCard
             label="Average Cluster Overlap"
             value={`${(caseDNAData.average_similarity * 100).toFixed(1)}%`}
-            subtext="Harmonic vector average"
+            subtext="Cross-dimension average"
             icon={Layers}
           />
           <MetricCard

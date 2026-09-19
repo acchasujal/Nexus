@@ -117,4 +117,22 @@ describe('Entity Search & Case Detail Navigation', () => {
       expect(nameInput.value).not.toBe('Vikram Sharma')
     })
   }, 15000)
+
+  it('renders Why This Candidate Appeared section with evidence breakdown', async () => {
+    const searchUrl = '/entities?name=Vikram%20Sharma'
+    const Wrapper = createWrapper([searchUrl])
+    render(
+      <Wrapper>
+        <Entities />
+      </Wrapper>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/Corroborated Resolution Matches/i)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/Why This Candidate Appeared/i).length).toBeGreaterThan(0)
+    })
+  })
 })

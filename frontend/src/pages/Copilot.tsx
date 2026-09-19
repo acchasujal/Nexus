@@ -57,7 +57,7 @@ const INITIAL_WELCOME_MESSAGE: Message = {
 
 const SUGGESTED_PROMPTS = [
   { text: 'How are the two cases connected?', type: 'connection' },
-  { text: 'Is the accused guilty of committing cyber financial fraud?', type: 'safety' },
+  { text: 'Identify evidence gaps and recommended verification actions for suspect network', type: 'investigative' },
   { text: 'Show multi-hop bank transaction layering chains across flagged accounts', type: 'financial' },
   { text: 'Find all bridge entities connecting narcotics and hawala syndicates', type: 'bridges' },
 ]
@@ -216,6 +216,19 @@ export default function Copilot() {
           </button>
         }
       />
+
+      {/* Active Investigation Context Indicator */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 bg-blue-50/70 border border-blue-200 rounded-xl text-xs text-blue-900 shrink-0">
+        <div className="flex items-center gap-2">
+          <Briefcase className="h-4 w-4 text-blue-700 shrink-0" />
+          <span className="font-semibold">Active Investigation Context:</span>
+          <span className="text-blue-800">Cross-Jurisdiction Graph Intelligence Workspace (Connected Syndicate Networks)</span>
+        </div>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          Evidence Grounded • Refusal Gate Active
+        </span>
+      </div>
 
       {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-2">
