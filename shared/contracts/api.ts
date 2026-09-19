@@ -614,7 +614,7 @@ export interface NexusDossierVerificationResponse {
 
 /** Multi-source ingestion request body for POST /ingest. */
 export interface IngestRequest {
-  source_type: 'CDR' | 'BANK_TXN' | 'FIR' | 'INTEL_REPORT'
+  source_type: 'CDR' | 'BANK_TXN' | 'FIR' | 'INTEL_REPORT' | 'SURVEILLANCE_REPORT'
   file_name: string
   records: Record<string, any>[]
 }

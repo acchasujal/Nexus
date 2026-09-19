@@ -380,12 +380,13 @@ export const apiClient = {
   },
 
   // ── NEXUS prototype endpoints (frozen M4 contract) ──────────────────────
-  nexusIngest: (files: { fir?: File, cdr?: File, bank?: File, intelligence?: File }) => {
+  nexusIngest: (files: { fir?: File, cdr?: File, bank?: File, intelligence?: File, surveillance?: File }) => {
     const formData = new FormData()
     if (files.fir) formData.append('fir', files.fir)
     if (files.cdr) formData.append('cdr', files.cdr)
     if (files.bank) formData.append('bank', files.bank)
     if (files.intelligence) formData.append('intelligence', files.intelligence)
+    if (files.surveillance) formData.append('surveillance', files.surveillance)
     
     return apiFetch<NexusIngestResponse>('/api/v1/nexus/ingest', {
       method: 'POST',

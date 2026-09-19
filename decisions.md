@@ -275,6 +275,23 @@ This document is the **single source of truth** for material architectural, secu
      - In-flight mutations are safely rolled back, leaving zero partial corruption in the graph.
   9. **Idempotency & Conflicting Decisions Protection:** Re-submitting an identical decision returns the existing decision idempotently (200 OK). Attempting to accept a candidate that was already rejected (or vice versa) raises an HTTP 409 Conflict.
 - **Reason:** Ensuring that the authoritative investigation graph remains strictly court-admissible, grounded in verifiable physical evidence under Indian law, and free from algorithmic or predictive guilt bias requires an airtight, human-in-the-loop promotion boundary.
-- **Consequences:** The authoritative graph expands with new court-ready nodes and corroborating edges, backed by cryptographic provenance and officer badge attribution, while maintaining complete system stability and backward compatibility.
+---
 
-
+## DEC-017 — Dedicated Surveillance Report Ingestion (P1-D)
+- **Date:** 2026-09-19
+- **Status:** Accepted & Implemented (P1-D)
+- **Decision:**
+  1. **Dedicated First-Class Source Type:** Introduce `SURVEILLANCE_REPORT = "SURVEILLANCE_REPORT"` into the authoritative `SourceType` enum, resolving the audit weakness where field observations were previously absorbed under generic intelligence reports (`INTEL_REPORT`). Existing ingestion behavior for FIR, CDR, BANK_TXN, and INTEL_REPORT remains completely unmodified.
+  2. **Deterministic Data Contract & Normalization:** Implement structured surveillance ingestion (`backend/app/db/ingestion/parsers/surveillance.py` and `mappers/surveillance.py`) handling surveillance records containing `report_id`, `case_id`, `observation_id`, `observed_at`, `subject_name`, `observation_type`, `location`, `vehicle_plate`, `phone_number`, `organization_name`, `summary`, and `source_reference`. Enforce strict ISO-8601 UTC timestamp validation, phone number normalization, vehicle plate uppercase standardization, and required field checks.
+  3. **Reuse of Existing Graph Semantics & Zero Unsupported Inference:**
+     - Map observations strictly into existing Schema V2 node types (`Person`, `Location`, `Vehicle`, `Phone`, `Organization`) and relationship types (`SEEN_AT`, `USED_VEHICLE`, `USED_PHONE`, `ASSOCIATED_WITH`).
+     - Strictly prohibit speculative inferences: observation at a location NEVER infers `OWNS`, `ACCUSED_IN`, `COMMITTED`, or implicit association with other subjects observed at the same location.
+  4. **Multi-Attribute Entity Resolution:** Integrate with the existing deterministic multi-attribute entity registry (`IdentityClaim`). Match canonical entities when evidence permits (phone, vehicle, exact name); flag ambiguous matches as `REVIEW_REQUIRED` without arbitrary or speculative fusion; never use LLMs to decide identity.
+  5. **Edge Deduplication & Evidence Corroboration:** Ingesting an observation connecting two entities that are already linked by an existing canonical edge (`(source_id, target_id, edge_type)`) does NOT create a redundant duplicate edge. The existing edge is corroborated by appending the observation's `EvidenceProvenance` to `corroborating_evidence` and incrementing `edges_reused`.
+  6. **Authoritative Graph Mutation Boundary:** Surveillance ingestion uses the exact same authoritative graph mutation pipeline (`apply_bundle` / `GraphStore` / Neo4j projection). Direct database writes or parallel graph stores are strictly prohibited.
+  7. **RBAC, Audit Trail & Idempotency:**
+     - Ingestion requires authenticated officer principals and enforces existing case jurisdiction policies.
+     - Emits dedicated audit events (`SURVEILLANCE_REPORT_UPLOADED`, `SURVEILLANCE_REPORT_INGESTED`, `SURVEILLANCE_REPORT_INGESTION_FAILED`) preserving officer identity, case ID, source record ID, and cryptographic payload integrity.
+     - Repeated ingestion of the same report is idempotent: duplicate observations reuse existing nodes and corroborate existing edges without creating duplicate entities. Mutation failures cleanly abort with zero partial graph state and emit failure audit records.
+- **Reason:** Field surveillance reports (stakeouts, physical sightings, vehicle tracking, rendezvous logs) provide critical time-stamped ground truth during active investigations. Establishing a dedicated, deterministic ingestion pipeline with full provenance and strict corroboration eliminates ambiguity while preventing speculative bias.
+- **Consequences:** Provides a seamless, court-admissible surveillance ingestion path across backend and frontend, unified within the single authoritative investigation graph.

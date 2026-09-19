@@ -635,6 +635,7 @@ def create_core_router() -> APIRouter:
         cdr: UploadFile | None = File(None),
         bank: UploadFile | None = File(None),
         intelligence: UploadFile | None = File(None),
+        surveillance: UploadFile | None = File(None),
         principal: Principal = Depends(get_principal),
         ingestion_service: IngestionService = Depends(get_ingestion_service),
         request_id: str = Depends(get_request_id),
@@ -667,6 +668,7 @@ def create_core_router() -> APIRouter:
         await _read_file(cdr, SourceType.CDR)
         await _read_file(bank, SourceType.BANK_TXN)
         await _read_file(intelligence, SourceType.INTEL_REPORT)
+        await _read_file(surveillance, SourceType.SURVEILLANCE_REPORT)
 
         if not sources:
             raise HTTPException(status_code=400, detail="At least one file must be provided.")

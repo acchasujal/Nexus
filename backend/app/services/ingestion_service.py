@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.db.in_memory import InMemoryBackendRepository
-from backend.app.db.ingestion.contracts import UploadedSource
+from backend.app.db.ingestion.contracts import SourceType, UploadedSource
 from backend.app.db.ingestion.pipeline import CsvIngestionPipeline
 from backend.app.services.audit_service import AuditService, AuditEventType
 from shared.contracts.api import (
@@ -47,8 +47,10 @@ class IngestionService:
         """
         if not sources:
             raise ValueError("At least one file must be uploaded.")
-        if len(sources) > 4:
-            raise ValueError("Maximum four files can be uploaded at once.")
+        max_files = 5 if any(s.source_type == SourceType.SURVEILLANCE_REPORT for s in sources) else 4
+        if len(sources) > max_files:
+            msg = "Maximum five files can be uploaded at once." if max_files == 5 else "Maximum four files can be uploaded at once."
+            raise ValueError(msg)
 
         for s in sources:
             if not s.file_name.lower().endswith(".csv"):
@@ -58,6 +60,8 @@ class IngestionService:
             if len(s.data) > 5 * 1024 * 1024:
                 raise ValueError(f"File {s.file_name} exceeds 5 MB limit.")
 
+        has_surveillance = any(s.source_type == SourceType.SURVEILLANCE_REPORT for s in sources)
+
         async with self._lock:
             # Audit start (do not log raw data)
             file_names = [s.file_name for s in sources]
@@ -66,6 +70,13 @@ class IngestionService:
                 actor_id=user_id,
                 details={"files": file_names},
             )
+            if has_surveillance:
+                surv_files = [s.file_name for s in sources if s.source_type == SourceType.SURVEILLANCE_REPORT]
+                self._audit.record(
+                    event_type=AuditEventType.SURVEILLANCE_REPORT_UPLOADED,
+                    actor_id=user_id,
+                    details={"files": surv_files},
+                )
 
             try:
                 bundle = self._pipeline.ingest_batch(sources)
@@ -79,6 +90,12 @@ class IngestionService:
                         actor_id=user_id,
                         details={"batch_id": bundle.batch_id, "reason": "Fatal parse errors encountered"},
                     )
+                    if has_surveillance:
+                        self._audit.record(
+                            event_type=AuditEventType.SURVEILLANCE_REPORT_INGESTION_FAILED,
+                            actor_id=user_id,
+                            details={"batch_id": bundle.batch_id, "reason": "Fatal parse errors encountered"},
+                        )
                     return self._build_response(bundle, BatchStatus.FAILED, sources, 0, 0, 0, 0)
 
                 existing_source_ids = set(self._repo.source_records)
@@ -130,6 +147,17 @@ class IngestionService:
                         "edges_created": created_e,
                     },
                 )
+                if has_surveillance:
+                    self._audit.record(
+                        event_type=AuditEventType.SURVEILLANCE_REPORT_INGESTED,
+                        actor_id=user_id,
+                        details={
+                            "batch_id": bundle.batch_id,
+                            "status": status.value,
+                            "nodes_created": created_n,
+                            "edges_created": created_e,
+                        },
+                    )
 
                 return self._build_response(
                     bundle, status, sources, created_n, reused_n, created_e, reused_e,
@@ -142,6 +170,12 @@ class IngestionService:
                     actor_id=user_id,
                     details={"reason": str(e)},
                 )
+                if has_surveillance:
+                    self._audit.record(
+                        event_type=AuditEventType.SURVEILLANCE_REPORT_INGESTION_FAILED,
+                        actor_id=user_id,
+                        details={"reason": str(e)},
+                    )
                 raise
 
     def _build_response(

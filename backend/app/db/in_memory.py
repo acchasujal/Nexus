@@ -331,13 +331,39 @@ class InMemoryBackendRepository:
                 "properties": dict(edge.properties),
             }
 
+            matched_existing = None
             if eid in existing_edge_ids:
-                edges_reused += 1
                 for existing in self.edges:
                     if str(existing.get("id")) == eid:
-                        existing.update(edge_data)
-                        self.batches[batch_id]["edges"].append(existing)
+                        matched_existing = existing
                         break
+            if matched_existing is None:
+                src_str = str(edge.source_id)
+                tgt_str = str(edge.target_id)
+                etype_str = edge.edge_type.value.upper()
+                for existing in self.edges:
+                    if (
+                        str(existing.get("source_id")) == src_str
+                        and str(existing.get("target_id")) == tgt_str
+                        and str(existing.get("edge_type", "")).upper() == etype_str
+                    ):
+                        matched_existing = existing
+                        break
+
+            if matched_existing is not None:
+                edges_reused += 1
+                if str(matched_existing.get("id")) == eid:
+                    matched_existing.update(edge_data)
+                else:
+                    edge_props = matched_existing.setdefault("properties", {})
+                    corroborations = edge_props.setdefault("corroborating_evidence", [])
+                    corroborations.append({
+                        "source_record_id": edge.source_record_id,
+                        "provenance": edge.provenance.model_dump(mode="json"),
+                        "properties": dict(edge.properties),
+                        "recorded_at": datetime.now(timezone.utc).isoformat(),
+                    })
+                self.batches[batch_id]["edges"].append(matched_existing)
             else:
                 edges_created += 1
                 self.edges.append(edge_data)

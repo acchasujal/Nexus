@@ -630,7 +630,7 @@ class NexusDossierVerificationResponse(BaseModel):
 
 class IngestRequest(BaseModel):
     """[DEPRECATED] Multi-source ingestion request body for POST /ingest."""
-    source_type: str  # CDR | BANK_TXN | FIR | INTEL_REPORT
+    source_type: str  # CDR | BANK_TXN | FIR | INTEL_REPORT | SURVEILLANCE_REPORT
     file_name: str
     records: list[dict[str, Any]] = Field(default_factory=list)
 

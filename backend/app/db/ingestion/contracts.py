@@ -19,6 +19,7 @@ class SourceType(str, Enum):
     CDR = "CDR"
     BANK_TXN = "BANK_TXN"
     INTEL_REPORT = "INTEL_REPORT"
+    SURVEILLANCE_REPORT = "SURVEILLANCE_REPORT"
     # Unstructured document source types (P1-A)
     FIR_DOCUMENT = "FIR_DOCUMENT"
     POLICE_REPORT = "POLICE_REPORT"

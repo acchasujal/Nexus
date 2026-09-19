@@ -16,11 +16,12 @@ import {
   Loader2,
   RotateCcw,
   Info,
+  Eye,
 } from 'lucide-react'
 import { useIngestFiles } from '@/hooks/useIngestion'
 import { DocumentIngestionPanel } from '@/components/DocumentIngestionPanel'
 
-type FileSlotType = 'fir' | 'cdr' | 'bank' | 'intelligence'
+type FileSlotType = 'fir' | 'cdr' | 'bank' | 'intelligence' | 'surveillance'
 
 interface FileSlot {
   id: FileSlotType
@@ -39,6 +40,7 @@ const FILE_SLOTS: FileSlot[] = [
   { id: 'cdr', label: 'Telecom CDR', icon: Phone, required: false, description: 'Call Detail Records for network links' },
   { id: 'bank', label: 'Bank Transactions', icon: Landmark, required: false, description: 'Financial flow and account entities' },
   { id: 'intelligence', label: 'Intelligence (Optional)', icon: FileText, required: false, description: 'Custom watchlists and OSINT reports' },
+  { id: 'surveillance', label: 'Surveillance Report', icon: Eye, required: false, description: 'Physical sighting and subject movement logs' },
 ]
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
@@ -74,12 +76,14 @@ export function CsvIngestionPanel({ onIngestSuccess }: CsvIngestionPanelProps = 
     cdr: null,
     bank: null,
     intelligence: null,
+    surveillance: null,
   })
   const [errors, setErrors] = useState<Record<FileSlotType, string | null>>({
     fir: null,
     cdr: null,
     bank: null,
     intelligence: null,
+    surveillance: null,
   })
 
   const [stageIndex, setStageIndex] = useState(0)
@@ -144,7 +148,7 @@ export function CsvIngestionPanel({ onIngestSuccess }: CsvIngestionPanelProps = 
   }
 
   const isFormValid = useMemo(() => {
-    const hasAtLeastOneFile = Boolean(files.fir || files.cdr || files.bank || files.intelligence)
+    const hasAtLeastOneFile = Boolean(files.fir || files.cdr || files.bank || files.intelligence || files.surveillance)
     const hasNoErrors = Object.values(errors).every(e => e === null)
     return hasAtLeastOneFile && hasNoErrors
   }, [files, errors])
@@ -156,13 +160,14 @@ export function CsvIngestionPanel({ onIngestSuccess }: CsvIngestionPanelProps = 
       cdr: files.cdr || undefined,
       bank: files.bank || undefined,
       intelligence: files.intelligence || undefined,
+      surveillance: files.surveillance || undefined,
     })
   }
 
   const onReset = () => {
     reset()
-    setFiles({ fir: null, cdr: null, bank: null, intelligence: null })
-    setErrors({ fir: null, cdr: null, bank: null, intelligence: null })
+    setFiles({ fir: null, cdr: null, bank: null, intelligence: null, surveillance: null })
+    setErrors({ fir: null, cdr: null, bank: null, intelligence: null, surveillance: null })
   }
 
   // File Selection View
