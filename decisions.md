@@ -295,3 +295,26 @@ This document is the **single source of truth** for material architectural, secu
      - Repeated ingestion of the same report is idempotent: duplicate observations reuse existing nodes and corroborate existing edges without creating duplicate entities. Mutation failures cleanly abort with zero partial graph state and emit failure audit records.
 - **Reason:** Field surveillance reports (stakeouts, physical sightings, vehicle tracking, rendezvous logs) provide critical time-stamped ground truth during active investigations. Establishing a dedicated, deterministic ingestion pipeline with full provenance and strict corroboration eliminates ambiguity while preventing speculative bias.
 - **Consequences:** Provides a seamless, court-admissible surveillance ingestion path across backend and frontend, unified within the single authoritative investigation graph.
+
+---
+
+## DEC-018 — Unified IntelligenceEvent Domain Contract & Foundation (A3)
+- **Date:** 2026-09-20
+- **Status:** Accepted & Implemented (A3)
+- **Decision:**
+  1. **Unified Domain Event Contract:** Establish `IntelligenceEvent` as the foundational unified domain event contract for the NEXUS intelligence processing lifecycle, bridging document ingestion, graph mutations, network diffs, evidence assessments, intelligence pulses, verification tasks, investigator decisions, and cross-case routing.
+  2. **Zero Predictive Guilt Constraint:** Exclude any `confidence`, `guilt`, or `predictive` scores from the `IntelligenceEvent` model. Intelligence events represent objective facts, actions, and detected operational state changes, never probabilistic guilt determinations.
+  3. **Deterministic Canonical Identifier:** Introduce `make_intelligence_event_id` in `backend/app/db/ingestion/identifiers.py` producing `intevt-{hash12}` from case ID, event type, and payload content.
+  4. **Cryptographic Payload Integrity:** Compute deterministic SHA-256 integrity hashes (`compute_payload_integrity_hash`) with sorted JSON keys, preserving evidentiary chain of custody under Section 63 BSA.
+  5. **Clean Epistemic Separation:**
+     - `IntelligenceEvent` represents domain events within the investigative analysis lifecycle.
+     - `AuditEvent` represents administrative, security, and user action tracking for compliance. Recording an `IntelligenceEvent` emits an `AuditEventType.INTELLIGENCE_EVENT_RECORDED` audit entry.
+     - Graph `Event` nodes represent real-world crime incidents or meetings within the entity network graph.
+  6. **Strict Epistemic Isolation for Phase A3:**
+     - Document ingestion is NOT wired to emit `IntelligenceEvent`s yet.
+     - Closed-loop cascades (A7 verification workflows, A8 closed-loop graph updates, A14 cross-case routing) are deferred to their designated roadmap phases.
+     - No external brokers (Kafka/RabbitMQ) introduced; persistence is managed via in-memory repository with case indexing.
+  7. **Case-Level RBAC:** Endpoints `POST /nexus/intelligence/events`, `GET /nexus/intelligence/events/{event_id}`, and `GET /nexus/intelligence/events` strictly enforce case access authorization (`can_access_case`).
+- **Reason:** Prior to A3, event representations across NEXUS were fragmented across disparate subsystem objects (`Event` graph nodes, `IntelligencePulsePacket`, `AuditEvent`). Unifying the event contract at the domain level provides the structural foundation for reactive intelligence propagation without introducing speculative predictive bias or untracked state transitions.
+- **Consequences:** Provides a clean, typed, canonical event foundation across backend Python and frontend TypeScript contracts while maintaining 100% test passing rates.
+

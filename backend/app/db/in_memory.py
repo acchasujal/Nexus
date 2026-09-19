@@ -77,6 +77,7 @@ class InMemoryBackendRepository:
         self.documents: dict[str, dict[str, Any]] = {}
         self.candidate_extractions: dict[str, dict[str, Any]] = {}
         self.candidate_decisions: dict[str, list[dict[str, Any]]] = {}
+        self.intelligence_events: dict[str, dict[str, Any]] = {}
         self.state_path = state_path
 
         self._load_artifact(artifact_path or self._default_artifact_path())
@@ -99,6 +100,7 @@ class InMemoryBackendRepository:
         self.documents.clear()
         self.candidate_extractions.clear()
         self.candidate_decisions.clear()
+        self.intelligence_events.clear()
         self._load_artifact(self._default_artifact_path())
         if self.state_path and self.state_path.exists():
             try:
@@ -258,6 +260,7 @@ class InMemoryBackendRepository:
                     self.nodes[node_id].setdefault("properties", {}).update(patch)
             self.audit_events = list(raw.get("audit_events", []))
             self.review_candidates = dict(raw.get("review_candidates", {}))
+            self.intelligence_events = dict(raw.get("intelligence_events", {}))
         except (json.JSONDecodeError, OSError, ValueError, TypeError) as exc:
             logger.debug("Optional state file loading skipped: %s", exc)
 
@@ -268,6 +271,7 @@ class InMemoryBackendRepository:
         payload = {
             "audit_events": self.audit_events,
             "review_candidates": self.review_candidates,
+            "intelligence_events": self.intelligence_events,
             "saved_at": _utcnow().isoformat(),
         }
         self.state_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -1020,3 +1024,57 @@ class InMemoryBackendRepository:
                     self._save_state()
                     return rel
         return None
+
+    # ── Operational Intelligence Events Repository Methods (A3) ──────────────
+
+    def save_intelligence_event(self, event_record: dict[str, Any]) -> dict[str, Any]:
+        """Store an operational intelligence event immutably in the repository."""
+        event_id = str(event_record["event_id"])
+        if event_id in self.intelligence_events:
+            # Immutability guarantee: existing event cannot be altered
+            return self.intelligence_events[event_id]
+        self.intelligence_events[event_id] = dict(event_record)
+        self._save_state()
+        return self.intelligence_events[event_id]
+
+    def get_intelligence_event(self, event_id: str) -> dict[str, Any] | None:
+        """Retrieve an intelligence event by its canonical event ID."""
+        return self.intelligence_events.get(str(event_id))
+
+    def list_intelligence_events(
+        self,
+        case_id: str | None = None,
+        event_type: str | None = None,
+        entity_id: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """List and filter intelligence events with pagination."""
+        all_events = list(self.intelligence_events.values())
+
+        filtered: list[dict[str, Any]] = []
+        for ev in all_events:
+            if case_id and ev.get("case_id") != case_id:
+                continue
+            if event_type:
+                et_val = ev.get("event_type")
+                if hasattr(et_val, "value"):
+                    et_val = et_val.value
+                target_et = event_type.value if hasattr(event_type, "value") else str(event_type)
+                if str(et_val).upper() != target_et.upper():
+                    continue
+            if entity_id:
+                related = ev.get("related_entity_ids", [])
+                if entity_id not in related:
+                    continue
+            filtered.append(ev)
+
+        # Sort reverse chronologically by event_timestamp / ingested_at
+        def _sort_key(item: dict[str, Any]) -> str:
+            return str(item.get("event_timestamp") or item.get("ingested_at") or "")
+
+        filtered.sort(key=_sort_key, reverse=True)
+        total_count = len(filtered)
+        paginated = filtered[offset : offset + limit]
+        return paginated, total_count
+

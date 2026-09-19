@@ -1155,3 +1155,89 @@ class CaseDNAMatchResponse(BaseModel):
     top_shared_entities: list[str] = Field(default_factory=list)
 
 
+# ── A3 IntelligenceEvent Unified Domain Contract ─────────────────────────────
+
+class IntelligenceEventType(str, Enum):
+    DOCUMENT_INGESTED = "DOCUMENT_INGESTED"
+    DOCUMENT_EXTRACTED = "DOCUMENT_EXTRACTED"
+    ENTITY_OBSERVED = "ENTITY_OBSERVED"
+    RELATIONSHIP_OBSERVED = "RELATIONSHIP_OBSERVED"
+    NETWORK_CHANGE_DETECTED = "NETWORK_CHANGE_DETECTED"
+    SNAPSHOT_CREATED = "SNAPSHOT_CREATED"
+    SIGNAL_GENERATED = "SIGNAL_GENERATED"
+    EVIDENCE_ASSESSED = "EVIDENCE_ASSESSED"
+    VERIFICATION_REQUIRED = "VERIFICATION_REQUIRED"
+    VERIFICATION_COMPLETED = "VERIFICATION_COMPLETED"
+    ENTITY_RESOLUTION_DECIDED = "ENTITY_RESOLUTION_DECIDED"
+    INVESTIGATOR_DECISION = "INVESTIGATOR_DECISION"
+
+
+class IntelligenceEvent(BaseModel):
+    """
+    Authoritative domain event contract for the NEXUS criminal intelligence pipeline (A3).
+    Represents atomic operational intelligence occurrences with tamper-evident SHA-256
+    payload hashing and verifiable evidence provenance, strictly without predictive guilt scoring.
+    """
+    # Identity
+    event_id: str
+    event_type: IntelligenceEventType
+    event_version: str = "1.0"
+    event_timestamp: datetime = Field(default_factory=_utcnow)
+
+    # Context
+    case_id: str
+    fir_id: str | None = None
+    source_id: str | None = None
+    evidence_refs: list[str] = Field(default_factory=list)
+    snapshot_id: str | None = None
+    related_entity_ids: list[str] = Field(default_factory=list)
+    related_edge_ids: list[str] = Field(default_factory=list)
+
+    # Provenance
+    source_type: str = "SYSTEM"
+    actor_id: str = "SYSTEM"
+    actor_role: UserRole | None = None
+    observed_at: datetime | None = None
+    ingested_at: datetime = Field(default_factory=_utcnow)
+    processed_at: datetime | None = None
+    correlation_id: str | None = None
+    causation_id: str | None = None
+
+    # Semantics & Content
+    title: str = ""
+    description: str = ""
+    payload: dict[str, Any] = Field(default_factory=dict)
+    integrity_hash: str | None = None
+
+
+class CreateIntelligenceEventRequest(BaseModel):
+    """Request contract to record an operational intelligence event."""
+    event_type: IntelligenceEventType
+    case_id: str
+    fir_id: str | None = None
+    source_id: str | None = None
+    evidence_refs: list[str] = Field(default_factory=list)
+    snapshot_id: str | None = None
+    related_entity_ids: list[str] = Field(default_factory=list)
+    related_edge_ids: list[str] = Field(default_factory=list)
+    source_type: str = "SYSTEM"
+    actor_id: str | None = None
+    actor_role: UserRole | None = None
+    observed_at: datetime | None = None
+    correlation_id: str | None = None
+    causation_id: str | None = None
+    title: str = ""
+    description: str = ""
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
+class IntelligenceEventListResponse(BaseModel):
+    """Paginated collection of intelligence events."""
+    events: list[IntelligenceEvent]
+    total_count: int
+    case_id: str | None = None
+    limit: int = 50
+    offset: int = 0
+
+
+

@@ -339,6 +339,23 @@ def get_case_dna_service(
     return dna_svc
 
 
+def get_intelligence_event_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_service: AuditService = Depends(get_audit_service),
+    auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+) -> Any:
+    """Return the shared or per-request IntelligenceEventService instance."""
+    event_svc = getattr(request.app.state, "intelligence_event_service", None)
+    if event_svc is not None:
+        return event_svc
+    from backend.app.services.intelligence_event_service import IntelligenceEventService
+    event_svc = IntelligenceEventService(repo, audit_service=audit_service, auth_policy=auth_policy)
+    request.app.state.intelligence_event_service = event_svc
+    return event_svc
+
+
+
 
 
 

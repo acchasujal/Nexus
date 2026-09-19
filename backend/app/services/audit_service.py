@@ -122,6 +122,9 @@ class AuditEventType(str, Enum):
     DIGITAL_SHADOW_VIEWED = "digital_shadow_viewed"
     DIGITAL_SHADOW_DECIDED = "digital_shadow_decided"
 
+    # Operational Intelligence Events (A3)
+    INTELLIGENCE_EVENT_RECORDED = "intelligence_event_recorded"
+
 
 class AuditService:
     """Application-layer service for writing and querying audit logs."""

@@ -1225,6 +1225,77 @@ export interface CaseDNAMatchResponse {
   top_shared_entities: string[]
 }
 
+// ── A3 IntelligenceEvent Unified Domain Contract ─────────────────────────────
+
+export type IntelligenceEventType =
+  | 'DOCUMENT_INGESTED'
+  | 'DOCUMENT_EXTRACTED'
+  | 'ENTITY_OBSERVED'
+  | 'RELATIONSHIP_OBSERVED'
+  | 'NETWORK_CHANGE_DETECTED'
+  | 'SNAPSHOT_CREATED'
+  | 'SIGNAL_GENERATED'
+  | 'EVIDENCE_ASSESSED'
+  | 'VERIFICATION_REQUIRED'
+  | 'VERIFICATION_COMPLETED'
+  | 'ENTITY_RESOLUTION_DECIDED'
+  | 'INVESTIGATOR_DECISION'
+
+export interface IntelligenceEvent {
+  event_id: string
+  event_type: IntelligenceEventType
+  event_version: string
+  event_timestamp: string
+  case_id: string
+  fir_id?: string | null
+  source_id?: string | null
+  evidence_refs: string[]
+  snapshot_id?: string | null
+  related_entity_ids: string[]
+  related_edge_ids: string[]
+  source_type: string
+  actor_id: string
+  actor_role?: UserRole | null
+  observed_at?: string | null
+  ingested_at: string
+  processed_at?: string | null
+  correlation_id?: string | null
+  causation_id?: string | null
+  title: string
+  description: string
+  payload: Record<string, unknown>
+  integrity_hash?: string | null
+}
+
+export interface CreateIntelligenceEventRequest {
+  event_type: IntelligenceEventType
+  case_id: string
+  fir_id?: string | null
+  source_id?: string | null
+  evidence_refs?: string[]
+  snapshot_id?: string | null
+  related_entity_ids?: string[]
+  related_edge_ids?: string[]
+  source_type?: string
+  actor_id?: string | null
+  actor_role?: UserRole | null
+  observed_at?: string | null
+  correlation_id?: string | null
+  causation_id?: string | null
+  title?: string
+  description?: string
+  payload?: Record<string, unknown>
+}
+
+export interface IntelligenceEventListResponse {
+  events: IntelligenceEvent[]
+  total_count: number
+  case_id?: string | null
+  limit: number
+  offset: number
+}
+
+
 
 
 

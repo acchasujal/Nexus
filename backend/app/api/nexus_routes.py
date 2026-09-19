@@ -23,7 +23,7 @@ import shutil
 import tempfile
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 from pydantic import BaseModel, Field
 
 from backend.app.api.dependencies import (
@@ -45,6 +45,7 @@ from backend.app.api.dependencies import (
     get_network_adaptation_service,
     get_digital_shadow_service,
     get_case_dna_service,
+    get_intelligence_event_service,
 )
 from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal
@@ -62,8 +63,8 @@ from shared.contracts.api import (
     CaseDNA,
     CaseDNAMatchResponse,
     CombinedBridgeSignal,
-
     CopilotQueryRequest,
+    CreateIntelligenceEventRequest,
     CreateIntelligencePulseRequest,
     DecideDigitalShadowRequest,
     DecideIdentityDriftRequest,
@@ -73,6 +74,9 @@ from shared.contracts.api import (
     DigitalShadowPlatform,
     DistrictHotspotIntelligence,
     EvidenceBatchVerifyRequest,
+    IntelligenceEvent,
+    IntelligenceEventListResponse,
+    IntelligenceEventType,
     EvidenceBatchVerifyResponse,
     EvidenceIntegrityCheckResult,
     GroundedCitation,
@@ -2394,7 +2398,69 @@ def create_nexus_router() -> APIRouter:
         """Find structurally similar cases via explainable 5-vector Case DNA matching."""
         return dna_svc.get_case_dna_matches(case_id=case_id, top_k=top_k, principal=principal)
 
+    # ── A3 Operational Intelligence Events Endpoints ─────────────────────────
+
+    @router.post("/nexus/intelligence/events", response_model=IntelligenceEvent, status_code=status.HTTP_201_CREATED)
+    def record_intelligence_event(
+        request: CreateIntelligenceEventRequest,
+        principal: Principal = Depends(get_principal),
+        event_svc: Any = Depends(get_intelligence_event_service),
+    ) -> IntelligenceEvent:
+        """Record an operational intelligence event in the append-only intelligence plane."""
+        try:
+            return event_svc.record_event(request, principal=principal)
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    @router.get("/nexus/intelligence/events/{event_id}", response_model=IntelligenceEvent)
+    def get_intelligence_event(
+        event_id: str,
+        principal: Principal = Depends(get_principal),
+        event_svc: Any = Depends(get_intelligence_event_service),
+    ) -> IntelligenceEvent:
+        """Retrieve an operational intelligence event by its canonical event ID."""
+        try:
+            event = event_svc.get_event(event_id, principal=principal)
+            if not event:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"IntelligenceEvent '{event_id}' not found")
+            return event
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+    @router.get("/nexus/intelligence/events", response_model=IntelligenceEventListResponse)
+    def list_intelligence_events(
+        case_id: str | None = Query(None, description="Optional case ID filter"),
+        event_type: IntelligenceEventType | None = Query(None, description="Optional event type filter"),
+        entity_id: str | None = Query(None, description="Optional related entity ID filter"),
+        limit: int = Query(50, ge=1, le=200, description="Page limit"),
+        offset: int = Query(0, ge=0, description="Page offset"),
+        principal: Principal = Depends(get_principal),
+        event_svc: Any = Depends(get_intelligence_event_service),
+    ) -> IntelligenceEventListResponse:
+        """Query and filter operational intelligence events with pagination and RBAC authorization."""
+        try:
+            events, total_count = event_svc.list_events(
+                case_id=case_id,
+                event_type=event_type,
+                entity_id=entity_id,
+                limit=limit,
+                offset=offset,
+                principal=principal,
+            )
+            return IntelligenceEventListResponse(
+                events=events,
+                total_count=total_count,
+                case_id=case_id,
+                limit=limit,
+                offset=offset,
+            )
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
     return router
+
 
 
 

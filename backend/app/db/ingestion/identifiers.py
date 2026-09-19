@@ -72,13 +72,34 @@ def make_relationship_id(
     return _stable_id("relationship", *(str(part).strip() for part in parts))
 
 
+def make_intelligence_event_id(
+    event_type: str,
+    case_id: str,
+    timestamp_str: str,
+    discriminator: str = "",
+) -> str:
+    """Create a stable, deterministic intelligence event ID (intevt-XXXX)."""
+    parts = (
+        str(event_type).strip().upper(),
+        str(case_id).strip(),
+        str(timestamp_str).strip(),
+        str(discriminator).strip(),
+    )
+    if not str(event_type).strip() or not str(case_id).strip():
+        raise ValueError("event_type and case_id must not be empty")
+    digest = _stable_id("intelligence_event", *parts).replace("-", "")[:12]
+    return f"intevt-{digest}"
+
+
 __all__ = [
     "make_account_id",
     "make_batch_id",
     "make_case_id",
+    "make_intelligence_event_id",
     "make_phone_id",
     "make_provisional_person_id",
     "make_relationship_id",
     "make_source_record_id",
     "make_vehicle_id",
 ]
+
