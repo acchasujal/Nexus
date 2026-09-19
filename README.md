@@ -20,7 +20,7 @@
 Operating on the continuous investigative loop:
 $$\text{observe} \to \text{connect} \to \text{detect change} \to \text{forecast only what is justified} \to \text{alert} \to \text{verify} \to \text{act} \to \text{learn}$$
 
-NEXUS bridges disconnected First Information Reports (FIRs), Call Detail Records (CDRs), and banking transactions into an explainable, multi-relational knowledge graph. It detects how an observed network adapts over time, grounds every insight in verifiable source evidence, identifies evidence gaps, suggests next-best verification actions, and securely propagates actionable intelligence across police station jurisdictions.
+NEXUS bridges disconnected First Information Reports (FIRs), Call Detail Records (CDRs), and banking transactions into an explainable, multi-relational knowledge graphs. It detects how an observed network adapts over time, grounds every insight in verifiable source evidence, identifies evidence gaps, suggests next-best verification actions, and securely propagates actionable intelligence across police station jurisdictions.
 
 ---
 
