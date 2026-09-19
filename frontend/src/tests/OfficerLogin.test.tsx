@@ -110,15 +110,14 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
     expect(screen.getByTestId('demo-officer-admin')).toBeInTheDocument()
   })
 
-  it('renders full-width responsive layout with intelligence overview and authentication console', () => {
+  it('renders centered responsive layout with institutional banner and authentication console', () => {
     renderLoginWithRouter()
 
     expect(screen.getByRole('banner')).toBeInTheDocument()
     expect(screen.getByRole('main')).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: /Platform Intelligence Overview/i })).toBeInTheDocument()
     expect(screen.getByRole('region', { name: /Officer Authentication Form/i })).toBeInTheDocument()
-    expect(screen.getByText(/Deterministic Analytics/i)).toBeInTheDocument()
-    expect(screen.getByText(/Section 63 BSA Provenance/i)).toBeInTheDocument()
+    expect(screen.getByText(/Deterministic Graph Analytics/i)).toBeInTheDocument()
+    expect(screen.getByText(/Section 63 BSA \(2023\) Compliant/i)).toBeInTheDocument()
   })
 
   it('authenticates officer successfully and redirects to /worklist', async () => {
