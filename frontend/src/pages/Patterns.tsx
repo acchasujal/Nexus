@@ -12,7 +12,7 @@
  * 8. Crime Hotspots (Concentration density, drilldown)
  * 9. Repeat-Case Entities (Entity-resolved aliases, district spread)
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Layers, Network, Users, Share2, AlertTriangle, ShieldCheck, Inbox,
@@ -67,6 +67,7 @@ export default function Patterns() {
   // Intelligence queries
   const {
     data: pulses,
+    isLoading: isPulsesLoading,
     refetch: refetchPulses,
   } = useNetworkPulses()
 
@@ -95,25 +96,33 @@ export default function Patterns() {
   const [communities, setCommunities] = useState<CommunityItem[]>([])
   const [graphBridges, setGraphBridges] = useState<BridgeItem[]>([])
   const [isGraphAlgoLoading, setIsGraphAlgoLoading] = useState<boolean>(true)
+  const isMountedRef = useRef<boolean>(true)
 
   const loadGraphAlgos = (setLoading = true) => {
-    if (setLoading) setIsGraphAlgoLoading(true)
+    if (setLoading && isMountedRef.current) setIsGraphAlgoLoading(true)
     return Promise.all([
       apiClient.getCommunities().catch(() => []),
       apiClient.getBridges().catch(() => []),
     ])
       .then(([commData, bridgeData]) => {
+        if (!isMountedRef.current) return
         setCommunities(Array.isArray(commData) ? (commData as CommunityItem[]) : [])
         setGraphBridges(Array.isArray(bridgeData) ? (bridgeData as BridgeItem[]) : [])
       })
       .finally(() => {
-        setIsGraphAlgoLoading(false)
+        if (isMountedRef.current) {
+          setIsGraphAlgoLoading(false)
+        }
       })
   }
 
   // Initial load of graph modularity
   useEffect(() => {
+    isMountedRef.current = true
     loadGraphAlgos(false)
+    return () => {
+      isMountedRef.current = false
+    }
   }, [])
 
   const handleRefreshAll = async () => {
@@ -175,7 +184,7 @@ export default function Patterns() {
           }`}
         >
           <Activity className="h-4 w-4 text-indigo-600" />
-          Network Pulse ({pulses?.length ?? 0})
+          Network Pulse ({isPulsesLoading ? '...' : pulses?.length ?? 0})
         </button>
 
         <button
@@ -223,7 +232,7 @@ export default function Patterns() {
           }`}
         >
           <GitBranch className="h-4 w-4 text-purple-600" />
-          Cross-District Bridges ({bridgeSignals?.length ?? 0})
+          Cross-District Bridges ({isBridgeLoading ? '...' : bridgeSignals?.length ?? 0})
         </button>
 
         <button
@@ -247,7 +256,7 @@ export default function Patterns() {
           }`}
         >
           <Users className="h-4 w-4 text-blue-600" />
-          Network Communities &amp; Connectors ({communities.length + graphBridges.length})
+          Network Communities &amp; Connectors ({isGraphAlgoLoading ? '...' : communities.length + graphBridges.length})
         </button>
 
         <button
@@ -259,7 +268,7 @@ export default function Patterns() {
           }`}
         >
           <Flame className="h-4 w-4 text-red-600" />
-          Crime Hotspots ({hotspots?.length ?? 0})
+          Crime Hotspots ({isHotspotsLoading ? '...' : hotspots?.length ?? 0})
         </button>
 
         <button
@@ -271,7 +280,7 @@ export default function Patterns() {
           }`}
         >
           <Radio className="h-4 w-4 text-amber-600" />
-          Repeat-Case Entities ({repeatOffenders?.length ?? 0})
+          Repeat-Case Entities ({isRadarLoading ? '...' : repeatOffenders?.length ?? 0})
         </button>
       </div>
 
@@ -624,7 +633,7 @@ export default function Patterns() {
             <div className="space-y-0.5">
               <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
                 <Radio className="h-4 w-4 text-amber-600" />
-                Repeat-Offender Detection &amp; Entity-Resolved Identity Radar
+                Cross-Case Entity Recurrence &amp; Entity-Resolved Identity Radar
               </h2>
               <p className="text-xs text-neutral-500">
                 Surfaces multi-case accused individuals across spelling variations, aliases, shared phones, and cross-district mobility.

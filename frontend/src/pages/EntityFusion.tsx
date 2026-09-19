@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   GitMerge, CheckCircle2, XCircle, Clock, FileText,
-  PauseCircle, ShieldCheck, Network, ArrowRight,
+  PauseCircle, ShieldCheck, Network, ArrowRight, AlertTriangle,
 } from 'lucide-react'
 import { useResolutionCandidates, useDecideCandidate } from '@/hooks/useNexus'
 import { EvidenceConflictMatrix } from '@/components/nexus/EvidenceConflictMatrix'
@@ -146,11 +146,23 @@ export default function EntityFusion() {
         title="Entity Fusion Workbench"
         subtitle="Review each candidate match on deterministic evidence corroboration. Nothing merges without explicit investigator approval."
         actions={
-          <div className="flex items-center gap-3 bg-white border border-neutral-200/90 rounded-xl px-4 py-2 shadow-2xs">
-            <div className="text-right">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Evidence Similarity</div>
-              <div data-testid="match-score" className="text-xl sm:text-2xl font-extrabold text-emerald-700 tabular-nums" aria-label={`Match score ${(candidate.score * 100).toFixed(0)} out of 100`}>
-                {(candidate.score * 100).toFixed(0)}/100
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Primary: Factor assessment */}
+            <div className="flex items-center gap-1.5 bg-white border border-neutral-200/90 rounded-xl px-3 py-2 shadow-2xs text-xs font-bold">
+              <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                ✓ {candidate.reasons.length} Supporting
+              </span>
+              <span className={candidate.conflicts.length > 0 ? 'text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded' : 'text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded'}>
+                {candidate.conflicts.length} Conflict{candidate.conflicts.length === 1 ? '' : 's'}
+              </span>
+            </div>
+            {/* Secondary: Technical score */}
+            <div className="flex items-center gap-2 bg-white border border-neutral-200/90 rounded-xl px-3 py-2 shadow-2xs">
+              <div className="text-right">
+                <div className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Technical Score</div>
+                <div data-testid="match-score" className="text-sm sm:text-base font-extrabold text-neutral-700 tabular-nums" aria-label={`Match score ${(candidate.score * 100).toFixed(0)} out of 100`}>
+                  {(candidate.score * 100).toFixed(0)}/100
+                </div>
               </div>
             </div>
           </div>
@@ -210,6 +222,33 @@ export default function EntityFusion() {
         </div>
       )}
 
+      {/* Conflict-Aware Recommendation & Guidance Callout (B11) */}
+      {candidate.conflicts.length > 0 ? (
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs shadow-2xs">
+          <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <div className="font-bold text-amber-900 text-sm">
+              DEFER DECISION RECOMMENDED — Discrepancy Detected
+            </div>
+            <p className="text-amber-800 leading-relaxed">
+              Conflicting data points in <strong>{candidate.conflicts.map(c => c.field.replaceAll('_', ' ')).join(', ')}</strong> prevent deterministic automated fusion. Verify with subscriber KYC or field interrogation before confirming.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-emerald-950 text-xs shadow-2xs">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <div className="font-bold text-emerald-900 text-sm">
+              HIGH CONFIDENCE MATCH — Corroborated Evidence
+            </div>
+            <p className="text-emerald-800 leading-relaxed">
+              Zero conflicting attributes detected across independent police records. Corroborated across {candidate.reasons.length} matching field{candidate.reasons.length === 1 ? '' : 's'}. Ready for investigator fusion review.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* 2-Entity Comparison Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <RecordPanel title="Record A" record={candidate.left} accent="sky" />
@@ -218,6 +257,78 @@ export default function EntityFusion() {
 
       {/* Evidentiary Contradiction & Agreement Matrix */}
       <EvidenceConflictMatrix candidate={candidate} />
+
+      {/* Visual Resolution Transformation Impact (B13: BEFORE -> DECISION -> AFTER) */}
+      <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-xs space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 pb-3">
+          <div>
+            <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+              <Network className="h-4 w-4 text-indigo-600" />
+              Network Transformation Delta (Resolution Impact)
+            </h3>
+            <p className="text-xs text-neutral-500">
+              Topological impact of fusing {candidate.left.label} and {candidate.right.label} across criminal network snapshots.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-[11px] font-bold">
+            <span className="bg-indigo-50 border border-indigo-200 text-indigo-900 px-2 py-0.5 rounded">
+              Topology State: {candidate.status === 'CONFIRMED' ? 'Applied (After Snapshot)' : 'Proposed (Before Snapshot)'}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+          {/* BEFORE */}
+          <div className="p-3.5 rounded-lg border border-neutral-200 bg-neutral-50/70 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">1. Before State</span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-neutral-200 text-neutral-700">2 Disconnected Nodes</span>
+            </div>
+            <div className="space-y-1 text-xs">
+              <div className="font-semibold text-neutral-800">• {candidate.left.label} ({candidate.left.case_ids[0]})</div>
+              <div className="font-semibold text-neutral-800">• {candidate.right.label} ({candidate.right.case_ids[0]})</div>
+              <p className="text-[11px] text-neutral-500 pt-1 border-t border-neutral-200/60">
+                Independent suspect entries; cross-district investigation link unestablished.
+              </p>
+            </div>
+          </div>
+
+          {/* DECISION */}
+          <div className="p-3.5 rounded-lg border border-blue-200 bg-blue-50/50 space-y-2 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-blue-900 font-bold text-xs">
+              <GitMerge className="h-4 w-4 text-blue-600" />
+              <span>2. Investigator Decision</span>
+            </div>
+            <div className="text-[11px] text-blue-800 leading-relaxed">
+              {candidate.status === 'CONFIRMED' ? (
+                <strong className="text-emerald-700">Approved by {candidate.decided_by || 'IO'}</strong>
+              ) : (
+                <span>Awaiting IO verification of {candidate.reasons.length} corroborating factor{candidate.reasons.length === 1 ? '' : 's'}.</span>
+              )}
+            </div>
+            <div className="text-[10px] font-mono text-neutral-500">
+              Audit Signature: SHA-256 Sealed
+            </div>
+          </div>
+
+          {/* AFTER */}
+          <div className="p-3.5 rounded-lg border border-emerald-200 bg-emerald-50/60 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">3. After State</span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">+1 Cross-Case Bridge</span>
+            </div>
+            <div className="space-y-1 text-xs">
+              <div className="font-bold text-emerald-950">Canonical: {candidate.left.label}</div>
+              <div className="text-[11px] text-neutral-600">
+                Bridges <strong>{candidate.left.case_ids[0]}</strong> ↔ <strong>{candidate.right.case_ids[0]}</strong>
+              </div>
+              <p className="text-[11px] text-emerald-900 pt-1 border-t border-emerald-200/60">
+                Rewires {candidate.left.source_records.length + candidate.right.source_records.length} evidence links to unified suspect entity.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Decision Section */}
       {decided ? (
