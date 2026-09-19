@@ -313,15 +313,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Card Footer Statutory Disclaimers */}
-          <div className="border-t border-neutral-200/90 pt-2 text-center space-y-1">
-            <p className="text-xs text-neutral-500 font-medium">
-              Deterministic Graph Analytics · Evidence-Grounded Attribution · Tamper-Proof Audit Logging
-            </p>
-            <p className="text-[11px] text-neutral-400">
-              Section 63 BSA (2023) Compliant · Zero Real Citizen PII · Tamper-Evident Ledger Provenance
-            </p>
-          </div>
         </div>
       </main>
     </div>
