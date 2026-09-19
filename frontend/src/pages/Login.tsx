@@ -86,7 +86,7 @@ export default function Login() {
 
   // Redirect if already authenticated
   if (isAuthenticated && role) {
-    const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/worklist'
+    const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/intelligence'
     return <Navigate to={from} replace />
   }
 
@@ -131,7 +131,7 @@ export default function Login() {
         password: password || 'nexus-demo-passcode',
         role: targetRole,
       })
-      const destination = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/worklist'
+      const destination = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/intelligence'
       navigate(destination, { replace: true })
     } catch (err: any) {
       const msg = err?.message || 'Authentication failed. Please verify your officer credentials.'

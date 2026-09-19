@@ -49,6 +49,7 @@ function renderLoginWithRouter(initialEntry = '/login') {
         <MemoryRouter initialEntries={[initialEntry]}>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/intelligence" element={<DummyWorklist />} />
             <Route path="/worklist" element={<DummyWorklist />} />
           </Routes>
         </MemoryRouter>
@@ -292,5 +293,45 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
 
     expect(localStorage.getItem('nexus_role')).toBeNull()
     expect(localStorage.getItem('nexus_token')).toBeNull()
+  })
+
+  it('authenticates and navigates to /intelligence by default when no previous location is specified', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(apiClient, 'login').mockResolvedValueOnce({
+      access_token: 'dummy.jwt.token',
+      token_type: 'bearer',
+      user_id: 'KA-1001',
+      role: 'IO',
+      expires_in: 86400,
+    })
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/login']}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/intelligence" element={<div data-testid="intelligence-landing">Intelligence Center</div>} />
+              <Route path="/worklist" element={<div data-testid="worklist-landing">Worklist</div>} />
+            </Routes>
+          </MemoryRouter>
+        </AuthProvider>
+      </QueryClientProvider>
+    )
+
+    const idInput = screen.getByTestId('officer-id-input')
+    const submitBtn = screen.getByTestId('login-submit-button')
+
+    await user.type(idInput, 'KA-1001')
+    await user.click(submitBtn)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('intelligence-landing')).toBeInTheDocument()
+      expect(screen.queryByTestId('worklist-landing')).not.toBeInTheDocument()
+    })
   })
 })

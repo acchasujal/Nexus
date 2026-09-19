@@ -41,11 +41,11 @@ export function RouteErrorBoundary() {
             Reload Page
           </button>
           <Link
-            to="/worklist"
+            to="/intelligence"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-xs font-bold text-neutral-800 hover:bg-neutral-50 transition-colors shadow-2xs"
           >
             <Home className="h-3.5 w-3.5 text-neutral-500" />
-            Return to Worklist
+            Return to Intelligence Center
           </Link>
         </div>
 

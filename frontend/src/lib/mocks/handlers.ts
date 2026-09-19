@@ -612,5 +612,141 @@ export const handlers = [
       },
     ])
   }),
+
+  // 13. GET /api/v1/documents
+  http.get(/\/api\/v1\/documents(\?.*)?$/, () => {
+    return HttpResponse.json([
+      {
+        document_id: 'doc-sample-fir-141',
+        original_filename: 'fir_141_2026_cybercrime.pdf',
+        source_type: 'FIR_DOCUMENT',
+        mime_type: 'application/pdf',
+        content_hash: '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+        uploaded_by: 'KA-1001',
+        uploaded_at: '2026-02-11T10:30:00Z',
+        case_id: 'case-0141',
+        extraction_status: 'SUCCESS',
+        extraction_metadata: {
+          page_count: 2,
+          character_count: 1250,
+          word_count: 210,
+          extraction_method: 'pypdf',
+          error_message: null,
+        },
+        provenance: {
+          source_type: 'FIR_DOCUMENT',
+          source_id: 'doc-sample-fir-141',
+          timestamp: '2026-02-11T10:30:00Z',
+          extracted_fact: 'FIR 141/2026 Cyber Crime complaint statement',
+          derivation_method: 'DOCUMENT_EXTRACTION',
+          confidence: 1.0,
+        },
+      },
+    ])
+  }),
+
+  // 14. POST /api/v1/documents (Upload)
+  http.post(/\/api\/v1\/documents$/, async () => {
+    return HttpResponse.json({
+      document_id: 'doc-uploaded-' + Date.now().toString(16),
+      original_filename: 'uploaded_document.pdf',
+      source_type: 'OTHER_DOCUMENT',
+      mime_type: 'application/pdf',
+      content_hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      uploaded_by: 'KA-1001',
+      uploaded_at: new Date().toISOString(),
+      case_id: 'case-0141',
+      extraction_status: 'SUCCESS',
+      extraction_metadata: {
+        page_count: 1,
+        character_count: 650,
+        word_count: 110,
+        extraction_method: 'pypdf',
+        error_message: null,
+      },
+      provenance: {
+        source_type: 'OTHER_DOCUMENT',
+        source_id: 'doc-uploaded-' + Date.now().toString(16),
+        timestamp: new Date().toISOString(),
+        extracted_fact: 'Uploaded evidentiary document',
+        derivation_method: 'DOCUMENT_EXTRACTION',
+        confidence: 1.0,
+      },
+    })
+  }),
+
+  // 15. GET /api/v1/documents/:id/text
+  http.get(/\/api\/v1\/documents\/[^/]+\/text/, () => {
+    return HttpResponse.json({
+      document_id: 'doc-sample-fir-141',
+      content_hash: '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+      extracted_text: 'First Information Report No. 141/2026, Cyber Crime PS Bengaluru.\nComplainant: Smt. Meena Devi.\nAccused: Rafiq Khan (Phone: +91 98200 11223), beneficiary account 4099-2201-7731 IFSC SBIN0001040.',
+      extraction_status: 'SUCCESS',
+      extraction_metadata: {
+        page_count: 2,
+        character_count: 1250,
+        word_count: 210,
+        extraction_method: 'pypdf',
+        error_message: null,
+      },
+    })
+  }),
+
+  // 16. POST /api/v1/documents/:id/extract
+  http.post(/\/api\/v1\/documents\/[^/]+\/extract/, () => {
+    return HttpResponse.json({
+      document_id: 'doc-sample-fir-141',
+      candidate_entities: [
+        {
+          candidate_id: 'cand-ent-01',
+          name: 'Rafiq Khan',
+          entity_type: 'Person',
+          confidence: 0.95,
+          text_span: 'Rafiq Khan',
+          source_locator: 'Page 1, Paragraph 2',
+          resolution_candidates: [
+            {
+              matched_entity_id: 'person-0040',
+              canonical_name: 'Rafiq Khan',
+              similarity_score: 0.95,
+              match_reasons: ['Exact phonetics', 'Matched phone +91 98200 11223'],
+            },
+          ],
+        },
+      ],
+      candidate_relationships: [
+        {
+          candidate_id: 'cand-rel-01',
+          source_candidate_id: 'cand-ent-01',
+          source_label: 'Rafiq Khan',
+          target_candidate_id: 'cand-ent-02',
+          target_label: '4099-2201-7731',
+          relationship_type: 'OWNS_ACCOUNT',
+          confidence: 0.9,
+          text_span: 'beneficiary account 4099-2201-7731',
+          source_locator: 'Page 1, Paragraph 3',
+        },
+      ],
+    })
+  }),
+
+  // 17. GET /api/v1/documents/:id/candidates
+  http.get(/\/api\/v1\/documents\/[^/]+\/candidates/, () => {
+    return HttpResponse.json({
+      document_id: 'doc-sample-fir-141',
+      candidate_entities: [],
+      candidate_relationships: [],
+    })
+  }),
+
+  // 18. Candidate Decisions
+  http.post(/\/api\/v1\/candidates\/[^/]+\/(accept-entity|accept-new|reject)/, () => {
+    return HttpResponse.json({
+      candidate_id: 'cand-ent-01',
+      decision: 'ACCEPTED',
+      resolved_entity_id: 'person-0040',
+      timestamp: new Date().toISOString(),
+    })
+  }),
 ]
 
