@@ -72,7 +72,7 @@ class IntelligencePulseService:
             "origin_officer_id": "OFFICER-DEMO-IO-01",
             "target_case_id": "CASE-207",
             "target_district": "Bengaluru Central",
-            "headline": "Cross-Jurisdiction Syndicate Conduit: Rafiq Khan / Deepak Rao Linkage",
+            "headline": "Cross-Investigation Communication Link: Rafiq Khan / Deepak Rao Linkage",
             "summary": "Telephony CDR analysis reveals direct communication link between suspect Rafiq Khan (Mysuru FIR 141/2026) and co-accused Deepak Rao (Bengaluru FIR 207/2026). Multiple IMPS layering transactions corroborate common financial conduit.",
             "shared_entities": ["P-RAFIQ", "PH-UNIFIED", "ACC-7731", "ACC-9914"],
             "evidence_refs": ["SRC-FIR-141", "SRC-FIR-207", "SRC-CDR-A12", "SRC-CDR-B31", "SRC-TXN-55"],

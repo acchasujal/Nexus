@@ -47,7 +47,7 @@ const AUTHORIZED_OFFICERS: OfficerProfile[] = [
     badge: 'KA-1002',
     role: 'SHO',
     roleName: 'SHO / Intelligence Analyst',
-    scope: 'Louvain syndicate communities, betweenness brokers & lead actioning',
+    scope: 'Louvain cohesive communities, betweenness brokers & lead actioning',
     icon: ShieldAlert,
   },
   {
@@ -62,11 +62,11 @@ const AUTHORIZED_OFFICERS: OfficerProfile[] = [
   },
   {
     id: 'KA-1000',
-    name: 'System Administrator',
+    name: 'Dir. Priya Mehta',
     rank: 'Director of Cyber Intelligence',
     badge: 'KA-1000',
     role: 'ADMIN',
-    roleName: 'System Administrator',
+    roleName: 'Forensic Governance Officer (Admin)',
     scope: 'National cybercrime operations, ledger anchors & full forensic governance',
     icon: Shield,
   },

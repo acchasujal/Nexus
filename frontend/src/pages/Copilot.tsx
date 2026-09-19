@@ -56,10 +56,10 @@ const INITIAL_WELCOME_MESSAGE: Message = {
 }
 
 const SUGGESTED_PROMPTS = [
-  { text: 'How are the two cases connected?', type: 'connection' },
-  { text: 'Identify evidence gaps and recommended verification actions for suspect network', type: 'investigative' },
-  { text: 'Show multi-hop bank transaction layering chains across flagged accounts', type: 'financial' },
-  { text: 'Find all bridge entities connecting narcotics and hawala syndicates', type: 'bridges' },
+  { text: 'What evidence connects these cases?', type: 'connection' },
+  { text: 'What evidence is missing and what should be verified next?', type: 'investigative' },
+  { text: 'Summarize only the verified financial connections with source citations.', type: 'financial' },
+  { text: 'Which entity links these investigations? Show only corroborated connections.', type: 'bridges' },
 ]
 
 const STORAGE_KEY = 'nexus_copilot_chat_history'

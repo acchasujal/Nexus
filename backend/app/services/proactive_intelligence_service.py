@@ -343,7 +343,7 @@ class ProactiveIntelligenceService:
                 NetworkPulseItem(
                     pulse_id=demo_pulse_id,
                     change_ids=["rel_person-0002_COMMUNICATED_WITH_person-0073"],
-                    signal_headline="Cross-Syndicate Articulation Bridge Detected",
+                    signal_headline="Cross-Investigation Network Bridge Detected",
                     review_priority=ReviewPriority.CRITICAL_REVIEW,
                     time_window=("2026-08-20T14:30:00Z", "2026-08-22T18:00:00Z"),
                     evidence_refs=["EV-CDR-2026-0491", "EV-BANK-IMPS-8812"],

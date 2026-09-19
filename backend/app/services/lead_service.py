@@ -316,34 +316,34 @@ class LeadPipelineService:
                 "Intervention Value": "Disruption breaks communication between clusters",
             }
             why = [
-                f"Entity {node_label} connects otherwise disconnected criminal sub-clusters.",
+                f"Entity {node_label} connects otherwise disconnected investigation sub-clusters.",
                 "Key facilitator or broker node in the network hierarchy.",
             ]
 
         elif rule == "community_detection":
-            title = f"Cohesive Criminal Syndicate Cluster ({entity_count} Entities)"
+            title = f"Cohesive Network Community Cluster ({entity_count} Entities)"
             priority = "MEDIUM"
             factors = {
                 "Modularity Score": "High internal edge density",
                 "Cluster Size": f"{entity_count} densely interconnected nodes",
-                "Network Yield": "Identifies syndicate membership boundary",
+                "Network Yield": "Identifies cohesive community membership boundary",
             }
             why = [
                 "Louvain modularity clustering identified tightly connected group.",
-                "Supports mapping organizational hierarchy and joint chargesheeting.",
+                "Supports mapping organizational structure and case associations.",
             ]
 
         elif rule == "cross_district_hotspot_bridge":
-            title = f"Cross-District Crime Syndicate Bridge ({entity_count} Suspects)"
+            title = f"Cross-District Network Bridge ({entity_count} Entities)"
             priority = "HIGH"
             factors = {
-                "Jurisdictional Reach": "Multi-district criminal coordination",
-                "Repeat Accused Count": f"{entity_count} repeat offenders spanning districts",
-                "Intervention Value": "Inter-district task force mobilization recommended",
+                "Jurisdictional Reach": "Multi-district coordination observed",
+                "Entity Count": f"{entity_count} entities spanning districts",
+                "Intervention Value": "Cross-district task force coordination recommended",
             }
             why = [
-                "Identified repeat offenders bridging active high-density crime hotspots.",
-                "Strong indicator of syndicated interstate/inter-district criminal operations.",
+                "Entities bridging active high-density case hotspots across districts.",
+                "Structural evidence of inter-district network coordination.",
             ]
 
 

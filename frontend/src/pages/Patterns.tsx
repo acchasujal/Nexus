@@ -661,10 +661,10 @@ export default function Patterns() {
           {isRadarLoading ? (
             <LoadingSkeleton layout="card" />
           ) : radarError ? (
-            <ErrorState message="Failed to load repeat offender radar." onRetry={() => void refetchRadar()} />
+            <ErrorState message="Failed to load repeat-case entity radar." onRetry={() => void refetchRadar()} />
           ) : !repeatOffenders || repeatOffenders.length === 0 ? (
             <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-12 text-center text-neutral-500">
-              No repeat offenders detected with at least {minCasesFilter} cases.
+              No repeat-case entities detected with at least {minCasesFilter} cases.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

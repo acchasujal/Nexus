@@ -1,11 +1,11 @@
 /**
  * frontend/src/tests/TrustFabricLedger.test.tsx
  *
- * Comprehensive tests for NEXUS Trust Fabric & Permissioned Merkle Ledger (Audit page).
+ * Comprehensive tests for NEXUS Trust Fabric & Tamper-Evident Merkle Audit Ledger (Audit page).
  * Verifies:
  *   1. Renders Section 63 BSA statutory compliance banner.
- *   2. Displays Permissioned Blockchain Trust Anchors section with anchored blocks.
- *   3. Triggers block anchor batch verification and displays verified badge.
+ *   2. Displays Tamper-Evident Ledger Anchors section with anchored blocks.
+ *   3. Triggers batch anchor verification and displays INTEGRITY VERIFIED badge.
  *   4. Allows inspecting Merkle inclusion proof for audit records.
  *   5. Renders Merkle inclusion certificate modal with proof path steps.
  */
@@ -123,20 +123,20 @@ describe('Trust Fabric & Merkle Ledger UI (Audit.tsx)', () => {
     renderWithClient(<Audit />)
 
     expect(screen.getByText(/Section 63 Bharatiya Sakshya Adhiniyam \(BSA\) 2023 Statutory Compliance/i)).toBeInTheDocument()
-    expect(screen.getByText('LEGAL CERTIFICATE')).toBeInTheDocument()
+    expect(screen.getByText('Section 63 Certificate Preparation')).toBeInTheDocument()
     expect(screen.getByText(/RFC 6962 prefix-hardened binary Merkle tree roots/i)).toBeInTheDocument()
   })
 
-  it('renders Permissioned Blockchain Trust Anchors section and cards', async () => {
+  it('renders Tamper-Evident Ledger Anchors section and cards', async () => {
     renderWithClient(<Audit />)
 
-    expect(screen.getByText('Permissioned Blockchain Trust Anchors')).toBeInTheDocument()
+    expect(screen.getByText('Tamper-Evident Ledger Anchors')).toBeInTheDocument()
     expect(await screen.findByText('ANCHOR-2026-A1B2C3D4', {}, { timeout: 10000 })).toBeInTheDocument()
     expect(screen.getByText('Block #1')).toBeInTheDocument()
     expect(screen.getByText('NEXUS-POLICE-HQ')).toBeInTheDocument()
   })
 
-  it('verifies anchored block on demand and shows BLOCKCHAIN VERIFIED badge', async () => {
+  it('verifies anchored block on demand and shows INTEGRITY VERIFIED badge', async () => {
     renderWithClient(<Audit />)
 
     expect(await screen.findByText('ANCHOR-2026-A1B2C3D4', {}, { timeout: 10000 })).toBeInTheDocument()
@@ -145,7 +145,7 @@ describe('Trust Fabric & Merkle Ledger UI (Audit.tsx)', () => {
 
     fireEvent.click(verifyButtons[0])
 
-    expect(await screen.findByText(/BLOCKCHAIN VERIFIED/i, {}, { timeout: 10000 })).toBeInTheDocument()
+    expect(await screen.findByText(/INTEGRITY VERIFIED/i, {}, { timeout: 10000 })).toBeInTheDocument()
   })
 
   it('opens row inspection and allows viewing Merkle inclusion proof modal', async () => {

@@ -287,10 +287,10 @@ export default function Audit() {
             <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30" title="Section 63 Certificate Preparation">
               Section 63 Certificate Preparation
             </span>
-            <span className="sr-only">LEGAL CERTIFICATE</span>
+            <span className="sr-only">SECTION 63 CERTIFICATE PREPARATION</span>
           </span>
           <p className="text-[11px] text-neutral-400 leading-relaxed">
-            All electronic investigative actions are canonically serialized with SHA-256 integrity digests, chronologically chained, and batched into RFC 6962 prefix-hardened binary Merkle tree roots anchored to the append-only permissioned ledger. Zero citizen PII is committed to ledger blocks.
+            All electronic investigative actions are canonically serialized with SHA-256 integrity digests, chronologically chained, and batched into RFC 6962 prefix-hardened binary Merkle tree roots anchored to the append-only tamper-evident audit ledger. Zero citizen PII is committed to ledger blocks.
           </p>
         </div>
       </div>
@@ -298,15 +298,15 @@ export default function Audit() {
       {/* Header */}
       <PageHeader
         icon={ShieldCheck}
-        title="Immutable Audit Trail &amp; Permissioned Blockchain Ledger"
-        subtitle="Cryptographically sealed audit history, canonical SHA-256 digests, and Merkle root anchoring to an append-only permissioned block chain."
+        title="Tamper-Evident Audit Trail &amp; Evidence Integrity Ledger"
+        subtitle="Cryptographically sealed audit history with canonical SHA-256 digests, backward hash chaining, and Merkle batch root anchoring (Section 63 BSA certificate preparation)."
       />
 
 
-      {/* Permissioned Blockchain Anchors Section */}
+      {/* Tamper-Evident Ledger Anchors Section */}
       <SectionCard
-        title="Permissioned Blockchain Trust Anchors"
-        subtitle="Cryptographic Merkle batch roots anchored to local permissioned blocks (NEXUS-POLICE-HQ / CYBER-CELL / DISTRICT-HQ)"
+        title="Tamper-Evident Ledger Anchors"
+        subtitle="Cryptographic Merkle batch roots anchored to local authority nodes (NEXUS-POLICE-HQ / CYBER-CELL / DISTRICT-HQ) — Evidence Integrity Record"
         actions={
           <div className="flex items-center gap-2">
             <button
@@ -335,7 +335,7 @@ export default function Audit() {
 
         {anchors.length === 0 ? (
           <div className="p-4 text-center text-xs text-neutral-500">
-            No blockchain anchors committed yet. Click &quot;Anchor Audit Batch&quot; to commit the first batch.
+            No integrity anchors committed yet. Click &quot;Anchor Audit Batch&quot; to commit the first batch.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -389,7 +389,7 @@ export default function Audit() {
                         <span className="text-xs text-blue-600 animate-pulse">Verifying...</span>
                       ) : vState?.verified ? (
                         <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> BLOCKCHAIN VERIFIED
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> INTEGRITY VERIFIED
                         </span>
                       ) : vState?.verified === false ? (
                         <span className="inline-flex items-center gap-1 text-xs font-bold text-red-600">

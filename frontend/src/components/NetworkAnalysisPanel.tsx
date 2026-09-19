@@ -120,12 +120,12 @@ const SCOPE_DEFINITIONS: Record<number, { label: string; short: string; descript
   2: {
     label: 'Expanded Intelligence (2 Hops)',
     short: '2 Hops',
-    description: 'Syndicate co-conspirators, financial routes, and CDR bridges',
+    description: 'Connected entities, financial routes, and CDR bridges',
   },
   3: {
     label: 'Extended Intelligence (3 Hops)',
     short: '3 Hops',
-    description: 'Wide multi-tier criminal syndicate network and secondary accounts',
+    description: 'Wide multi-tier network and secondary accounts',
   },
 }
 

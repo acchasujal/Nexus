@@ -96,7 +96,7 @@ const CANONICAL_OFFICERS: Record<string, OfficerUser> = {
     userId: 'officer_admin',
     officerId: 'OFFICER-DEMO-ADMIN-01',
     badgeNumber: 'KA-1000',
-    name: 'System Administrator',
+    name: 'Dir. Priya Mehta',
     rank: 'Director of Cyber Intelligence',
     role: 'ADMIN',
     stationId: 'HQ-MHA-NCRB-DELHI',
