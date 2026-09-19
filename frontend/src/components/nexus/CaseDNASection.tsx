@@ -142,13 +142,13 @@ export function CaseDNASection({ initialCaseId = 'CASE-141' }: CaseDNASectionPro
           <MetricCard
             label="Highest Structural Similarity"
             value={`${(caseDNAData.highest_similarity * 100).toFixed(1)}%`}
-            subtext="Top mathematical match"
+            subtext="Closest structural match"
             icon={GitCompare}
           />
           <MetricCard
             label="Average Cluster Overlap"
             value={`${(caseDNAData.average_similarity * 100).toFixed(1)}%`}
-            subtext="Harmonic vector average"
+            subtext="Cross-dimension average"
             icon={Layers}
           />
           <MetricCard

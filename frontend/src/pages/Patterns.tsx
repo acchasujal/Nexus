@@ -67,6 +67,7 @@ export default function Patterns() {
   // Intelligence queries
   const {
     data: pulses,
+    isLoading: isPulsesLoading,
     refetch: refetchPulses,
   } = useNetworkPulses()
 
@@ -183,7 +184,7 @@ export default function Patterns() {
           }`}
         >
           <Activity className="h-4 w-4 text-indigo-600" />
-          Network Pulse ({pulses?.length ?? 0})
+          Network Pulse ({isPulsesLoading ? '...' : pulses?.length ?? 0})
         </button>
 
         <button
@@ -231,7 +232,7 @@ export default function Patterns() {
           }`}
         >
           <GitBranch className="h-4 w-4 text-purple-600" />
-          Cross-District Bridges ({bridgeSignals?.length ?? 0})
+          Cross-District Bridges ({isBridgeLoading ? '...' : bridgeSignals?.length ?? 0})
         </button>
 
         <button
@@ -255,7 +256,7 @@ export default function Patterns() {
           }`}
         >
           <Users className="h-4 w-4 text-blue-600" />
-          Network Communities &amp; Connectors ({communities.length + graphBridges.length})
+          Network Communities &amp; Connectors ({isGraphAlgoLoading ? '...' : communities.length + graphBridges.length})
         </button>
 
         <button
@@ -267,7 +268,7 @@ export default function Patterns() {
           }`}
         >
           <Flame className="h-4 w-4 text-red-600" />
-          Crime Hotspots ({hotspots?.length ?? 0})
+          Crime Hotspots ({isHotspotsLoading ? '...' : hotspots?.length ?? 0})
         </button>
 
         <button
@@ -279,7 +280,7 @@ export default function Patterns() {
           }`}
         >
           <Radio className="h-4 w-4 text-amber-600" />
-          Repeat-Case Entities ({repeatOffenders?.length ?? 0})
+          Repeat-Case Entities ({isRadarLoading ? '...' : repeatOffenders?.length ?? 0})
         </button>
       </div>
 
