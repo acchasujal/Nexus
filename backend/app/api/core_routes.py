@@ -18,13 +18,14 @@ from __future__ import annotations
 from typing import Any
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, File, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Response, File, UploadFile
 
 from backend.app.api.dependencies import (
     get_audit_anchor_service,
     get_audit_service,
     get_case_service,
     get_copilot_service,
+    get_document_service,
     get_entity_service,
     get_evidence_authorization_policy,
     get_evidence_service,
@@ -51,6 +52,7 @@ from backend.app.core.graph.algorithms.pattern_detection import (
 from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.case_service import InvestigationService
 from backend.app.services.copilot_service import CopilotService
+from backend.app.services.document_service import DocumentService
 from backend.app.services.entity_service import EntityService
 from backend.app.services.evidence_service import EvidenceService
 from backend.app.services.export_service import ExportService
@@ -64,6 +66,8 @@ from shared.contracts.api import (
     CommunityResponse,
     CopilotQueryRequest,
     CopilotQueryResponse,
+    DocumentResponse,
+    DocumentTextResponse,
     DossierExportRequest,
     DossierExportResponse,
     EntityProfileResponse,
@@ -665,6 +669,145 @@ def create_core_router() -> APIRouter:
             return resp
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
+
+    # ── Unstructured Document Ingestion (P1-A) ──────────────────────────────
+
+    @router.post("/documents", response_model=DocumentResponse)
+    async def upload_document(
+        file: UploadFile = File(...),
+        source_type: str = Form("OTHER_DOCUMENT"),
+        case_id: str | None = Form(None),
+        principal: Principal = Depends(get_principal),
+        doc_service: DocumentService = Depends(get_document_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+        request_id: str = Depends(get_request_id),
+    ) -> DocumentResponse:
+        """Upload and extract unstructured evidence document (.pdf, .txt)."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required to upload documents.")
+
+        # If case_id is supplied, verify investigator/officer authorization for the case
+        clean_case_id = case_id.strip() if case_id and case_id.strip() else None
+        if clean_case_id:
+            allowed, reason = auth_policy.can_access_case(principal, clean_case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="Filename missing.")
+
+        lower_filename = file.filename.lower()
+        if not (lower_filename.endswith(".pdf") or lower_filename.endswith(".txt")):
+            raise HTTPException(
+                status_code=415,
+                detail=f"Unsupported file format for '{file.filename}'. Only .pdf and .txt documents are supported.",
+            )
+
+        content = await file.read()
+        if len(content) == 0:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty (0 bytes).")
+        if len(content) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail=f"File '{file.filename}' exceeds 10 MB limit.")
+
+        try:
+            return doc_service.ingest_document(
+                filename=file.filename,
+                data=content,
+                source_type=source_type,
+                uploader_id=principal.user_id,
+                case_id=clean_case_id,
+                request_id=request_id,
+            )
+        except ValueError as val_err:
+            raise HTTPException(status_code=400, detail=str(val_err))
+
+    @router.get("/documents", response_model=list[DocumentResponse])
+    def list_documents(
+        case_id: str | None = Query(None),
+        principal: Principal = Depends(get_principal),
+        doc_service: DocumentService = Depends(get_document_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+    ) -> list[DocumentResponse]:
+        """List documents, enforcing case-level RBAC confidentiality."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required.")
+
+        clean_case_id = case_id.strip() if case_id and case_id.strip() else None
+        if clean_case_id:
+            allowed, reason = auth_policy.can_access_case(principal, clean_case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        all_docs = doc_service.list_documents(case_id=clean_case_id)
+        # Confidentiality filter: only return documents for cases the officer is authorized to view
+        authorized_docs = [
+            doc for doc in all_docs
+            if not doc.case_id or auth_policy.can_access_case(principal, doc.case_id)[0]
+        ]
+        return authorized_docs
+
+    @router.get("/documents/{document_id}", response_model=DocumentResponse)
+    def get_document(
+        document_id: str,
+        principal: Principal = Depends(get_principal),
+        doc_service: DocumentService = Depends(get_document_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+        request_id: str = Depends(get_request_id),
+    ) -> DocumentResponse:
+        """Retrieve document metadata and cryptographic fingerprint, enforcing RBAC."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required.")
+
+        # Check metadata first with suppressed audit
+        doc = doc_service.get_document_metadata(document_id, actor_id=principal.user_id, suppress_audit=True)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Document not found.")
+
+        if doc.case_id:
+            allowed, reason = auth_policy.can_access_case(principal, doc.case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        # Authorized view - record DOCUMENT_VIEWED audit event
+        result = doc_service.get_document_metadata(
+            document_id,
+            actor_id=principal.user_id,
+            request_id=request_id,
+            suppress_audit=False,
+        )
+        return result or doc
+
+    @router.get("/documents/{document_id}/text", response_model=DocumentTextResponse)
+    def get_document_text(
+        document_id: str,
+        principal: Principal = Depends(get_principal),
+        doc_service: DocumentService = Depends(get_document_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+        request_id: str = Depends(get_request_id),
+    ) -> DocumentTextResponse:
+        """Retrieve extracted document text, enforcing RBAC and audit logging."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required.")
+
+        doc = doc_service.get_document_metadata(document_id, actor_id=principal.user_id, suppress_audit=True)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Document not found.")
+
+        if doc.case_id:
+            allowed, reason = auth_policy.can_access_case(principal, doc.case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        # Authorized view - record DOCUMENT_VIEWED audit event
+        text_resp = doc_service.get_document_text(
+            document_id,
+            actor_id=principal.user_id,
+            request_id=request_id,
+            suppress_audit=False,
+        )
+        if not text_resp:
+            raise HTTPException(status_code=404, detail="Document text not found.")
+        return text_resp
 
     # ── Dossier Export (Phase 5 / BE-05) ────────────────────────────────────
 

@@ -94,6 +94,7 @@ class PostgresBackendRepository:
         self.audit_events: list[dict[str, Any]] = []
         self.review_candidates: dict[str, dict[str, Any]] = {}
         self.batches: dict[str, dict[str, Any]] = {}
+        self.documents: dict[str, dict[str, Any]] = {}
 
         # 1. Initialize schema
         self._init_schema()
@@ -1089,3 +1090,29 @@ class PostgresBackendRepository:
             reverse=True,
         )
         return [AuditLogEntry(**e) for e in sorted_events[:limit]]
+
+    # ── Document Repository Methods (P1-A) ──────────────────────────────────
+
+    def store_document(self, doc_record: dict[str, Any]) -> dict[str, Any]:
+        """Store or update a document record in repository cache."""
+        doc_id = doc_record["document_id"]
+        self.documents[doc_id] = doc_record
+        return doc_record
+
+    def get_document(self, doc_id: str) -> dict[str, Any] | None:
+        """Retrieve a document record by its ID."""
+        return self.documents.get(doc_id)
+
+    def get_document_by_hash(self, content_hash: str) -> dict[str, Any] | None:
+        """Find an existing document with the identical content hash."""
+        for doc in self.documents.values():
+            if doc.get("content_hash") == content_hash:
+                return doc
+        return None
+
+    def list_documents(self, case_id: str | None = None) -> list[dict[str, Any]]:
+        """List documents, optionally filtered by case_id."""
+        docs = list(self.documents.values())
+        if case_id is not None:
+            docs = [d for d in docs if d.get("case_id") == case_id]
+        return sorted(docs, key=lambda d: str(d.get("uploaded_at", "")), reverse=True)

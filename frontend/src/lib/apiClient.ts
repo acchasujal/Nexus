@@ -7,6 +7,8 @@
 import type {
   CopilotQueryRequest,
   CopilotQueryResponse,
+  DocumentResponse,
+  DocumentTextResponse,
   EntityResolutionQuery,
   EntityResolutionResponse,
   InvestigationDetailResponse,
@@ -291,6 +293,30 @@ export const apiClient = {
       method: 'POST',
       body: formData,
     })
+  },
+
+  // ── Document Ingestion (P1-A) ───────────────────────────────────────────
+  uploadDocument: (file: File, sourceType: string = 'OTHER_DOCUMENT', caseId?: string) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('source_type', sourceType)
+    if (caseId && caseId.trim()) {
+      formData.append('case_id', caseId.trim())
+    }
+    return apiFetch<DocumentResponse>('/api/v1/documents', {
+      method: 'POST',
+      body: formData,
+    })
+  },
+  getDocument: (documentId: string) => {
+    return apiFetch<DocumentResponse>(`/api/v1/documents/${documentId}`)
+  },
+  getDocumentText: (documentId: string) => {
+    return apiFetch<DocumentTextResponse>(`/api/v1/documents/${documentId}/text`)
+  },
+  listDocuments: (caseId?: string) => {
+    const query = caseId ? `?case_id=${encodeURIComponent(caseId)}` : ''
+    return apiFetch<DocumentResponse[]>(`/api/v1/documents${query}`)
   },
 
   // ── NEXUS prototype endpoints (frozen M4 contract) ──────────────────────

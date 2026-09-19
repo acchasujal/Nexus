@@ -80,6 +80,9 @@ class AuditEventType(str, Enum):
     INGESTION_COMPLETED = "ingestion_completed"
     INGESTION_FAILED = "ingestion_failed"
     SEED_COMPLETED = "seed_completed"
+    DOCUMENT_UPLOADED = "document_uploaded"
+    DOCUMENT_VIEWED = "document_viewed"
+    DOCUMENT_EXTRACTION_FAILED = "document_extraction_failed"
 
     # Export (BE-05)
     EXPORT_INITIATED = "export_initiated"

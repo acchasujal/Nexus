@@ -90,6 +90,44 @@ export interface EvidenceItemResponse {
   provenance: EvidenceProvenanceContract
 }
 
+export type DocumentSourceType =
+  | 'FIR_DOCUMENT'
+  | 'POLICE_REPORT'
+  | 'INTELLIGENCE_DOCUMENT'
+  | 'OTHER_DOCUMENT'
+
+export type ExtractionStatus = 'SUCCESS' | 'FAILED' | 'EMPTY'
+
+export interface DocumentExtractionMetadata {
+  page_count: number
+  character_count: number
+  word_count: number
+  extraction_method: string
+  error_message?: string | null
+}
+
+export interface DocumentResponse {
+  document_id: string
+  original_filename: string
+  source_type: string
+  mime_type: string
+  content_hash: string
+  uploaded_by: string
+  uploaded_at: string
+  case_id?: string | null
+  extraction_status: ExtractionStatus
+  extraction_metadata: DocumentExtractionMetadata
+  provenance: EvidenceProvenanceContract
+}
+
+export interface DocumentTextResponse {
+  document_id: string
+  content_hash: string
+  extracted_text: string
+  extraction_status: ExtractionStatus
+  extraction_metadata: DocumentExtractionMetadata
+}
+
 export type NodePresenceType =
   | 'DIRECT_CASE'
   | 'INTELLIGENCE_EXPANSION'

@@ -18,6 +18,7 @@ import {
   Info,
 } from 'lucide-react'
 import { useIngestFiles } from '@/hooks/useIngestion'
+import { DocumentIngestionPanel } from '@/components/DocumentIngestionPanel'
 
 type FileSlotType = 'fir' | 'cdr' | 'bank' | 'intelligence'
 
@@ -82,6 +83,7 @@ export function CsvIngestionPanel({ onIngestSuccess }: CsvIngestionPanelProps = 
   })
 
   const [stageIndex, setStageIndex] = useState(0)
+  const [activeMode, setActiveMode] = useState<'csv' | 'document'>('csv')
   const { mutate: ingestFiles, isPending, isSuccess, data: result, error: submitError, reset } = useIngestFiles()
 
   // Simulate progress steps while pending
@@ -167,17 +169,45 @@ export function CsvIngestionPanel({ onIngestSuccess }: CsvIngestionPanelProps = 
   if (!isSuccess || !result) {
     return (
       <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-6 space-y-6">
-        <div>
-          <h2 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
-            <Database className="h-5 w-5 text-blue-600" />
-            Upload Evidence & Intelligence
-          </h2>
-          <p className="text-sm text-neutral-600 mt-1">
-            Select one or more data sources. Only one CSV file is required. The system will automatically map identities, discover graph relationships, and check for conflicts.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 pb-4">
+          <div>
+            <h2 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
+              <Database className="h-5 w-5 text-blue-600" />
+              Upload Evidence & Intelligence
+            </h2>
+            <p className="text-sm text-neutral-600 mt-1">
+              Select one or more data sources. Only one CSV file is required. The system will automatically map identities, discover graph relationships, and check for conflicts.
+            </p>
+          </div>
+          <div className="flex items-center space-x-1 p-1 bg-neutral-100 rounded-lg shrink-0">
+            <button
+              type="button"
+              data-testid="tab-csv-ingest"
+              onClick={() => setActiveMode('csv')}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                activeMode === 'csv' ? 'bg-white text-neutral-900 shadow-2xs' : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              Structured Feeds (CSV)
+            </button>
+            <button
+              type="button"
+              data-testid="tab-doc-ingest"
+              onClick={() => setActiveMode('document')}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                activeMode === 'document' ? 'bg-white text-neutral-900 shadow-2xs' : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              Unstructured Docs (.pdf, .txt)
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {activeMode === 'document' ? (
+          <DocumentIngestionPanel onUploadSuccess={onIngestSuccess} />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {FILE_SLOTS.map((slot) => {
             const currentFile = files[slot.id]
             const currentError = errors[slot.id]
@@ -304,6 +334,8 @@ export function CsvIngestionPanel({ onIngestSuccess }: CsvIngestionPanelProps = 
             )}
           </button>
         </div>
+          </>
+        )}
       </div>
     )
   }

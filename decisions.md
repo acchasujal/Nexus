@@ -206,3 +206,23 @@ This document is the **single source of truth** for material architectural, secu
   - *Removing multi-hop capability:* Rejected; multi-hop syndicate detection is essential for dismantling criminal networks.
   - *LLM-generated context explanations:* Rejected; violates deterministic evidence grounding and introduces hallucination risk.
 - **Consequences:** Investigators have full control over network scope; direct accused entities and multi-hop intelligence are clearly and visually distinguished; all presence is explainable with verifiable Section 63 BSA evidence citations.
+
+---
+
+## DEC-014 — Unstructured Document Ingestion Foundation & Tamper-Evident Fingerprinting (P1-A)
+- **Date:** 2026-09-19
+- **Status:** Accepted & Implemented (P1-A)
+- **Decision:**
+  1. Establish an unstructured document ingestion foundation for machine-readable `.pdf` and `.txt` files (FIRs, police memos, intelligence reports).
+  2. Maintain a strict phase boundary:
+     $$\text{DOCUMENT} \to \text{EXTRACTED TEXT} \to \text{VERIFIED DOCUMENT PROVENANCE}$$
+     No automatic graph mutations, no node/relationship generation, and no LLM execution in this phase.
+  3. Enforce deterministic SHA-256 cryptographic document integrity hashing on original bytes. Frame hashing accurately as cryptographic integrity and tamper-evident fingerprinting without making premature or unsupported statutory legal-admissibility claims.
+  4. Preserve document and extracted text confidentiality strictly through existing RBAC (`EvidenceAuthorizationPolicy`). Documents tagged with a `case_id` are confidential and inaccessible/undiscoverable to unauthorized officers across upload, listing, metadata, and text endpoints.
+  5. Employ deterministic text extraction: `pypdf` for machine-readable PDFs (with encryption detection and page-level fallback) and safe encoding decoding for plain text.
+  6. Emit `DOCUMENT_UPLOADED`, `DOCUMENT_VIEWED`, and `DOCUMENT_EXTRACTION_FAILED` through the durable audit trail, avoiding duplicate events during internal service queries.
+- **Reason:** Real-world criminal investigations receive voluminous unstructured filings (FIR PDFs, seizure memos, plain-text intelligence notes). Establishing an authoritative, tamper-evident document intake layer before downstream entity extraction prevents ungrounded graph corruption and ensures strict chain-of-custody tracking.
+- **Alternatives Considered:**
+  - *Direct LLM extraction directly into graph on upload:* Rejected; violates deterministic auditability and risks hallucinations mutating the authoritative graph.
+  - *Storing multi-gigabyte raw binaries directly inside relational SQL columns:* Rejected; decoupled `DocumentService` operates via clean persistence abstraction allowing future blob/object storage backends.
+- **Consequences:** Provides a secure, tamper-evident, RBAC-governed document extraction foundation. Existing CSV ingestion remains 100% unchanged.

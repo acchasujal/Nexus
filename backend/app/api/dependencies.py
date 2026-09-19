@@ -182,6 +182,14 @@ def get_ingestion_service(request: Request) -> IngestionService:
     return request.app.state.ingestion_service  # type: ignore[no-any-return]
 
 
+def get_document_service(
+    repo: RepositoryType = Depends(get_repository),
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> Any:
+    from backend.app.services.document_service import DocumentService
+    return DocumentService(repo, audit_svc)
+
+
 def get_graph_repository(request: Request):
     from backend.app.core.graph.repositories.graph_repository import GraphRepository
     return request.app.state.graph_repo  # type: ignore[no-any-return]
