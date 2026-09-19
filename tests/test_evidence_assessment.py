@@ -218,13 +218,13 @@ def test_assessment_creation_missing(
         rationale="No KYC or bank account opening forms available in current docket.",
         assessment_basis=AssessmentBasis.MISSING,
         target_entity_id="account-0001",
-        missing_evidence_types=["Section 91 CrPC Bank KYC Registry"],
+        missing_evidence_types=["Section 94 BNSS Bank KYC Registry"],
     )
     asmt = service.create_assessment(req, principal=authorized_principal)
 
     assert asmt.state == EpistemicState.MISSING
     assert asmt.assessment_basis == AssessmentBasis.MISSING
-    assert "Section 91 CrPC Bank KYC Registry" in asmt.missing_evidence_types
+    assert "Section 94 BNSS Bank KYC Registry" in asmt.missing_evidence_types
 
 
 def test_assessment_creation_inferred(
@@ -466,7 +466,7 @@ def test_immutable_revision_history(
             claim="Subscriber ownership of phone-0002",
             state=EpistemicState.MISSING,
             rationale="Initial assessment: no subscriber registration on file.",
-            missing_evidence_types=["Section 91 CrPC CAF"],
+            missing_evidence_types=["Section 94 BNSS CAF"],
         ),
         principal=authorized_principal,
     )

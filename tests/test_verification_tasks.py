@@ -65,13 +65,13 @@ def test_canonical_task_id_generation_and_validation() -> None:
     id1 = make_verification_task_id(
         case_id="case-0001",
         target_claim="Verify beneficial subscriber identity",
-        requested_evidence_type="Section 91 CrPC CAF",
+        requested_evidence_type="Section 94 BNSS CAF",
         discriminator="pulse-0082",
     )
     id2 = make_verification_task_id(
         case_id="case-0001",
         target_claim="Verify beneficial subscriber identity",
-        requested_evidence_type="Section 91 CrPC CAF",
+        requested_evidence_type="Section 94 BNSS CAF",
         discriminator="pulse-0082",
     )
     assert id1.startswith("vtask-")
@@ -225,7 +225,7 @@ def test_valid_lifecycle_transitions() -> None:
         target_claim="Bank UTR IMPS-8812 account holder verification",
         reason="Layered transaction needs KYC documents",
         requested_evidence_type="Bank Statement & KYC",
-        verification_action="Serve notice to HDFC Bank under Section 91 CrPC",
+        verification_action="Serve notice to HDFC Bank under Section 94 BNSS",
     ))
     assert task.status == VerificationTaskStatus.CREATED
 
@@ -480,7 +480,7 @@ def test_api_verification_task_crud_and_rbac(api_client: TestClient) -> None:
         headers={"Authorization": f"Bearer {assigned_io_token}"},
         json={
             "target_status": "REQUESTED",
-            "rationale": "Sent Section 91 notice to Airtel",
+            "rationale": "Sent Section 94 notice to Airtel",
         },
     )
     assert res_trans1.status_code == 200

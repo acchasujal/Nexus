@@ -130,7 +130,7 @@ class NetworkAdaptationService:
             review_status=AdaptationReviewStatus.MONITORING,
             decided_at="2026-03-14T15:30:00Z",
             decided_by="Analyst Suresh Babu (BADGE-AN-108)",
-            investigator_note="Notice served under Section 91 CrPC for bank KYC logs.",
+            investigator_note="Notice served under Section 94 BNSS for bank KYC logs.",
         )
         self.repo.network_adaptations[financial_event.adaptation_id] = financial_event.model_dump()
 

@@ -429,5 +429,17 @@ This document is the **single source of truth** for material architectural, secu
 - **Reason:** Closes the evidentiary provenance gap, ensuring every document uploaded by an investigator forms an unbroken, auditable link into the canonical intelligence plane.
 - **Consequences:** Investigators can upload evidence documents, inspect them via `/evidence/{id}`, see them projected onto the chronological timeline, and extract candidates under full Section 63 BSA compliance.
 
+---
 
+## ADR-0016: A17 Statutory Legal Modernization (BNSS / BNS / BSA)
+
+- **Context:** Following the enactment of India's new criminal law framework on July 1, 2024, the Indian Penal Code (IPC), Code of Criminal Procedure (CrPC), and Indian Evidence Act (IEA) were replaced by the Bharatiya Nyaya Sanhita (BNS), Bharatiya Nagarik Suraksha Sanhita (BNSS), and Bharatiya Sakshya Adhiniyam (BSA). While NEXUS had already migrated substantive crime nodes to BNS and electronic evidence integrity to Section 63 BSA, active legacy references remained for procedural requisitions (`Section 91 CrPC`), a fallback offence label (`420 IPC`), and UI compliance copy.
+- **Decision:**
+  1. **Procedural Requisitions Migration (CrPC $\to$ BNSS):** Modernized all active runtime requisition and verification action references from `Section 91 CrPC` to `Section 94 BNSS` in `ProactiveIntelligenceService` (live pulse generation and baseline demo pulse `pulse-0082`), `DigitalShadowService` (`shadow-0003` seed), `NetworkAdaptationService` (financial adaptation seed), and canonical documentation (`DATA_MODEL.md`, `DEMO.md`).
+  2. **Substantive Offence Migration (IPC $\to$ BNS):** Replaced legacy fallback string `"Section 66D IT Act, 420 IPC"` in `EvidenceDossierService` with the authoritative BNS equivalent `"Section 66D IT Act, Section 318(4) BNS"`, matching the established BNS Cheating mapping in `synthetic_data/ncrb_calibration.py`. Updated mock case sections in `handlers.ts` and `nexusHandlers.ts` from IPC 120B/392/397 to BNS 61/309/311.
+  3. **Evidence Act Terminology Harmonization:** Modernized UI copy in `Settings.tsx` from `Strict Indian Evidence Act & Bharatiya Sakshya Adhiniyam (BSA) Compliance` to `Strict Bharatiya Sakshya Adhiniyam (BSA) 2023 Compliance`, aligning with statutory banners in `Audit.tsx` and `Evidence.tsx`.
+  4. **Strict Preservation of Historical NCRB Provenance:** Explicitly retained historical source spreadsheet names (`1DistrictwiseIPCCrimes2024.xlsx`), calibration column names (`Miscellaneous IPC/BNS Crimes`), and calculation weights (`KARNATAKA_IPC_CRIME_CATEGORY_WEIGHTS`) in `synthetic_data/ncrb_catalog.json` and `synthetic_data/ncrb_calibration.py` to preserve scientific reproducibility and exact provenance against official Government of India NCRB publications.
+  5. **Zero Algorithm Mutation:** No changes were made to graph schema, betweenness centrality, Louvain clustering, or snapshot diffing algorithms.
+- **Reason:** Ensures complete domain consistency and statutory alignment with contemporary Indian criminal law as mandated for the Ministry of Home Affairs (MHA) and National Crime Records Bureau (NCRB).
+- **Consequences:** Proactive intelligence pulses, evidence assessments, verification tasks, and dossier exports consistently cite authoritative BNS/BNSS/BSA statutes with zero legacy CrPC/IPC leakage into investigator-facing workflows.
 

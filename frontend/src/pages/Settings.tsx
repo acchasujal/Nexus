@@ -101,7 +101,7 @@ export default function Settings() {
         <div className="rounded-lg bg-neutral-50 p-4 border border-neutral-200/80 text-xs text-neutral-700 space-y-2">
           <div className="flex items-center gap-2 font-bold text-neutral-900">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            <span>Strict Indian Evidence Act &amp; Bharatiya Sakshya Adhiniyam (BSA) Compliance</span>
+            <span>Strict Bharatiya Sakshya Adhiniyam (BSA) 2023 Compliance</span>
           </div>
           <p className="text-neutral-600 leading-relaxed">
             All graph operations preserve immutable provenance back to source records (FIRs, CDRs, Bank Transactions). No automated guilt determination is performed by the AI system.

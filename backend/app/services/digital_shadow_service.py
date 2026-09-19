@@ -122,7 +122,7 @@ class DigitalShadowService:
             last_verified_at="2026-03-10T11:20:00Z",
             decided_at="2026-03-12T16:00:00Z",
             decided_by="IO Rajesh Kumar (BADGE-IO-412)",
-            investigator_note="Corroborated by bank statement submission and Section 91 CrPC response.",
+            investigator_note="Corroborated by bank statement submission and Section 94 BNSS response.",
         )
         self.repo.digital_shadows[shadow_3.corroboration_id] = shadow_3.model_dump()
 

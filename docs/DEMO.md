@@ -58,7 +58,7 @@ journey
 
 ### Minute 2:00 – 2:30: Evidence Assessment, Early Warning & Abstention
 - **Investigator Narrative:**  
-  *"How do we know this lead is sound? Our Evidence Assessment engine classifies supporting documentation into SUPPORTS, CONFLICTS, and MISSING. Furthermore, NEXUS features a constrained Early-Warning Engine: it forecasts operational movements like JURISDICTION_SHIFT, but if evidence is contradictory or stale, it explicitly abstains. Next Best Verification immediately recommends the exact legal step required—such as obtaining a Section 91 CrPC subscriber verification."*
+  *"How do we know this lead is sound? Our Evidence Assessment engine classifies supporting documentation into SUPPORTS, CONFLICTS, and MISSING. Furthermore, NEXUS features a constrained Early-Warning Engine: it forecasts operational movements like JURISDICTION_SHIFT, but if evidence is contradictory or stale, it explicitly abstains. Next Best Verification immediately recommends the exact legal step required—such as obtaining a Section 94 BNSS subscriber verification."*
 - **Action on Screen:**  
   1. Click the Pulse card to display the **Evidence Assessment** panel. Highlight the `SUPPORTS` and `MISSING` badges.
   2. Show the **Early Warning Card** indicating `Target State: JURISDICTION_SHIFT (Action Window: 48h)`.

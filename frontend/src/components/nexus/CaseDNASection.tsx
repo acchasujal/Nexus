@@ -314,7 +314,7 @@ export function CaseDNASection({ initialCaseId = 'CASE-141' }: CaseDNASectionPro
                         />
                       </div>
                       <span className="text-[11px] text-slate-500 block mt-0.5">
-                        Accused degree distribution, legal sections (IPC/BNS), and modular community overlap.
+                        Accused degree distribution, legal sections (BNS/SLL), and modular community overlap.
                       </span>
                     </div>
 

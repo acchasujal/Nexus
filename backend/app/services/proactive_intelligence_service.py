@@ -221,7 +221,7 @@ class ProactiveIntelligenceService:
                 VerificationActionItem(
                     verification_id=f"verif-{pulse_id}-1",
                     target_claim="Beneficial subscriber identity corroboration",
-                    missing_evidence_type="Section 91 CrPC CAF / Subscriber Registry",
+                    missing_evidence_type="Section 94 BNSS CAF / Subscriber Registry",
                     recommended_action="Serve notice to telecom service provider for customer acquisition form.",
                     responsible_role=UserRole.INVESTIGATOR,
                     status="PENDING",
@@ -397,8 +397,8 @@ class ProactiveIntelligenceService:
                         VerificationActionItem(
                             verification_id=f"verif-{demo_pulse_id}-1",
                             target_claim="Verify subscriber identity of burner MSISDN",
-                            missing_evidence_type="Section 91 CrPC CAF Record",
-                            recommended_action="Issue Section 91 CrPC requisition to telecom provider for CAF documentation.",
+                            missing_evidence_type="Section 94 BNSS CAF Record",
+                            recommended_action="Issue Section 94 BNSS requisition to telecom provider for CAF documentation.",
                             responsible_role=UserRole.INVESTIGATOR,
                             status="PENDING",
                         ),

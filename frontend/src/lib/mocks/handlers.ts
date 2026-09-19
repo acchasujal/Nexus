@@ -387,7 +387,7 @@ export const handlers = [
           date: '2026-02-04T10:00:00Z',
           crime_head: 'Narcotics',
           police_station: 'Mumbai Central Police Station',
-          sections: ['Section 21 NDPS', 'Section 120B IPC'],
+          sections: ['Section 21 NDPS', 'Section 61 BNS'],
           accused_count: 4,
         },
         {
@@ -397,7 +397,7 @@ export const handlers = [
           date: '2026-02-12T14:30:00Z',
           crime_head: 'Robbery',
           police_station: 'Crime Branch Mumbai',
-          sections: ['Section 392 IPC', 'Section 397 IPC'],
+          sections: ['Section 309 BNS', 'Section 311 BNS'],
           accused_count: 3,
         },
       ],

@@ -181,7 +181,7 @@ class VerificationPlan(BaseModel):
     verification_id: str
     target_claim: str
     missing_evidence_type: str
-    recommended_action: str          # e.g. "Obtain Section 91 CrPC telecom subscriber record"
+    recommended_action: str          # e.g. "Obtain Section 94 BNSS telecom subscriber record"
     responsible_role: str            # "INVESTIGATOR" or "ANALYST"
     status: str = "PENDING"
     result: str | None = None

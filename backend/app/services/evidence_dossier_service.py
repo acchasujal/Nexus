@@ -480,7 +480,7 @@ class EvidenceDossierService:
             case_tbl_data = [
                 [Paragraph("<b>FIR Number</b>", body_style), Paragraph(str(case_info.get("fir_number", "N/A")), body_style), Paragraph("<b>Status</b>", body_style), Paragraph(str(case_info.get("status", "ACTIVE")), body_style)],
                 [Paragraph("<b>Police Station</b>", body_style), Paragraph(str(case_info.get("police_station", "N/A")), body_style), Paragraph("<b>Category</b>", body_style), Paragraph(str(case_info.get("category", "N/A")), body_style)],
-                [Paragraph("<b>Offence / Acts</b>", body_style), Paragraph(str(case_info.get("offence_acts", "Section 66D IT Act, 420 IPC")), body_style), Paragraph("<b>Officer</b>", body_style), Paragraph(str(case_info.get("investigating_officer", actor_id)), body_style)],
+                [Paragraph("<b>Offence / Acts</b>", body_style), Paragraph(str(case_info.get("offence_acts", "Section 66D IT Act, Section 318(4) BNS")), body_style), Paragraph("<b>Officer</b>", body_style), Paragraph(str(case_info.get("investigating_officer", actor_id)), body_style)],
             ]
             case_tbl = Table(case_tbl_data, colWidths=[100, 170, 90, 180])
             case_tbl.setStyle(TableStyle([
