@@ -274,6 +274,13 @@ def create_core_router() -> APIRouter:
                     reason=m.reason,
                     evidence_breakdown=m.evidence_breakdown,
                     properties=m.properties,
+                    search_relevance=getattr(m, "search_relevance", 1.0),
+                    resolution_state=getattr(m, "resolution_state", "CANDIDATE_NAME_ONLY"),
+                    evidence_families=getattr(m, "evidence_families", []),
+                    supporting_factors=getattr(m, "supporting_factors", []),
+                    conflicting_factors=getattr(m, "conflicting_factors", []),
+                    independent_sources=getattr(m, "independent_sources", 1),
+                    explanation=getattr(m, "explanation", ""),
                 )
                 for m in matches
             ],

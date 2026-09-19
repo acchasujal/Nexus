@@ -8,8 +8,8 @@ This document is the **single source of truth** for ongoing engineering, capabil
 
 | Metric / Subsystem | Current Measured Status | Target Requirement | Status |
 |---|---|---|---|
-| **Backend Test Suite** | **791 / 791 passing** (`pytest`) | 100% pass rate | ✅ VERIFIED GREEN |
-| **Frontend Test Suite** | **155 / 155 passing** (`vitest`) | 100% pass rate | ✅ VERIFIED GREEN |
+| **Backend Test Suite** | **796 / 796 passing** (`pytest`) | 100% pass rate | ✅ VERIFIED GREEN |
+| **Frontend Test Suite** | **156 / 156 passing** (`vitest`) | 100% pass rate | ✅ VERIFIED GREEN |
 | **Backend Code Quality** | **0 errors / clean** (`ruff check`) | 0 lint errors | ✅ VERIFIED CLEAN |
 | **Frontend Typecheck / Build** | **0 errors / clean build** (`tsc && vite build`) | 0 TypeScript errors | ✅ VERIFIED CLEAN |
 | **Ground-Truth ER Precision** | **100.00%** (`evaluate_ground_truth.py`) | $\ge 95.00\%$ | ✅ VERIFIED PASSED |
@@ -29,8 +29,9 @@ This document is the **single source of truth** for ongoing engineering, capabil
 - **P1-A:** Implement Unstructured Document Ingestion Foundation (`DocumentService`, deterministic PDF/TXT extraction, tamper-evident SHA-256 fingerprinting, case RBAC, audit logging). (✅ COMPLETED)
 - **P1-B:** Implement Document Intelligence: Candidate Entity & Relationship Extraction (`DocumentExtractionService`, high-precision candidate extraction, read-only candidate resolution, unsupported inference guards, zero graph mutation invariant). (✅ COMPLETED)
 - **P1-C:** Implement Candidate Review, Promotion, & Identity Fusion ("Add to Graph", investigator accept/reject workflows). (✅ COMPLETED)
-- **P1-D (Audit Fix):** Implement Dedicated Surveillance Report Ingestion (`SourceType.SURVEILLANCE_REPORT`, deterministic parser/mapper, zero unsupported inference, edge corroboration, single authoritative graph). (✅ COMPLETED)
+-**P1-D (Audit Fix):** Implement Dedicated Surveillance Report Ingestion (`SourceType.SURVEILLANCE_REPORT`, deterministic parser/mapper, zero unsupported inference, edge corroboration, single authoritative graph). (✅ COMPLETED)
 - **P1-Radar:** Identity Drift Radar, Network Adaptation Radar, and Digital Shadow / SOCMINT Radar. (✅ COMPLETED)
+- **P1-ER-Realism:** Entity Resolution Realism & Epistemic Evidence Families. Eliminate hardcoded 0.85/85% scores, replace naive name token match with grounded token ratio, separate search relevance from identity resolution, classify attributes into orthogonal evidence families, reject false `MULTI-FIELD CORROBORATED` claims on name-only matches, and expose transparent 'Why this candidate appeared' factor breakdowns. (✅ COMPLETED)
 
 ---
 
