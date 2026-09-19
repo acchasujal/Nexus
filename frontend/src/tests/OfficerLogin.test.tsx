@@ -189,6 +189,29 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
     })
   })
 
+  it('authenticates via mobile demo officer dropdown selector', async () => {
+    const user = userEvent.setup()
+
+    vi.spyOn(apiClient, 'login').mockResolvedValueOnce({
+      access_token: 'dummy.jwt.token',
+      token_type: 'bearer',
+      user_id: 'KA-1003',
+      role: 'SP',
+      expires_in: 86400,
+    })
+
+    renderLoginWithRouter()
+
+    const mobileSelect = screen.getByTestId('demo-officer-select-mobile')
+    expect(mobileSelect).toBeInTheDocument()
+
+    await user.selectOptions(mobileSelect, 'KA-1003')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('worklist-content')).toBeInTheDocument()
+    })
+  })
+
   it('displays authenticated officer details in the Header without role-switching dropdown', () => {
     const mockOfficer: OfficerUser = {
       userId: 'officer_io',
