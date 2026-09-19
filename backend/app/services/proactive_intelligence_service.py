@@ -46,6 +46,7 @@ class ProactiveIntelligenceService:
     def __init__(self, repository: InMemoryBackendRepository) -> None:
         self.repo = repository
         self._snapshots: dict[str, dict[str, Any]] = {}
+        self._dynamic_pulses: dict[str, NetworkPulseItem] = {}
         self._initialize_baseline_snapshots()
 
     def _initialize_baseline_snapshots(self) -> None:
@@ -61,6 +62,25 @@ class ProactiveIntelligenceService:
             "edge_count": sum(len(edges) for edges in store.adj.values()),
             "version": "v1.0",
         }
+
+    def get_latest_snapshot_id(self) -> str:
+        """Return the snapshot ID of the most recent snapshot."""
+        if not self._snapshots:
+            return "snap-baseline-v1"
+        sorted_snaps = sorted(
+            self._snapshots.values(),
+            key=lambda s: s.get("created_at", ""),
+            reverse=True,
+        )
+        return str(sorted_snaps[0]["snapshot_id"])
+
+    def register_dynamic_pulse(self, pulse: NetworkPulseItem) -> None:
+        """Register a dynamically generated network pulse from closed-loop propagation."""
+        self._dynamic_pulses[pulse.pulse_id] = pulse
+
+    def clear_dynamic_pulses(self) -> None:
+        """Clear dynamic active pulses (used in test teardown)."""
+        self._dynamic_pulses.clear()
 
     # ── 1. GraphSnapshot Management ───────────────────────────────────────────
 
@@ -308,7 +328,13 @@ class ProactiveIntelligenceService:
         store = self.repo.to_graph_store()
         baseline_store = self.get_snapshot_store("snap-baseline-v1") or store
         diff = diff_graph_snapshots(baseline_store, store)
-        pulses = self._filter_network_pulses(diff, baseline_store, store)
+        diff_pulses = self._filter_network_pulses(diff, baseline_store, store)
+
+        # Merge dynamic pulses from closed-loop propagation with diff pulses
+        pulse_map: dict[str, NetworkPulseItem] = {p.pulse_id: p for p in diff_pulses}
+        for dp_id, dp in self._dynamic_pulses.items():
+            pulse_map[dp_id] = dp
+        pulses = list(pulse_map.values())
 
         if not pulses:
             # Generate deterministic active demonstration pulse grounded in ground-truth data

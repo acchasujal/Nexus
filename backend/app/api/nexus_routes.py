@@ -48,7 +48,9 @@ from backend.app.api.dependencies import (
     get_intelligence_event_service,
     get_verification_task_service,
     get_evidence_assessment_service,
+    get_closed_loop_propagation_service,
 )
+from backend.app.services.closed_loop_propagation_service import PropagationResult
 from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal
 from backend.app.core.graph.enums import ResolutionStatus
@@ -2698,6 +2700,43 @@ def create_nexus_router() -> APIRouter:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    # ── A8 Closed-Loop Propagation Endpoints ─────────────────────────────────
+
+    @router.get("/nexus/propagation/{decision_id}", response_model=PropagationResult)
+    def get_propagation_status(
+        decision_id: str,
+        principal: Principal = Depends(get_principal),
+        prop_svc: Any = Depends(get_closed_loop_propagation_service),
+    ) -> PropagationResult:
+        """Retrieve the closed-loop propagation status and diff summary for a candidate decision."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+        result = prop_svc.get_propagation(decision_id)
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Propagation record for decision '{decision_id}' not found",
+            )
+        return result
+
+    @router.post("/nexus/propagation/retry/{decision_id}", response_model=PropagationResult)
+    def retry_propagation_execution(
+        decision_id: str,
+        principal: Principal = Depends(get_principal),
+        prop_svc: Any = Depends(get_closed_loop_propagation_service),
+    ) -> PropagationResult:
+        """Retry closed-loop propagation for a prior decision without re-mutating the graph."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+        try:
+            return prop_svc.retry_propagation(decision_id, principal=principal)
+        except KeyError as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     return router
 

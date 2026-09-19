@@ -268,6 +268,8 @@ class CandidateDecisionResponse(BaseModel):
     reason: str | None = None
     notes: str | None = None
     audit_event_id: str | None = None
+    propagation_status: str | None = None
+    propagation_snapshot_id: str | None = None
 
 
 # ── Graph & Network ───────────────────────────────────────────────────────────

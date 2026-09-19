@@ -268,6 +268,8 @@ export interface CandidateDecisionResponse {
   reason?: string | null
   notes?: string | null
   audit_event_id?: string | null
+  propagation_status?: string | null
+  propagation_snapshot_id?: string | null
 }
 
 export type NodePresenceType =

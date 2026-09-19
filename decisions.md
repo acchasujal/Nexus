@@ -361,4 +361,27 @@ This document is the **single source of truth** for material architectural, secu
 - **Consequences:** Enables standalone, explainable evidentiary assessment workflows while preserving complete compatibility with existing proactive pulse and verification features.
 
 
+## DEC-016: Closed-Loop Propagation Architecture (A8)
+- **Date:** 2026-09-20
+- **Status:** Accepted & Implemented (A8)
+- **Decision:**
+  1. **Deterministic Closed-Loop Pipeline:** Connect authoritative investigator decisions to deterministic graph mutation, point-in-time snapshots, pure $O(N+E)$ network diffing, A3 operational domain events, and refreshed active network change pulses:
+     $$\text{Investigator Decision} \to \text{Graph Mutation} \to \text{Snapshot Capture} \to \text{NetworkDiff} \to \text{IntelligenceEvents} \to \text{Pulse Refresh}$$
+  2. **Strict A3 Enum Compatibility:** Restrict operational event types strictly to pre-existing members of `IntelligenceEventType`:
+     - `INVESTIGATOR_DECISION`
+     - `ENTITY_OBSERVED` / `RELATIONSHIP_OBSERVED`
+     - `SNAPSHOT_CREATED`
+     - `NETWORK_CHANGE_DETECTED`
+     - `SIGNAL_GENERATED`
+     Zero duplicate or ad-hoc event enums introduced.
+  3. **Case-Scope Transparency:** Explicitly document that the underlying graph store (`repo.to_graph_store()`) is global; `case_scope` is recorded and transmitted strictly as investigative context/attribution metadata, never claimed as graph partitioning or case-isolated topology.
+  4. **Dynamic Pulse Integrity:** Propagation filters pulses strictly from non-empty graph diffs via `_filter_network_pulses`. Under no circumstances is the static demonstration pulse `pulse-0082` emitted as dynamic intelligence or registered as a signal event.
+  5. **Stable Decision ID Idempotency:** The propagation lifecycle is keyed on the stable `decision_id` (`dec-XXXX`) generated during candidate review. Subsequent invocations with the same `decision_id` return the cached completed propagation result without re-snapshotting or duplicate event emission.
+  6. **Retryable & Recoverable Fault Handling:** If downstream snapshot, diff, or event emission fails after graph mutation, the valid graph mutation is NOT rolled back. Failure is tracked in the decision record, and propagation can be retried via `retry_propagation` or `POST /nexus/propagation/retry/{decision_id}`.
+  7. **Human-in-the-Loop Verification Boundary:** Refreshed pulses provide `verification_plan` recommendations (`VerificationActionItem`), but A7 persistent `VerificationTask`s are NOT automatically instantiated, preserving intentional investigator review.
+  8. **Strict Decoupling from A14:** Cross-jurisdiction inter-case pulse packet routing (`IntelligencePulsePacket` / A14) is completely decoupled from A8.
+- **Reason:** Bridges the operational gap between investigator decisions, graph mutations, and proactive network change intelligence while adhering strictly to zero predictive guilt and deterministic audit requirements.
+- **Consequences:** Enables investigators to see the immediate network consequences of verified facts in the form of refreshed pulses, diffs, and audit trails without manual snapshot orchestration.
+
+
 

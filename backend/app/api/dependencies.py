@@ -214,13 +214,35 @@ def get_graph_mutation_service(
 
 
 def get_candidate_promotion_service(
+    request: Request,
     repo: RepositoryType = Depends(get_repository),
     mutation_svc: Any = Depends(get_graph_mutation_service),
     audit_svc: AuditService = Depends(get_audit_service),
     auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
 ) -> Any:
     from backend.app.services.candidate_promotion_service import CandidatePromotionService
-    return CandidatePromotionService(repo, mutation_svc, audit_svc, auth_policy)
+    prop_svc = getattr(request.app.state, "closed_loop_propagation_service", None)
+    if prop_svc is None:
+        proactive_svc = getattr(request.app.state, "proactive_intelligence_service", None)
+        if proactive_svc is None:
+            from backend.app.services.proactive_intelligence_service import ProactiveIntelligenceService
+            proactive_svc = ProactiveIntelligenceService(repo)
+            request.app.state.proactive_intelligence_service = proactive_svc
+        intel_svc = getattr(request.app.state, "intelligence_event_service", None)
+        if intel_svc is None:
+            from backend.app.services.intelligence_event_service import IntelligenceEventService
+            intel_svc = IntelligenceEventService(repo, audit_service=audit_svc, auth_policy=auth_policy)
+            request.app.state.intelligence_event_service = intel_svc
+        from backend.app.services.closed_loop_propagation_service import ClosedLoopPropagationService
+        prop_svc = ClosedLoopPropagationService(
+            repository=repo,
+            proactive_service=proactive_svc,
+            intel_event_service=intel_svc,
+            audit_service=audit_svc,
+            auth_policy=auth_policy,
+        )
+        request.app.state.closed_loop_propagation_service = prop_svc
+    return CandidatePromotionService(repo, mutation_svc, audit_svc, auth_policy, prop_svc)
 
 
 def get_graph_repository(request: Request):
@@ -403,6 +425,30 @@ def get_evidence_assessment_service(
     )
     request.app.state.evidence_assessment_service = assessment_svc
     return assessment_svc
+
+
+def get_closed_loop_propagation_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    proactive_svc: Any = Depends(get_proactive_intelligence_service),
+    intel_svc: Any = Depends(get_intelligence_event_service),
+    audit_svc: AuditService = Depends(get_audit_service),
+    auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+) -> Any:
+    """Return the shared or per-request ClosedLoopPropagationService instance."""
+    prop_svc = getattr(request.app.state, "closed_loop_propagation_service", None)
+    if prop_svc is not None:
+        return prop_svc
+    from backend.app.services.closed_loop_propagation_service import ClosedLoopPropagationService
+    prop_svc = ClosedLoopPropagationService(
+        repository=repo,
+        proactive_service=proactive_svc,
+        intel_event_service=intel_svc,
+        audit_service=audit_svc,
+        auth_policy=auth_policy,
+    )
+    request.app.state.closed_loop_propagation_service = prop_svc
+    return prop_svc
 
 
 

@@ -66,11 +66,13 @@ class CandidatePromotionService:
         mutation_service: GraphMutationService,
         audit_service: AuditService,
         auth_policy: EvidenceAuthorizationPolicy,
+        propagation_service: Any | None = None,
     ) -> None:
         self.repo = repository
         self.mutator = mutation_service
         self.audit = audit_service
         self.auth = auth_policy
+        self.propagation = propagation_service
 
     # ── Accept Candidate -> Link to Existing Authoritative Entity ────────────
 
@@ -186,6 +188,24 @@ class CandidatePromotionService:
             },
         )
         decision_data["audit_event_id"] = audit_event_id
+
+        # 6. A8 Closed-Loop Propagation
+        if self.propagation:
+            try:
+                prop_res = self.propagation.propagate_decision(
+                    decision_id=decision_id,
+                    case_id=case_id or "GLOBAL",
+                    mutation_type="ENTITY_LINKED",
+                    target_id=target_id,
+                    principal=principal,
+                    evidence_refs=[doc_id] if doc_id else [],
+                    details={"candidate_id": candidate_id, "notes": request.notes},
+                )
+                decision_data["propagation_status"] = prop_res.status
+                decision_data["propagation_snapshot_id"] = prop_res.snapshot_id
+            except Exception as prop_err:
+                logger.warning("Closed-loop propagation failed for decision %s: %s", decision_id, prop_err)
+                decision_data["propagation_status"] = "FAILED"
 
         self.repo.store_candidate_decision(decision_data)
         return CandidateDecisionResponse(**decision_data)
@@ -307,6 +327,24 @@ class CandidatePromotionService:
             },
         )
         decision_data["audit_event_id"] = audit_event_id
+
+        # 6. A8 Closed-Loop Propagation
+        if self.propagation:
+            try:
+                prop_res = self.propagation.propagate_decision(
+                    decision_id=decision_id,
+                    case_id=case_id or "GLOBAL",
+                    mutation_type="ENTITY_PROMOTED",
+                    target_id=created_node_id,
+                    principal=principal,
+                    evidence_refs=[doc_id] if doc_id else [],
+                    details={"candidate_id": candidate_id, "canonical_name": request.canonical_name, "entity_type": request.entity_type},
+                )
+                decision_data["propagation_status"] = prop_res.status
+                decision_data["propagation_snapshot_id"] = prop_res.snapshot_id
+            except Exception as prop_err:
+                logger.warning("Closed-loop propagation failed for decision %s: %s", decision_id, prop_err)
+                decision_data["propagation_status"] = "FAILED"
 
         self.repo.store_candidate_decision(decision_data)
         return CandidateDecisionResponse(**decision_data)
@@ -442,6 +480,24 @@ class CandidatePromotionService:
             },
         )
         decision_data["audit_event_id"] = audit_event_id
+
+        # 7. A8 Closed-Loop Propagation
+        if self.propagation:
+            try:
+                prop_res = self.propagation.propagate_decision(
+                    decision_id=decision_id,
+                    case_id=case_id or "GLOBAL",
+                    mutation_type="RELATIONSHIP_PROMOTED",
+                    target_id=created_edge_id,
+                    principal=principal,
+                    evidence_refs=[doc_id] if doc_id else [],
+                    details={"relationship_id": relationship_id, "source_id": src_id, "target_id": tgt_id, "edge_type": edge_type},
+                )
+                decision_data["propagation_status"] = prop_res.status
+                decision_data["propagation_snapshot_id"] = prop_res.snapshot_id
+            except Exception as prop_err:
+                logger.warning("Closed-loop propagation failed for decision %s: %s", decision_id, prop_err)
+                decision_data["propagation_status"] = "FAILED"
 
         self.repo.store_candidate_decision(decision_data)
         return CandidateDecisionResponse(**decision_data)
