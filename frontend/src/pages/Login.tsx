@@ -8,7 +8,6 @@ import {
   ShieldAlert, 
   UserCheck, 
   Shield, 
-  Lock, 
   User, 
   Eye, 
   EyeOff, 
@@ -156,13 +155,6 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Security Notice Banner */}
-          <div className="rounded-lg border border-neutral-200/80 bg-neutral-50/70 px-3 py-1.5 text-center shadow-2xs">
-            <p className="text-xs font-medium text-neutral-600 flex items-center justify-center gap-1.5">
-              <Lock className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
-              <span>Restricted Access · All Sessions Cryptographically Audited</span>
-            </p>
-          </div>
 
           {/* Error Alert */}
           {errorMessage && (

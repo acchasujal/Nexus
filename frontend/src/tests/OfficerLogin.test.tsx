@@ -90,13 +90,13 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders login page with professional branding, inputs, and security notice', () => {
+  it('renders login page with professional branding and inputs', () => {
     renderLoginWithRouter()
 
     // Brand and subtitle
     expect(screen.getByText('NEXUS')).toBeInTheDocument()
     expect(screen.getByText(/Investigative Network Intelligence Platform/i)).toBeInTheDocument()
-    expect(screen.getByText(/Restricted Access · All Sessions Cryptographically Audited/i)).toBeInTheDocument()
+    expect(screen.getByText('Officer Authentication Console')).toBeInTheDocument()
 
     // Inputs
     expect(screen.getByLabelText(/Officer ID \/ Service Identifier/i)).toBeInTheDocument()
