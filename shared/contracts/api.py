@@ -310,7 +310,7 @@ class AuditLogEntry(BaseModel):
 class AuthLoginRequest(BaseModel):
     username: str
     password: str | None = None
-    role: UserRole | None = UserRole.INVESTIGATOR
+    role: UserRole | None = None
 
 
 class AuthTokenResponse(BaseModel):

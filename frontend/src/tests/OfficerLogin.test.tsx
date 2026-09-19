@@ -145,6 +145,42 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
     })
   })
 
+  it('redirects to relevant user profile when entering KA-xxxx badge in input box', async () => {
+    const user = userEvent.setup()
+
+    const loginSpy = vi.spyOn(apiClient, 'login').mockImplementation(async (req) => {
+      const u = req.username.toUpperCase()
+      const role = req.role || 'IO'
+      return {
+        access_token: 'dummy.jwt.token',
+        token_type: 'bearer',
+        user_id: u,
+        role: role,
+        expires_in: 86400,
+      }
+    })
+
+    renderLoginWithRouter()
+
+    const idInput = screen.getByTestId('officer-id-input')
+    const submitBtn = screen.getByTestId('login-submit-button')
+
+    // Enter KA-1002 (SHO Sunita Sharma) directly without clicking helper cards
+    await user.type(idInput, 'KA-1002')
+    await user.click(submitBtn)
+
+    expect(loginSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        username: 'KA-1002',
+        role: 'SHO',
+      })
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('worklist-content')).toBeInTheDocument()
+    })
+  })
+
   it('handles login failure and displays error alert banner', async () => {
     const user = userEvent.setup()
 

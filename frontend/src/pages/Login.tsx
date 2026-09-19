@@ -94,11 +94,32 @@ export default function Login() {
     if (e) e.preventDefault()
     
     const targetUsername = (overrideCreds?.username || username).trim()
-    const targetRole = overrideCreds?.role || selectedRole
-    
+    let targetRole = overrideCreds?.role || selectedRole
+
     if (!targetUsername) {
       setErrorMessage('Please enter your Officer ID or Service Number.')
       return
+    }
+
+    // Auto-resolve known officer duty profile from badge ID if not explicitly specified
+    if (!targetRole && targetUsername) {
+      const u = targetUsername.toLowerCase()
+      const matchingOfficer = AUTHORIZED_OFFICERS.find(
+        (o) => o.badge.toLowerCase() === u ||
+               o.id.toLowerCase() === u ||
+               o.role.toLowerCase() === u
+      )
+      if (matchingOfficer) {
+        targetRole = matchingOfficer.role
+      } else if (u.includes('sho') || u.includes('1002') || u.includes('analyst')) {
+        targetRole = 'SHO'
+      } else if (u.includes('sp') || u.includes('1003') || u.includes('supervisor')) {
+        targetRole = 'SP'
+      } else if (u.includes('admin') || u.includes('1000')) {
+        targetRole = 'ADMIN'
+      } else if (u.includes('io') || u.includes('1001') || u.includes('investigator') || u.startsWith('ka-')) {
+        targetRole = 'IO'
+      }
     }
 
     setIsLoading(true)

@@ -125,15 +125,16 @@ def create_core_router() -> APIRouter:
                 role = UserRole.SP
             elif "admin" in u or "ka-1000" in u:
                 role = UserRole.ADMIN
-            elif "io" in u or "ka-1001" in u or "investigator" in u:
+            elif "io" in u or "ka-1001" in u or "investigator" in u or u.startswith("ka-"):
                 role = UserRole.IO
             else:
                 role = UserRole.INVESTIGATOR
         officer = resolve_officer_identity(user_id=req.username, role=role)
+        effective_role = officer.role if officer else role
         token_payload = {
             "sub": req.username,
             "email": f"{req.username}@nexus.internal",
-            "role": role.value,
+            "role": effective_role.value,
             "officer_id": officer.officer_id,
             "badge_number": officer.badge_number,
             "name": officer.name,
@@ -146,7 +147,7 @@ def create_core_router() -> APIRouter:
             access_token=token,
             token_type="bearer",
             user_id=req.username,
-            role=role,
+            role=effective_role,
             expires_in=settings.jwt_expire_seconds,
         )
 
