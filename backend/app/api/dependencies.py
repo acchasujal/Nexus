@@ -381,6 +381,31 @@ def get_verification_task_service(
     return vtask_svc
 
 
+def get_evidence_assessment_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_service: AuditService = Depends(get_audit_service),
+    evidence_service: Any = Depends(get_evidence_service),
+    intel_svc: Any = Depends(get_intelligence_event_service),
+    auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+) -> Any:
+    """Return the shared or per-request EvidenceAssessmentService instance."""
+    assessment_svc = getattr(request.app.state, "evidence_assessment_service", None)
+    if assessment_svc is not None:
+        return assessment_svc
+    from backend.app.services.evidence_assessment_service import EvidenceAssessmentService
+    assessment_svc = EvidenceAssessmentService(
+        repository=repo,
+        audit_service=audit_service,
+        evidence_service=evidence_service,
+        intelligence_event_service=intel_svc,
+        auth_policy=auth_policy,
+    )
+    request.app.state.evidence_assessment_service = assessment_svc
+    return assessment_svc
+
+
+
 
 
 

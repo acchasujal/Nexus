@@ -79,6 +79,7 @@ class InMemoryBackendRepository:
         self.candidate_decisions: dict[str, list[dict[str, Any]]] = {}
         self.intelligence_events: dict[str, dict[str, Any]] = {}
         self.verification_tasks: dict[str, dict[str, Any]] = {}
+        self.evidence_assessments: dict[str, dict[str, Any]] = {}
         self.state_path = state_path
 
         self._load_artifact(artifact_path or self._default_artifact_path())
@@ -103,6 +104,7 @@ class InMemoryBackendRepository:
         self.candidate_decisions.clear()
         self.intelligence_events.clear()
         self.verification_tasks.clear()
+        self.evidence_assessments.clear()
         self._load_artifact(self._default_artifact_path())
         if self.state_path and self.state_path.exists():
             try:
@@ -264,6 +266,7 @@ class InMemoryBackendRepository:
             self.review_candidates = dict(raw.get("review_candidates", {}))
             self.intelligence_events = dict(raw.get("intelligence_events", {}))
             self.verification_tasks = dict(raw.get("verification_tasks", {}))
+            self.evidence_assessments = dict(raw.get("evidence_assessments", {}))
         except (json.JSONDecodeError, OSError, ValueError, TypeError) as exc:
             logger.debug("Optional state file loading skipped: %s", exc)
 
@@ -276,6 +279,7 @@ class InMemoryBackendRepository:
             "review_candidates": self.review_candidates,
             "intelligence_events": self.intelligence_events,
             "verification_tasks": self.verification_tasks,
+            "evidence_assessments": self.evidence_assessments,
             "saved_at": _utcnow().isoformat(),
         }
         self.state_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -1130,3 +1134,67 @@ class InMemoryBackendRepository:
             filtered.append(t)
 
         return filtered[offset : offset + limit], len(filtered)
+
+    # ── Evidence Assessments Repository Methods (A5) ─────────────────────────
+
+    def save_evidence_assessment(self, assessment_record: dict[str, Any]) -> dict[str, Any]:
+        """Store an evidence assessment in the repository."""
+        assessment_id = str(assessment_record["assessment_id"])
+        self.evidence_assessments[assessment_id] = dict(assessment_record)
+        self._save_state()
+        return self.evidence_assessments[assessment_id]
+
+    def get_evidence_assessment(self, assessment_id: str) -> dict[str, Any] | None:
+        """Retrieve an evidence assessment by its canonical ID."""
+        return self.evidence_assessments.get(str(assessment_id))
+
+    def update_evidence_assessment(self, assessment_record: dict[str, Any]) -> dict[str, Any]:
+        """Update an existing evidence assessment record."""
+        assessment_id = str(assessment_record["assessment_id"])
+        self.evidence_assessments[assessment_id] = dict(assessment_record)
+        self._save_state()
+        return self.evidence_assessments[assessment_id]
+
+    def list_evidence_assessments(
+        self,
+        case_id: str | None = None,
+        state: str | None = None,
+        entity_id: str | None = None,
+        edge_id: str | None = None,
+        claim_type: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """List and filter evidence assessments with pagination."""
+        all_items = list(self.evidence_assessments.values())
+
+        filtered: list[dict[str, Any]] = []
+        for a in all_items:
+            if case_id and a.get("case_id") != case_id:
+                continue
+            if state:
+                st_val = a.get("state")
+                if hasattr(st_val, "value"):
+                    st_val = st_val.value
+                target_st = state.value if hasattr(state, "value") else str(state)
+                if str(st_val).upper() != target_st.upper():
+                    continue
+            if entity_id:
+                if a.get("target_entity_id") != entity_id and entity_id not in (a.get("source_ids") or []):
+                    continue
+            if edge_id:
+                if a.get("target_edge_id") != edge_id:
+                    continue
+            if claim_type:
+                ct_val = str(a.get("claim_type", "")).upper()
+                if ct_val != str(claim_type).upper():
+                    continue
+            filtered.append(a)
+
+        def _sort_key(item: dict[str, Any]) -> str:
+            val = item.get("created_at", "")
+            return val.isoformat() if hasattr(val, "isoformat") else str(val)
+
+        filtered.sort(key=_sort_key, reverse=True)
+        return filtered[offset : offset + limit], len(filtered)
+

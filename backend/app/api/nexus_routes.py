@@ -47,6 +47,7 @@ from backend.app.api.dependencies import (
     get_case_dna_service,
     get_intelligence_event_service,
     get_verification_task_service,
+    get_evidence_assessment_service,
 )
 from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal
@@ -106,6 +107,12 @@ from shared.contracts.api import (
     VerificationTaskDecision,
     VerificationTaskListResponse,
     VerificationTaskStatus,
+    AssessmentBasis,
+    CreateEvidenceAssessmentRequest,
+    EpistemicState,
+    EvidenceAssessment,
+    EvidenceAssessmentListResponse,
+    ReviseEvidenceAssessmentRequest,
 )
 from backend.app.services.ingestion_service import IngestionService
 from backend.app.db.ingestion.contracts import UploadedSource, SourceType
@@ -2610,6 +2617,81 @@ def create_nexus_router() -> APIRouter:
         """Record a final VERIFIED or DISMISSED decision with rationale on a verification task."""
         try:
             return task_svc.decide_task(task_id, request, principal=principal)
+        except KeyError as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    # ── A5 First-Class Evidence Assessment Endpoints ─────────────────────────
+
+    @router.post("/nexus/evidence/assessments", response_model=EvidenceAssessment, status_code=status.HTTP_201_CREATED)
+    def create_evidence_assessment(
+        request: CreateEvidenceAssessmentRequest,
+        principal: Principal = Depends(get_principal),
+        assessment_svc: Any = Depends(get_evidence_assessment_service),
+    ) -> EvidenceAssessment:
+        """Create a first-class evidence assessment grounding a claim in authoritative evidence."""
+        try:
+            return assessment_svc.create_assessment(request, principal=principal)
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    @router.get("/nexus/evidence/assessments/{assessment_id}", response_model=EvidenceAssessment)
+    def get_evidence_assessment(
+        assessment_id: str,
+        principal: Principal = Depends(get_principal),
+        assessment_svc: Any = Depends(get_evidence_assessment_service),
+    ) -> EvidenceAssessment:
+        """Retrieve an authoritative evidence assessment by canonical ID."""
+        try:
+            assessment = assessment_svc.get_assessment(assessment_id, principal=principal)
+            if not assessment:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"EvidenceAssessment '{assessment_id}' not found")
+            return assessment
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+    @router.get("/nexus/evidence/assessments", response_model=EvidenceAssessmentListResponse)
+    def list_evidence_assessments(
+        case_id: str | None = Query(None, description="Optional case ID filter"),
+        state: EpistemicState | None = Query(None, description="Optional epistemic state filter"),
+        entity_id: str | None = Query(None, description="Optional target or source entity filter"),
+        edge_id: str | None = Query(None, description="Optional target relationship filter"),
+        claim_type: str | None = Query(None, description="Optional claim type filter"),
+        limit: int = Query(50, ge=1, le=200, description="Page limit"),
+        offset: int = Query(0, ge=0, description="Page offset"),
+        principal: Principal = Depends(get_principal),
+        assessment_svc: Any = Depends(get_evidence_assessment_service),
+    ) -> EvidenceAssessmentListResponse:
+        """Query and filter evidence assessments with case RBAC authorization."""
+        try:
+            return assessment_svc.list_assessments(
+                case_id=case_id,
+                state=state,
+                entity_id=entity_id,
+                edge_id=edge_id,
+                claim_type=claim_type,
+                limit=limit,
+                offset=offset,
+                principal=principal,
+            )
+        except PermissionError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+    @router.post("/nexus/evidence/assessments/{assessment_id}/revise", response_model=EvidenceAssessment)
+    def revise_evidence_assessment(
+        assessment_id: str,
+        request: ReviseEvidenceAssessmentRequest,
+        principal: Principal = Depends(get_principal),
+        assessment_svc: Any = Depends(get_evidence_assessment_service),
+    ) -> EvidenceAssessment:
+        """Revise an evidence assessment, preserving an append-only audit trail and revision history."""
+        try:
+            return assessment_svc.revise_assessment(assessment_id, request, principal=principal)
         except KeyError as e:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
         except PermissionError as e:

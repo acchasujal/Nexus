@@ -110,10 +110,30 @@ def make_verification_task_id(
     return f"vtask-{digest}"
 
 
+def make_evidence_assessment_id(
+    case_id: str,
+    claim: str,
+    state: str,
+    discriminator: str = "",
+) -> str:
+    """Create a stable, deterministic evidence assessment ID (evasmt-XXXX)."""
+    parts = (
+        str(case_id).strip(),
+        str(claim).strip(),
+        str(state).strip().upper(),
+        str(discriminator).strip(),
+    )
+    if not str(case_id).strip() or not str(claim).strip():
+        raise ValueError("case_id and claim must not be empty")
+    digest = _stable_id("evidence_assessment", *parts).replace("-", "")[:12]
+    return f"evasmt-{digest}"
+
+
 __all__ = [
     "make_account_id",
     "make_batch_id",
     "make_case_id",
+    "make_evidence_assessment_id",
     "make_intelligence_event_id",
     "make_phone_id",
     "make_provisional_person_id",

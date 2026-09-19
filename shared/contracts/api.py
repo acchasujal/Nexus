@@ -1364,5 +1364,137 @@ class VerificationTaskListResponse(BaseModel):
     offset: int = 0
 
 
+# ── A5 Evidence Assessment Domain Contracts ────────────────────────────────────
+
+class AssessmentBasis(str, Enum):
+    DIRECT = "DIRECT"
+    CORROBORATING = "CORROBORATING"
+    CONFLICTING = "CONFLICTING"
+    MISSING = "MISSING"
+    INFERRED = "INFERRED"
+
+
+class AssessmentRevisionHistoryItem(BaseModel):
+    revision_number: int
+    from_state: EpistemicState
+    to_state: EpistemicState
+    actor_id: str
+    timestamp: datetime = Field(default_factory=_utcnow)
+    rationale: str
+    evidence_ids: list[str] = Field(default_factory=list)
+
+
+class EvidenceAssessment(BaseModel):
+    """
+    Authoritative evidence assessment domain entity (A5).
+    Evaluates the relationship between evidence and claims/entities/edges/events
+    without predictive guilt, risk, or confidence scoring.
+    """
+    # Identity
+    assessment_id: str
+    case_id: str
+    created_at: datetime = Field(default_factory=_utcnow)
+    updated_at: datetime = Field(default_factory=_utcnow)
+
+    # Claim
+    claim: str
+    claim_type: str = "RELATIONSHIP"  # RELATIONSHIP, ENTITY_LINK, COMMUNICATION, FINANCIAL, EVENT_MEMBERSHIP
+    target_entity_id: str | None = None
+    target_edge_id: str | None = None
+    target_event_id: str | None = None
+    intelligence_event_id: str | None = None
+    verification_task_id: str | None = None
+
+    # Assessment
+    state: EpistemicState
+    rationale: str
+    assessment_basis: AssessmentBasis = AssessmentBasis.DIRECT
+
+    # Authoritative Evidence References
+    evidence_ids: list[str] = Field(default_factory=list)
+    supporting_evidence_ids: list[str] = Field(default_factory=list)
+    conflicting_evidence_ids: list[str] = Field(default_factory=list)
+    missing_evidence_types: list[str] = Field(default_factory=list)
+
+    # Provenance
+    source_ids: list[str] = Field(default_factory=list)
+    source_types: list[str] = Field(default_factory=list)
+    observed_at: datetime | None = None
+    ingested_at: datetime = Field(default_factory=_utcnow)
+    provenance_refs: list[str] = Field(default_factory=list)
+
+    # History & Lifecycle
+    history: list[AssessmentRevisionHistoryItem] = Field(default_factory=list)
+
+    def to_pulse_item(self) -> EvidenceAssessmentItem:
+        """Convert first-class EvidenceAssessment into a backward-compatible pulse item."""
+        evidence_ref = self.evidence_ids[0] if self.evidence_ids else (self.target_edge_id or "none")
+        return EvidenceAssessmentItem(
+            claim_id=self.assessment_id,
+            target_relationship_id=self.target_edge_id or self.target_entity_id or "none",
+            evidence_ref=evidence_ref,
+            state=self.state,
+            rationale=self.rationale,
+            source_quality=1.0 if self.state in (EpistemicState.SUPPORTS, EpistemicState.VERIFIED) else 0.5,
+            freshness_days=0,
+        )
+
+    @classmethod
+    def from_pulse_item(cls, item: EvidenceAssessmentItem, case_id: str = "") -> EvidenceAssessment:
+        """Construct an EvidenceAssessment from an embedded pulse EvidenceAssessmentItem."""
+        return cls(
+            assessment_id=item.claim_id,
+            case_id=case_id,
+            claim=f"Assessment of {item.target_relationship_id}",
+            claim_type="RELATIONSHIP",
+            target_edge_id=item.target_relationship_id if item.target_relationship_id != "none" else None,
+            evidence_ids=[item.evidence_ref] if item.evidence_ref != "none" else [],
+            state=item.state,
+            rationale=item.rationale,
+            assessment_basis=AssessmentBasis.DIRECT if item.state == EpistemicState.SUPPORTS else AssessmentBasis.MISSING,
+        )
+
+
+class CreateEvidenceAssessmentRequest(BaseModel):
+    """Request contract to assess a claim with evidence."""
+    case_id: str
+    claim: str
+    claim_type: str = "RELATIONSHIP"
+    state: EpistemicState
+    rationale: str
+    assessment_basis: AssessmentBasis = AssessmentBasis.DIRECT
+    target_entity_id: str | None = None
+    target_edge_id: str | None = None
+    target_event_id: str | None = None
+    intelligence_event_id: str | None = None
+    verification_task_id: str | None = None
+    evidence_ids: list[str] = Field(default_factory=list)
+    supporting_evidence_ids: list[str] = Field(default_factory=list)
+    conflicting_evidence_ids: list[str] = Field(default_factory=list)
+    missing_evidence_types: list[str] = Field(default_factory=list)
+
+
+class ReviseEvidenceAssessmentRequest(BaseModel):
+    """Request contract to revise an existing assessment."""
+    state: EpistemicState
+    rationale: str
+    assessment_basis: AssessmentBasis | None = None
+    additional_evidence_ids: list[str] = Field(default_factory=list)
+    supporting_evidence_ids: list[str] | None = None
+    conflicting_evidence_ids: list[str] | None = None
+    missing_evidence_types: list[str] | None = None
+
+
+class EvidenceAssessmentListResponse(BaseModel):
+    """Paginated collection of evidence assessments."""
+    assessments: list[EvidenceAssessment]
+    total_count: int
+    case_id: str | None = None
+    state: EpistemicState | None = None
+    limit: int = 50
+    offset: int = 0
+
+
+
 
 

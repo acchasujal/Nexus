@@ -1391,6 +1391,90 @@ export interface VerificationTaskListResponse {
   offset: number
 }
 
+// ── A5 Evidence Assessment Domain Contracts ────────────────────────────────────
+
+export type AssessmentBasis =
+  | 'DIRECT'
+  | 'CORROBORATING'
+  | 'CONFLICTING'
+  | 'MISSING'
+  | 'INFERRED'
+
+export interface AssessmentRevisionHistoryItem {
+  revision_number: number
+  from_state: EpistemicState
+  to_state: EpistemicState
+  actor_id: string
+  timestamp: string
+  rationale: string
+  evidence_ids: string[]
+}
+
+export interface EvidenceAssessment {
+  assessment_id: string
+  case_id: string
+  created_at: string
+  updated_at: string
+  claim: string
+  claim_type: string
+  target_entity_id?: string | null
+  target_edge_id?: string | null
+  target_event_id?: string | null
+  intelligence_event_id?: string | null
+  verification_task_id?: string | null
+  state: EpistemicState
+  rationale: string
+  assessment_basis: AssessmentBasis
+  evidence_ids: string[]
+  supporting_evidence_ids: string[]
+  conflicting_evidence_ids: string[]
+  missing_evidence_types: string[]
+  source_ids: string[]
+  source_types: string[]
+  observed_at?: string | null
+  ingested_at: string
+  provenance_refs: string[]
+  history: AssessmentRevisionHistoryItem[]
+}
+
+export interface CreateEvidenceAssessmentRequest {
+  case_id: string
+  claim: string
+  claim_type?: string
+  state: EpistemicState
+  rationale: string
+  assessment_basis?: AssessmentBasis
+  target_entity_id?: string | null
+  target_edge_id?: string | null
+  target_event_id?: string | null
+  intelligence_event_id?: string | null
+  verification_task_id?: string | null
+  evidence_ids?: string[]
+  supporting_evidence_ids?: string[]
+  conflicting_evidence_ids?: string[]
+  missing_evidence_types?: string[]
+}
+
+export interface ReviseEvidenceAssessmentRequest {
+  state: EpistemicState
+  rationale: string
+  assessment_basis?: AssessmentBasis | null
+  additional_evidence_ids?: string[]
+  supporting_evidence_ids?: string[] | null
+  conflicting_evidence_ids?: string[] | null
+  missing_evidence_types?: string[] | null
+}
+
+export interface EvidenceAssessmentListResponse {
+  assessments: EvidenceAssessment[]
+  total_count: number
+  case_id?: string | null
+  state?: EpistemicState | null
+  limit: number
+  offset: number
+}
+
+
 
 
 

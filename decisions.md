@@ -339,4 +339,26 @@ This document is the **single source of truth** for material architectural, secu
 - **Reason:** Real-world investigative operations require tracking, assigning, and corroborating missing evidence across jurisdictions. Read-only recommendations lacked accountability, audit history, and durable evidentiary linkage.
 - **Consequences:** Empowers investigators with an immutable, verifiable action plan to bridge intelligence gaps while preserving court admissibility under Section 63 BSA.
 
+---
+
+## DEC-020 — First-Class Evidence Assessment Architecture & Pulse Compatibility Bridge (A5)
+- **Date:** 2026-09-20
+- **Status:** Accepted & Implemented (A5)
+- **Decision:**
+  1. **First-Class Domain Entity:** Elevate evidence assessment from an embedded sub-object inside `NetworkPulseItem` into a standalone, investigator-accessible `EvidenceAssessment` domain object:
+     $$\text{Claim / Edge / Entity / Event} \to \text{Evidence Assessment} \to \text{Epistemic State} + \text{Rationale} \to \text{Verification Task / Decision}$$
+  2. **Preservation of Epistemic State Semantics:** Strictly reuse existing `EpistemicState` enum (`SUPPORTS`, `CONFLICTS`, `MISSING`, `INFERRED`, `VERIFIED`). Complete exclusion of predictive confidence scores, numerical probabilities, risk metrics, or guilt determinations.
+  3. **Deterministic Canonical Identifier:** Implement `make_evidence_assessment_id(case_id, claim, state, discriminator)` producing stable `evasmt-{hash12}` identifiers.
+  4. **Append-Only Auditable Revision:** Assessments are immutable records; revisions do not destructively overwrite records. Revisions append to `history: list[AssessmentRevisionHistoryItem]` recording `revision_number`, `from_state`, `to_state`, `actor_id`, `timestamp`, `rationale`, and `evidence_ids`.
+  5. **Authoritative Evidence Linkage:** Assessments link by reference to authoritative evidence (`evidence_ids`, `supporting_evidence_ids`, `conflicting_evidence_ids`, `missing_evidence_types`). Every referenced ID is validated against repository source records; non-existent evidence references are rejected.
+  6. **Provenance Preservation:** Source IDs, source types, and observed timestamps are preserved directly from underlying evidence citations into assessment metadata.
+  7. **Backward-Compatible Pulse Bridge:** `NetworkPulseItem.assessment: list[EvidenceAssessmentItem]` contract remains 100% intact. `EvidenceAssessment` provides `.to_pulse_item()` and `.from_pulse_item()` methods to allow seamless bidirectional projection without breaking existing pulse consumers or frontend components.
+  8. **Audit & IntelligenceEvent Integration:**
+     - Emits Section 63 BSA audit events: `EVIDENCE_ASSESSMENT_CREATED` and `EVIDENCE_ASSESSMENT_REVISED`.
+     - Emits A3 `IntelligenceEvent`s with `event_type=IntelligenceEventType.EVIDENCE_ASSESSED`.
+  9. **Strict Decoupling Invariants:** No graph mutations, no snapshot recalculations, no automated closed-loop propagation (A8), and no automated routing (A14) occur in A5.
+- **Reason:** Investigators must independently evaluate evidentiary support, conflicts, and gaps for relationships, claims, and events across cases without requiring an active network pulse.
+- **Consequences:** Enables standalone, explainable evidentiary assessment workflows while preserving complete compatibility with existing proactive pulse and verification features.
+
+
 

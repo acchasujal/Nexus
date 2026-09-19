@@ -132,6 +132,11 @@ class AuditEventType(str, Enum):
     VERIFICATION_TASK_EVIDENCE_ATTACHED = "verification_task_evidence_attached"
     VERIFICATION_TASK_DECIDED = "verification_task_decided"
 
+    # Evidence Assessments (A5)
+    EVIDENCE_ASSESSMENT_CREATED = "evidence_assessment_created"
+    EVIDENCE_ASSESSMENT_REVISED = "evidence_assessment_revised"
+
+
 
 class AuditService:
     """Application-layer service for writing and querying audit logs."""
