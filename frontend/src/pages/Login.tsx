@@ -129,35 +129,40 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-900 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="w-full max-w-xl space-y-5">
-        {/* Compliance Header Badge */}
-        <div className="flex justify-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-neutral-700 bg-neutral-800/80 px-3.5 py-1 text-xs font-medium text-neutral-300">
-            <Shield className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
-            <span>Official System · Authorized Access Only</span>
-          </div>
+    <div className="flex min-h-screen flex-col justify-between bg-neutral-50 text-neutral-800 px-4 py-8 sm:px-6 lg:px-8">
+      {/* Top Institutional Header */}
+      <header className="w-full max-w-xl mx-auto flex flex-col items-center text-center space-y-2">
+        <div className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3.5 py-1 text-xs font-semibold text-neutral-600 shadow-2xs">
+          <Shield className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+          <span>Official Law Enforcement Portal · Authorized Access Only</span>
         </div>
+        <p className="text-[11px] font-medium tracking-wide text-neutral-500 uppercase">
+          Ministry of Home Affairs (MHA) · National Crime Records Bureau · Women Safety Division
+        </p>
+      </header>
 
-        {/* Main Card */}
-        <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-6 sm:p-8 shadow-xl space-y-6">
+      {/* Main Login Card */}
+      <main className="w-full max-w-xl mx-auto my-auto py-4">
+        <div className="rounded-xl border border-neutral-200/90 bg-white p-6 sm:p-8 shadow-sm space-y-6">
           {/* Brand Header */}
-          <div className="text-center space-y-1.5">
-            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+          <div className="text-center space-y-2">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
               <Network className="h-5 w-5" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              NEXUS
-            </h1>
-            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
-              Investigative Network Intelligence Platform
-            </p>
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900">
+                NEXUS
+              </h1>
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-700 mt-0.5">
+                Investigative Network Intelligence Platform
+              </p>
+            </div>
           </div>
 
           {/* Security Notice Banner */}
-          <div className="rounded-lg border border-neutral-800 bg-neutral-900/80 px-3.5 py-2.5 text-center">
-            <p className="text-xs font-medium text-neutral-300 flex items-center justify-center gap-1.5">
-              <Lock className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
+          <div className="rounded-lg border border-neutral-200 bg-neutral-50/80 px-3.5 py-2.5 text-center shadow-2xs">
+            <p className="text-xs font-medium text-neutral-700 flex items-center justify-center gap-1.5">
+              <Lock className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
               <span>Restricted Access · All Sessions Cryptographically Audited</span>
             </p>
           </div>
@@ -166,12 +171,12 @@ export default function Login() {
           {errorMessage && (
             <div 
               role="alert" 
-              className="flex items-start gap-2.5 rounded-lg border border-red-900/60 bg-red-950/40 p-3 text-xs text-red-200"
+              className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800"
               data-testid="login-error-alert"
             >
-              <AlertCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+              <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
               <div className="flex-1">
-                <span className="font-semibold block">Authentication Error:</span>
+                <span className="font-bold block">Authentication Error:</span>
                 <span>{errorMessage}</span>
               </div>
             </div>
@@ -182,12 +187,12 @@ export default function Login() {
             <div>
               <label 
                 htmlFor="officer-id-input" 
-                className="block text-xs font-semibold uppercase tracking-wider text-neutral-300 mb-1.5"
+                className="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-1.5"
               >
                 Officer ID / Service Identifier
               </label>
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400">
                   <User className="h-4 w-4" />
                 </div>
                 <input
@@ -200,7 +205,7 @@ export default function Login() {
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="e.g. KA-1001"
                   disabled={isLoading}
-                  className="w-full rounded-lg border border-neutral-700 bg-neutral-900 pl-9 pr-3 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden transition-colors"
+                  className="w-full rounded-lg border border-neutral-300 bg-white pl-9 pr-3 py-2.5 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-hidden transition-colors shadow-2xs disabled:bg-neutral-100"
                   data-testid="officer-id-input"
                 />
               </div>
@@ -209,12 +214,12 @@ export default function Login() {
             <div>
               <label 
                 htmlFor="password-input" 
-                className="block text-xs font-semibold uppercase tracking-wider text-neutral-300 mb-1.5"
+                className="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-1.5"
               >
                 Security Passcode / Token
               </label>
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400">
                   <KeyRound className="h-4 w-4" />
                 </div>
                 <input
@@ -226,13 +231,13 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
                   disabled={isLoading}
-                  className="w-full rounded-lg border border-neutral-700 bg-neutral-900 pl-9 pr-10 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden transition-colors"
+                  className="w-full rounded-lg border border-neutral-300 bg-white pl-9 pr-10 py-2.5 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-hidden transition-colors shadow-2xs disabled:bg-neutral-100"
                   data-testid="password-input"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-neutral-400 hover:text-neutral-200 cursor-pointer"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-neutral-400 hover:text-neutral-700 cursor-pointer"
                   aria-label={showPassword ? 'Hide passcode' : 'Show passcode'}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -243,7 +248,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-400"
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-xs disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-600"
               data-testid="login-submit-button"
             >
               {isLoading ? (
@@ -261,9 +266,9 @@ export default function Login() {
           </form>
 
           {/* Authorized Officer Fast-Select */}
-          <div className="border-t border-neutral-800/80 pt-5 space-y-3">
+          <div className="border-t border-neutral-200/90 pt-5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-neutral-700">
                 Evaluation Workspace Access
               </span>
               <span className="text-[11px] text-neutral-500">
@@ -280,28 +285,28 @@ export default function Login() {
                     type="button"
                     onClick={() => handleSelectOfficer(officer)}
                     disabled={isLoading}
-                    className="group flex flex-col items-start p-3 rounded-lg border border-neutral-800 bg-neutral-900 hover:bg-neutral-850 hover:border-neutral-700 text-left transition-colors cursor-pointer disabled:opacity-50"
+                    className="group flex flex-col items-start p-3 rounded-lg border border-neutral-200 bg-neutral-50/70 hover:bg-blue-50/40 hover:border-blue-300 text-left transition-all cursor-pointer disabled:opacity-50 shadow-2xs"
                     data-testid={`demo-officer-${officer.role.toLowerCase()}`}
                   >
                     <div className="flex items-center gap-2 w-full mb-1">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-neutral-800 border border-neutral-700 text-neutral-300 group-hover:text-white">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white border border-neutral-200 text-neutral-600 group-hover:text-blue-600 group-hover:border-blue-200 shadow-2xs">
                         <Icon className="h-3.5 w-3.5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <span className="text-xs font-semibold text-neutral-200 group-hover:text-white truncate block">
+                        <span className="text-xs font-bold text-neutral-900 group-hover:text-blue-900 truncate block">
                           {officer.name}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between w-full text-[11px] text-neutral-400 mt-0.5">
-                      <span className="font-mono text-[10px] text-neutral-300 bg-neutral-800 px-1.5 py-0.5 rounded border border-neutral-700">
+                    <div className="flex items-center justify-between w-full text-[11px] text-neutral-500 mt-0.5">
+                      <span className="font-mono text-[10px] font-semibold text-neutral-700 bg-neutral-200/80 px-1.5 py-0.5 rounded border border-neutral-300/80">
                         {officer.badge}
                       </span>
-                      <span className="text-neutral-400 text-[10px] font-medium uppercase">
+                      <span className="text-blue-700 bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
                         {officer.role}
                       </span>
                     </div>
-                    <p className="text-[10px] text-neutral-500 line-clamp-2 mt-1 leading-tight">
+                    <p className="text-[10px] text-neutral-600 line-clamp-2 mt-1.5 leading-snug">
                       {officer.scope}
                     </p>
                   </button>
@@ -310,14 +315,24 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Footer Statutory Disclaimers */}
-          <div className="border-t border-neutral-800/80 pt-4 text-center space-y-1">
-            <p className="text-[11px] text-neutral-400 font-medium">
+          {/* Card Footer Statutory Disclaimers */}
+          <div className="border-t border-neutral-200/90 pt-4 text-center space-y-1">
+            <p className="text-[11px] text-neutral-600 font-medium">
               Deterministic Graph Analytics · Evidence-Grounded Attribution · Tamper-Proof Audit Logging
             </p>
           </div>
         </div>
-      </div>
+      </main>
+
+      {/* Page Footer */}
+      <footer className="w-full max-w-xl mx-auto text-center space-y-1 pt-2">
+        <p className="text-[11px] text-neutral-500">
+          Smart India Hackathon 2026 · Problem Statement ID: 26189 · Section 63 BSA (2023) Compliant
+        </p>
+        <p className="text-[10px] text-neutral-400">
+          Zero Citizen PII on Ledger · Cryptographic Integrity Verifications Active
+        </p>
+      </footer>
     </div>
   )
 }
