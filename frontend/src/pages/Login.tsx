@@ -133,33 +133,33 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-neutral-50 text-neutral-800">
-      {/* Top Institutional Masthead Bar — Full Width */}
-      <header className="w-full border-b border-neutral-200/90 bg-white px-4 sm:px-6 lg:px-10 py-3 shadow-2xs">
-        <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
-              <Network className="h-5 w-5" />
+    <div className="h-screen max-h-screen flex flex-col justify-between bg-neutral-50 text-neutral-800 overflow-y-auto lg:overflow-hidden">
+      {/* Top Institutional Masthead Bar — Full Width, Compact */}
+      <header className="w-full border-b border-neutral-200/90 bg-white px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 shadow-2xs shrink-0">
+        <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
+              <Network className="h-4 w-4" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-base font-black tracking-tight text-neutral-900">NCRB Intelligence</span>
-                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 rounded uppercase tracking-wider">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs sm:text-sm font-black tracking-tight text-neutral-900">NCRB Intelligence</span>
+                <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-1 py-0.2 rounded uppercase tracking-wider">
                   MHA Portal
                 </span>
               </div>
-              <p className="text-[11px] text-neutral-500 font-medium">
+              <p className="text-[10px] text-neutral-500 font-medium hidden sm:block">
                 Ministry of Home Affairs · National Crime Records Bureau · Women Safety Division
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-semibold text-neutral-700">
-              <Shield className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-[11px] font-semibold text-neutral-700">
+              <Shield className="h-3 w-3 text-blue-600 shrink-0" />
               <span>Official Law Enforcement Portal · Authorized Access Only</span>
             </div>
-            <div className="hidden md:inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-800">
+            <div className="hidden md:inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800">
               <Scale className="h-3 w-3 text-amber-600 shrink-0" />
               <span>Sec. 63 BSA Compliant</span>
             </div>
@@ -167,102 +167,102 @@ export default function Login() {
         </div>
       </header>
 
-      {/* Main Responsive Grid Layout — Full Width with Max Constraint for Readability */}
-      <main className="w-full flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 lg:py-12 flex flex-col justify-center">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
+      {/* Main Responsive Grid Layout — Fits Viewport Height with Zero Scroll */}
+      <main className="w-full flex-1 min-h-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 flex flex-col justify-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center w-full my-auto">
           {/* Left Column: Intelligence Operational Overview */}
-          <section aria-label="Platform Intelligence Overview" className="lg:col-span-5 xl:col-span-6 space-y-6">
-            <div className="space-y-2.5">
-              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-1 rounded-md">
-                <Database className="h-3.5 w-3.5" />
+          <section aria-label="Platform Intelligence Overview" className="lg:col-span-5 xl:col-span-6 space-y-3 sm:space-y-4">
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-md">
+                <Database className="h-3 w-3" />
                 <span>Crime Intelligence &amp; Network Analytics</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900 leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 leading-tight">
                 NEXUS
               </h1>
-              <p className="text-sm sm:text-base font-bold text-blue-700 uppercase tracking-wider">
+              <p className="text-xs sm:text-sm font-bold text-blue-700 uppercase tracking-wider">
                 Investigative Network Intelligence Platform
               </p>
-              <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed pt-1 max-w-xl">
+              <p className="text-xs text-neutral-600 leading-relaxed max-w-lg">
                 Proactive, evidence-grounded criminal network change intelligence transforming First Information Reports (FIRs), Call Detail Records (CDRs), and financial transactions into an explainable, graph-native investigative workspace.
               </p>
             </div>
 
             {/* Architecture Highlights Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <div className="rounded-xl border border-neutral-200/90 bg-white p-3.5 shadow-2xs space-y-1">
-                <div className="flex items-center gap-2 text-neutral-900 font-bold text-xs">
-                  <div className="h-6 w-6 rounded-md bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center shrink-0">
-                    <GitFork className="h-3.5 w-3.5" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
+              <div className="rounded-lg border border-neutral-200/90 bg-white p-2.5 shadow-2xs space-y-0.5">
+                <div className="flex items-center gap-1.5 text-neutral-900 font-bold text-[11px]">
+                  <div className="h-5 w-5 rounded bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center shrink-0">
+                    <GitFork className="h-3 w-3" />
                   </div>
                   <span>Deterministic Analytics</span>
                 </div>
-                <p className="text-[11px] text-neutral-500 leading-snug">
+                <p className="text-[10px] text-neutral-500 leading-snug line-clamp-2">
                   Pure graph snapshot diffing &amp; Louvain community detection with zero predictive guilt scoring.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-neutral-200/90 bg-white p-3.5 shadow-2xs space-y-1">
-                <div className="flex items-center gap-2 text-neutral-900 font-bold text-xs">
-                  <div className="h-6 w-6 rounded-md bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
-                    <Scale className="h-3.5 w-3.5" />
+              <div className="rounded-lg border border-neutral-200/90 bg-white p-2.5 shadow-2xs space-y-0.5">
+                <div className="flex items-center gap-1.5 text-neutral-900 font-bold text-[11px]">
+                  <div className="h-5 w-5 rounded bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
+                    <Scale className="h-3 w-3" />
                   </div>
                   <span>Section 63 BSA Provenance</span>
                 </div>
-                <p className="text-[11px] text-neutral-500 leading-snug">
+                <p className="text-[10px] text-neutral-500 leading-snug line-clamp-2">
                   Every link grounds to verifiable source documents with RFC 6962 binary Merkle proof chains.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-neutral-200/90 bg-white p-3.5 shadow-2xs space-y-1">
-                <div className="flex items-center gap-2 text-neutral-900 font-bold text-xs">
-                  <div className="h-6 w-6 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
-                    <ShieldCheck className="h-3.5 w-3.5" />
+              <div className="rounded-lg border border-neutral-200/90 bg-white p-2.5 shadow-2xs space-y-0.5">
+                <div className="flex items-center gap-1.5 text-neutral-900 font-bold text-[11px]">
+                  <div className="h-5 w-5 rounded bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="h-3 w-3" />
                   </div>
                   <span>Mandatory Abstention</span>
                 </div>
-                <p className="text-[11px] text-neutral-500 leading-snug">
+                <p className="text-[10px] text-neutral-500 leading-snug line-clamp-2">
                   Early warning engine explicitly refrains when data is sparse, stale, or conflicting.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-neutral-200/90 bg-white p-3.5 shadow-2xs space-y-1">
-                <div className="flex items-center gap-2 text-neutral-900 font-bold text-xs">
-                  <div className="h-6 w-6 rounded-md bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center shrink-0">
-                    <Database className="h-3.5 w-3.5" />
+              <div className="rounded-lg border border-neutral-200/90 bg-white p-2.5 shadow-2xs space-y-0.5">
+                <div className="flex items-center gap-1.5 text-neutral-900 font-bold text-[11px]">
+                  <div className="h-5 w-5 rounded bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center shrink-0">
+                    <Database className="h-3 w-3" />
                   </div>
                   <span>Multi-Tenant Governance</span>
                 </div>
-                <p className="text-[11px] text-neutral-500 leading-snug">
+                <p className="text-[10px] text-neutral-500 leading-snug line-clamp-2">
                   Jurisdiction-gated routing across Karnataka Cyber, CID, and State station units.
                 </p>
               </div>
             </div>
 
             {/* Operational Status Pill */}
-            <div className="rounded-lg border border-neutral-200 bg-neutral-100/70 px-3.5 py-2 flex items-center gap-2 text-[11px] text-neutral-600 shadow-2xs">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            <div className="rounded-lg border border-neutral-200 bg-neutral-100/70 px-3 py-1.5 flex items-center gap-2 text-[10px] text-neutral-600 shadow-2xs">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
               <span>Neo4j AuraDB &amp; PostgreSQL operational · Zero real citizen PII processed</span>
             </div>
           </section>
 
           {/* Right Column: Authentication Console */}
           <section aria-label="Officer Authentication Form" className="lg:col-span-7 xl:col-span-6 w-full">
-            <div className="rounded-xl border border-neutral-200/90 bg-white p-6 sm:p-8 shadow-sm space-y-6 w-full">
+            <div className="rounded-xl border border-neutral-200/90 bg-white p-4 sm:p-5 shadow-sm space-y-3.5 w-full">
               {/* Form Title & Subtitle */}
-              <div className="border-b border-neutral-100 pb-4 space-y-1">
-                <h2 className="text-lg font-bold text-neutral-900 tracking-tight">
+              <div className="border-b border-neutral-100 pb-2.5 space-y-0.5">
+                <h2 className="text-base font-bold text-neutral-900 tracking-tight">
                   Officer Authentication Console
                 </h2>
-                <p className="text-xs text-neutral-500">
+                <p className="text-[11px] text-neutral-500">
                   Enter authorized service credentials or select an evaluation duty profile below.
                 </p>
               </div>
 
               {/* Security Notice Banner */}
-              <div className="rounded-lg border border-neutral-200 bg-neutral-50/80 px-3.5 py-2.5 text-center shadow-2xs">
-                <p className="text-xs font-medium text-neutral-700 flex items-center justify-center gap-1.5">
-                  <Lock className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
+              <div className="rounded-lg border border-neutral-200 bg-neutral-50/80 px-3 py-1.5 text-center shadow-2xs">
+                <p className="text-[11px] font-medium text-neutral-700 flex items-center justify-center gap-1.5">
+                  <Lock className="h-3 w-3 text-neutral-500 shrink-0" />
                   <span>Restricted Access · All Sessions Cryptographically Audited</span>
                 </p>
               </div>
@@ -271,29 +271,29 @@ export default function Login() {
               {errorMessage && (
                 <div 
                   role="alert" 
-                  className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800"
+                  className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-800"
                   data-testid="login-error-alert"
                 >
-                  <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                  <AlertCircle className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <span className="font-bold block">Authentication Error:</span>
-                    <span>{errorMessage}</span>
+                    <span className="font-bold block text-[11px]">Authentication Error:</span>
+                    <span className="text-[11px]">{errorMessage}</span>
                   </div>
                 </div>
               )}
 
               {/* Login Form */}
-              <form onSubmit={(e) => handleSubmit(e)} className="space-y-4">
+              <form onSubmit={(e) => handleSubmit(e)} className="space-y-2.5">
                 <div>
                   <label 
                     htmlFor="officer-id-input" 
-                    className="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-1.5"
+                    className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-1"
                   >
                     Officer ID / Service Identifier
                   </label>
                   <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400">
-                      <User className="h-4 w-4" />
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-neutral-400">
+                      <User className="h-3.5 w-3.5" />
                     </div>
                     <input
                       id="officer-id-input"
@@ -305,7 +305,7 @@ export default function Login() {
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="e.g. KA-1001"
                       disabled={isLoading}
-                      className="w-full rounded-lg border border-neutral-300 bg-white pl-9 pr-3 py-2.5 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-hidden transition-colors shadow-2xs disabled:bg-neutral-100"
+                      className="w-full rounded-lg border border-neutral-300 bg-white pl-8 pr-3 py-1.5 text-xs sm:text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-hidden transition-colors shadow-2xs disabled:bg-neutral-100"
                       data-testid="officer-id-input"
                     />
                   </div>
@@ -314,13 +314,13 @@ export default function Login() {
                 <div>
                   <label 
                     htmlFor="password-input" 
-                    className="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-1.5"
+                    className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-1"
                   >
                     Security Passcode / Token
                   </label>
                   <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400">
-                      <KeyRound className="h-4 w-4" />
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-neutral-400">
+                      <KeyRound className="h-3.5 w-3.5" />
                     </div>
                     <input
                       id="password-input"
@@ -331,16 +331,16 @@ export default function Login() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••••••"
                       disabled={isLoading}
-                      className="w-full rounded-lg border border-neutral-300 bg-white pl-9 pr-10 py-2.5 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-hidden transition-colors shadow-2xs disabled:bg-neutral-100"
+                      className="w-full rounded-lg border border-neutral-300 bg-white pl-8 pr-9 py-1.5 text-xs sm:text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-hidden transition-colors shadow-2xs disabled:bg-neutral-100"
                       data-testid="password-input"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+                      className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-neutral-400 hover:text-neutral-700 cursor-pointer"
                       aria-label={showPassword ? 'Hide passcode' : 'Show passcode'}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                     </button>
                   </div>
                 </div>
@@ -348,35 +348,35 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-xs disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-600"
+                  className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-600"
                   data-testid="login-submit-button"
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       <span>Verifying Credentials...</span>
                     </>
                   ) : (
                     <>
                       <span>Sign In to Intelligence Workspace</span>
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-3.5 w-3.5" />
                     </>
                   )}
                 </button>
               </form>
 
               {/* Authorized Officer Fast-Select Duty Profiles */}
-              <div className="border-t border-neutral-200/90 pt-5 space-y-3">
+              <div className="border-t border-neutral-200/90 pt-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-700">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-700">
                     Evaluation Workspace Access
                   </span>
-                  <span className="text-[11px] text-neutral-500">
+                  <span className="text-[10px] text-neutral-500">
                     Select profile to sign in
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {AUTHORIZED_OFFICERS.map((officer) => {
                     const Icon = officer.icon
                     return (
@@ -385,28 +385,28 @@ export default function Login() {
                         type="button"
                         onClick={() => handleSelectOfficer(officer)}
                         disabled={isLoading}
-                        className="group flex flex-col items-start p-3 rounded-lg border border-neutral-200 bg-neutral-50/70 hover:bg-blue-50/40 hover:border-blue-300 text-left transition-all cursor-pointer disabled:opacity-50 shadow-2xs"
+                        className="group flex flex-col items-start p-2 rounded-lg border border-neutral-200 bg-neutral-50/70 hover:bg-blue-50/40 hover:border-blue-300 text-left transition-all cursor-pointer disabled:opacity-50 shadow-2xs"
                         data-testid={`demo-officer-${officer.role.toLowerCase()}`}
                       >
-                        <div className="flex items-center gap-2 w-full mb-1">
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white border border-neutral-200 text-neutral-600 group-hover:text-blue-600 group-hover:border-blue-200 shadow-2xs">
-                            <Icon className="h-3.5 w-3.5" />
+                        <div className="flex items-center gap-1.5 w-full mb-0.5">
+                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-white border border-neutral-200 text-neutral-600 group-hover:text-blue-600 group-hover:border-blue-200 shadow-2xs">
+                            <Icon className="h-3 w-3" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <span className="text-xs font-bold text-neutral-900 group-hover:text-blue-900 truncate block">
+                            <span className="text-[11px] font-bold text-neutral-900 group-hover:text-blue-900 truncate block">
                               {officer.name}
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between w-full text-[11px] text-neutral-500 mt-0.5">
-                          <span className="font-mono text-[10px] font-semibold text-neutral-700 bg-neutral-200/80 px-1.5 py-0.5 rounded border border-neutral-300/80">
+                        <div className="flex items-center justify-between w-full text-[10px] text-neutral-500">
+                          <span className="font-mono text-[9px] font-semibold text-neutral-700 bg-neutral-200/80 px-1 py-0.2 rounded border border-neutral-300/80">
                             {officer.badge}
                           </span>
-                          <span className="text-blue-700 bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                          <span className="text-blue-700 bg-blue-50 border border-blue-200/80 px-1 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider">
                             {officer.role}
                           </span>
                         </div>
-                        <p className="text-[10px] text-neutral-600 line-clamp-2 mt-1.5 leading-snug">
+                        <p className="text-[9px] text-neutral-600 line-clamp-1 mt-0.5 leading-tight">
                           {officer.scope}
                         </p>
                       </button>
@@ -416,8 +416,8 @@ export default function Login() {
               </div>
 
               {/* Card Footer Statutory Disclaimers */}
-              <div className="border-t border-neutral-200/90 pt-4 text-center space-y-1">
-                <p className="text-[11px] text-neutral-600 font-medium">
+              <div className="border-t border-neutral-200/90 pt-2 text-center">
+                <p className="text-[10px] text-neutral-500 font-medium">
                   Deterministic Graph Analytics · Evidence-Grounded Attribution · Tamper-Proof Audit Logging
                 </p>
               </div>
@@ -426,10 +426,10 @@ export default function Login() {
         </div>
       </main>
 
-      {/* Page Footer — Full Width */}
-      <footer className="w-full border-t border-neutral-200/90 bg-white px-4 sm:px-6 lg:px-10 py-3.5 text-xs text-neutral-500 shadow-2xs">
-        <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-[11px] text-neutral-500">
+      {/* Page Footer — Full Width, Compact */}
+      <footer className="w-full border-t border-neutral-200/90 bg-white px-4 sm:px-6 lg:px-8 py-2 text-xs text-neutral-500 shadow-2xs shrink-0">
+        <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1">
+          <p className="text-[10px] text-neutral-500">
             Smart India Hackathon 2026 · Problem Statement ID: 26189 · Ministry of Home Affairs (MHA)
           </p>
           <p className="text-[10px] text-neutral-400">
