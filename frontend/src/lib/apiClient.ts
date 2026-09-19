@@ -5,8 +5,10 @@
  */
 
 import type {
+  CandidateEntity,
   CopilotQueryRequest,
   CopilotQueryResponse,
+  DocumentExtractionResult,
   DocumentResponse,
   DocumentTextResponse,
   EntityResolutionQuery,
@@ -24,6 +26,7 @@ import type {
   NexusPathResponse,
   NexusSearchResponse,
   ResolutionCandidate,
+  ResolutionCandidateMatch,
   ResolutionDecisionRequest,
   EvidenceIntegrityCheckResult,
   ResolutionDecisionResponse,
@@ -317,6 +320,23 @@ export const apiClient = {
   listDocuments: (caseId?: string) => {
     const query = caseId ? `?case_id=${encodeURIComponent(caseId)}` : ''
     return apiFetch<DocumentResponse[]>(`/api/v1/documents${query}`)
+  },
+
+  // ── Candidate Intelligence & Entity Extraction (P1-B) ───────────────────
+  extractDocumentCandidates: (documentId: string, forceReextract: boolean = false) => {
+    const query = forceReextract ? '?force_reextract=true' : ''
+    return apiFetch<DocumentExtractionResult>(`/api/v1/documents/${encodeURIComponent(documentId)}/extract${query}`, {
+      method: 'POST',
+    })
+  },
+  getDocumentCandidates: (documentId: string) => {
+    return apiFetch<DocumentExtractionResult>(`/api/v1/documents/${encodeURIComponent(documentId)}/candidates`)
+  },
+  getCandidateEntity: (candidateId: string) => {
+    return apiFetch<CandidateEntity>(`/api/v1/candidates/${encodeURIComponent(candidateId)}`)
+  },
+  getCandidateResolution: (candidateId: string) => {
+    return apiFetch<ResolutionCandidateMatch[]>(`/api/v1/candidates/${encodeURIComponent(candidateId)}/resolution`)
   },
 
   // ── NEXUS prototype endpoints (frozen M4 contract) ──────────────────────

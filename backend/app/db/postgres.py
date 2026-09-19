@@ -95,6 +95,7 @@ class PostgresBackendRepository:
         self.review_candidates: dict[str, dict[str, Any]] = {}
         self.batches: dict[str, dict[str, Any]] = {}
         self.documents: dict[str, dict[str, Any]] = {}
+        self.candidate_extractions: dict[str, dict[str, Any]] = {}
 
         # 1. Initialize schema
         self._init_schema()
@@ -1116,3 +1117,23 @@ class PostgresBackendRepository:
         if case_id is not None:
             docs = [d for d in docs if d.get("case_id") == case_id]
         return sorted(docs, key=lambda d: str(d.get("uploaded_at", "")), reverse=True)
+
+    # ── Candidate Intelligence & Entity Extraction Methods (P1-B) ───────────
+
+    def store_candidate_extraction(self, extraction_record: dict[str, Any]) -> dict[str, Any]:
+        """Store or update candidate extraction results for a document in repository cache."""
+        doc_id = extraction_record["document_id"]
+        self.candidate_extractions[doc_id] = extraction_record
+        return extraction_record
+
+    def get_candidate_extraction(self, doc_id: str) -> dict[str, Any] | None:
+        """Retrieve candidate extraction results for a document."""
+        return self.candidate_extractions.get(doc_id)
+
+    def get_candidate_entity(self, candidate_id: str) -> dict[str, Any] | None:
+        """Retrieve a specific candidate entity by candidate_id across all extractions."""
+        for extraction in self.candidate_extractions.values():
+            for entity in extraction.get("candidate_entities", []):
+                if entity.get("candidate_id") == candidate_id:
+                    return entity
+        return None

@@ -128,6 +128,87 @@ export interface DocumentTextResponse {
   extraction_metadata: DocumentExtractionMetadata
 }
 
+export type CandidateEntityType =
+  | 'PERSON'
+  | 'PHONE'
+  | 'ACCOUNT'
+  | 'VEHICLE'
+  | 'LOCATION'
+  | 'ORGANIZATION'
+  | 'DEVICE'
+  | 'DATE_TIME'
+  | 'EVENT'
+
+export type CandidateResolutionStatus = 'UNRESOLVED' | 'REVIEW_REQUIRED' | 'NO_MATCH_FOUND'
+
+export interface SourceSpan {
+  start: number
+  end: number
+  page?: number | null
+}
+
+export interface CandidateProvenance {
+  document_id: string
+  document_sha256: string
+  page?: number | null
+  source_text_hash: string
+  case_id?: string | null
+}
+
+export interface ResolutionCandidateMatch {
+  canonical_entity_id: string
+  canonical_name: string
+  entity_type: string
+  match_score: number
+  match_reasons: string[]
+}
+
+export interface CandidateEntity {
+  candidate_id: string
+  entity_type: CandidateEntityType | string
+  surface_text: string
+  normalized_value: string
+  confidence: number
+  source_document_id: string
+  case_id?: string | null
+  source_span: SourceSpan
+  evidence_text: string
+  extraction_method: 'DETERMINISTIC' | 'LLM_ASSISTED' | string
+  provenance: CandidateProvenance
+  resolution_status: CandidateResolutionStatus
+  resolution_candidates: ResolutionCandidateMatch[]
+}
+
+export interface CandidateRelationship {
+  candidate_relationship_id: string
+  source_candidate_id: string
+  target_candidate_id: string
+  source_text: string
+  target_text: string
+  relationship_type: string
+  confidence: number
+  evidence_text: string
+  source_document_id: string
+  case_id?: string | null
+  source_span?: SourceSpan | null
+  provenance: CandidateProvenance
+  status: 'CANDIDATE' | string
+}
+
+export interface DocumentExtractionResult {
+  document_id: string
+  case_id?: string | null
+  content_hash: string
+  extraction_run_id: string
+  extracted_at: string
+  candidate_entities: CandidateEntity[]
+  candidate_relationships: CandidateRelationship[]
+  entity_count: number
+  relationship_count: number
+  status: string
+  extraction_notes: string[]
+}
+
 export type NodePresenceType =
   | 'DIRECT_CASE'
   | 'INTELLIGENCE_EXPANSION'

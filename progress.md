@@ -8,7 +8,7 @@ This document is the **single source of truth** for ongoing engineering, capabil
 
 | Metric / Subsystem | Current Measured Status | Target Requirement | Status |
 |---|---|---|---|
-| **Backend Test Suite** | **752 / 752 passing** (`pytest`) | 100% pass rate | ✅ VERIFIED GREEN |
+| **Backend Test Suite** | **761 / 761 passing** (`pytest`) | 100% pass rate | ✅ VERIFIED GREEN |
 | **Frontend Test Suite** | **147 / 147 passing** (`vitest`) | 100% pass rate | ✅ VERIFIED GREEN |
 | **Backend Code Quality** | **0 errors / clean** (`ruff check`) | 0 lint errors | ✅ VERIFIED CLEAN |
 | **Frontend Typecheck / Build** | **0 errors / clean build** (`tsc && vite build`) | 0 TypeScript errors | ✅ VERIFIED CLEAN |
@@ -27,9 +27,11 @@ This document is the **single source of truth** for ongoing engineering, capabil
 - **P0-E:** Implement `EarlyWarningService` with constrained forecast scopes & mandatory abstention gate. (✅ COMPLETED)
 - **P0-F:** Implement `VerificationPlanner` for role-aware investigation actions. (✅ COMPLETED)
 - **P1-A:** Implement Unstructured Document Ingestion Foundation (`DocumentService`, deterministic PDF/TXT extraction, tamper-evident SHA-256 fingerprinting, case RBAC, audit logging). (✅ COMPLETED)
-- **P1-B:** Implement `IdentityDriftService` identifier transition radar (phone turnover, device hopping, vehicle registration drift, alias evolution), evidence citations & investigator actioning. (✅ COMPLETED)
-- **P1-C:** Implement `NetworkAdaptationService` criminal network adaptation engine (intermediary proxy replacement, bridge broker substitution, financial rerouting), Section 63 BSA citations & investigator actioning. (✅ COMPLETED)
-- **P1-D:** Implement `DigitalShadowService` controlled SOCMINT governance engine (Telegram, Darkweb, Payment VPAs), mandatory physical hard-ID corroboration rule, 4-stage Section 63 BSA lifecycle & investigator actioning. (✅ COMPLETED)
+- **P1-B:** Implement Document Intelligence: Candidate Entity & Relationship Extraction (`DocumentExtractionService`, high-precision candidate extraction, read-only candidate resolution, unsupported inference guards, zero graph mutation invariant). (✅ COMPLETED)
+- **P1-C:** Implement Candidate Review, Promotion, & Identity Fusion ("Add to Graph", investigator accept/reject workflows). (PLANNED NEXT)
+- **P1-D:** Implement `IdentityDriftService` identifier transition radar (phone turnover, device hopping, vehicle registration drift, alias evolution), evidence citations & investigator actioning. (✅ COMPLETED)
+- **P1-E:** Implement `NetworkAdaptationService` criminal network adaptation engine (intermediary proxy replacement, bridge broker substitution, financial rerouting), Section 63 BSA citations & investigator actioning. (✅ COMPLETED)
+- **P1-F:** Implement `DigitalShadowService` controlled SOCMINT governance engine (Telegram, Darkweb, Payment VPAs), mandatory physical hard-ID corroboration rule, 4-stage Section 63 BSA lifecycle & investigator actioning. (✅ COMPLETED)
 
 ---
 
@@ -39,6 +41,7 @@ This document is the **single source of truth** for ongoing engineering, capabil
 |---|---|---|---|---|
 | **Multi-Source Ingestion** | `ingestion_service.py`, CSV mappers | ✅ CURRENT | BASELINE | FIR, CDR, Bank, Intel synthetic ingestion operational. |
 | **Unstructured Document Ingestion** | `document_service.py`, `pypdf`, `POST /documents` | ✅ CURRENT | NEW PROTOTYPE | Deterministic PDF/TXT extraction, tamper-evident SHA-256 fingerprint, case RBAC, audit logging (`DOCUMENT_UPLOADED`, `DOCUMENT_VIEWED`, `DOCUMENT_EXTRACTION_FAILED`). |
+| **Document Intelligence (P1-B)** | `document_extraction_service.py`, `POST /documents/{id}/extract` | ✅ CURRENT | NEW PROTOTYPE | High-precision candidate entity & relationship extraction, read-only graph resolution, unsupported inference guards, zero graph mutation invariant. |
 | **Entity Resolution** | `entity_resolver.py`, `matcher.py` | ✅ CURRENT | BASELINE | Double Metaphone, bigram Jaccard, hard-ID corroboration (100% P/R). |
 | **Graph Persistence** | `GraphStore` (in-memory) + `Neo4j` | ✅ CURRENT | BASELINE | Sub-millisecond local traversal (<0.025ms), durable Cypher projection. |
 | **Syndicate Modularity** | `communities.py` (Louvain) | ✅ CURRENT | SUPPORTING | Partitions complex networks into distinct criminal syndicate cells. |
@@ -66,7 +69,7 @@ This document is the **single source of truth** for ongoing engineering, capabil
 ## 4. Completed Milestones
 
 | Date | Milestone / Action | Deliverables | Verification Status |
-|---|---|---|---|
+| 2026-09-19 | P1-B Document Intelligence: Candidate Entity & Relationship Extraction (`DocumentExtractionService`, `DocumentIngestionPanel`) | Implemented Phase P1-B candidate extraction pipeline (`DOCUMENT -> EXTRACTED TEXT -> CANDIDATE ENTITIES -> CANDIDATE RESOLUTION -> CANDIDATE RELATIONSHIPS -> PROVENANCE -> STOP`). Built deterministic, high-precision candidate extractors (`PHONE`, `ACCOUNT`, `VEHICLE`, `DATE_TIME`, `PERSON`, `LOCATION`, `ORGANIZATION`) and evidence-backed relationship rules (`COMMUNICATED_WITH`, `TRANSFERRED_TO`, `USED_PHONE`, `USED_VEHICLE`, `LOCATED_AT`). Implemented strictly read-only candidate resolution against graph nodes (`REVIEW_REQUIRED`, `NO_MATCH_FOUND`). Enforced unsupported inference guards (paragraph co-occurrence without connective text produces zero candidate relationships). Verified strict zero-graph-mutation invariant via deep full-graph state equality checks before and after extraction (`authoritative_graph_before == authoritative_graph_after`). Enforced canonical case RBAC and recorded durable audit events (`DOCUMENT_EXTRACTION_STARTED`, `DOCUMENT_CANDIDATES_EXTRACTED`, `CANDIDATE_VIEWED`). Integrated Candidate Review Panel into frontend. | ✅ 761/761 Backend Tests, 147/147 Frontend Tests, 100% P/R, 0 Lint Errors, Clean Build |
 | 2026-09-19 | P1-A Unstructured Document Ingestion Foundation (`DocumentService`, `DocumentIngestionPanel`) | Implemented unstructured crime-related document ingestion (`.pdf`, `.txt`) supporting FIRs, police reports, and intelligence memos. Built deterministic machine-readable text extraction (`pypdf 6.14.2`), cryptographic document integrity fingerprinting (SHA-256), provenance metadata citation, and strict case-level RBAC (`can_access_case`). Emitted audit events (`DOCUMENT_UPLOADED`, `DOCUMENT_VIEWED`, `DOCUMENT_EXTRACTION_FAILED`). Preserved strict phase boundary (no graph nodes, no edges, no LLM entity extraction, existing CSV ingestion 100% intact). Built multi-tab ingestion UI with SHA-256 copy & document preview. | ✅ 752/752 Backend Tests, 147/147 Frontend Tests, 100% P/R, 0 Lint Errors, Clean Build |
 | 2026-09-18 | Explicit Graph Depth Control & Entity Context Provenance (`CaseService`, `NetworkAnalysisPanel`) | Implemented investigator-controlled depth exploration (`depth=0, 1, 2, 3`, defaulting to 1 for direct case scope) with safe validation and fail-closed RBAC across backend repositories (`in_memory.py`, `postgres.py`). Enriched `NetworkGraphResponse` with deterministic `NodeContextResponse` containing presence type (`DIRECT_CASE`, `INTELLIGENCE_EXPANSION`, `CDR_CONNECTION`, `CROSS_CASE`, `EVIDENCE`), distance from case, source record citations, and grounded traversal path. Built Scope Control Bar, Presence Legend, on-canvas presence rings, and Inspector "Why is this entity shown?" card in frontend. | ✅ 741/741 Backend Tests, 141/141 Frontend Tests, 100% P/R, 0 Lint Errors, Clean Build |
 | 2026-09-18 | Neo4j AuraDB Cloud Migration & Graph Projection | Created `scripts/migrate_to_neo4j.py`, provisioned Neo4j AuraDB cloud database, verified schema constraints (`(n:NexusNode {id})` UNIQUE) and indexes. Successfully migrated all 445 graph entities and 493 multi-relational edges. Linked environment configuration (`GRAPH_BACKEND=neo4j`), tested live connection probes, and verified backend startup synchronization. | ✅ 733/733 Backend Tests, 133/133 Frontend Tests, 100% P/R, 0 Lint Errors |

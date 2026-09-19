@@ -75,6 +75,7 @@ class InMemoryBackendRepository:
         self.network_adaptations: dict[str, dict[str, Any]] = {}
         self.digital_shadows: dict[str, dict[str, Any]] = {}
         self.documents: dict[str, dict[str, Any]] = {}
+        self.candidate_extractions: dict[str, dict[str, Any]] = {}
         self.state_path = state_path
 
         self._load_artifact(artifact_path or self._default_artifact_path())
@@ -95,6 +96,7 @@ class InMemoryBackendRepository:
         self.network_adaptations.clear()
         self.digital_shadows.clear()
         self.documents.clear()
+        self.candidate_extractions.clear()
         self._load_artifact(self._default_artifact_path())
         if self.state_path and self.state_path.exists():
             try:
@@ -915,3 +917,23 @@ class InMemoryBackendRepository:
         if case_id is not None:
             docs = [d for d in docs if d.get("case_id") == case_id]
         return sorted(docs, key=lambda d: str(d.get("uploaded_at", "")), reverse=True)
+
+    # ── Candidate Intelligence & Entity Extraction Methods (P1-B) ───────────
+
+    def store_candidate_extraction(self, extraction_record: dict[str, Any]) -> dict[str, Any]:
+        """Store or update candidate extraction results for a document."""
+        doc_id = extraction_record["document_id"]
+        self.candidate_extractions[doc_id] = extraction_record
+        return extraction_record
+
+    def get_candidate_extraction(self, doc_id: str) -> dict[str, Any] | None:
+        """Retrieve candidate extraction results for a document."""
+        return self.candidate_extractions.get(doc_id)
+
+    def get_candidate_entity(self, candidate_id: str) -> dict[str, Any] | None:
+        """Retrieve a specific candidate entity by candidate_id across all extractions."""
+        for extraction in self.candidate_extractions.values():
+            for entity in extraction.get("candidate_entities", []):
+                if entity.get("candidate_id") == candidate_id:
+                    return entity
+        return None

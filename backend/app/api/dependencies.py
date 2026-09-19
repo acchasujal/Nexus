@@ -190,6 +190,14 @@ def get_document_service(
     return DocumentService(repo, audit_svc)
 
 
+def get_document_extraction_service(
+    repo: RepositoryType = Depends(get_repository),
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> Any:
+    from backend.app.services.document_extraction_service import DocumentExtractionService
+    return DocumentExtractionService(repo, audit_svc)
+
+
 def get_graph_repository(request: Request):
     from backend.app.core.graph.repositories.graph_repository import GraphRepository
     return request.app.state.graph_repo  # type: ignore[no-any-return]

@@ -25,6 +25,7 @@ from backend.app.api.dependencies import (
     get_audit_service,
     get_case_service,
     get_copilot_service,
+    get_document_extraction_service,
     get_document_service,
     get_entity_service,
     get_evidence_authorization_policy,
@@ -52,6 +53,7 @@ from backend.app.core.graph.algorithms.pattern_detection import (
 from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.case_service import InvestigationService
 from backend.app.services.copilot_service import CopilotService
+from backend.app.services.document_extraction_service import DocumentExtractionService
 from backend.app.services.document_service import DocumentService
 from backend.app.services.entity_service import EntityService
 from backend.app.services.evidence_service import EvidenceService
@@ -63,9 +65,12 @@ from shared.contracts.api import (
     AuthLoginRequest,
     AuthTokenResponse,
     BridgeNodeResponse,
+    CandidateEntity,
+    CandidateRelationship,
     CommunityResponse,
     CopilotQueryRequest,
     CopilotQueryResponse,
+    DocumentExtractionResult,
     DocumentResponse,
     DocumentTextResponse,
     DossierExportRequest,
@@ -85,6 +90,7 @@ from shared.contracts.api import (
     InvestigationSummaryResponse,
     NetworkGraphResponse,
     RepeatOffenderResponse,
+    ResolutionCandidateMatch,
     SharedClusterResponse,
     TimelineEventResponse,
     UserRole,
@@ -808,6 +814,127 @@ def create_core_router() -> APIRouter:
         if not text_resp:
             raise HTTPException(status_code=404, detail="Document text not found.")
         return text_resp
+
+    # ── Candidate Intelligence & Entity Extraction (P1-B) ────────────────────
+
+    @router.post("/documents/{document_id}/extract", response_model=DocumentExtractionResult)
+    def extract_document_candidates(
+        document_id: str,
+        force_reextract: bool = Query(False, description="Force re-extraction ignoring cached result"),
+        principal: Principal = Depends(get_principal),
+        doc_service: DocumentService = Depends(get_document_service),
+        extraction_svc: DocumentExtractionService = Depends(get_document_extraction_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+        request_id: str = Depends(get_request_id),
+    ) -> DocumentExtractionResult:
+        """Extract candidate entities and candidate relationships from an authorized document."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required to run document extraction.")
+
+        doc = doc_service.get_document_metadata(document_id, actor_id=principal.user_id, suppress_audit=True)
+        if not doc:
+            raise HTTPException(status_code=404, detail=f"Document '{document_id}' not found.")
+
+        if doc.case_id:
+            allowed, reason = auth_policy.can_access_case(principal, doc.case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        try:
+            return extraction_svc.extract_document_candidates(
+                document_id=document_id,
+                actor_id=principal.user_id,
+                request_id=request_id,
+                force_reextract=force_reextract,
+            )
+        except ValueError as err:
+            raise HTTPException(status_code=404, detail=str(err))
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Extraction failed: {exc}")
+
+    @router.get("/documents/{document_id}/candidates", response_model=DocumentExtractionResult)
+    def get_document_candidates(
+        document_id: str,
+        principal: Principal = Depends(get_principal),
+        doc_service: DocumentService = Depends(get_document_service),
+        extraction_svc: DocumentExtractionService = Depends(get_document_extraction_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+    ) -> DocumentExtractionResult:
+        """Retrieve previously extracted candidate entities and relationships for a document."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required.")
+
+        doc = doc_service.get_document_metadata(document_id, actor_id=principal.user_id, suppress_audit=True)
+        if not doc:
+            raise HTTPException(status_code=404, detail=f"Document '{document_id}' not found.")
+
+        if doc.case_id:
+            allowed, reason = auth_policy.can_access_case(principal, doc.case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        extraction = extraction_svc.get_candidate_extraction(document_id)
+        if not extraction:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No candidate extraction found for document '{document_id}'. Run extraction first.",
+            )
+        return extraction
+
+    @router.get("/candidates/{candidate_id}", response_model=CandidateEntity)
+    def get_candidate_entity(
+        candidate_id: str,
+        principal: Principal = Depends(get_principal),
+        extraction_svc: DocumentExtractionService = Depends(get_document_extraction_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+        audit_svc: AuditService = Depends(get_audit_service),
+        request_id: str = Depends(get_request_id),
+    ) -> CandidateEntity:
+        """Retrieve a specific candidate entity with source span and provenance, enforcing case RBAC."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required.")
+
+        candidate = extraction_svc.get_candidate_entity(candidate_id)
+        if not candidate:
+            raise HTTPException(status_code=404, detail=f"Candidate entity '{candidate_id}' not found.")
+
+        if candidate.case_id:
+            allowed, reason = auth_policy.can_access_case(principal, candidate.case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        audit_svc.record(
+            event_type=AuditEventType.CANDIDATE_VIEWED,
+            actor_id=principal.user_id,
+            case_id=candidate.case_id,
+            entity_id=candidate_id,
+            entity_type="CandidateEntity",
+            request_id=request_id,
+            details={"entity_type": candidate.entity_type, "source_document_id": candidate.source_document_id},
+        )
+        return candidate
+
+    @router.get("/candidates/{candidate_id}/resolution", response_model=list[ResolutionCandidateMatch])
+    def get_candidate_resolution(
+        candidate_id: str,
+        principal: Principal = Depends(get_principal),
+        extraction_svc: DocumentExtractionService = Depends(get_document_extraction_service),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+    ) -> list[ResolutionCandidateMatch]:
+        """Retrieve candidate resolution matches for investigator review."""
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required.")
+
+        candidate = extraction_svc.get_candidate_entity(candidate_id)
+        if not candidate:
+            raise HTTPException(status_code=404, detail=f"Candidate entity '{candidate_id}' not found.")
+
+        if candidate.case_id:
+            allowed, reason = auth_policy.can_access_case(principal, candidate.case_id)
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
+        return candidate.resolution_candidates
 
     # ── Dossier Export (Phase 5 / BE-05) ────────────────────────────────────
 

@@ -12,9 +12,21 @@ import {
   Layers,
   FileCode,
   RotateCcw,
+  Sparkles,
+  Search,
+  ExternalLink,
+  ChevronRight,
+  ChevronDown,
 } from 'lucide-react'
 import { apiClient } from '@/lib/apiClient'
-import type { DocumentResponse, DocumentSourceType, DocumentTextResponse } from '@shared/contracts/api'
+import type {
+  CandidateEntity,
+  CandidateRelationship,
+  DocumentExtractionResult,
+  DocumentResponse,
+  DocumentSourceType,
+  DocumentTextResponse,
+} from '@shared/contracts/api'
 
 export interface DocumentIngestionPanelProps {
   onUploadSuccess?: (doc: DocumentResponse) => void
@@ -38,6 +50,12 @@ export function DocumentIngestionPanel({ onUploadSuccess, defaultCaseId = '' }: 
   const [showTextPreview, setShowTextPreview] = useState<boolean>(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [copiedHash, setCopiedHash] = useState<boolean>(false)
+
+  // ── P1-B Candidate Intelligence State ─────────────────────────────────────
+  const [isExtractingCandidates, setIsExtractingCandidates] = useState<boolean>(false)
+  const [extractionResult, setExtractionResult] = useState<DocumentExtractionResult | null>(null)
+  const [activeCandidateTab, setActiveCandidateTab] = useState<'entities' | 'relationships'>('entities')
+  const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -106,12 +124,28 @@ export function DocumentIngestionPanel({ onUploadSuccess, defaultCaseId = '' }: 
     setTimeout(() => setCopiedHash(false), 2000)
   }
 
+  const handleExtractCandidates = async () => {
+    if (!uploadedDoc || isExtractingCandidates) return
+    setIsExtractingCandidates(true)
+    setErrorMessage(null)
+    try {
+      const result = await apiClient.extractDocumentCandidates(uploadedDoc.document_id)
+      setExtractionResult(result)
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to extract candidate entities from document.')
+    } finally {
+      setIsExtractingCandidates(false)
+    }
+  }
+
   const handleReset = () => {
     setSelectedFile(null)
     setUploadedDoc(null)
     setExtractedText(null)
     setShowTextPreview(false)
     setErrorMessage(null)
+    setExtractionResult(null)
+    setExpandedCandidateId(null)
   }
 
   return (
@@ -369,6 +403,224 @@ export function DocumentIngestionPanel({ onUploadSuccess, defaultCaseId = '' }: 
               {showTextPreview && (
                 <div className="p-3 bg-white max-h-60 overflow-y-auto text-xs font-mono text-neutral-800 whitespace-pre-wrap leading-relaxed border-t border-neutral-200">
                   {extractedText}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Candidate Intelligence Action (P1-B) ────────────────────────── */}
+          <div className="pt-2 border-t border-neutral-100 flex items-center justify-between">
+            <div className="text-xs text-neutral-500">
+              {extractionResult ? (
+                <span>
+                  Extracted <strong className="text-neutral-900">{extractionResult.entity_count}</strong> entities &{' '}
+                  <strong className="text-neutral-900">{extractionResult.relationship_count}</strong> relationships.
+                </span>
+              ) : (
+                <span>Ready to extract candidate entities & relationships</span>
+              )}
+            </div>
+            <button
+              type="button"
+              data-testid="extract-candidates-btn"
+              disabled={isExtractingCandidates}
+              onClick={handleExtractCandidates}
+              className={`inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-2xs ${
+                isExtractingCandidates
+                  ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed border border-neutral-200'
+                  : 'bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-700'
+              }`}
+            >
+              {isExtractingCandidates ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Extracting Candidates...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>{extractionResult ? 'Re-extract Candidates' : 'Extract Candidates (P1-B)'}</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* ── Candidate Intelligence Review Panel (P1-B) ───────────────────── */}
+          {extractionResult && (
+            <div data-testid="candidate-intelligence-section" className="mt-4 pt-4 border-t border-neutral-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <h4 className="text-xs font-bold text-neutral-900">Extracted Intelligence Candidates</h4>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                    CANDIDATE — NOT YET CONFIRMED
+                  </span>
+                </div>
+                <div className="flex items-center space-x-1 bg-neutral-100 p-0.5 rounded-lg text-xs font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setActiveCandidateTab('entities')}
+                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                      activeCandidateTab === 'entities'
+                        ? 'bg-white text-neutral-900 shadow-2xs'
+                        : 'text-neutral-600 hover:text-neutral-900'
+                    }`}
+                  >
+                    Entities ({extractionResult.entity_count})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveCandidateTab('relationships')}
+                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                      activeCandidateTab === 'relationships'
+                        ? 'bg-white text-neutral-900 shadow-2xs'
+                        : 'text-neutral-600 hover:text-neutral-900'
+                    }`}
+                  >
+                    Relationships ({extractionResult.relationship_count})
+                  </button>
+                </div>
+              </div>
+
+              {/* Tab 1: Candidate Entities */}
+              {activeCandidateTab === 'entities' && (
+                <div className="space-y-2">
+                  {extractionResult.candidate_entities.length === 0 ? (
+                    <p className="text-xs text-neutral-500 py-3 text-center">No candidate entities identified.</p>
+                  ) : (
+                    <div className="divide-y divide-neutral-100 border border-neutral-200 rounded-lg overflow-hidden bg-white">
+                      {extractionResult.candidate_entities.map((cand) => {
+                        const isExpanded = expandedCandidateId === cand.candidate_id
+                        const hasMatches = cand.resolution_candidates && cand.resolution_candidates.length > 0
+
+                        return (
+                          <div key={cand.candidate_id} className="p-3 text-xs space-y-2 hover:bg-neutral-50/50 transition-colors">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start space-x-2.5">
+                                <span
+                                  className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    cand.entity_type === 'PERSON'
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : cand.entity_type === 'PHONE'
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : cand.entity_type === 'ACCOUNT'
+                                      ? 'bg-purple-100 text-purple-800'
+                                      : cand.entity_type === 'VEHICLE'
+                                      ? 'bg-amber-100 text-amber-800'
+                                      : cand.entity_type === 'LOCATION'
+                                      ? 'bg-rose-100 text-rose-800'
+                                      : 'bg-neutral-100 text-neutral-800'
+                                  }`}
+                                >
+                                  {cand.entity_type}
+                                </span>
+                                <div>
+                                  <div className="font-semibold text-neutral-900">{cand.surface_text}</div>
+                                  <div className="text-[11px] text-neutral-500">
+                                    Normalized: <span className="font-mono text-neutral-700">{cand.normalized_value}</span> ·
+                                    Span: [{cand.source_span.start}..{cand.source_span.end}] · Confidence:{' '}
+                                    {(cand.confidence * 100).toFixed(0)}%
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div>
+                                {hasMatches ? (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setExpandedCandidateId(isExpanded ? null : cand.candidate_id)
+                                    }
+                                    className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-amber-50 text-amber-800 hover:bg-amber-100 font-semibold text-[11px] border border-amber-200 transition-colors"
+                                  >
+                                    <span>{cand.resolution_candidates.length} Candidate Matches</span>
+                                    {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                                  </button>
+                                ) : (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-neutral-100 text-neutral-600">
+                                    No Prior Match
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Evidence Snippet */}
+                            <div className="text-[11px] text-neutral-600 bg-neutral-50 p-2 rounded border border-neutral-100 font-mono">
+                              <span className="text-neutral-400 font-normal">Evidence: </span>
+                              "{cand.evidence_text}"
+                            </div>
+
+                            {/* Expanded Candidate Matches List */}
+                            {isExpanded && hasMatches && (
+                              <div className="mt-2 p-2.5 bg-neutral-50 border border-neutral-200 rounded-lg space-y-2">
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+                                  Candidate Canonical Entity Matches (Read-Only Graph Review)
+                                </div>
+                                <div className="space-y-1.5">
+                                  {cand.resolution_candidates.map((match) => (
+                                    <div
+                                      key={match.canonical_entity_id}
+                                      className="p-2 bg-white rounded border border-neutral-200 flex items-center justify-between text-xs"
+                                    >
+                                      <div>
+                                        <div className="font-semibold text-neutral-900 flex items-center space-x-1.5">
+                                          <span>{match.canonical_name}</span>
+                                          <span className="text-[10px] font-mono text-neutral-400">
+                                            ({match.canonical_entity_id})
+                                          </span>
+                                        </div>
+                                        <div className="text-[10px] text-neutral-500 mt-0.5">
+                                          {match.match_reasons.join(', ')}
+                                        </div>
+                                      </div>
+                                      <div className="text-right shrink-0">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded font-bold text-[10px] bg-blue-50 text-blue-700 border border-blue-100">
+                                          {(match.match_score * 100).toFixed(0)}% Match
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tab 2: Candidate Relationships */}
+              {activeCandidateTab === 'relationships' && (
+                <div className="space-y-2">
+                  {extractionResult.candidate_relationships.length === 0 ? (
+                    <div className="p-4 text-center border border-dashed border-neutral-200 rounded-lg text-xs text-neutral-500">
+                      No candidate relationships identified with explicit textual evidence.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-neutral-100 border border-neutral-200 rounded-lg overflow-hidden bg-white">
+                      {extractionResult.candidate_relationships.map((rel) => (
+                        <div key={rel.candidate_relationship_id} className="p-3 text-xs space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-semibold text-neutral-900">{rel.source_text}</span>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800">
+                                {rel.relationship_type}
+                              </span>
+                              <span className="font-semibold text-neutral-900">{rel.target_text}</span>
+                            </div>
+                            <span className="text-[10px] font-semibold text-neutral-500">
+                              {(rel.confidence * 100).toFixed(0)}% Conf
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-neutral-600 bg-neutral-50 p-2 rounded border border-neutral-100 font-mono">
+                            <span className="text-neutral-400 font-normal">Evidence: </span>
+                            "{rel.evidence_text}"
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -83,6 +83,9 @@ class AuditEventType(str, Enum):
     DOCUMENT_UPLOADED = "document_uploaded"
     DOCUMENT_VIEWED = "document_viewed"
     DOCUMENT_EXTRACTION_FAILED = "document_extraction_failed"
+    DOCUMENT_EXTRACTION_STARTED = "document_extraction_started"
+    DOCUMENT_CANDIDATES_EXTRACTED = "document_candidates_extracted"
+    CANDIDATE_VIEWED = "candidate_viewed"
 
     # Export (BE-05)
     EXPORT_INITIATED = "export_initiated"

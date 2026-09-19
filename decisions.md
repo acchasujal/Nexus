@@ -226,3 +226,24 @@ This document is the **single source of truth** for material architectural, secu
   - *Direct LLM extraction directly into graph on upload:* Rejected; violates deterministic auditability and risks hallucinations mutating the authoritative graph.
   - *Storing multi-gigabyte raw binaries directly inside relational SQL columns:* Rejected; decoupled `DocumentService` operates via clean persistence abstraction allowing future blob/object storage backends.
 - **Consequences:** Provides a secure, tamper-evident, RBAC-governed document extraction foundation. Existing CSV ingestion remains 100% unchanged.
+
+---
+
+## DEC-015 — Document Intelligence: Deterministic Candidate Entity & Relationship Extraction (P1-B)
+- **Date:** 2026-09-19
+- **Status:** Accepted & Implemented (P1-B)
+- **Decision:**
+  1. Establish Phase P1-B pipeline:
+     $$\text{DOCUMENT} \to \text{EXTRACTED TEXT} \to \text{CANDIDATE ENTITIES} \to \text{CANDIDATE RESOLUTION} \to \text{CANDIDATE RELATIONSHIPS} \to \text{PROVENANCE} \to \text{STOP}$$
+  2. **Absolute Zero-Mutation Invariant:** P1-B must never mutate the authoritative investigation graph. It has no authority to create, update, or delete nodes or edges, or merge/fuse entities. Enforced and validated via deep graph state equality assertions before and after extraction (`authoritative_graph_before == authoritative_graph_after`).
+  3. **Deterministic Extraction Priority:** Deterministic high-precision candidate extraction operates completely independently. Optional LLM enrichment is strictly non-authoritative and every LLM output must be deterministically validated against source spans.
+  4. **Strictly Read-Only Resolution:** Candidate resolution queries existing canonical graph entities via read-only inspection to identify candidate matches (`REVIEW_REQUIRED` / `NO_MATCH_FOUND`). It never outputs authoritative confirmation or "MATCHED" state.
+  5. **Explicit Evidence Requirement for Relationships:** Candidate relationships are produced only where explicit textual connective evidence exists. Mere paragraph co-occurrence without relational predicates strictly yields zero relationships (unsupported inference guard).
+  6. **Case RBAC & Auditability:** Candidate extraction and retrieval endpoints (`POST /documents/{id}/extract`, `GET /documents/{id}/candidates`, `GET /candidates/{id}`, `GET /candidates/{id}/resolution`) strictly enforce canonical case jurisdiction and record audit events (`DOCUMENT_EXTRACTION_STARTED`, `DOCUMENT_CANDIDATES_EXTRACTED`, `CANDIDATE_VIEWED`).
+  7. **Strict Phase Boundary:** P1-B strictly stops before P1-C. No "Add to Graph", no candidate promotion, and no investigator accept/reject logic is implemented in this phase.
+- **Reason:** Criminal intelligence cannot permit black-box ungrounded entity injection into the authoritative case graph. Establishing an isolated, verifiable candidate layer with explicit provenance and read-only resolution guarantees that human investigators retain constitutional sovereignty over what enters the court-admissible graph.
+- **Alternatives Considered:**
+  - *Direct graph ingestion from text:* Rejected; risks hallucinated or false nodes polluting the evidence network.
+  - *Automated entity fusion during extraction:* Rejected; violates judicial and evidentiary standards under Indian law.
+- **Consequences:** Provides an explainable, isolated candidate extraction layer with complete provenance grounding. Prepares the system for investigator-guided P1-C candidate review.
+
