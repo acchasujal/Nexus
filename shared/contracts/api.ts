@@ -1116,6 +1116,49 @@ export interface AcknowledgePulseRequest {
   note?: string | null
 }
 
+// ── A14 Affected Investigation Routing Contracts ─────────────────────────────
+
+export interface AffectedInvestigationRoute {
+  route_id: string
+  origin_case_id: string
+  origin_district: string
+  target_case_id: string
+  target_district: string
+  trigger_event_id?: string | null
+  source_snapshot_id: string
+  target_snapshot_id: string
+  diff_summary: Record<string, number>
+  intersecting_entity_ids: string[]
+  intersecting_edge_ids: string[]
+  routing_reason: string
+  evidence_refs: string[]
+  route_hash: string
+  status: PulseDeliveryStatus
+  dispatched_at: string
+  acknowledged_at?: string | null
+  acknowledged_by?: string | null
+  acknowledgment_note?: string | null
+}
+
+export interface AcknowledgeRouteRequest {
+  decision: 'ACKNOWLEDGE' | 'ACTION' | 'REJECT'
+  note?: string | null
+}
+
+export interface EvaluateRoutingRequest {
+  origin_case_id?: string | null
+  source_snapshot_id?: string | null
+  target_snapshot_id?: string | null
+  trigger_event_id?: string | null
+  changed_entity_ids?: string[]
+  changed_edge_ids?: string[]
+}
+
+export interface RouteQueryResponse {
+  total: number
+  routes: AffectedInvestigationRoute[]
+}
+
 // ── P1-C Network Adaptation Engine Contracts ─────────────────────────────────
 
 export type NetworkAdaptationType = 

@@ -80,6 +80,7 @@ class InMemoryBackendRepository:
         self.intelligence_events: dict[str, dict[str, Any]] = {}
         self.verification_tasks: dict[str, dict[str, Any]] = {}
         self.evidence_assessments: dict[str, dict[str, Any]] = {}
+        self.affected_routes: dict[str, dict[str, Any]] = {}
         self.state_path = state_path
 
         self._load_artifact(artifact_path or self._default_artifact_path())
@@ -105,6 +106,7 @@ class InMemoryBackendRepository:
         self.intelligence_events.clear()
         self.verification_tasks.clear()
         self.evidence_assessments.clear()
+        self.affected_routes.clear()
         self._load_artifact(self._default_artifact_path())
         if self.state_path and self.state_path.exists():
             try:
@@ -267,6 +269,7 @@ class InMemoryBackendRepository:
             self.intelligence_events = dict(raw.get("intelligence_events", {}))
             self.verification_tasks = dict(raw.get("verification_tasks", {}))
             self.evidence_assessments = dict(raw.get("evidence_assessments", {}))
+            self.affected_routes = dict(raw.get("affected_routes", {}))
         except (json.JSONDecodeError, OSError, ValueError, TypeError) as exc:
             logger.debug("Optional state file loading skipped: %s", exc)
 
@@ -280,6 +283,7 @@ class InMemoryBackendRepository:
             "intelligence_events": self.intelligence_events,
             "verification_tasks": self.verification_tasks,
             "evidence_assessments": self.evidence_assessments,
+            "affected_routes": self.affected_routes,
             "saved_at": _utcnow().isoformat(),
         }
         self.state_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -626,7 +630,153 @@ class InMemoryBackendRepository:
         res = self.get_investigation_detail(case_id)
         return res.model_dump() if res else None
 
-    # ── Subgraph & Network Visualizer ─────────────────────────────────────────
+    def resolve_cases_for_entities_and_edges(
+        self,
+        entity_ids: list[str],
+        edge_ids: list[str],
+    ) -> dict[str, dict[str, Any]]:
+        """
+        Deterministically resolve all existing cases that contain or intersect
+        with the specified entities and edges (A14).
+        
+        Returns:
+            dict mapping case_id -> {
+                "case_id": str,
+                "district": str,
+                "intersecting_entity_ids": list[str],
+                "intersecting_edge_ids": list[str],
+                "reasons": list[str],
+            }
+        """
+        results: dict[str, dict[str, Any]] = {}
+
+        def _get_or_create_case_record(cid: str) -> dict[str, Any]:
+            if cid not in results:
+                node = self.nodes.get(cid, {})
+                props = node.get("properties", {})
+                results[cid] = {
+                    "case_id": cid,
+                    "district": props.get("district", "Unknown District"),
+                    "intersecting_entity_ids": set(),
+                    "intersecting_edge_ids": set(),
+                    "reasons": [],
+                }
+            return results[cid]
+
+        # 1. Resolve for entity_ids
+        for eid in entity_ids:
+            clean_eid = str(eid).strip()
+            if not clean_eid:
+                continue
+
+            node = self.nodes.get(clean_eid)
+            # Case A: entity is a Case node itself
+            if node and node.get("entity_type") in ("Case", "CASE"):
+                rec = _get_or_create_case_record(clean_eid)
+                rec["intersecting_entity_ids"].add(clean_eid)
+                rec["reasons"].append(f"Changed entity '{clean_eid}' is target investigation itself.")
+
+            # Case B: incident edges connecting entity to a Case node
+            for edge in self.incident_edges.get(clean_eid, []):
+                src = str(edge.get("source_id", ""))
+                tgt = str(edge.get("target_id", ""))
+                other = tgt if src == clean_eid else src
+                other_node = self.nodes.get(other, {})
+                if other_node and other_node.get("entity_type") in ("Case", "CASE"):
+                    etype = edge.get("edge_type", "LINKED_TO")
+                    edge_id_val = str(edge.get("id", f"{src}_{etype}_{tgt}"))
+                    rec = _get_or_create_case_record(other)
+                    rec["intersecting_entity_ids"].add(clean_eid)
+                    rec["intersecting_edge_ids"].add(edge_id_val)
+                    rec["reasons"].append(f"Changed entity '{clean_eid}' is linked to case {other} via {etype}.")
+
+            # Case C: node properties containing case_ids / case_id
+            if node:
+                props = node.get("properties", {})
+                cids = props.get("case_ids")
+                if isinstance(cids, list):
+                    for cid in cids:
+                        cid_str = str(cid).strip()
+                        if cid_str in self.nodes and self.nodes[cid_str].get("entity_type") in ("Case", "CASE"):
+                            rec = _get_or_create_case_record(cid_str)
+                            rec["intersecting_entity_ids"].add(clean_eid)
+                            rec["reasons"].append(f"Changed entity '{clean_eid}' references {cid_str} in node case_ids.")
+                single_cid = props.get("case_id")
+                if single_cid:
+                    scid_str = str(single_cid).strip()
+                    if scid_str in self.nodes and self.nodes[scid_str].get("entity_type") in ("Case", "CASE"):
+                        rec = _get_or_create_case_record(scid_str)
+                        rec["intersecting_entity_ids"].add(clean_eid)
+                        rec["reasons"].append(f"Changed entity '{clean_eid}' references {scid_str} in node case_id.")
+
+        # 2. Resolve for edge_ids
+        edge_map = {str(e.get("id", "")): e for e in self.edges if e.get("id")}
+        for rel_id in edge_ids:
+            clean_rid = str(rel_id).strip()
+            if not clean_rid:
+                continue
+
+            edge_obj = edge_map.get(clean_rid)
+            src_id = ""
+            tgt_id = ""
+            e_type = ""
+
+            if edge_obj:
+                src_id = str(edge_obj.get("source_id", ""))
+                tgt_id = str(edge_obj.get("target_id", ""))
+                e_type = str(edge_obj.get("edge_type", ""))
+                # Check explicit case_ids on edge
+                edge_cids = edge_obj.get("case_ids") or edge_obj.get("properties", {}).get("case_ids") or []
+                if isinstance(edge_cids, list):
+                    for cid in edge_cids:
+                        cid_str = str(cid).strip()
+                        if cid_str in self.nodes and self.nodes[cid_str].get("entity_type") in ("Case", "CASE"):
+                            rec = _get_or_create_case_record(cid_str)
+                            rec["intersecting_edge_ids"].add(clean_rid)
+                            rec["reasons"].append(f"Changed relationship '{clean_rid}' is explicitly scoped to {cid_str}.")
+            else:
+                # Parse fallback format e.g. rel_SRC_TYPE_TGT
+                parts = clean_rid.split("_")
+                if len(parts) >= 4 and parts[0] == "rel":
+                    src_id = parts[1]
+                    e_type = parts[2]
+                    tgt_id = parts[3]
+
+            # If an endpoint is a Case node
+            for endpoint_id in (src_id, tgt_id):
+                if endpoint_id and endpoint_id in self.nodes:
+                    ep_node = self.nodes[endpoint_id]
+                    if ep_node.get("entity_type") in ("Case", "CASE"):
+                        rec = _get_or_create_case_record(endpoint_id)
+                        rec["intersecting_edge_ids"].add(clean_rid)
+                        rec["reasons"].append(f"Changed relationship '{clean_rid}' ({e_type}) directly connects to {endpoint_id}.")
+
+            # If endpoints are entities belonging to cases
+            for ep_id in (src_id, tgt_id):
+                if not ep_id:
+                    continue
+                for edge in self.incident_edges.get(ep_id, []):
+                    s = str(edge.get("source_id", ""))
+                    t = str(edge.get("target_id", ""))
+                    other = t if s == ep_id else s
+                    other_node = self.nodes.get(other, {})
+                    if other_node and other_node.get("entity_type") in ("Case", "CASE"):
+                        rec = _get_or_create_case_record(other)
+                        rec["intersecting_edge_ids"].add(clean_rid)
+                        rec["intersecting_entity_ids"].add(ep_id)
+                        rec["reasons"].append(f"Changed relationship '{clean_rid}' endpoint '{ep_id}' is linked to case {other}.")
+
+        # Convert sets to sorted lists
+        final_output: dict[str, dict[str, Any]] = {}
+        for cid, data in results.items():
+            final_output[cid] = {
+                "case_id": cid,
+                "district": data["district"],
+                "intersecting_entity_ids": sorted(list(data["intersecting_entity_ids"])),
+                "intersecting_edge_ids": sorted(list(data["intersecting_edge_ids"])),
+                "reasons": list(dict.fromkeys(data["reasons"])),
+            }
+        return final_output
 
     # ── Subgraph & Network Visualizer ─────────────────────────────────────────
 

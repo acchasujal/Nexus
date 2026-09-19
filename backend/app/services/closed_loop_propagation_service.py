@@ -59,6 +59,8 @@ class PropagationResult(BaseModel):
     diff_summary: dict[str, int] = Field(default_factory=dict)
     emitted_event_ids: list[str] = Field(default_factory=list)
     generated_pulse_ids: list[str] = Field(default_factory=list)
+    routed_case_ids: list[str] = Field(default_factory=list)
+    route_ids: list[str] = Field(default_factory=list)
     status: str = "COMPLETED"  # "COMPLETED" | "FAILED" | "SKIPPED_NO_DIFF"
     error_message: str | None = None
     executed_at: datetime = Field(default_factory=_utcnow)
@@ -74,12 +76,14 @@ class ClosedLoopPropagationService:
         intel_event_service: IntelligenceEventService | None = None,
         audit_service: AuditService | None = None,
         auth_policy: EvidenceAuthorizationPolicy | None = None,
+        routing_service: Any | None = None,
     ) -> None:
         self._repo = repository
         self._proactive_svc = proactive_service
         self._intel_svc = intel_event_service
         self._audit = audit_service
         self._auth = auth_policy
+        self._routing_svc = routing_service
         self._propagations: dict[str, PropagationResult] = {}
 
     def get_propagation(self, decision_id: str) -> PropagationResult | None:
@@ -299,6 +303,25 @@ class ClosedLoopPropagationService:
                     except Exception as exc:
                         logger.warning("Failed emitting SIGNAL_GENERATED event for %s: %s", pulse.pulse_id, exc)
 
+            # 8b. Affected Investigation Routing (A14)
+            routed_case_ids: list[str] = []
+            route_ids: list[str] = []
+            if has_changes and self._routing_svc:
+                try:
+                    routes = self._routing_svc.route_network_diff(
+                        raw_diff=raw_diff,
+                        origin_case_id=clean_case_id,
+                        target_snapshot_id=new_snapshot_id,
+                        source_snapshot_id=prev_snapshot_id,
+                        trigger_event_id=clean_dec_id,
+                        principal=principal,
+                        evidence_refs=evidence_refs,
+                    )
+                    routed_case_ids = [r.target_case_id for r in routes]
+                    route_ids = [r.route_id for r in routes]
+                except Exception as exc:
+                    logger.warning("Affected investigation routing failed for %s: %s", clean_dec_id, exc)
+
             # 9. Audit Trail
             if self._audit:
                 self._audit.record(
@@ -313,6 +336,7 @@ class ClosedLoopPropagationService:
                         "previous_snapshot_id": prev_snapshot_id,
                         "pulse_count": len(pulses),
                         "diff_summary": diff_summary,
+                        "routed_case_count": len(routed_case_ids),
                     },
                 )
 
@@ -327,16 +351,19 @@ class ClosedLoopPropagationService:
                 diff_summary=diff_summary,
                 emitted_event_ids=emitted_event_ids,
                 generated_pulse_ids=generated_pulse_ids,
+                routed_case_ids=routed_case_ids,
+                route_ids=route_ids,
                 status=result_status,
                 error_message=None,
                 executed_at=now,
             )
             self._propagations[clean_dec_id] = res
             logger.info(
-                "Closed-loop propagation completed for decision %s (snapshot=%s, pulses=%d)",
+                "Closed-loop propagation completed for decision %s (snapshot=%s, pulses=%d, routed_cases=%d)",
                 clean_dec_id,
                 new_snapshot_id,
                 len(pulses),
+                len(routed_case_ids),
             )
             return res
 

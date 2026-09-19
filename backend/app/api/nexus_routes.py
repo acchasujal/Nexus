@@ -49,6 +49,7 @@ from backend.app.api.dependencies import (
     get_verification_task_service,
     get_evidence_assessment_service,
     get_closed_loop_propagation_service,
+    get_affected_investigation_routing_service,
 )
 from backend.app.services.closed_loop_propagation_service import PropagationResult
 from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
@@ -63,7 +64,9 @@ from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.copilot_service import CopilotService
 from shared.contracts.api import (
     AcknowledgePulseRequest,
+    AcknowledgeRouteRequest,
     AdaptationReviewStatus,
+    AffectedInvestigationRoute,
     CaseDNA,
     CaseDNAMatchResponse,
     CombinedBridgeSignal,
@@ -77,6 +80,7 @@ from shared.contracts.api import (
     DigitalShadowLifecycle,
     DigitalShadowPlatform,
     DistrictHotspotIntelligence,
+    EvaluateRoutingRequest,
     EvidenceBatchVerifyRequest,
     IntelligenceEvent,
     IntelligenceEventListResponse,
@@ -89,6 +93,7 @@ from shared.contracts.api import (
     IdentityDriftStatus,
     IdentityDriftType,
     IntelligencePulsePacket,
+    PulseDeliveryStatus,
     NetworkAdaptationEvent,
     NetworkAdaptationType,
     NetworkGraphResponse,
@@ -96,6 +101,7 @@ from shared.contracts.api import (
     NexusDossierResponse,
     NexusDossierVerificationResponse,
     RepeatOffenderRadarItem,
+    RouteQueryResponse,
     GraphSnapshotSummary,
     NetworkDiffResponse,
     NetworkPulseItem,
@@ -2283,6 +2289,79 @@ def create_nexus_router() -> APIRouter:
             raise HTTPException(status_code=404, detail=str(e))
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Failed to acknowledge pulse: {e}")
+
+    # ── A14 Affected Investigation Routing Endpoints ─────────────────────────
+
+    @router.post("/nexus/routing/evaluate", response_model=list[AffectedInvestigationRoute])
+    def evaluate_affected_investigation_routing(
+        request: EvaluateRoutingRequest,
+        principal: Principal = Depends(get_principal),
+        routing_svc: Any = Depends(get_affected_investigation_routing_service),
+    ) -> list[AffectedInvestigationRoute]:
+        """
+        Deterministically evaluate and route network changes to affected investigations.
+        """
+        try:
+            return routing_svc.route_entities_and_edges(
+                entity_ids=request.changed_entity_ids,
+                edge_ids=request.changed_edge_ids,
+                origin_case_id=request.origin_case_id,
+                target_snapshot_id=request.target_snapshot_id or "snap-eval-target",
+                source_snapshot_id=request.source_snapshot_id or "snap-eval-source",
+                trigger_event_id=request.trigger_event_id,
+                principal=principal,
+            )
+        except PermissionError as e:
+            raise HTTPException(status_code=403, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed evaluating affected routing: {e}")
+
+    @router.get("/nexus/routing/inbox", response_model=list[AffectedInvestigationRoute])
+    def list_affected_investigation_routes_inbox(
+        case_id: str | None = Query(None, description="Filter by case ID"),
+        district: str | None = Query(None, description="Filter by target district"),
+        status: PulseDeliveryStatus | None = Query(None, description="Filter by route status"),
+        principal: Principal = Depends(get_principal),
+        routing_svc: Any = Depends(get_affected_investigation_routing_service),
+    ) -> list[AffectedInvestigationRoute]:
+        """
+        List incoming affected investigation routes authorized for the authenticated officer.
+        """
+        return routing_svc.list_inbox_routes(principal, case_id=case_id, district=district, status=status)
+
+    @router.get("/nexus/routing/{route_id}", response_model=AffectedInvestigationRoute)
+    def get_affected_investigation_route_detail(
+        route_id: str,
+        principal: Principal = Depends(get_principal),
+        routing_svc: Any = Depends(get_affected_investigation_routing_service),
+    ) -> AffectedInvestigationRoute:
+        """Retrieve single affected investigation route record with evidence grounding."""
+        try:
+            route = routing_svc.get_route(route_id, principal=principal)
+            if not route:
+                raise HTTPException(status_code=404, detail=f"Route '{route_id}' not found.")
+            return route
+        except PermissionError as e:
+            raise HTTPException(status_code=403, detail=str(e))
+
+    @router.post("/nexus/routing/{route_id}/acknowledge", response_model=AffectedInvestigationRoute)
+    def acknowledge_affected_investigation_route(
+        route_id: str,
+        request: AcknowledgeRouteRequest,
+        principal: Principal = Depends(get_principal),
+        routing_svc: Any = Depends(get_affected_investigation_routing_service),
+    ) -> AffectedInvestigationRoute:
+        """
+        Record authoritative officer acknowledgment, action, or rejection on an affected investigation route.
+        """
+        try:
+            return routing_svc.acknowledge_route(route_id, request, principal)
+        except KeyError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except PermissionError as e:
+            raise HTTPException(status_code=403, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed acknowledging route: {e}")
 
     # ── P1-B Identity Drift Radar Endpoints ────────────────────────────────────
 

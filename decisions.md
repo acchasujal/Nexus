@@ -384,4 +384,19 @@ This document is the **single source of truth** for material architectural, secu
 - **Consequences:** Enables investigators to see the immediate network consequences of verified facts in the form of refreshed pulses, diffs, and audit trails without manual snapshot orchestration.
 
 
+## ADR-0013: A14 Affected Investigation Routing Architecture
+
+- **Context:** Following authoritative graph mutations and deterministic network diffs (A8), cross-jurisdiction criminal networks alter connections across investigations. NEXUS required a deterministic, evidence-grounded routing subsystem (A14) to identify which existing investigations/cases are affected and route actionable intelligence to assigned investigators without predictive guilt, suspect ranking, or autonomous case alteration.
+- **Decision:**
+  1. **Deterministic Graph-Case Intersection:** Implemented `resolve_cases_for_entities_and_edges` in `InMemoryBackendRepository`. A case is affected if a changed entity is accused/involved/evidenced in that case, or if a changed edge connects to an entity in that case, or if an edge is explicitly case-scoped. No arbitrary graph proximity heuristics.
+  2. **Reused Lifecycle & Zero Event Duplication:** Reused `PulseDeliveryStatus` (`DISPATCHED`, `DELIVERED`, `ACKNOWLEDGED`, `ACTIONED`, `REJECTED`) and reused `IntelligenceEventType.SIGNAL_GENERATED` with `source_type="AFFECTED_INVESTIGATION_ROUTE"`. Zero new event types introduced.
+  3. **Originating Case Exclusion:** The case originating the mutation is explicitly excluded from target routes to prevent self-routing.
+  4. **Strict Idempotency:** Routes are uniquely keyed on `route-{source_snap_clean}-{target_snap_clean}-{target_case_clean}`. Re-evaluating identical diffs returns the cached route without creating duplicates.
+  5. **Backward Compatibility:** Every `AffectedInvestigationRoute` automatically synchronizes into `repo.intelligence_pulses` for frontend `CrossJurisdictionPulseSection` compatibility.
+  6. **Graph Mutation Isolation:** Routing errors are caught and logged; authoritative graph mutations and snapshots are never rolled back if routing encounters an exception.
+  7. **Human-in-the-Loop:** Routes are informational intelligence items; A7 verification tasks are not automatically created.
+- **Reason:** Ensures rapid, evidence-grounded cross-case intelligence routing across jurisdictions without predictive bias or unverified assumptions.
+- **Consequences:** Investigators assigned to affected investigations immediately receive verified change intelligence with grounded Section 63 BSA evidence references and cryptographic payload sealing.
+
+
 

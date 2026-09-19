@@ -427,6 +427,28 @@ def get_evidence_assessment_service(
     return assessment_svc
 
 
+def get_affected_investigation_routing_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_service: AuditService = Depends(get_audit_service),
+    auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+    intel_svc: Any = Depends(get_intelligence_event_service),
+) -> Any:
+    """Return the shared or per-request AffectedInvestigationRoutingService instance."""
+    routing_svc = getattr(request.app.state, "affected_investigation_routing_service", None)
+    if routing_svc is not None:
+        return routing_svc
+    from backend.app.services.affected_investigation_routing_service import AffectedInvestigationRoutingService
+    routing_svc = AffectedInvestigationRoutingService(
+        repository=repo,
+        audit_service=audit_service,
+        auth_policy=auth_policy,
+        intelligence_event_service=intel_svc,
+    )
+    request.app.state.affected_investigation_routing_service = routing_svc
+    return routing_svc
+
+
 def get_closed_loop_propagation_service(
     request: Request,
     repo: InMemoryBackendRepository = Depends(get_repository),
@@ -434,6 +456,7 @@ def get_closed_loop_propagation_service(
     intel_svc: Any = Depends(get_intelligence_event_service),
     audit_svc: AuditService = Depends(get_audit_service),
     auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+    routing_svc: Any = Depends(get_affected_investigation_routing_service),
 ) -> Any:
     """Return the shared or per-request ClosedLoopPropagationService instance."""
     prop_svc = getattr(request.app.state, "closed_loop_propagation_service", None)
@@ -446,6 +469,7 @@ def get_closed_loop_propagation_service(
         intel_event_service=intel_svc,
         audit_service=audit_svc,
         auth_policy=auth_policy,
+        routing_service=routing_svc,
     )
     request.app.state.closed_loop_propagation_service = prop_svc
     return prop_svc

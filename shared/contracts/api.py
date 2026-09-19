@@ -1001,6 +1001,55 @@ class AcknowledgePulseRequest(BaseModel):
     note: str | None = None
 
 
+# ── A14 Affected Investigation Routing Contracts ─────────────────────────────
+
+class AffectedInvestigationRoute(BaseModel):
+    """
+    Authoritative routing record directing criminal network change intelligence
+    to deterministically affected investigations (A14).
+    Grounded in verifiable evidence provenance and Section 63 BSA compliance,
+    without predictive guilt or speculative prioritization.
+    """
+    route_id: str
+    origin_case_id: str
+    origin_district: str
+    target_case_id: str
+    target_district: str
+    trigger_event_id: str | None = None
+    source_snapshot_id: str
+    target_snapshot_id: str
+    diff_summary: dict[str, int] = Field(default_factory=dict)
+    intersecting_entity_ids: list[str] = Field(default_factory=list)
+    intersecting_edge_ids: list[str] = Field(default_factory=list)
+    routing_reason: str
+    evidence_refs: list[str] = Field(default_factory=list)
+    route_hash: str
+    status: PulseDeliveryStatus = PulseDeliveryStatus.DISPATCHED
+    dispatched_at: str = Field(default_factory=lambda: _utcnow().isoformat())
+    acknowledged_at: str | None = None
+    acknowledged_by: str | None = None
+    acknowledgment_note: str | None = None
+
+
+class AcknowledgeRouteRequest(BaseModel):
+    decision: str  # ACKNOWLEDGE, ACTION, REJECT
+    note: str | None = None
+
+
+class EvaluateRoutingRequest(BaseModel):
+    origin_case_id: str | None = None
+    source_snapshot_id: str | None = None
+    target_snapshot_id: str | None = None
+    trigger_event_id: str | None = None
+    changed_entity_ids: list[str] = Field(default_factory=list)
+    changed_edge_ids: list[str] = Field(default_factory=list)
+
+
+class RouteQueryResponse(BaseModel):
+    total: int
+    routes: list[AffectedInvestigationRoute] = Field(default_factory=list)
+
+
 # ── P1-B Identity Drift Radar Contracts ───────────────────────────────────────
 
 class IdentityDriftType(str, Enum):
