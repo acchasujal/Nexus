@@ -36,6 +36,7 @@ from backend.app.api.dependencies import (
     get_principal,
     get_repository,
     get_request_id,
+    get_timeline_service,
 )
 from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
 from backend.app.auth.principal import Principal, resolve_officer_identity
@@ -419,35 +420,21 @@ def create_core_router() -> APIRouter:
     @router.get("/timeline", response_model=list[TimelineEventResponse])
     def get_timeline_events(
         case_id: str | None = Query(None),
-        repo: Any = Depends(get_repository),
-        audit: AuditService = Depends(get_audit_service),
+        limit: int = Query(50, ge=1, le=200),
+        offset: int = Query(0, ge=0),
+        timeline_svc: Any = Depends(get_timeline_service),
         principal: Principal = Depends(get_principal),
         request_id: str = Depends(get_request_id),
     ) -> list[TimelineEventResponse]:
-        events: list[TimelineEventResponse] = []
-        for nid, node in repo.nodes.items():
-            if node.get("entity_type") in ("Event", "EVENT", "Case", "CASE"):
-                props = node.get("properties", {})
-                ts = props.get("timestamp") or props.get("incident_date") or props.get("created_at") or "2026-01-15T10:00:00Z"
-                desc = props.get("description") or props.get("summary") or props.get("title") or "Logged graph event"
-                events.append(
-                    TimelineEventResponse(
-                        id=nid,
-                        event_type=props.get("event_type", node.get("entity_type")),
-                        timestamp=ts,
-                        description=desc,
-                        participant_ids=props.get("participant_ids", []),
-                        case_id=case_id or props.get("case_id"),
-                    )
-                )
-
-        audit.record(
-            AuditEventType.TIMELINE_VIEWED,
-            actor_id=principal.user_id,
+        """Retrieve chronological timeline events for a case or all authorized cases."""
+        return timeline_svc.get_timeline_events(
+            principal=principal,
             case_id=case_id,
+            limit=limit,
+            offset=offset,
             request_id=request_id,
         )
-        return sorted(events, key=lambda e: e.timestamp, reverse=True)[:50]
+
 
     # ── Investigator Copilot ──────────────────────────────────────────────────
 

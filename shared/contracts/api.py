@@ -398,6 +398,20 @@ class SharedClusterResponse(BaseModel):
     reason: str
 
 
+class TimelineEventCategory(str, Enum):
+    CASE_REGISTRATION = "CASE_REGISTRATION"
+    EVIDENCE_DOCUMENT = "EVIDENCE_DOCUMENT"
+    COMMUNICATION = "COMMUNICATION"
+    FINANCIAL_TRANSACTION = "FINANCIAL_TRANSACTION"
+    SURVEILLANCE_SIGHTING = "SURVEILLANCE_SIGHTING"
+    INVESTIGATOR_ACTION = "INVESTIGATOR_ACTION"
+    GRAPH_CHANGE = "GRAPH_CHANGE"
+    INTELLIGENCE_SIGNAL = "INTELLIGENCE_SIGNAL"
+    EVIDENCE_ASSESSMENT = "EVIDENCE_ASSESSMENT"
+    VERIFICATION_WORKFLOW = "VERIFICATION_WORKFLOW"
+    CROSS_CASE_ROUTE = "CROSS_CASE_ROUTE"
+
+
 class TimelineEventResponse(BaseModel):
     id: str
     event_type: str
@@ -406,6 +420,35 @@ class TimelineEventResponse(BaseModel):
     participant_ids: list[str] = Field(default_factory=list)
     location_id: str | None = None
     case_id: str | None = None
+    # Rich A15 extensions (backward-compatible with defaults)
+    category: TimelineEventCategory | None = None
+    occurred_at: datetime | None = None
+    recorded_at: datetime | None = None
+    title: str | None = None
+    edge_ids: list[str] = Field(default_factory=list)
+    source_type: str | None = None
+    source_id: str | None = None
+    locator: str | None = None
+    actor_id: str | None = None
+    actor_role: UserRole | None = None
+    intelligence_event_id: str | None = None
+    evidence_refs: list[str] = Field(default_factory=list)
+    snapshot_id: str | None = None
+    route_id: str | None = None
+    task_id: str | None = None
+    assessment_id: str | None = None
+    properties: dict[str, Any] = Field(default_factory=dict)
+
+
+class TimelineQueryResponse(BaseModel):
+    events: list[TimelineEventResponse]
+    total_count: int
+    case_id: str | None = None
+    entity_id: str | None = None
+    limit: int = 50
+    offset: int = 0
+    has_more: bool = False
+
 
 
 # ── Case / Investigation ──────────────────────────────────────────────────────

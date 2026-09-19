@@ -398,5 +398,21 @@ This document is the **single source of truth** for material architectural, secu
 - **Reason:** Ensures rapid, evidence-grounded cross-case intelligence routing across jurisdictions without predictive bias or unverified assumptions.
 - **Consequences:** Investigators assigned to affected investigations immediately receive verified change intelligence with grounded Section 63 BSA evidence references and cryptographic payload sealing.
 
+---
+
+## ADR-0014: A15 Chronological Timeline Projection Architecture
+
+- **Context:** NEXUS requires an investigator-facing chronological record of verified facts and operational milestones across cases, entities, and time windows. Prior to A15, `/timeline` only inspected `Case` graph nodes, lacked dual timestamp semantics (`occurred_at` vs `recorded_at`), and ignored forensic source records (CDRs, bank wires, surveillance), A3 domain events, verification tasks, and cross-case routes.
+- **Decision:**
+  1. **Dynamic Read Projection Model:** Implemented `TimelineService` as a pure read projection over authoritative in-memory collections (`source_records`, `intelligence_events`, `nodes`, `verification_tasks`, `affected_routes`). Strict invariant: A15 never mutates graph state, never creates verification tasks, never dispatches routes, and never emits synthetic domain events.
+  2. **Dual Timestamp Semantics & Zero Date Fabrication:** Formally distinguished `occurred_at` (when the event happened in the real world) from `recorded_at` (when NEXUS learned/recorded it). Strictly prohibited fabricated fallback dates (e.g. `2026-01-01`). Retained `timestamp = occurred_at or recorded_at` for 100% backward compatibility with `TimelineEventResponse` and D3 network scrubbers.
+  3. **Deterministic Canonical Identifiers:** Generated repeatable IDs keyed by origin: `tle-intevt-{id}`, `tle-src-{id}`, `tle-case-{id}`, `tle-vtask-created-{id}`, `tle-vtask-decided-{id}`, `tle-route-disp-{id}`, `tle-route-ack-{id}`.
+  4. **Multi-Path Deduplication with Lifecycle Separation:** Suppressed duplicate projection of source records or task creation when already captured by primary A3 `IntelligenceEvent`s, while preserving distinct lifecycle progression milestones (e.g. task creation vs task decision; route dispatch vs route acknowledgment).
+  5. **Deterministic Chronological Ordering:** Sorted deterministically by a 3-tuple key: `(occurred_at, recorded_at, id)` with UTC timezone normalization and descending/ascending parameter support.
+  6. **Case Jurisdiction RBAC:** Enforced `EvidenceAuthorizationPolicy.can_access_case(principal, case_id)`. Explicit requests for unauthorized cases return HTTP 403 Forbidden; global queries silently exclude unauthorized cases.
+  7. **API Contract Preservation:** Updated `GET /api/v1/timeline` in `core_routes.py` to delegate to `TimelineService` returning `list[TimelineEventResponse]`, and added rich query endpoint `GET /nexus/timeline` in `nexus_routes.py` returning `TimelineQueryResponse` with pagination, category/type filters, and date boundaries.
+- **Reason:** Provides investigators, prosecutors, and supervisors with a defensible, grounded chronological sequence of evidence and operational milestones without predictive scoring or duplicate event buses.
+- **Consequences:** Investigators can reconstruct criminal timelines and system discovery timelines with Section 63 BSA evidence citations and sub-millisecond query performance.
+
 
 

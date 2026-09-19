@@ -389,6 +389,19 @@ export interface SharedClusterResponse {
   reason: string
 }
 
+export type TimelineEventCategory =
+  | 'CASE_REGISTRATION'
+  | 'EVIDENCE_DOCUMENT'
+  | 'COMMUNICATION'
+  | 'FINANCIAL_TRANSACTION'
+  | 'SURVEILLANCE_SIGHTING'
+  | 'INVESTIGATOR_ACTION'
+  | 'GRAPH_CHANGE'
+  | 'INTELLIGENCE_SIGNAL'
+  | 'EVIDENCE_ASSESSMENT'
+  | 'VERIFICATION_WORKFLOW'
+  | 'CROSS_CASE_ROUTE'
+
 export interface TimelineEventResponse {
   id: string
   event_type: string
@@ -397,7 +410,35 @@ export interface TimelineEventResponse {
   participant_ids: string[]
   location_id?: string
   case_id?: string
+  category?: TimelineEventCategory
+  occurred_at?: string
+  recorded_at?: string
+  title?: string
+  edge_ids?: string[]
+  source_type?: string
+  source_id?: string
+  locator?: string
+  actor_id?: string
+  actor_role?: UserRole
+  intelligence_event_id?: string
+  evidence_refs?: string[]
+  snapshot_id?: string
+  route_id?: string
+  task_id?: string
+  assessment_id?: string
+  properties?: Record<string, unknown>
 }
+
+export interface TimelineQueryResponse {
+  events: TimelineEventResponse[]
+  total_count: number
+  case_id?: string
+  entity_id?: string
+  limit: number
+  offset: number
+  has_more: boolean
+}
+
 
 export interface InvestigationSummaryResponse {
   id: string

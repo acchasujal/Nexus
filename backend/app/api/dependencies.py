@@ -475,9 +475,21 @@ def get_closed_loop_propagation_service(
     return prop_svc
 
 
-
-
-
-
-
-
+def get_timeline_service(
+    request: Request,
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> Any:
+    """Return the shared or per-request TimelineService instance."""
+    timeline_svc = getattr(request.app.state, "timeline_service", None)
+    if timeline_svc is not None:
+        return timeline_svc
+    from backend.app.services.timeline_service import TimelineService
+    timeline_svc = TimelineService(
+        repository=repo,
+        auth_policy=auth_policy,
+        audit_service=audit_svc,
+    )
+    request.app.state.timeline_service = timeline_svc
+    return timeline_svc

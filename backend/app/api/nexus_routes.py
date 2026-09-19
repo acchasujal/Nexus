@@ -50,6 +50,7 @@ from backend.app.api.dependencies import (
     get_evidence_assessment_service,
     get_closed_loop_propagation_service,
     get_affected_investigation_routing_service,
+    get_timeline_service,
 )
 from backend.app.services.closed_loop_propagation_service import PropagationResult
 from backend.app.auth.policy import EvidenceAction, EvidenceAuthorizationPolicy
@@ -121,6 +122,8 @@ from shared.contracts.api import (
     EvidenceAssessment,
     EvidenceAssessmentListResponse,
     ReviseEvidenceAssessmentRequest,
+    TimelineEventResponse,
+    TimelineQueryResponse,
 )
 from backend.app.services.ingestion_service import IngestionService
 from backend.app.db.ingestion.contracts import UploadedSource, SourceType
@@ -2817,7 +2820,44 @@ def create_nexus_router() -> APIRouter:
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
+    # ── A15 Chronological Timeline Projection Endpoints ──────────────────────
+
+    @router.get("/nexus/timeline", response_model=TimelineQueryResponse)
+    def query_nexus_timeline(
+        case_id: str | None = Query(None, description="Scope to specific case"),
+        entity_id: str | None = Query(None, description="Scope to specific entity"),
+        category: str | None = Query(None, description="Filter by event category"),
+        event_type: str | None = Query(None, description="Filter by specific event type"),
+        source_type: str | None = Query(None, description="Filter by source type"),
+        from_date: str | None = Query(None, description="ISO-8601 start date"),
+        to_date: str | None = Query(None, description="ISO-8601 end date"),
+        order: str = Query("desc", description="Sort order: 'desc' or 'asc'"),
+        limit: int = Query(50, ge=1, le=200, description="Page size limit"),
+        offset: int = Query(0, ge=0, description="Page offset"),
+        timeline_svc: Any = Depends(get_timeline_service),
+        principal: Principal = Depends(get_principal),
+        request_id: str = Depends(get_request_id),
+    ) -> TimelineQueryResponse:
+        """
+        Query verified chronological timeline with forensic dual timestamps, case scoping, and pagination.
+        """
+        return timeline_svc.query_timeline(
+            principal=principal,
+            case_id=case_id,
+            entity_id=entity_id,
+            category=category,
+            event_type=event_type,
+            source_type=source_type,
+            from_date=from_date,
+            to_date=to_date,
+            order=order,
+            limit=limit,
+            offset=offset,
+            request_id=request_id,
+        )
+
     return router
+
 
 
 
