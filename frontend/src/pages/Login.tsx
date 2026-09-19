@@ -168,14 +168,14 @@ export default function Login() {
       </header>
 
       {/* Main Responsive Grid Layout — Fits Viewport Height with Zero Scroll */}
-      <main className="w-full flex-1 min-h-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 flex flex-col justify-center">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center w-full my-auto">
+      <main className="w-full flex-1 min-h-0 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 flex flex-col justify-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center w-full my-auto">
           {/* Left Column: Intelligence Operational Overview */}
-          <section aria-label="Platform Intelligence Overview" className="lg:col-span-5 xl:col-span-6 space-y-3 sm:space-y-4">
+          <section aria-label="Platform Intelligence Overview" className="lg:col-span-7 space-y-3">
             <div className="space-y-1.5">
               <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-md">
                 <Database className="h-3 w-3" />
-                <span>Crime Intelligence &amp; Network Analytics</span>
+                <span>Criminal Network Intelligence Hub</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 leading-tight">
                 NEXUS
@@ -188,74 +188,82 @@ export default function Login() {
               </p>
             </div>
 
-            {/* Architecture Highlights Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
-              <div className="rounded-lg border border-neutral-200/90 bg-white p-2.5 shadow-2xs space-y-0.5">
-                <div className="flex items-center gap-1.5 text-neutral-900 font-bold text-[11px]">
-                  <div className="h-5 w-5 rounded bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center shrink-0">
-                    <GitFork className="h-3 w-3" />
-                  </div>
-                  <span>Deterministic Analytics</span>
-                </div>
-                <p className="text-[10px] text-neutral-500 leading-snug line-clamp-2">
-                  Pure graph snapshot diffing &amp; Louvain community detection with zero predictive guilt scoring.
-                </p>
+            {/* Unified Architecture & Compliance Briefing Box */}
+            <div className="rounded-xl border border-neutral-200/90 bg-white p-3.5 shadow-xs space-y-2.5">
+              <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-neutral-800 flex items-center gap-1.5">
+                  <Scale className="h-3.5 w-3.5 text-blue-600" />
+                  <span>Statutory Architecture &amp; Governance</span>
+                </span>
+                <span className="text-[10px] font-mono font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded">
+                  Sec. 63 BSA 2023
+                </span>
               </div>
 
-              <div className="rounded-lg border border-neutral-200/90 bg-white p-2.5 shadow-2xs space-y-0.5">
-                <div className="flex items-center gap-1.5 text-neutral-900 font-bold text-[11px]">
-                  <div className="h-5 w-5 rounded bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
-                    <Scale className="h-3 w-3" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                <div className="space-y-0.5">
+                  <div className="font-bold text-neutral-900 flex items-center gap-1.5 text-[11px]">
+                    <GitFork className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                    <span>Deterministic Analytics</span>
                   </div>
-                  <span>Section 63 BSA Provenance</span>
+                  <p className="text-[10px] text-neutral-500 leading-snug">
+                    Pure graph snapshot diffing and Louvain syndicate communities with zero predictive guilt bias.
+                  </p>
                 </div>
-                <p className="text-[10px] text-neutral-500 leading-snug line-clamp-2">
-                  Every link grounds to verifiable source documents with RFC 6962 binary Merkle proof chains.
-                </p>
+
+                <div className="space-y-0.5">
+                  <div className="font-bold text-neutral-900 flex items-center gap-1.5 text-[11px]">
+                    <Scale className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                    <span>Section 63 BSA Provenance</span>
+                  </div>
+                  <p className="text-[10px] text-neutral-500 leading-snug">
+                    Every relationship carries verifiable citations to primary records with RFC 6962 Merkle proof chains.
+                  </p>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className="font-bold text-neutral-900 flex items-center gap-1.5 text-[11px]">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>Mandatory Abstention</span>
+                  </div>
+                  <p className="text-[10px] text-neutral-500 leading-snug">
+                    Fail-closed early warnings that explicitly refuse forecasts when evidence is sparse or conflicting.
+                  </p>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className="font-bold text-neutral-900 flex items-center gap-1.5 text-[11px]">
+                    <Shield className="h-3.5 w-3.5 text-purple-600 shrink-0" />
+                    <span>Multi-Agency Deconfliction</span>
+                  </div>
+                  <p className="text-[10px] text-neutral-500 leading-snug">
+                    Cryptographically sealed cross-jurisdiction routing envelopes across Karnataka Cyber and State police units.
+                  </p>
+                </div>
               </div>
 
-              <div className="rounded-lg border border-neutral-200/90 bg-white p-2.5 shadow-2xs space-y-0.5">
-                <div className="flex items-center gap-1.5 text-neutral-900 font-bold text-[11px]">
-                  <div className="h-5 w-5 rounded bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
-                    <ShieldCheck className="h-3 w-3" />
-                  </div>
-                  <span>Mandatory Abstention</span>
-                </div>
-                <p className="text-[10px] text-neutral-500 leading-snug line-clamp-2">
-                  Early warning engine explicitly refrains when data is sparse, stale, or conflicting.
-                </p>
+              <div className="border-t border-neutral-100 pt-2 flex items-center justify-between text-[10px] text-neutral-500">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
+                  <span>Neo4j AuraDB &amp; PostgreSQL Operational</span>
+                </span>
+                <span className="font-medium text-neutral-400">
+                  Zero Real Citizen PII on Ledger
+                </span>
               </div>
-
-              <div className="rounded-lg border border-neutral-200/90 bg-white p-2.5 shadow-2xs space-y-0.5">
-                <div className="flex items-center gap-1.5 text-neutral-900 font-bold text-[11px]">
-                  <div className="h-5 w-5 rounded bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center shrink-0">
-                    <Database className="h-3 w-3" />
-                  </div>
-                  <span>Multi-Tenant Governance</span>
-                </div>
-                <p className="text-[10px] text-neutral-500 leading-snug line-clamp-2">
-                  Jurisdiction-gated routing across Karnataka Cyber, CID, and State station units.
-                </p>
-              </div>
-            </div>
-
-            {/* Operational Status Pill */}
-            <div className="rounded-lg border border-neutral-200 bg-neutral-100/70 px-3 py-1.5 flex items-center gap-2 text-[10px] text-neutral-600 shadow-2xs">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-              <span>Neo4j AuraDB &amp; PostgreSQL operational · Zero real citizen PII processed</span>
             </div>
           </section>
 
-          {/* Right Column: Authentication Console */}
-          <section aria-label="Officer Authentication Form" className="lg:col-span-7 xl:col-span-6 w-full">
-            <div className="rounded-xl border border-neutral-200/90 bg-white p-4 sm:p-5 shadow-sm space-y-3.5 w-full">
+          {/* Right Column: Authentication Console — Cleanly Constrained Width */}
+          <section aria-label="Officer Authentication Form" className="lg:col-span-5 w-full flex justify-center lg:justify-end">
+            <div className="w-full max-w-[400px] rounded-xl border border-neutral-200/90 bg-white p-4 sm:p-5 shadow-xs space-y-3">
               {/* Form Title & Subtitle */}
-              <div className="border-b border-neutral-100 pb-2.5 space-y-0.5">
-                <h2 className="text-base font-bold text-neutral-900 tracking-tight">
+              <div className="border-b border-neutral-100 pb-2 space-y-0.5">
+                <h2 className="text-sm font-bold text-neutral-900 tracking-tight">
                   Officer Authentication Console
                 </h2>
                 <p className="text-[11px] text-neutral-500">
-                  Enter authorized service credentials or select an evaluation duty profile below.
+                  Enter authorized credentials or select an evaluation profile.
                 </p>
               </div>
 
@@ -271,7 +279,7 @@ export default function Login() {
               {errorMessage && (
                 <div 
                   role="alert" 
-                  className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-800"
+                  className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-800"
                   data-testid="login-error-alert"
                 >
                   <AlertCircle className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />
@@ -366,7 +374,7 @@ export default function Login() {
               </form>
 
               {/* Authorized Officer Fast-Select Duty Profiles */}
-              <div className="border-t border-neutral-200/90 pt-3 space-y-2">
+              <div className="border-t border-neutral-200/90 pt-2.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-700">
                     Evaluation Workspace Access
