@@ -446,6 +446,8 @@ class InMemoryBackendRepository:
             etype = str(edge.get("edge_type", "LINKED_TO"))
             weight = float(edge.get("weight", 1.0))
             provenance = dict(edge.get("provenance", {}))
+            if not provenance.get("source_id") and edge.get("source_record_id"):
+                provenance["source_id"] = str(edge["source_record_id"])
 
             adj_edge = AdjEdge(
                 source_id=src,

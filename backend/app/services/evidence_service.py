@@ -56,9 +56,17 @@ def _get_prov(edge: Any) -> dict:
     Returns empty dict if not present.
     """
     props = getattr(edge, "properties", {}) or {}
-    prov = props.get("provenance") or {}
-    if not prov.get("source_id") and getattr(edge, "source_record_id", None):
-        prov = {"source_id": edge.source_record_id}
+    raw_prov = props.get("provenance") or {}
+    prov = dict(raw_prov) if isinstance(raw_prov, dict) else {}
+    if not prov.get("source_id"):
+        sid = (
+            prov.get("source_record_id")
+            or getattr(edge, "source_record_id", None)
+            or props.get("source_record_id")
+            or ""
+        )
+        if sid:
+            prov["source_id"] = str(sid)
     return prov
 
 

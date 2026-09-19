@@ -1,3 +1,5 @@
+import base64
+import json
 import pytest
 from fastapi.testclient import TestClient
 from pathlib import Path
@@ -8,6 +10,11 @@ from shared.contracts.api import UserRole
 from backend.app.api.dependencies import get_principal, get_repository
 
 FIXTURES_DIR = Path(__file__).parent.parent / "data" / "fixtures" / "m2_csv"
+
+
+def _make_demo_token(user_id: str, role: str) -> str:
+    payload = json.dumps({"sub": user_id, "role": role, "email": f"{user_id}@mha.gov.in"})
+    return base64.b64encode(payload.encode("utf-8")).decode("utf-8")
 
 
 @pytest.fixture
@@ -138,7 +145,8 @@ def test_all_three_sources_resolve_together_and_graph_apis(client, sp_token, rep
     
     # 9. Evidence endpoints can access new relationship provenance.
     # Let's get network for FIR-101
-    res_network = client.get(f"/api/v1/network/cases/{case_id}")
+    sp_headers = {"Authorization": f"Bearer {_make_demo_token('test_sp', 'SP')}"}
+    res_network = client.get(f"/api/v1/network/cases/{case_id}", headers=sp_headers)
     assert res_network.status_code == 200
     edges = res_network.json()["edges"]
     assert len(edges) > 0
@@ -146,10 +154,12 @@ def test_all_three_sources_resolve_together_and_graph_apis(client, sp_token, rep
     src = edge["source_id"]
     tgt = edge["target_id"]
     
-    res_ev = client.get(f"/api/v1/entities/{src}/links/{tgt}/evidence")
+    # Authenticated SP access succeeds and returns provenance-backed evidence
+    res_ev = client.get(f"/api/v1/entities/{src}/links/{tgt}/evidence", headers=sp_headers)
     assert res_ev.status_code == 200
     ev_list = res_ev.json()
     assert len(ev_list) > 0
+    assert ev_list[0]["case_id"] == case_id
 
 
 def test_reupload_idempotent(client, sp_token, repo):
