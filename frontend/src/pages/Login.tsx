@@ -130,9 +130,9 @@ export default function Login() {
   }
 
   return (
-    <div className="h-screen max-h-screen flex flex-col justify-between bg-neutral-50 text-neutral-800 selection:bg-blue-100 selection:text-blue-900 overflow-y-auto lg:overflow-hidden">
+    <div className="min-h-screen flex flex-col justify-between bg-neutral-50 text-neutral-800 selection:bg-blue-100 selection:text-blue-900 overflow-y-auto">
       {/* Top Institutional Masthead Bar — Full Width, Compact */}
-      <header className="w-full border-b border-neutral-200/90 bg-white px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 shadow-2xs shrink-0">
+      <header className="w-full relative z-20 border-b border-neutral-200/90 bg-white px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 shadow-2xs shrink-0">
         <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
@@ -164,34 +164,29 @@ export default function Login() {
         </div>
       </header>
 
-      {/* Main Container — Centered, No Left Card, Fits Viewport Height with Zero Scroll */}
-      <main className="w-full flex-1 min-h-0 max-w-lg mx-auto px-4 sm:px-6 py-2 sm:py-3 flex flex-col justify-center items-center my-auto">
-        {/* Brand Header */}
-        <div className="text-center space-y-1 mb-2.5">
-          <div className="mx-auto inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs ring-4 ring-blue-50">
-            <Network className="h-5 w-5" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
-            NEXUS
-          </h1>
-          <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
-            Investigative Network Intelligence Platform
-          </p>
-        </div>
-
-        {/* Authentication Console Card — Cleanly Constrained Width & Elevated Craft */}
+      {/* Main Container — Centered Authentication Console */}
+      <main className="w-full flex-1 max-w-[440px] mx-auto px-4 py-4 sm:py-6 flex flex-col justify-center items-center relative z-10">
+        {/* Authentication Console Card — Integrated Brand & Elevated Craft */}
         <div 
           role="region" 
           aria-label="Officer Authentication Form" 
           className="w-full max-w-[420px] rounded-2xl border border-neutral-200/80 bg-white p-5 sm:p-6 shadow-[0_1px_3px_0_rgb(0_0_0_/_0.04),0_8px_24px_-4px_rgb(0_0_0_/_0.06)] space-y-3.5"
         >
-          {/* Form Title & Subtitle */}
-          <div className="border-b border-neutral-100 pb-2 space-y-0.5">
-            <h2 className="text-sm font-bold text-neutral-900 tracking-tight">
+          {/* Integrated Brand Emblem & Title */}
+          <div className="text-center pb-2.5 border-b border-neutral-100 space-y-1">
+            <div className="mx-auto inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs ring-4 ring-blue-50">
+              <Network className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-neutral-900">
+                NEXUS
+              </h1>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">
+                Investigative Network Intelligence Platform
+              </p>
+            </div>
+            <p className="text-[11px] text-neutral-500 pt-0.5">
               Officer Authentication Console
-            </h2>
-            <p className="text-[11px] text-neutral-500">
-              Enter authorized credentials or select an evaluation duty profile.
             </p>
           </div>
 
