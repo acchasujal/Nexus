@@ -12,7 +12,7 @@
  * 8. Crime Hotspots (Concentration density, drilldown)
  * 9. Repeat-Case Entities (Entity-resolved aliases, district spread)
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Layers, Network, Users, Share2, AlertTriangle, ShieldCheck, Inbox,
@@ -95,25 +95,33 @@ export default function Patterns() {
   const [communities, setCommunities] = useState<CommunityItem[]>([])
   const [graphBridges, setGraphBridges] = useState<BridgeItem[]>([])
   const [isGraphAlgoLoading, setIsGraphAlgoLoading] = useState<boolean>(true)
+  const isMountedRef = useRef<boolean>(true)
 
   const loadGraphAlgos = (setLoading = true) => {
-    if (setLoading) setIsGraphAlgoLoading(true)
+    if (setLoading && isMountedRef.current) setIsGraphAlgoLoading(true)
     return Promise.all([
       apiClient.getCommunities().catch(() => []),
       apiClient.getBridges().catch(() => []),
     ])
       .then(([commData, bridgeData]) => {
+        if (!isMountedRef.current) return
         setCommunities(Array.isArray(commData) ? (commData as CommunityItem[]) : [])
         setGraphBridges(Array.isArray(bridgeData) ? (bridgeData as BridgeItem[]) : [])
       })
       .finally(() => {
-        setIsGraphAlgoLoading(false)
+        if (isMountedRef.current) {
+          setIsGraphAlgoLoading(false)
+        }
       })
   }
 
   // Initial load of graph modularity
   useEffect(() => {
+    isMountedRef.current = true
     loadGraphAlgos(false)
+    return () => {
+      isMountedRef.current = false
+    }
   }, [])
 
   const handleRefreshAll = async () => {
