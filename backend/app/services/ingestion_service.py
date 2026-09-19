@@ -30,16 +30,22 @@ class IngestionService:
         audit_service: AuditService,
         pipeline: CsvIngestionPipeline,
         neo4j_conn: Any = None,
+        intelligence_event_service: Any | None = None,
     ):
         self._repo = repository
         self._graph_repo = graph_repo
         self._audit = audit_service
         self._pipeline = pipeline
         self._neo4j = neo4j_conn
+        self._event_service = intelligence_event_service
         self._lock = asyncio.Lock()
 
     async def ingest_files(
-        self, user_id: str, user_role: str, sources: list[UploadedSource]
+        self,
+        user_id: str,
+        user_role: str,
+        sources: list[UploadedSource],
+        case_id: str | None = None,
     ) -> IngestionBatchResponse:
         """
         Validate, parse, resolve, and apply a batch of CSV uploads.
@@ -114,6 +120,15 @@ class IngestionService:
 
                 # Apply to in-memory repository (Atomic operation)
                 created_n, reused_n, created_e, reused_e = self._repo.apply_bundle(bundle)
+
+                # Tag source records with case_id if provided
+                if case_id:
+                    for record in bundle.source_records:
+                        srid = str(record.id)
+                        if srid in self._repo.source_records:
+                            cids = self._repo.source_records[srid].setdefault("case_ids", [])
+                            if case_id not in cids:
+                                cids.append(case_id)
                 
                 # Store review candidates
                 if bundle.review_candidates:
@@ -158,6 +173,35 @@ class IngestionService:
                             "edges_created": created_e,
                         },
                     )
+
+                # Emit A3 IntelligenceEvent (DOCUMENT_INGESTED) for each source file if case-associated
+                if case_id and self._event_service is not None:
+                    import hashlib
+                    for s in sources:
+                        f_hash = hashlib.sha256(s.data).hexdigest()
+                        try:
+                            from shared.contracts.api import CreateIntelligenceEventRequest, IntelligenceEventType
+                            self._event_service.record_event(
+                                CreateIntelligenceEventRequest(
+                                    event_type=IntelligenceEventType.DOCUMENT_INGESTED,
+                                    case_id=case_id,
+                                    source_id=f"src-{f_hash[:16]}",
+                                    evidence_refs=[f"src-{f_hash[:16]}"],
+                                    source_type=s.source_type.value,
+                                    actor_id=user_id,
+                                    title=f"CSV Ingested: {s.file_name}",
+                                    description=f"Ingested {s.file_name} ({s.source_type.value}) for case {case_id}",
+                                    payload={
+                                        "batch_id": bundle.batch_id,
+                                        "filename": s.file_name,
+                                        "source_type": s.source_type.value,
+                                        "content_hash": f_hash,
+                                        "case_id": case_id,
+                                    },
+                                )
+                            )
+                        except Exception as ev_err:
+                            logger.warning("Failed to emit DOCUMENT_INGESTED for %s: %s", s.file_name, ev_err)
 
                 return self._build_response(
                     bundle, status, sources, created_n, reused_n, created_e, reused_e,

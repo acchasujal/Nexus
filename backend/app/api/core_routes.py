@@ -623,6 +623,7 @@ def create_core_router() -> APIRouter:
         bank: UploadFile | None = File(None),
         intelligence: UploadFile | None = File(None),
         surveillance: UploadFile | None = File(None),
+        case_id: str | None = Form(None),
         principal: Principal = Depends(get_principal),
         ingestion_service: IngestionService = Depends(get_ingestion_service),
         request_id: str = Depends(get_request_id),
@@ -660,11 +661,13 @@ def create_core_router() -> APIRouter:
         if not sources:
             raise HTTPException(status_code=400, detail="At least one file must be provided.")
 
+        clean_case_id = case_id.strip() if case_id and case_id.strip() else None
         try:
             resp = await ingestion_service.ingest_files(
                 user_id=principal.user_id,
                 user_role=principal.role.value if hasattr(principal.role, 'value') else str(principal.role),
-                sources=sources
+                sources=sources,
+                case_id=clean_case_id,
             )
             if resp.status.value == "FAILED":
                 raise HTTPException(status_code=422, detail="Fatal validation error during ingestion.")

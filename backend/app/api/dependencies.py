@@ -183,11 +183,14 @@ def get_ingestion_service(request: Request) -> IngestionService:
 
 
 def get_document_service(
+    request: Request,
     repo: RepositoryType = Depends(get_repository),
     audit_svc: AuditService = Depends(get_audit_service),
+    auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
 ) -> Any:
     from backend.app.services.document_service import DocumentService
-    return DocumentService(repo, audit_svc)
+    event_svc = get_intelligence_event_service(request, repo, audit_svc, auth_policy)
+    return DocumentService(repo, audit_svc, intelligence_event_service=event_svc)
 
 
 def get_read_only_graph_view(

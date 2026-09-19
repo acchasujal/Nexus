@@ -414,5 +414,20 @@ This document is the **single source of truth** for material architectural, secu
 - **Reason:** Provides investigators, prosecutors, and supervisors with a defensible, grounded chronological sequence of evidence and operational milestones without predictive scoring or duplicate event buses.
 - **Consequences:** Investigators can reconstruct criminal timelines and system discovery timelines with Section 63 BSA evidence citations and sub-millisecond query performance.
 
+---
+
+## ADR-0015: A1 Document Ingestion & Canonical Source Record Bridge Architecture
+
+- **Context:** NEXUS requires a legally defensible chain of custody from ingested material (both unstructured evidence documents and structured CSV batches) to canonical source records, evidence citations, domain events, and downstream graph workflows. While structured CSV ingestion and unstructured document upload existed, unstructured documents were isolated in `repo.documents`, missing canonical `SourceRecord` registration, unable to be resolved via `EvidenceService.get_evidence_by_id()`, and omitting the A3 `IntelligenceEventType.DOCUMENT_INGESTED` event.
+- **Decision:**
+  1. **Canonical SourceRecord Bridge for Documents:** Updated `DocumentService.ingest_document()` to automatically generate and persist a canonical `SourceRecord` in `repo.source_records[doc_id]` alongside the existing `repo.documents` record. Contains SHA-256 `content_hash`, `source_type`, `locator`, `raw_excerpt`, `occurred_at`, and `case_ids`.
+  2. **Direct Evidence Resolution:** By populating `repo.source_records`, `EvidenceService.get_evidence_by_id(doc_id)` seamlessly resolves uploaded documents without modifying `EvidenceService` or inventing competing evidence resolution schemes.
+  3. **A3 `DOCUMENT_INGESTED` Event Wiring:** Integrated `IntelligenceEventService` into `DocumentService` and `IngestionService`. When a document or structured batch is associated with a case envelope (`case_id`), a strongly-typed `DOCUMENT_INGESTED` event is emitted with payload integrity hashing, evidence citations, and tamper-evident provenance.
+  4. **Strict Idempotency:** Re-uploading an identical document (matching SHA-256) returns the existing record immediately without creating duplicate `SourceRecord` entries or re-emitting `DOCUMENT_INGESTED` events.
+  5. **Optional Case Envelope for Structured CSVs:** Added optional `case_id` form field to `POST /ingest` and `POST /nexus/ingest`, tagging ingested source records and emitting `DOCUMENT_INGESTED` events for each source file when specified, while preserving 100% backward compatibility when omitted.
+  6. **Zero Premature Graph Mutation:** Unstructured documents remain strictly read-only with respect to the graph (strict P1-A/P1-B boundary). No automatic entity/relationship generation or LLM extraction in the ingestion path.
+- **Reason:** Closes the evidentiary provenance gap, ensuring every document uploaded by an investigator forms an unbroken, auditable link into the canonical intelligence plane.
+- **Consequences:** Investigators can upload evidence documents, inspect them via `/evidence/{id}`, see them projected onto the chronological timeline, and extract candidates under full Section 63 BSA compliance.
+
 
 

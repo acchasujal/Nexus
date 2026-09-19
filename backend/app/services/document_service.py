@@ -58,9 +58,15 @@ class DocumentService:
     cryptographic fingerprinting, and audit logging.
     """
 
-    def __init__(self, repository: Any, audit_service: AuditService) -> None:
+    def __init__(
+        self,
+        repository: Any,
+        audit_service: AuditService,
+        intelligence_event_service: Any | None = None,
+    ) -> None:
         self._repo = repository
         self._audit = audit_service
+        self._event_service = intelligence_event_service
 
     # ── Upload & Ingestion ───────────────────────────────────────────────────
 
@@ -107,15 +113,41 @@ class DocumentService:
         if hasattr(self._repo, "get_document_by_hash"):
             existing = self._repo.get_document_by_hash(content_hash)
 
-        if existing:
-            logger.info("Document with identical content hash %s already exists. Returning existing record.", content_hash)
-            return self._record_to_response(existing)
-
         # 6. Mime Type determination
         mime_type = "application/pdf" if lower_name.endswith(".pdf") else "text/plain"
         guess, _ = mimetypes.guess_type(clean_filename)
         if guess:
             mime_type = guess
+
+        if existing:
+            logger.info("Document with identical content hash %s already exists. Returning existing record.", content_hash)
+            # Ensure SourceRecord is also registered if this document was stored previously
+            doc_id = existing.get("document_id", f"doc-{content_hash[:16]}")
+            if hasattr(self._repo, "get_source_record") and not self._repo.get_source_record(doc_id):
+                source_record = {
+                    "id": doc_id,
+                    "entity_type": "SOURCE_RECORD",
+                    "batch_id": f"BATCH-{_parse_datetime(existing.get('uploaded_at')).strftime('%Y-%m-%d')}",
+                    "source_type": existing.get("source_type", st_val),
+                    "locator": f"{existing.get('original_filename', clean_filename)} (SHA-256: {content_hash[:8]}...)",
+                    "raw_excerpt": (existing.get("extracted_text", "")[:200] + "...") if len(existing.get("extracted_text", "")) > 200 else existing.get("extracted_text", ""),
+                    "hash_algorithm": "SHA-256",
+                    "content_hash": content_hash,
+                    "hash_version": "v1",
+                    "hashed_at": existing.get("uploaded_at"),
+                    "occurred_at": existing.get("uploaded_at"),
+                    "created_at": existing.get("uploaded_at"),
+                    "updated_at": existing.get("uploaded_at"),
+                    "case_ids": [existing.get("case_id")] if existing.get("case_id") else [],
+                    "attributes": {
+                        "original_filename": existing.get("original_filename", clean_filename),
+                        "mime_type": existing.get("mime_type", mime_type),
+                        "extraction_status": existing.get("extraction_status", "SUCCESS"),
+                    },
+                }
+                if hasattr(self._repo, "store_source_record"):
+                    self._repo.store_source_record(source_record)
+            return self._record_to_response(existing)
 
         # 7. Deterministic Text Extraction
         extracted_text, metadata, status = self._extract_text(data, lower_name)
@@ -150,9 +182,35 @@ class DocumentService:
             "extracted_text": extracted_text,
         }
 
+        source_record = {
+            "id": doc_id,
+            "entity_type": "SOURCE_RECORD",
+            "batch_id": f"BATCH-{now_dt.strftime('%Y-%m-%d')}",
+            "source_type": st_val,
+            "locator": f"{clean_filename} (SHA-256: {content_hash[:8]}...)",
+            "raw_excerpt": excerpt or f"Uploaded document: {clean_filename}",
+            "hash_algorithm": "SHA-256",
+            "content_hash": content_hash,
+            "hash_version": "v1",
+            "hashed_at": now_dt.isoformat(),
+            "occurred_at": now_dt.isoformat(),
+            "created_at": now_dt.isoformat(),
+            "updated_at": now_dt.isoformat(),
+            "case_ids": [case_id] if case_id else [],
+            "attributes": {
+                "original_filename": clean_filename,
+                "mime_type": mime_type,
+                "extraction_status": status.value,
+            },
+        }
+
         # 10. Persist in repository
         if hasattr(self._repo, "store_document"):
             self._repo.store_document(doc_record)
+        if hasattr(self._repo, "store_source_record"):
+            self._repo.store_source_record(source_record)
+        elif hasattr(self._repo, "source_records") and isinstance(self._repo.source_records, dict):
+            self._repo.source_records[doc_id] = source_record
 
         # 11. Emit Audit Event (no duplicate events)
         audit_event_type = (
@@ -183,6 +241,33 @@ class DocumentService:
                 "error_message": metadata.error_message,
             },
         )
+
+        # 12. Emit A3 IntelligenceEvent (DOCUMENT_INGESTED) if case-associated
+        if case_id and self._event_service is not None:
+            try:
+                from shared.contracts.api import CreateIntelligenceEventRequest, IntelligenceEventType
+                self._event_service.record_event(
+                    CreateIntelligenceEventRequest(
+                        event_type=IntelligenceEventType.DOCUMENT_INGESTED,
+                        case_id=case_id,
+                        source_id=doc_id,
+                        evidence_refs=[doc_id],
+                        source_type=st_val,
+                        actor_id=uploader_id,
+                        title=f"Document Ingested: {clean_filename}",
+                        description=f"Ingested {clean_filename} ({mime_type}) with SHA-256 {content_hash[:16]}...",
+                        payload={
+                            "document_id": doc_id,
+                            "filename": clean_filename,
+                            "content_hash": content_hash,
+                            "source_type": st_val,
+                            "mime_type": mime_type,
+                            "extraction_status": status.value,
+                        },
+                    )
+                )
+            except Exception as ev_err:
+                logger.warning("Failed to emit DOCUMENT_INGESTED event for %s: %s", doc_id, ev_err)
 
         return self._record_to_response(doc_record)
 

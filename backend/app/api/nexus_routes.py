@@ -23,7 +23,7 @@ import shutil
 import tempfile
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile, status
 from pydantic import BaseModel, Field
 
 from backend.app.api.dependencies import (
@@ -1021,6 +1021,7 @@ def create_nexus_router() -> APIRouter:
         bank: UploadFile | None = File(None),
         intelligence: UploadFile | None = File(None),
         surveillance: UploadFile | None = File(None),
+        case_id: str | None = Form(None),
         principal: Principal = Depends(get_principal),
         ingestion_service: IngestionService = Depends(get_ingestion_service),
     ) -> NexusIngestResponse:
@@ -1057,11 +1058,13 @@ def create_nexus_router() -> APIRouter:
                 data=content
             ))
 
+        clean_case_id = case_id.strip() if case_id and case_id.strip() else None
         try:
             resp = await ingestion_service.ingest_files(
                 user_id=principal.user_id,
                 user_role=principal.role.value if hasattr(principal.role, 'value') else str(principal.role),
-                sources=sources
+                sources=sources,
+                case_id=clean_case_id,
             )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))

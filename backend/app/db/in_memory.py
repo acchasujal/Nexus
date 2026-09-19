@@ -1108,6 +1108,18 @@ class InMemoryBackendRepository:
             docs = [d for d in docs if d.get("case_id") == case_id]
         return sorted(docs, key=lambda d: str(d.get("uploaded_at", "")), reverse=True)
 
+    def store_source_record(self, source_record: dict[str, Any]) -> dict[str, Any]:
+        """Store or update a source record in repository."""
+        srid = str(source_record["id"])
+        self.source_records[srid] = dict(source_record)
+        self._save_state()
+        return dict(source_record)
+
+    def get_source_record(self, source_id: str) -> dict[str, Any] | None:
+        """Retrieve a source record by its ID."""
+        rec = self.source_records.get(source_id)
+        return dict(rec) if rec is not None else None
+
     # ── Candidate Intelligence & Entity Extraction Methods (P1-B) ───────────
 
     def store_candidate_extraction(self, extraction_record: dict[str, Any]) -> dict[str, Any]:

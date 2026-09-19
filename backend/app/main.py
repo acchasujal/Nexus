@@ -161,13 +161,21 @@ def create_app(
     # Graph intelligence routes
     graph_repo = GraphRepository(repository.to_graph_store() if cfg.graph_backend == "memory" else None)
     app.state.graph_repo = graph_repo
+
+    from backend.app.auth.policy import EvidenceAuthorizationPolicy
+    from backend.app.services.intelligence_event_service import IntelligenceEventService
+    audit_svc = AuditService(repository)
+    auth_policy = EvidenceAuthorizationPolicy(repository, audit_svc)
+    intel_event_svc = IntelligenceEventService(repository, audit_service=audit_svc, auth_policy=auth_policy)
+    app.state.intelligence_event_service = intel_event_svc
     
     app.state.ingestion_service = IngestionService(
         repository=repository,
         graph_repo=graph_repo,
-        audit_service=AuditService(repository),
+        audit_service=audit_svc,
         pipeline=app.state.pipeline,
         neo4j_conn=connection,
+        intelligence_event_service=intel_event_svc,
     )
 
     app.include_router(
