@@ -86,13 +86,13 @@ export function CaseDNASection({ initialCaseId = 'CASE-141' }: CaseDNASectionPro
         {/* Case Selector / Search Bar */}
         <form onSubmit={handleSearchSubmit} className="mt-4 flex items-center gap-3">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
             <input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Enter Case ID (e.g. CASE-141, CASE-207)..."
-              className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full pl-9 pr-4 py-2 text-sm text-slate-900 placeholder:text-slate-500 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
           </div>
           <button

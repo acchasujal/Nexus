@@ -266,9 +266,17 @@ def generate_nexus_synthetic_dataset(
                 # NCRB_INFERRED: weighted crime category from Karnataka IPC group weights
                 category = _weighted_choice(rng, _ipc_crime_category_weights)
             station = rng.choice(stations)
-            num_acc = 1 if iso_idx + 2 >= len(isolated_pool) else rng.randint(1, 2)
-            accused_sample = isolated_pool[iso_idx : iso_idx + num_acc]
-            iso_idx += num_acc
+            # Cross-case entity propagation injection: 40% chance to reuse an existing entity
+            if rng.random() < 0.4 and iso_idx > 0:
+                # Reuse a previously used isolated entity to create cross-case linking
+                accused_sample = [rng.choice(isolated_pool[:iso_idx])]
+                if rng.random() < 0.3:
+                    # Occasional link to a major syndicate member
+                    accused_sample.append(rng.choice(alpha_pool + beta_pool))
+            else:
+                num_acc = 1 if iso_idx + 2 >= len(isolated_pool) else rng.randint(1, 2)
+                accused_sample = isolated_pool[iso_idx : iso_idx + num_acc]
+                iso_idx += num_acc
 
         days_offset = rng.randint(5, 120)
         incident_date = (base_time - timedelta(days=days_offset)).isoformat()

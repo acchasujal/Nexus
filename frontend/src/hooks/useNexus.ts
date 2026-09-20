@@ -148,10 +148,11 @@ export function useScanLeads() {
 
 // ── Intelligence Hub Hooks ──────────────────────────────────────────────────
 
-export function useIntelligenceHotspots() {
+export function useIntelligenceHotspots(enabled: boolean = true) {
   return useQuery({
     queryKey: ['nexus', 'intelligence', 'hotspots'],
     queryFn: () => apiClient.getIntelligenceHotspots(),
+    enabled,
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -165,18 +166,20 @@ export function useHotspotDrilldown(district: string | null, enabled: boolean = 
   })
 }
 
-export function useRepeatOffenderRadar(minCases: number = 2, topK: number = 50) {
+export function useRepeatOffenderRadar(minCases: number = 2, topK: number = 50, enabled: boolean = true) {
   return useQuery({
     queryKey: ['nexus', 'intelligence', 'offenders', minCases, topK],
     queryFn: () => apiClient.getRepeatOffenderRadar(minCases, topK),
+    enabled,
     staleTime: 5 * 60 * 1000,
   })
 }
 
-export function useCombinedBridgeSignals() {
+export function useCombinedBridgeSignals(enabled: boolean = true) {
   return useQuery({
     queryKey: ['nexus', 'intelligence', 'combined'],
     queryFn: () => apiClient.getCombinedBridgeSignals(),
+    enabled,
     staleTime: 5 * 60 * 1000,
   })
 }

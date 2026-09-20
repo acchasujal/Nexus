@@ -546,10 +546,10 @@ class InMemoryBackendRepository:
                 InvestigationSummaryResponse(
                     id=cid,
                     fir_number=props.get("fir_number") or f"FIR-{cid}",
-                    title=props.get("title") or f"Investigation {cid}",
+                    title=props.get("title") or c.get("label") or f"Investigation {cid}",
                     station_name=props.get("station_name", "Central Station"),
                     district=props.get("district", "Bengaluru"),
-                    offence_category=props.get("offence_category", "General Crime"),
+                    offence_category=props.get("offence_category") or props.get("offence", "General Crime"),
                     status=props.get("status", "OPEN"),
                     updated_at=updated_at,
                     accused_count=accused_count,

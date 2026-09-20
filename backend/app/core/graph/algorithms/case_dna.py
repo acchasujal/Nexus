@@ -64,7 +64,10 @@ def compute_case_dna_profile(
     title_b = (node_b.properties.get("fir_number") if node_b else None) or (node_b.properties.get("title") if node_b else None) or cid_b
 
     # 1. Structure Similarity (Accused entity overlap + section overlaps)
-    accused_overlap = _jaccard(feat_a.accused_ids, feat_b.accused_ids)
+    accused_overlap = max(
+        _jaccard(feat_a.accused_ids, feat_b.accused_ids),
+        _jaccard(feat_a.accused_names, feat_b.accused_names)
+    )
     section_overlap = _jaccard(feat_a.section_ids, feat_b.section_ids)
     crime_overlap = _jaccard(feat_a.crime_sub_head_ids, feat_b.crime_sub_head_ids)
     struct_sim = round(0.5 * accused_overlap + 0.3 * section_overlap + 0.2 * crime_overlap, 3)

@@ -15,6 +15,7 @@
  */
 
 import { useState, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import {
   GitFork,
   ArrowRight,
@@ -28,6 +29,10 @@ import {
   Layers,
   Repeat,
   Landmark,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  Network,
 } from 'lucide-react'
 import {
   useNetworkAdaptations,
@@ -98,6 +103,7 @@ export function NetworkAdaptationSection() {
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
   const [decisionNote, setDecisionNote] = useState('')
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null)
+  const [expandedWhy, setExpandedWhy] = useState<string | null>(null)
 
   const filteredAdaptations = useMemo(() => {
     return adaptations.filter((a) => {
@@ -319,6 +325,39 @@ export function NetworkAdaptationSection() {
                     </div>
                   )}
 
+                  {/* "Why This Appeared" grounded section */}
+                  <div className="mt-3 rounded-lg border border-neutral-200 bg-white overflow-hidden text-xs">
+                    <button
+                      onClick={() => setExpandedWhy(expandedWhy === a.adaptation_id ? null : a.adaptation_id)}
+                      className="w-full flex items-center justify-between p-2.5 bg-neutral-50 hover:bg-neutral-100 transition text-left cursor-pointer font-bold text-neutral-800"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <HelpCircle className="h-3.5 w-3.5 text-indigo-600" />
+                        Why this appeared (Deterministic Signal Grounding)
+                      </span>
+                      {expandedWhy === a.adaptation_id ? <ChevronUp className="h-4 w-4 text-neutral-500" /> : <ChevronDown className="h-4 w-4 text-neutral-500" />}
+                    </button>
+                    {expandedWhy === a.adaptation_id && (
+                      <div className="p-3 space-y-2 border-t border-neutral-200 bg-indigo-50/20">
+                        <p className="text-[11px] text-neutral-700 leading-relaxed">
+                          This {typeConf.label.toLowerCase()} anomaly was detected via deterministic structural graph analysis comparing snapshots. 
+                          The system observed a severed link replaced by <strong className="text-neutral-900">{a.substitute_intermediary_name}</strong>.
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] text-neutral-600 pt-1">
+                          <div className="p-2 rounded bg-white border border-neutral-200 space-y-0.5">
+                            <div className="font-bold text-neutral-800">Graph Trigger Scope:</div>
+                            <div>Identifier: <strong>{typeConf.label}</strong></div>
+                            <div>Supporting records: <strong>{a.evidence_refs.length} provenance items</strong></div>
+                          </div>
+                          <div className="p-2 rounded bg-white border border-neutral-200 space-y-0.5">
+                            <div className="font-bold text-neutral-800">Evidence Baseline:</div>
+                            <div>Structural Sig: <strong>{(a.structural_significance * 100).toFixed(0)}%</strong></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Investigator Decision Record if decided */}
                   {a.decided_at && (
                     <div className="mt-3 p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-200 text-xs text-emerald-950 space-y-1">
@@ -331,6 +370,17 @@ export function NetworkAdaptationSection() {
                       )}
                     </div>
                   )}
+
+                  {/* Next Action Links */}
+                  <div className="mt-3 flex items-center gap-2 pt-2 border-t border-neutral-100">
+                    <Link
+                      to={`/network?node_id=${encodeURIComponent(a.primary_entity_id)}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition shadow-2xs cursor-pointer"
+                    >
+                      <Network className="h-3 w-3" />
+                      Inspect {a.primary_entity_name} in Graph
+                    </Link>
+                  </div>
                 </div>
 
                 {/* Investigator Action Bar */}

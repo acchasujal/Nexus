@@ -76,21 +76,21 @@ export default function Patterns() {
     isLoading: isHotspotsLoading,
     error: hotspotsError,
     refetch: refetchHotspots,
-  } = useIntelligenceHotspots()
+  } = useIntelligenceHotspots(activeTab === 'hotspots')
 
   const {
     data: repeatOffenders,
     isLoading: isRadarLoading,
     error: radarError,
     refetch: refetchRadar,
-  } = useRepeatOffenderRadar(minCasesFilter)
+  } = useRepeatOffenderRadar(minCasesFilter, 50, activeTab === 'radar')
 
   const {
     data: bridgeSignals,
     isLoading: isBridgeLoading,
     error: bridgeError,
     refetch: refetchBridges,
-  } = useCombinedBridgeSignals()
+  } = useCombinedBridgeSignals(activeTab === 'combined')
 
   // Graph Modularity / Bridges queries
   const [communities, setCommunities] = useState<CommunityItem[]>([])
@@ -116,14 +116,18 @@ export default function Patterns() {
       })
   }
 
-  // Initial load of graph modularity
+  // Lazy load graph modularity when its tab is active
+  const hasLoadedGraphAlgos = useRef(false)
   useEffect(() => {
     isMountedRef.current = true
-    loadGraphAlgos(false)
+    if (activeTab === 'communities' && !hasLoadedGraphAlgos.current) {
+      loadGraphAlgos(true)
+      hasLoadedGraphAlgos.current = true
+    }
     return () => {
       isMountedRef.current = false
     }
-  }, [])
+  }, [activeTab])
 
   const handleRefreshAll = async () => {
     await Promise.all([
