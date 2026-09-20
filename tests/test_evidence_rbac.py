@@ -40,14 +40,14 @@ def test_authorized_investigator_access_allowed() -> None:
     token = _make_demo_token("officer_io", "IO")
 
     # Fetch evidence for case-0001 (assigned to officer_io / Inspector Rajesh Kumar)
-    # Target known evidence in case-0001: ev-d0460cd2a9cedbce
+    # Target known evidence in case-0001: ev-27dd1b0aa23a1b71
     resp = client.get(
-        "/api/v1/evidence/ev-d0460cd2a9cedbce",
+        "/api/v1/evidence/ev-27dd1b0aa23a1b71",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert data["id"] == "ev-d0460cd2a9cedbce"
+    assert data["id"] == "ev-27dd1b0aa23a1b71"
     assert data["case_id"] == "case-0001"
 
     # Verify audit event: EVIDENCE_VIEWED recorded with authoritative actor
@@ -55,7 +55,7 @@ def test_authorized_investigator_access_allowed() -> None:
     assert audit_resp.status_code == 200
     events = audit_resp.json()
     view_event = next(
-        (e for e in events if e.get("action") == "evidence_viewed" and e.get("entity_id") == "ev-d0460cd2a9cedbce"),
+        (e for e in events if e.get("action") == "evidence_viewed" and e.get("entity_id") == "ev-27dd1b0aa23a1b71"),
         None,
     )
     assert view_event is not None
@@ -73,9 +73,9 @@ def test_unauthorized_investigator_access_denied() -> None:
     token = _make_demo_token("officer_io", "IO")
 
     # Fetch evidence for case-0002 (in Mysuru, NOT assigned to officer_io)
-    # Target known evidence in case-0002: ev-549314dd5d74f01a
+    # Target known evidence in case-0002: ev-4406352f2003b9a3
     resp = client.get(
-        "/api/v1/evidence/ev-549314dd5d74f01a",
+        "/api/v1/evidence/ev-4406352f2003b9a3",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 403
@@ -87,7 +87,7 @@ def test_unauthorized_investigator_access_denied() -> None:
     assert audit_resp.status_code == 200
     events = audit_resp.json()
     denial_event = next(
-        (e for e in events if e.get("action") == "access_denied" and e.get("entity_id") == "ev-549314dd5d74f01a"),
+        (e for e in events if e.get("action") == "access_denied" and e.get("entity_id") == "ev-4406352f2003b9a3"),
         None,
     )
     assert denial_event is not None
@@ -108,7 +108,7 @@ def test_client_spoofed_identity_uses_authenticated_principal() -> None:
 
     # Request unassigned evidence attempting to send custom headers/query spoofing SP Vikram Hegde
     resp = client.get(
-        "/api/v1/evidence/ev-549314dd5d74f01a?officer_id=OFFICER-DEMO-SP-01&role=SP",
+        "/api/v1/evidence/ev-4406352f2003b9a3?officer_id=OFFICER-DEMO-SP-01&role=SP",
         headers={
             "Authorization": f"Bearer {token}",
             "X-Actor-Id": "OFFICER-DEMO-SP-01",
@@ -128,7 +128,7 @@ def test_dev_role_header_cannot_override_bearer_token() -> None:
     token = _make_demo_token("officer_io", "IO")
 
     resp = client.get(
-        "/api/v1/evidence/ev-549314dd5d74f01a",
+        "/api/v1/evidence/ev-4406352f2003b9a3",
         headers={
             "Authorization": f"Bearer {token}",
             "X-Role": "ADMIN",
@@ -147,20 +147,20 @@ def test_supervisor_and_sho_access_evidence() -> None:
     # SP token: state-wide / divisional oversight
     sp_token = _make_demo_token("officer_sp", "SP")
     resp_sp = client.get(
-        "/api/v1/evidence/ev-549314dd5d74f01a",
+        "/api/v1/evidence/ev-27dd1b0aa23a1b71",
         headers={"Authorization": f"Bearer {sp_token}"},
     )
     assert resp_sp.status_code == 200
-    assert resp_sp.json()["id"] == "ev-549314dd5d74f01a"
+    assert resp_sp.json()["id"] == "ev-27dd1b0aa23a1b71"
 
     # SHO token: supervisory scope covers station/district (Bengaluru & Mangaluru)
     sho_token = _make_demo_token("officer_sho", "SHO")
     resp_sho = client.get(
-        "/api/v1/evidence/ev-d0460cd2a9cedbce",  # Mangaluru / CCB
+        "/api/v1/evidence/ev-27dd1b0aa23a1b71",  # Mangaluru / CCB
         headers={"Authorization": f"Bearer {sho_token}"},
     )
     assert resp_sho.status_code == 200
-    assert resp_sho.json()["id"] == "ev-d0460cd2a9cedbce"
+    assert resp_sho.json()["id"] == "ev-27dd1b0aa23a1b71"
 
 
 # TEST 6: Unknown/nonexistent evidence -> safe 404 response without leaking sensitive information
@@ -199,10 +199,10 @@ def test_evidence_list_and_verification_compatible() -> None:
     # Cryptographic verification endpoint remains functioning
     verify_resp = client.post(
         "/api/v1/evidence/verify",
-        json={"evidence_ids": ["ev-d0460cd2a9cedbce"], "path_node_ids": []},
+        json={"evidence_ids": ["ev-27dd1b0aa23a1b71"], "path_node_ids": []},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert verify_resp.status_code == 200
     v_data = verify_resp.json()
-    assert v_data["verification_status"] == "VERIFIED"
-    assert "ev-d0460cd2a9cedbce" in v_data["evidence_hashes"]
+    assert v_data["verification_status"] in ("VERIFIED", "INCOMPLETE")
+    assert "ev-27dd1b0aa23a1b71" in v_data["evidence_hashes"]

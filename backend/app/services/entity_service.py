@@ -173,8 +173,10 @@ class EntityService:
             )
 
         for edge in subgraph.edges:
+            from datetime import datetime, timezone
             from shared.contracts.api import EvidenceProvenanceContract
             prov_dict = (edge.properties or {}).get("provenance") or {}
+            ts_val = prov_dict.get("timestamp") or datetime.now(timezone.utc)
             edges.append(
                 GraphEdgeResponse(
                     id=f"{edge.source_id}-{edge.edge_type}-{edge.target_id}",
@@ -185,7 +187,7 @@ class EntityService:
                     provenance=EvidenceProvenanceContract(
                         source_type=prov_dict.get("source_type", "DIRECT_RECORD"),
                         source_id=prov_dict.get("source_id", ""),
-                        timestamp=prov_dict.get("timestamp") or None,
+                        timestamp=ts_val,
                         extracted_fact=prov_dict.get("extracted_fact", ""),
                         derivation_method=prov_dict.get("derivation_method", "DIRECT"),
                         confidence=float(prov_dict.get("confidence", 1.0)),

@@ -112,6 +112,13 @@ def generate_nexus_synthetic_dataset(
         districts = ["Bengaluru City", "Bengaluru Rural", "Mysuru", "Mangaluru", "Hubballi-Dharwad", "Belagavi"]
         stations = ["Central Crime Branch", "Indiranagar PS", "Koramangala PS", "Ulsoor PS", "Jayanagar PS", "Hebbal PS", "Cyber Crime PS"]
         _ipc_crime_category_weights = KARNATAKA_IPC_CRIME_CATEGORY_WEIGHTS
+        crime_categories_baseline = [
+            "Narcotics & Drug Trafficking",
+            "Cyber Financial Fraud & Phishing",
+            "Organized Extortion & Protection Racketeering",
+            "Illegal Arms Trafficking",
+            "Hawala & Money Laundering",
+        ]
 
     # ── 1. Create Person Nodes ───────────────────────────────────────────────
     persons: list[dict[str, Any]] = []
@@ -257,7 +264,7 @@ def generate_nexus_synthetic_dataset(
             station = "Indiranagar PS"
             accused_sample = [p_sanjay, p_naveen, p_girish]
         else:
-            if is_baseline:
+            if is_baseline or profile == "demo":
                 district = rng.choice(districts)
                 category = rng.choice(crime_categories_baseline)
             else:
@@ -291,6 +298,16 @@ def generate_nexus_synthetic_dataset(
             # SYNTHETIC_ASSUMPTION: BNS sections curated per category, informed by TABLE1B44 headers
             case_sections = _pick_bns_sections(category)
 
+        if profile == "demo":
+            if i == 0:
+                fir_no = "FIR-2026-141"
+            elif i == 15:
+                fir_no = "FIR-2026-207"
+
+        assigned_officer_id = None
+        if cid in ("case-0001", "case-0009", "case-0010", "case-0016") or fir_no in ("FIR-2026-495", "FIR-2026-141", "FIR-2026-207"):
+            assigned_officer_id = "OFFICER-DEMO-IO-01"
+
         c_node = {
             "id": cid,
             "entity_type": GraphEntityType.CASE.value,
@@ -304,6 +321,7 @@ def generate_nexus_synthetic_dataset(
                 "status": case_status,
                 "summary": f"Case registered regarding suspected {category.lower()} involving syndicates in {district}.",
                 "sections": case_sections,
+                "assigned_officer_id": assigned_officer_id,
             },
         }
         nodes.append(c_node)
@@ -617,6 +635,59 @@ def generate_nexus_synthetic_dataset(
                 },
             })
 
+    if profile == "demo":
+        # Inject deterministic DEMO pulse, missing evidence gap, and case DNA match
+        # Case 0001 (FIR-2026-141) <-> Case 0016 (FIR-2026-207)
+        c1 = cases[0]
+        c2 = cases[15]
+        
+        c1["properties"]["fir_number"] = "FIR-2026-141"
+        c2["properties"]["fir_number"] = "FIR-2026-207"
+        c1["properties"]["assigned_officer_id"] = "OFFICER-DEMO-IO-01"
+        c2["properties"]["assigned_officer_id"] = "OFFICER-DEMO-IO-01"
+
+        # Ensure person exists
+        p_demo = persons[0]
+        p_demo["properties"]["full_name"] = "Rafiq Khan"
+        p_demo["properties"]["aliases"] = ["Rafi", "Chhota"]
+        p_demo["properties"]["phone_number"] = "9845999888"
+        p_demo["properties"]["vehicle_number"] = "KA01AB1001"
+
+        p_demo2 = persons[1]
+        p_demo2["properties"]["full_name"] = "Rafeeq Khan"
+        p_demo2["properties"]["aliases"] = ["Rafi"]
+        p_demo2["properties"]["phone_number"] = "9845999888"
+        p_demo2["properties"]["vehicle_number"] = "KA01AB1001"
+        p_demo2["properties"]["address_text"] = "Unknown"
+
+        p_demo3 = persons[2]
+        p_demo3["properties"]["full_name"] = "R. Khan"
+        p_demo3["properties"]["aliases"] = ["Doctor", "Chhota"]
+        p_demo3["properties"]["phone_number"] = "9845999888"
+        p_demo3["properties"]["vehicle_number"] = "KA01AB1001"
+        p_demo3["properties"]["address_text"] = p_demo["properties"]["address_text"]
+
+        planted_resolved_pairs = [
+            (p_demo["id"], p_demo2["id"]),
+            (p_demo["id"], p_demo3["id"]),
+        ]
+
+        # Link to cases
+        edges.append({
+            "id": f"edge-demo-acc-1",
+            "source_id": p_demo["id"],
+            "target_id": c1["id"],
+            "edge_type": GraphRelationshipType.ACCUSED_IN.value,
+            "weight": 1.0,
+        })
+        edges.append({
+            "id": f"edge-demo-acc-2",
+            "source_id": p_demo2["id"],
+            "target_id": c2["id"],
+            "edge_type": GraphRelationshipType.ACCUSED_IN.value,
+            "weight": 1.0,
+        })
+
     dataset = {
         "metadata": {
             "platform": "NEXUS Criminal Intelligence Platform",
@@ -665,11 +736,11 @@ def generate_nexus_synthetic_dataset(
     return {"dataset": dataset, "ground_truth": ground_truth}
 
 
-def export_nexus_synthetic_dataset(output_dir: Path | None = None) -> tuple[Path, Path]:
+def export_nexus_synthetic_dataset(output_dir: Path | None = None, profile: str = "demo") -> tuple[Path, Path]:
     output_dir = output_dir or Path("artifacts/nexus_graph")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    result = generate_nexus_synthetic_dataset()
+    result = generate_nexus_synthetic_dataset(profile=profile)
     dataset_path = output_dir / "nexus_graph.json"
     ground_truth_path = output_dir / "ground_truth.json"
 
@@ -682,3 +753,13 @@ def export_nexus_synthetic_dataset(output_dir: Path | None = None) -> tuple[Path
     (db_dir / "synthetic_graph.json").write_text(json.dumps(result["dataset"], indent=2), encoding="utf-8")
 
     return dataset_path, ground_truth_path
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Export synthetic graph")
+    parser.add_argument("--profile", default="demo", choices=["demo", "ncrb_calibrated", "baseline", "adversarial"])
+    parser.add_argument("--demo", action="store_true", default=False, help="Explicit flag for demo profile")
+    args = parser.parse_args()
+    selected_profile = "demo" if args.demo else args.profile
+    export_nexus_synthetic_dataset(profile=selected_profile)

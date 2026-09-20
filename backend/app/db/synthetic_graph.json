@@ -3,11 +3,11 @@
     "platform": "NEXUS Criminal Intelligence Platform",
     "version": "2.0",
     "seed": 42,
-    "profile": "ncrb_calibrated",
-    "generated_at": "2026-09-20T11:44:56.740621+00:00",
+    "profile": "demo",
+    "generated_at": "2026-09-20T12:26:52.862764+00:00",
     "counts": {
       "nodes": 445,
-      "edges": 485,
+      "edges": 486,
       "cases": 50,
       "persons": 120,
       "phones": 150,
@@ -19,14 +19,14 @@
       "id": "person-0001",
       "entity_type": "Person",
       "properties": {
-        "full_name": "Vikram Sharma",
+        "full_name": "Rafiq Khan",
         "first_name": "Ganesh",
         "last_name": "Kumar",
         "aliases": [
-          "Vicky",
-          "Doctor"
+          "Rafi",
+          "Chhota"
         ],
-        "phone_number": "9845012345",
+        "phone_number": "9845999888",
         "vehicle_number": "KA01AB1001",
         "address_text": "#54, Main Bazaar, Mangaluru",
         "national_id": "ID-198246",
@@ -37,15 +37,15 @@
       "id": "person-0002",
       "entity_type": "Person",
       "properties": {
-        "full_name": "Bikram Sarma",
+        "full_name": "Rafeeq Khan",
         "first_name": "Ganesh",
         "last_name": "Ansari",
         "aliases": [
-          "Vicky"
+          "Rafi"
         ],
-        "phone_number": "9845012345",
+        "phone_number": "9845999888",
         "vehicle_number": "KA01AB1001",
-        "address_text": "#424, MG Road, Bengaluru Rural",
+        "address_text": "Unknown",
         "national_id": null,
         "is_known_offender": false
       }
@@ -54,14 +54,15 @@
       "id": "person-0003",
       "entity_type": "Person",
       "properties": {
-        "full_name": "V. Sharma",
+        "full_name": "R. Khan",
         "first_name": "Zubair",
         "last_name": "Shetty",
         "aliases": [
-          "Doctor"
+          "Doctor",
+          "Chhota"
         ],
-        "phone_number": "9858181396",
-        "vehicle_number": "KA-23-TI-1711",
+        "phone_number": "9845999888",
+        "vehicle_number": "KA01AB1001",
         "address_text": "#54, Main Bazaar, Mangaluru",
         "national_id": "ID-496922",
         "is_known_offender": true
@@ -1907,7 +1908,7 @@
       "id": "case-0001",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-505",
+        "fir_number": "FIR-2026-141",
         "title": "Investigation into Narcotics & Drug Trafficking at Mangaluru",
         "district": "Mangaluru",
         "station_name": "Central Crime Branch",
@@ -1919,7 +1920,8 @@
           "Section 21 NDPS (Possession for Trafficking)",
           "Section 20 NDPS (Production/Sale)",
           "Section 27 NDPS (Consumption)"
-        ]
+        ],
+        "assigned_officer_id": "OFFICER-DEMO-IO-01"
       }
     },
     {
@@ -1929,7 +1931,7 @@
         "evidence_number": "EV-2026-7326",
         "case_id": "case-0001",
         "evidence_type": "CDR_RECORD",
-        "description": "Evidentiary material seized for FIR-2026-505",
+        "description": "Evidentiary material seized for FIR-2026-141",
         "collected_at": "2025-11-07T10:00:00+00:00"
       }
     },
@@ -1949,7 +1951,8 @@
           "Section 21 NDPS (Possession for Trafficking)",
           "Section 20 NDPS (Production/Sale)",
           "Section 27 NDPS (Consumption)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -1979,7 +1982,8 @@
           "Section 21 NDPS (Possession for Trafficking)",
           "Section 20 NDPS (Production/Sale)",
           "Section 27 NDPS (Consumption)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2009,7 +2013,8 @@
           "Section 21 NDPS (Possession for Trafficking)",
           "Section 20 NDPS (Production/Sale)",
           "Section 27 NDPS (Consumption)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2039,7 +2044,8 @@
           "Section 21 NDPS (Possession for Trafficking)",
           "Section 20 NDPS (Production/Sale)",
           "Section 27 NDPS (Consumption)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2069,7 +2075,8 @@
           "Section 21 NDPS (Possession for Trafficking)",
           "Section 20 NDPS (Production/Sale)",
           "Section 27 NDPS (Consumption)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2099,7 +2106,8 @@
           "Section 21 NDPS (Possession for Trafficking)",
           "Section 20 NDPS (Production/Sale)",
           "Section 27 NDPS (Consumption)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2129,7 +2137,8 @@
           "Section 21 NDPS (Possession for Trafficking)",
           "Section 20 NDPS (Production/Sale)",
           "Section 27 NDPS (Consumption)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2158,7 +2167,8 @@
         "sections": [
           "Section 61 BNS (Criminal Conspiracy)",
           "Section 238 BNS (Trespass)"
-        ]
+        ],
+        "assigned_officer_id": "OFFICER-DEMO-IO-01"
       }
     },
     {
@@ -2187,7 +2197,8 @@
         "sections": [
           "Section 3 PMLA (Money Laundering)",
           "Section 318 BNS (Cheating \u2014 financial channel)"
-        ]
+        ],
+        "assigned_officer_id": "OFFICER-DEMO-IO-01"
       }
     },
     {
@@ -2216,7 +2227,8 @@
         "sections": [
           "Section 61 BNS (Criminal Conspiracy)",
           "Section 238 BNS (Trespass)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2245,7 +2257,8 @@
         "sections": [
           "Section 3 PMLA (Money Laundering)",
           "Section 318 BNS (Cheating \u2014 financial channel)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2274,7 +2287,8 @@
         "sections": [
           "Section 61 BNS (Criminal Conspiracy)",
           "Section 238 BNS (Trespass)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2303,7 +2317,8 @@
         "sections": [
           "Section 3 PMLA (Money Laundering)",
           "Section 318 BNS (Cheating \u2014 financial channel)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2332,7 +2347,8 @@
         "sections": [
           "Section 61 BNS (Criminal Conspiracy)",
           "Section 238 BNS (Trespass)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2350,7 +2366,7 @@
       "id": "case-0016",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-270",
+        "fir_number": "FIR-2026-207",
         "title": "Investigation into Hawala & Money Laundering at Bengaluru Rural",
         "district": "Bengaluru Rural",
         "station_name": "Indiranagar PS",
@@ -2361,7 +2377,8 @@
         "sections": [
           "Section 3 PMLA (Money Laundering)",
           "Section 318 BNS (Cheating \u2014 financial channel)"
-        ]
+        ],
+        "assigned_officer_id": "OFFICER-DEMO-IO-01"
       }
     },
     {
@@ -2371,7 +2388,7 @@
         "evidence_number": "EV-2026-8126",
         "case_id": "case-0016",
         "evidence_type": "CCTV_FOOTAGE",
-        "description": "Evidentiary material seized for FIR-2026-270",
+        "description": "Evidentiary material seized for FIR-2026-207",
         "collected_at": "2025-09-21T10:00:00+00:00"
       }
     },
@@ -2390,7 +2407,8 @@
         "sections": [
           "Section 61 BNS (Criminal Conspiracy)",
           "Section 238 BNS (Trespass)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2419,7 +2437,8 @@
         "sections": [
           "Section 61 BNS (Criminal Conspiracy)",
           "Section 238 BNS (Trespass)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2448,7 +2467,8 @@
         "sections": [
           "Section 61 BNS (Criminal Conspiracy)",
           "Section 238 BNS (Trespass)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2477,7 +2497,8 @@
         "sections": [
           "Section 61 BNS (Criminal Conspiracy)",
           "Section 238 BNS (Trespass)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2506,7 +2527,8 @@
         "sections": [
           "Section 25 Arms Act (Illegal Arms Possession)",
           "Section 27 Arms Act (Use of Illegal Arms)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2535,7 +2557,8 @@
         "sections": [
           "Section 25 Arms Act (Illegal Arms Possession)",
           "Section 27 Arms Act (Use of Illegal Arms)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2564,7 +2587,8 @@
         "sections": [
           "Section 25 Arms Act (Illegal Arms Possession)",
           "Section 27 Arms Act (Use of Illegal Arms)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2593,7 +2617,8 @@
         "sections": [
           "Section 25 Arms Act (Illegal Arms Possession)",
           "Section 27 Arms Act (Use of Illegal Arms)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2622,7 +2647,8 @@
         "sections": [
           "Section 25 Arms Act (Illegal Arms Possession)",
           "Section 27 Arms Act (Use of Illegal Arms)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2651,7 +2677,8 @@
         "sections": [
           "Section 25 Arms Act (Illegal Arms Possession)",
           "Section 27 Arms Act (Use of Illegal Arms)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2670,18 +2697,18 @@
       "entity_type": "Case",
       "properties": {
         "fir_number": "FIR-2026-667",
-        "title": "Investigation into Violence & Bodily Harm at Bengaluru Rural",
-        "district": "Bengaluru Rural",
-        "station_name": "Jayanagar PS",
-        "offence_category": "Violence & Bodily Harm",
+        "title": "Investigation into Organized Extortion & Protection Racketeering at Hubballi-Dharwad",
+        "district": "Hubballi-Dharwad",
+        "station_name": "Ulsoor PS",
+        "offence_category": "Organized Extortion & Protection Racketeering",
         "incident_date": "2025-10-24T10:00:00+00:00",
         "status": "OPEN",
-        "summary": "Case registered regarding suspected violence & bodily harm involving syndicates in Bengaluru Rural.",
+        "summary": "Case registered regarding suspected organized extortion & protection racketeering involving syndicates in Hubballi-Dharwad.",
         "sections": [
-          "Section 103(1) BNS (Murder)",
-          "Section 115 BNS (Hurt/Grievous Hurt)",
-          "Section 109 BNS (Attempt to Murder)"
-        ]
+          "Section 61 BNS (Criminal Conspiracy)",
+          "Section 238 BNS (Trespass)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2700,18 +2727,18 @@
       "entity_type": "Case",
       "properties": {
         "fir_number": "FIR-2026-507",
-        "title": "Investigation into Theft & Property Crime at Belagavi",
+        "title": "Investigation into Illegal Arms Trafficking at Belagavi",
         "district": "Belagavi",
         "station_name": "Jayanagar PS",
-        "offence_category": "Theft & Property Crime",
+        "offence_category": "Illegal Arms Trafficking",
         "incident_date": "2025-10-04T10:00:00+00:00",
         "status": "CHARGESHEET_FILED",
-        "summary": "Case registered regarding suspected theft & property crime involving syndicates in Belagavi.",
+        "summary": "Case registered regarding suspected illegal arms trafficking involving syndicates in Belagavi.",
         "sections": [
-          "Section 303 BNS (Theft)",
-          "Section 305 BNS (Vehicle Theft)",
-          "Section 309 BNS (Robbery)"
-        ]
+          "Section 25 Arms Act (Illegal Arms Possession)",
+          "Section 27 Arms Act (Use of Illegal Arms)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -2730,465 +2757,471 @@
       "entity_type": "Case",
       "properties": {
         "fir_number": "FIR-2026-424",
-        "title": "Investigation into Violence & Bodily Harm at Bengaluru Rural",
-        "district": "Bengaluru Rural",
-        "station_name": "Hebbal PS",
-        "offence_category": "Violence & Bodily Harm",
-        "incident_date": "2025-12-25T10:00:00+00:00",
-        "status": "OPEN",
-        "summary": "Case registered regarding suspected violence & bodily harm involving syndicates in Bengaluru Rural.",
+        "title": "Investigation into Narcotics & Drug Trafficking at Belagavi",
+        "district": "Belagavi",
+        "station_name": "Ulsoor PS",
+        "offence_category": "Narcotics & Drug Trafficking",
+        "incident_date": "2025-10-15T10:00:00+00:00",
+        "status": "INVESTIGATION_IN_PROGRESS",
+        "summary": "Case registered regarding suspected narcotics & drug trafficking involving syndicates in Belagavi.",
         "sections": [
-          "Section 103(1) BNS (Murder)",
-          "Section 115 BNS (Hurt/Grievous Hurt)",
-          "Section 109 BNS (Attempt to Murder)"
-        ]
+          "Section 21 NDPS (Possession for Trafficking)",
+          "Section 20 NDPS (Production/Sale)",
+          "Section 27 NDPS (Consumption)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0029",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-3981",
+        "evidence_number": "EV-2026-3102",
         "case_id": "case-0029",
         "evidence_type": "SEIZED_DEVICE",
         "description": "Evidentiary material seized for FIR-2026-424",
-        "collected_at": "2025-12-25T10:00:00+00:00"
+        "collected_at": "2025-10-15T10:00:00+00:00"
       }
     },
     {
       "id": "case-0030",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-543",
-        "title": "Investigation into Offences Against Women & Children at Bengaluru City",
-        "district": "Bengaluru City",
-        "station_name": "Cyber Crime PS",
-        "offence_category": "Offences Against Women & Children",
-        "incident_date": "2025-11-05T10:00:00+00:00",
+        "fir_number": "FIR-2026-886",
+        "title": "Investigation into Illegal Arms Trafficking at Bengaluru Rural",
+        "district": "Bengaluru Rural",
+        "station_name": "Jayanagar PS",
+        "offence_category": "Illegal Arms Trafficking",
+        "incident_date": "2025-09-26T10:00:00+00:00",
         "status": "CHARGESHEET_FILED",
-        "summary": "Case registered regarding suspected offences against women & children involving syndicates in Bengaluru City.",
+        "summary": "Case registered regarding suspected illegal arms trafficking involving syndicates in Bengaluru Rural.",
         "sections": [
-          "Section 64 BNS (Rape)",
-          "Section 75 BNS (Sexual Harassment)",
-          "Section 80 BNS (Dowry Death)"
-        ]
+          "Section 25 Arms Act (Illegal Arms Possession)",
+          "Section 27 Arms Act (Use of Illegal Arms)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0030",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-3697",
+        "evidence_number": "EV-2026-3507",
         "case_id": "case-0030",
-        "evidence_type": "SEIZED_DEVICE",
-        "description": "Evidentiary material seized for FIR-2026-543",
-        "collected_at": "2025-11-05T10:00:00+00:00"
+        "evidence_type": "CCTV_FOOTAGE",
+        "description": "Evidentiary material seized for FIR-2026-886",
+        "collected_at": "2025-09-26T10:00:00+00:00"
       }
     },
     {
       "id": "case-0031",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-430",
-        "title": "Investigation into Miscellaneous IPC at Belagavi",
-        "district": "Belagavi",
-        "station_name": "Jayanagar PS",
-        "offence_category": "Miscellaneous IPC",
-        "incident_date": "2025-12-09T10:00:00+00:00",
+        "fir_number": "FIR-2026-268",
+        "title": "Investigation into Organized Extortion & Protection Racketeering at Bengaluru Rural",
+        "district": "Bengaluru Rural",
+        "station_name": "Hebbal PS",
+        "offence_category": "Organized Extortion & Protection Racketeering",
+        "incident_date": "2025-09-24T10:00:00+00:00",
         "status": "CHARGESHEET_FILED",
-        "summary": "Case registered regarding suspected miscellaneous ipc involving syndicates in Belagavi.",
+        "summary": "Case registered regarding suspected organized extortion & protection racketeering involving syndicates in Bengaluru Rural.",
         "sections": [
-          "Section 223 BNS (Rash Driving)",
-          "Section 296 BNS (Obscene Acts)"
-        ]
+          "Section 61 BNS (Criminal Conspiracy)",
+          "Section 238 BNS (Trespass)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0031",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-5496",
+        "evidence_number": "EV-2026-4216",
         "case_id": "case-0031",
-        "evidence_type": "SEIZED_DEVICE",
-        "description": "Evidentiary material seized for FIR-2026-430",
-        "collected_at": "2025-12-09T10:00:00+00:00"
+        "evidence_type": "CCTV_FOOTAGE",
+        "description": "Evidentiary material seized for FIR-2026-268",
+        "collected_at": "2025-09-24T10:00:00+00:00"
       }
     },
     {
       "id": "case-0032",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-740",
-        "title": "Investigation into Violence & Bodily Harm at Bengaluru City",
-        "district": "Bengaluru City",
+        "fir_number": "FIR-2026-228",
+        "title": "Investigation into Organized Extortion & Protection Racketeering at Belagavi",
+        "district": "Belagavi",
         "station_name": "Jayanagar PS",
-        "offence_category": "Violence & Bodily Harm",
-        "incident_date": "2025-12-20T10:00:00+00:00",
-        "status": "INVESTIGATION_IN_PROGRESS",
-        "summary": "Case registered regarding suspected violence & bodily harm involving syndicates in Bengaluru City.",
+        "offence_category": "Organized Extortion & Protection Racketeering",
+        "incident_date": "2025-10-27T10:00:00+00:00",
+        "status": "OPEN",
+        "summary": "Case registered regarding suspected organized extortion & protection racketeering involving syndicates in Belagavi.",
         "sections": [
-          "Section 103(1) BNS (Murder)",
-          "Section 115 BNS (Hurt/Grievous Hurt)",
-          "Section 109 BNS (Attempt to Murder)"
-        ]
+          "Section 61 BNS (Criminal Conspiracy)",
+          "Section 238 BNS (Trespass)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0032",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-6531",
+        "evidence_number": "EV-2026-3526",
         "case_id": "case-0032",
-        "evidence_type": "CDR_RECORD",
-        "description": "Evidentiary material seized for FIR-2026-740",
-        "collected_at": "2025-12-20T10:00:00+00:00"
+        "evidence_type": "SEIZED_DEVICE",
+        "description": "Evidentiary material seized for FIR-2026-228",
+        "collected_at": "2025-10-27T10:00:00+00:00"
       }
     },
     {
       "id": "case-0033",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-945",
-        "title": "Investigation into Miscellaneous IPC at Hubballi-Dharwad",
+        "fir_number": "FIR-2026-774",
+        "title": "Investigation into Hawala & Money Laundering at Hubballi-Dharwad",
         "district": "Hubballi-Dharwad",
-        "station_name": "Hebbal PS",
-        "offence_category": "Miscellaneous IPC",
-        "incident_date": "2025-10-19T10:00:00+00:00",
-        "status": "CHARGESHEET_FILED",
-        "summary": "Case registered regarding suspected miscellaneous ipc involving syndicates in Hubballi-Dharwad.",
+        "station_name": "Koramangala PS",
+        "offence_category": "Hawala & Money Laundering",
+        "incident_date": "2025-09-27T10:00:00+00:00",
+        "status": "OPEN",
+        "summary": "Case registered regarding suspected hawala & money laundering involving syndicates in Hubballi-Dharwad.",
         "sections": [
-          "Section 223 BNS (Rash Driving)",
-          "Section 296 BNS (Obscene Acts)"
-        ]
+          "Section 3 PMLA (Money Laundering)",
+          "Section 318 BNS (Cheating \u2014 financial channel)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0033",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-7825",
+        "evidence_number": "EV-2026-2330",
         "case_id": "case-0033",
         "evidence_type": "CDR_RECORD",
-        "description": "Evidentiary material seized for FIR-2026-945",
-        "collected_at": "2025-10-19T10:00:00+00:00"
+        "description": "Evidentiary material seized for FIR-2026-774",
+        "collected_at": "2025-09-27T10:00:00+00:00"
       }
     },
     {
       "id": "case-0034",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-609",
-        "title": "Investigation into Violence & Bodily Harm at Hubballi-Dharwad",
+        "fir_number": "FIR-2026-756",
+        "title": "Investigation into Organized Extortion & Protection Racketeering at Hubballi-Dharwad",
         "district": "Hubballi-Dharwad",
         "station_name": "Hebbal PS",
-        "offence_category": "Violence & Bodily Harm",
-        "incident_date": "2025-12-10T10:00:00+00:00",
-        "status": "INVESTIGATION_IN_PROGRESS",
-        "summary": "Case registered regarding suspected violence & bodily harm involving syndicates in Hubballi-Dharwad.",
+        "offence_category": "Organized Extortion & Protection Racketeering",
+        "incident_date": "2026-01-07T10:00:00+00:00",
+        "status": "CHARGESHEET_FILED",
+        "summary": "Case registered regarding suspected organized extortion & protection racketeering involving syndicates in Hubballi-Dharwad.",
         "sections": [
-          "Section 103(1) BNS (Murder)",
-          "Section 115 BNS (Hurt/Grievous Hurt)",
-          "Section 109 BNS (Attempt to Murder)"
-        ]
+          "Section 61 BNS (Criminal Conspiracy)",
+          "Section 238 BNS (Trespass)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0034",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-7653",
+        "evidence_number": "EV-2026-9938",
         "case_id": "case-0034",
         "evidence_type": "CCTV_FOOTAGE",
-        "description": "Evidentiary material seized for FIR-2026-609",
-        "collected_at": "2025-12-10T10:00:00+00:00"
+        "description": "Evidentiary material seized for FIR-2026-756",
+        "collected_at": "2026-01-07T10:00:00+00:00"
       }
     },
     {
       "id": "case-0035",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-564",
-        "title": "Investigation into Miscellaneous IPC at Bengaluru City",
-        "district": "Bengaluru City",
-        "station_name": "Ulsoor PS",
-        "offence_category": "Miscellaneous IPC",
-        "incident_date": "2025-12-15T10:00:00+00:00",
+        "fir_number": "FIR-2026-757",
+        "title": "Investigation into Illegal Arms Trafficking at Mysuru",
+        "district": "Mysuru",
+        "station_name": "Indiranagar PS",
+        "offence_category": "Illegal Arms Trafficking",
+        "incident_date": "2025-12-03T10:00:00+00:00",
         "status": "CHARGESHEET_FILED",
-        "summary": "Case registered regarding suspected miscellaneous ipc involving syndicates in Bengaluru City.",
+        "summary": "Case registered regarding suspected illegal arms trafficking involving syndicates in Mysuru.",
         "sections": [
-          "Section 223 BNS (Rash Driving)",
-          "Section 296 BNS (Obscene Acts)"
-        ]
+          "Section 25 Arms Act (Illegal Arms Possession)",
+          "Section 27 Arms Act (Use of Illegal Arms)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0035",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-3353",
+        "evidence_number": "EV-2026-1981",
         "case_id": "case-0035",
-        "evidence_type": "CCTV_FOOTAGE",
-        "description": "Evidentiary material seized for FIR-2026-564",
-        "collected_at": "2025-12-15T10:00:00+00:00"
+        "evidence_type": "SEIZED_DEVICE",
+        "description": "Evidentiary material seized for FIR-2026-757",
+        "collected_at": "2025-12-03T10:00:00+00:00"
       }
     },
     {
       "id": "case-0036",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-982",
-        "title": "Investigation into Theft & Property Crime at Mysuru",
-        "district": "Mysuru",
-        "station_name": "Cyber Crime PS",
-        "offence_category": "Theft & Property Crime",
-        "incident_date": "2025-11-06T10:00:00+00:00",
-        "status": "INVESTIGATION_IN_PROGRESS",
-        "summary": "Case registered regarding suspected theft & property crime involving syndicates in Mysuru.",
+        "fir_number": "FIR-2026-550",
+        "title": "Investigation into Illegal Arms Trafficking at Mangaluru",
+        "district": "Mangaluru",
+        "station_name": "Ulsoor PS",
+        "offence_category": "Illegal Arms Trafficking",
+        "incident_date": "2025-10-09T10:00:00+00:00",
+        "status": "OPEN",
+        "summary": "Case registered regarding suspected illegal arms trafficking involving syndicates in Mangaluru.",
         "sections": [
-          "Section 303 BNS (Theft)",
-          "Section 305 BNS (Vehicle Theft)",
-          "Section 309 BNS (Robbery)"
-        ]
+          "Section 25 Arms Act (Illegal Arms Possession)",
+          "Section 27 Arms Act (Use of Illegal Arms)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0036",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-6228",
+        "evidence_number": "EV-2026-6658",
         "case_id": "case-0036",
-        "evidence_type": "SEIZED_DEVICE",
-        "description": "Evidentiary material seized for FIR-2026-982",
-        "collected_at": "2025-11-06T10:00:00+00:00"
+        "evidence_type": "BANK_STATEMENT",
+        "description": "Evidentiary material seized for FIR-2026-550",
+        "collected_at": "2025-10-09T10:00:00+00:00"
       }
     },
     {
       "id": "case-0037",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-577",
-        "title": "Investigation into Violence & Bodily Harm at Bengaluru City",
-        "district": "Bengaluru City",
-        "station_name": "Indiranagar PS",
-        "offence_category": "Violence & Bodily Harm",
-        "incident_date": "2025-09-22T10:00:00+00:00",
-        "status": "INVESTIGATION_IN_PROGRESS",
-        "summary": "Case registered regarding suspected violence & bodily harm involving syndicates in Bengaluru City.",
+        "fir_number": "FIR-2026-233",
+        "title": "Investigation into Hawala & Money Laundering at Mysuru",
+        "district": "Mysuru",
+        "station_name": "Jayanagar PS",
+        "offence_category": "Hawala & Money Laundering",
+        "incident_date": "2025-12-07T10:00:00+00:00",
+        "status": "CHARGESHEET_FILED",
+        "summary": "Case registered regarding suspected hawala & money laundering involving syndicates in Mysuru.",
         "sections": [
-          "Section 103(1) BNS (Murder)",
-          "Section 115 BNS (Hurt/Grievous Hurt)",
-          "Section 109 BNS (Attempt to Murder)"
-        ]
+          "Section 3 PMLA (Money Laundering)",
+          "Section 318 BNS (Cheating \u2014 financial channel)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0037",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-5067",
+        "evidence_number": "EV-2026-3308",
         "case_id": "case-0037",
-        "evidence_type": "SEIZED_DEVICE",
-        "description": "Evidentiary material seized for FIR-2026-577",
-        "collected_at": "2025-09-22T10:00:00+00:00"
+        "evidence_type": "CDR_RECORD",
+        "description": "Evidentiary material seized for FIR-2026-233",
+        "collected_at": "2025-12-07T10:00:00+00:00"
       }
     },
     {
       "id": "case-0038",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-933",
-        "title": "Investigation into Theft & Property Crime at Bengaluru City",
-        "district": "Bengaluru City",
-        "station_name": "Koramangala PS",
-        "offence_category": "Theft & Property Crime",
-        "incident_date": "2025-11-06T10:00:00+00:00",
-        "status": "CHARGESHEET_FILED",
-        "summary": "Case registered regarding suspected theft & property crime involving syndicates in Bengaluru City.",
+        "fir_number": "FIR-2026-151",
+        "title": "Investigation into Illegal Arms Trafficking at Mysuru",
+        "district": "Mysuru",
+        "station_name": "Cyber Crime PS",
+        "offence_category": "Illegal Arms Trafficking",
+        "incident_date": "2025-09-22T10:00:00+00:00",
+        "status": "OPEN",
+        "summary": "Case registered regarding suspected illegal arms trafficking involving syndicates in Mysuru.",
         "sections": [
-          "Section 303 BNS (Theft)",
-          "Section 305 BNS (Vehicle Theft)",
-          "Section 309 BNS (Robbery)"
-        ]
+          "Section 25 Arms Act (Illegal Arms Possession)",
+          "Section 27 Arms Act (Use of Illegal Arms)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0038",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-6055",
+        "evidence_number": "EV-2026-6364",
         "case_id": "case-0038",
-        "evidence_type": "BANK_STATEMENT",
-        "description": "Evidentiary material seized for FIR-2026-933",
-        "collected_at": "2025-11-06T10:00:00+00:00"
+        "evidence_type": "CCTV_FOOTAGE",
+        "description": "Evidentiary material seized for FIR-2026-151",
+        "collected_at": "2025-09-22T10:00:00+00:00"
       }
     },
     {
       "id": "case-0039",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-123",
-        "title": "Investigation into Violence & Bodily Harm at Bengaluru City",
-        "district": "Bengaluru City",
-        "station_name": "Ulsoor PS",
-        "offence_category": "Violence & Bodily Harm",
-        "incident_date": "2025-10-28T10:00:00+00:00",
+        "fir_number": "FIR-2026-294",
+        "title": "Investigation into Illegal Arms Trafficking at Bengaluru Rural",
+        "district": "Bengaluru Rural",
+        "station_name": "Jayanagar PS",
+        "offence_category": "Illegal Arms Trafficking",
+        "incident_date": "2025-11-08T10:00:00+00:00",
         "status": "CHARGESHEET_FILED",
-        "summary": "Case registered regarding suspected violence & bodily harm involving syndicates in Bengaluru City.",
+        "summary": "Case registered regarding suspected illegal arms trafficking involving syndicates in Bengaluru Rural.",
         "sections": [
-          "Section 103(1) BNS (Murder)",
-          "Section 115 BNS (Hurt/Grievous Hurt)",
-          "Section 109 BNS (Attempt to Murder)"
-        ]
+          "Section 25 Arms Act (Illegal Arms Possession)",
+          "Section 27 Arms Act (Use of Illegal Arms)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0039",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-1828",
+        "evidence_number": "EV-2026-7442",
         "case_id": "case-0039",
-        "evidence_type": "CCTV_FOOTAGE",
-        "description": "Evidentiary material seized for FIR-2026-123",
-        "collected_at": "2025-10-28T10:00:00+00:00"
+        "evidence_type": "BANK_STATEMENT",
+        "description": "Evidentiary material seized for FIR-2026-294",
+        "collected_at": "2025-11-08T10:00:00+00:00"
       }
     },
     {
       "id": "case-0040",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-606",
-        "title": "Investigation into Offences Against Women & Children at Bengaluru Rural",
+        "fir_number": "FIR-2026-346",
+        "title": "Investigation into Hawala & Money Laundering at Bengaluru Rural",
         "district": "Bengaluru Rural",
-        "station_name": "Hebbal PS",
-        "offence_category": "Offences Against Women & Children",
-        "incident_date": "2025-09-24T10:00:00+00:00",
-        "status": "CHARGESHEET_FILED",
-        "summary": "Case registered regarding suspected offences against women & children involving syndicates in Bengaluru Rural.",
+        "station_name": "Koramangala PS",
+        "offence_category": "Hawala & Money Laundering",
+        "incident_date": "2025-09-20T10:00:00+00:00",
+        "status": "INVESTIGATION_IN_PROGRESS",
+        "summary": "Case registered regarding suspected hawala & money laundering involving syndicates in Bengaluru Rural.",
         "sections": [
-          "Section 64 BNS (Rape)",
-          "Section 75 BNS (Sexual Harassment)",
-          "Section 80 BNS (Dowry Death)"
-        ]
+          "Section 3 PMLA (Money Laundering)",
+          "Section 318 BNS (Cheating \u2014 financial channel)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0040",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-3194",
+        "evidence_number": "EV-2026-8710",
         "case_id": "case-0040",
         "evidence_type": "CCTV_FOOTAGE",
-        "description": "Evidentiary material seized for FIR-2026-606",
-        "collected_at": "2025-09-24T10:00:00+00:00"
+        "description": "Evidentiary material seized for FIR-2026-346",
+        "collected_at": "2025-09-20T10:00:00+00:00"
       }
     },
     {
       "id": "case-0041",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-844",
-        "title": "Investigation into Violence & Bodily Harm at Bengaluru City",
+        "fir_number": "FIR-2026-649",
+        "title": "Investigation into Narcotics & Drug Trafficking at Bengaluru City",
         "district": "Bengaluru City",
-        "station_name": "Central Crime Branch",
-        "offence_category": "Violence & Bodily Harm",
-        "incident_date": "2025-11-25T10:00:00+00:00",
-        "status": "INVESTIGATION_IN_PROGRESS",
-        "summary": "Case registered regarding suspected violence & bodily harm involving syndicates in Bengaluru City.",
+        "station_name": "Ulsoor PS",
+        "offence_category": "Narcotics & Drug Trafficking",
+        "incident_date": "2025-10-05T10:00:00+00:00",
+        "status": "CHARGESHEET_FILED",
+        "summary": "Case registered regarding suspected narcotics & drug trafficking involving syndicates in Bengaluru City.",
         "sections": [
-          "Section 103(1) BNS (Murder)",
-          "Section 115 BNS (Hurt/Grievous Hurt)",
-          "Section 109 BNS (Attempt to Murder)"
-        ]
+          "Section 21 NDPS (Possession for Trafficking)",
+          "Section 20 NDPS (Production/Sale)",
+          "Section 27 NDPS (Consumption)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0041",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-2204",
+        "evidence_number": "EV-2026-1741",
         "case_id": "case-0041",
         "evidence_type": "BANK_STATEMENT",
-        "description": "Evidentiary material seized for FIR-2026-844",
-        "collected_at": "2025-11-25T10:00:00+00:00"
+        "description": "Evidentiary material seized for FIR-2026-649",
+        "collected_at": "2025-10-05T10:00:00+00:00"
       }
     },
     {
       "id": "case-0042",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-616",
-        "title": "Investigation into Violence & Bodily Harm at Bengaluru City",
-        "district": "Bengaluru City",
-        "station_name": "Cyber Crime PS",
-        "offence_category": "Violence & Bodily Harm",
-        "incident_date": "2025-12-25T10:00:00+00:00",
-        "status": "OPEN",
-        "summary": "Case registered regarding suspected violence & bodily harm involving syndicates in Bengaluru City.",
+        "fir_number": "FIR-2026-152",
+        "title": "Investigation into Hawala & Money Laundering at Hubballi-Dharwad",
+        "district": "Hubballi-Dharwad",
+        "station_name": "Indiranagar PS",
+        "offence_category": "Hawala & Money Laundering",
+        "incident_date": "2025-10-05T10:00:00+00:00",
+        "status": "INVESTIGATION_IN_PROGRESS",
+        "summary": "Case registered regarding suspected hawala & money laundering involving syndicates in Hubballi-Dharwad.",
         "sections": [
-          "Section 103(1) BNS (Murder)",
-          "Section 115 BNS (Hurt/Grievous Hurt)",
-          "Section 109 BNS (Attempt to Murder)"
-        ]
+          "Section 3 PMLA (Money Laundering)",
+          "Section 318 BNS (Cheating \u2014 financial channel)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0042",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-7453",
+        "evidence_number": "EV-2026-2946",
         "case_id": "case-0042",
-        "evidence_type": "CCTV_FOOTAGE",
-        "description": "Evidentiary material seized for FIR-2026-616",
-        "collected_at": "2025-12-25T10:00:00+00:00"
+        "evidence_type": "SEIZED_DEVICE",
+        "description": "Evidentiary material seized for FIR-2026-152",
+        "collected_at": "2025-10-05T10:00:00+00:00"
       }
     },
     {
       "id": "case-0043",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-913",
-        "title": "Investigation into Theft & Property Crime at Belagavi",
-        "district": "Belagavi",
-        "station_name": "Koramangala PS",
-        "offence_category": "Theft & Property Crime",
-        "incident_date": "2025-10-25T10:00:00+00:00",
-        "status": "INVESTIGATION_IN_PROGRESS",
-        "summary": "Case registered regarding suspected theft & property crime involving syndicates in Belagavi.",
+        "fir_number": "FIR-2026-199",
+        "title": "Investigation into Organized Extortion & Protection Racketeering at Mangaluru",
+        "district": "Mangaluru",
+        "station_name": "Cyber Crime PS",
+        "offence_category": "Organized Extortion & Protection Racketeering",
+        "incident_date": "2025-10-06T10:00:00+00:00",
+        "status": "CHARGESHEET_FILED",
+        "summary": "Case registered regarding suspected organized extortion & protection racketeering involving syndicates in Mangaluru.",
         "sections": [
-          "Section 303 BNS (Theft)",
-          "Section 305 BNS (Vehicle Theft)",
-          "Section 309 BNS (Robbery)"
-        ]
+          "Section 61 BNS (Criminal Conspiracy)",
+          "Section 238 BNS (Trespass)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0043",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-9193",
+        "evidence_number": "EV-2026-9341",
         "case_id": "case-0043",
-        "evidence_type": "CDR_RECORD",
-        "description": "Evidentiary material seized for FIR-2026-913",
-        "collected_at": "2025-10-25T10:00:00+00:00"
+        "evidence_type": "BANK_STATEMENT",
+        "description": "Evidentiary material seized for FIR-2026-199",
+        "collected_at": "2025-10-06T10:00:00+00:00"
       }
     },
     {
       "id": "case-0044",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-146",
-        "title": "Investigation into Theft & Property Crime at Bengaluru City",
+        "fir_number": "FIR-2026-612",
+        "title": "Investigation into Narcotics & Drug Trafficking at Bengaluru City",
         "district": "Bengaluru City",
-        "station_name": "Cyber Crime PS",
-        "offence_category": "Theft & Property Crime",
-        "incident_date": "2025-12-22T10:00:00+00:00",
-        "status": "INVESTIGATION_IN_PROGRESS",
-        "summary": "Case registered regarding suspected theft & property crime involving syndicates in Bengaluru City.",
+        "station_name": "Central Crime Branch",
+        "offence_category": "Narcotics & Drug Trafficking",
+        "incident_date": "2025-11-05T10:00:00+00:00",
+        "status": "CHARGESHEET_FILED",
+        "summary": "Case registered regarding suspected narcotics & drug trafficking involving syndicates in Bengaluru City.",
         "sections": [
-          "Section 303 BNS (Theft)",
-          "Section 305 BNS (Vehicle Theft)",
-          "Section 309 BNS (Robbery)"
-        ]
+          "Section 21 NDPS (Possession for Trafficking)",
+          "Section 20 NDPS (Production/Sale)",
+          "Section 27 NDPS (Consumption)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -3198,8 +3231,8 @@
         "evidence_number": "EV-2026-9446",
         "case_id": "case-0044",
         "evidence_type": "SEIZED_DEVICE",
-        "description": "Evidentiary material seized for FIR-2026-146",
-        "collected_at": "2025-12-22T10:00:00+00:00"
+        "description": "Evidentiary material seized for FIR-2026-612",
+        "collected_at": "2025-11-05T10:00:00+00:00"
       }
     },
     {
@@ -3207,29 +3240,29 @@
       "entity_type": "Case",
       "properties": {
         "fir_number": "FIR-2026-435",
-        "title": "Investigation into Violence & Bodily Harm at Belagavi",
-        "district": "Belagavi",
-        "station_name": "Ulsoor PS",
-        "offence_category": "Violence & Bodily Harm",
-        "incident_date": "2025-10-27T10:00:00+00:00",
-        "status": "CHARGESHEET_FILED",
-        "summary": "Case registered regarding suspected violence & bodily harm involving syndicates in Belagavi.",
+        "title": "Investigation into Organized Extortion & Protection Racketeering at Hubballi-Dharwad",
+        "district": "Hubballi-Dharwad",
+        "station_name": "Indiranagar PS",
+        "offence_category": "Organized Extortion & Protection Racketeering",
+        "incident_date": "2025-12-03T10:00:00+00:00",
+        "status": "INVESTIGATION_IN_PROGRESS",
+        "summary": "Case registered regarding suspected organized extortion & protection racketeering involving syndicates in Hubballi-Dharwad.",
         "sections": [
-          "Section 103(1) BNS (Murder)",
-          "Section 115 BNS (Hurt/Grievous Hurt)",
-          "Section 109 BNS (Attempt to Murder)"
-        ]
+          "Section 61 BNS (Criminal Conspiracy)",
+          "Section 238 BNS (Trespass)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0045",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-9351",
+        "evidence_number": "EV-2026-9311",
         "case_id": "case-0045",
         "evidence_type": "BANK_STATEMENT",
         "description": "Evidentiary material seized for FIR-2026-435",
-        "collected_at": "2025-10-27T10:00:00+00:00"
+        "collected_at": "2025-12-03T10:00:00+00:00"
       }
     },
     {
@@ -3237,47 +3270,49 @@
       "entity_type": "Case",
       "properties": {
         "fir_number": "FIR-2026-825",
-        "title": "Investigation into Violence & Bodily Harm at Bengaluru Rural",
-        "district": "Bengaluru Rural",
-        "station_name": "Central Crime Branch",
-        "offence_category": "Violence & Bodily Harm",
-        "incident_date": "2025-10-28T10:00:00+00:00",
-        "status": "CHARGESHEET_FILED",
-        "summary": "Case registered regarding suspected violence & bodily harm involving syndicates in Bengaluru Rural.",
+        "title": "Investigation into Organized Extortion & Protection Racketeering at Hubballi-Dharwad",
+        "district": "Hubballi-Dharwad",
+        "station_name": "Ulsoor PS",
+        "offence_category": "Organized Extortion & Protection Racketeering",
+        "incident_date": "2025-11-29T10:00:00+00:00",
+        "status": "INVESTIGATION_IN_PROGRESS",
+        "summary": "Case registered regarding suspected organized extortion & protection racketeering involving syndicates in Hubballi-Dharwad.",
         "sections": [
-          "Section 103(1) BNS (Murder)",
-          "Section 115 BNS (Hurt/Grievous Hurt)",
-          "Section 109 BNS (Attempt to Murder)"
-        ]
+          "Section 61 BNS (Criminal Conspiracy)",
+          "Section 238 BNS (Trespass)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0046",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-1436",
+        "evidence_number": "EV-2026-7824",
         "case_id": "case-0046",
-        "evidence_type": "BANK_STATEMENT",
+        "evidence_type": "CCTV_FOOTAGE",
         "description": "Evidentiary material seized for FIR-2026-825",
-        "collected_at": "2025-10-28T10:00:00+00:00"
+        "collected_at": "2025-11-29T10:00:00+00:00"
       }
     },
     {
       "id": "case-0047",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-371",
-        "title": "Investigation into Other IPC at Belagavi",
+        "fir_number": "FIR-2026-915",
+        "title": "Investigation into Narcotics & Drug Trafficking at Belagavi",
         "district": "Belagavi",
-        "station_name": "Cyber Crime PS",
-        "offence_category": "Other IPC",
+        "station_name": "Jayanagar PS",
+        "offence_category": "Narcotics & Drug Trafficking",
         "incident_date": "2025-10-10T10:00:00+00:00",
         "status": "CHARGESHEET_FILED",
-        "summary": "Case registered regarding suspected other ipc involving syndicates in Belagavi.",
+        "summary": "Case registered regarding suspected narcotics & drug trafficking involving syndicates in Belagavi.",
         "sections": [
-          "Section 61 BNS (Criminal Conspiracy)",
-          "Section 238 BNS (Trespass)"
-        ]
+          "Section 21 NDPS (Possession for Trafficking)",
+          "Section 20 NDPS (Production/Sale)",
+          "Section 27 NDPS (Consumption)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
@@ -3287,7 +3322,7 @@
         "evidence_number": "EV-2026-8871",
         "case_id": "case-0047",
         "evidence_type": "SEIZED_DEVICE",
-        "description": "Evidentiary material seized for FIR-2026-371",
+        "description": "Evidentiary material seized for FIR-2026-915",
         "collected_at": "2025-10-10T10:00:00+00:00"
       }
     },
@@ -3296,29 +3331,29 @@
       "entity_type": "Case",
       "properties": {
         "fir_number": "FIR-2026-636",
-        "title": "Investigation into Theft & Property Crime at Bengaluru Rural",
-        "district": "Bengaluru Rural",
+        "title": "Investigation into Hawala & Money Laundering at Belagavi",
+        "district": "Belagavi",
         "station_name": "Cyber Crime PS",
-        "offence_category": "Theft & Property Crime",
-        "incident_date": "2025-12-17T10:00:00+00:00",
-        "status": "CHARGESHEET_FILED",
-        "summary": "Case registered regarding suspected theft & property crime involving syndicates in Bengaluru Rural.",
+        "offence_category": "Hawala & Money Laundering",
+        "incident_date": "2025-09-27T10:00:00+00:00",
+        "status": "INVESTIGATION_IN_PROGRESS",
+        "summary": "Case registered regarding suspected hawala & money laundering involving syndicates in Belagavi.",
         "sections": [
-          "Section 303 BNS (Theft)",
-          "Section 305 BNS (Vehicle Theft)",
-          "Section 309 BNS (Robbery)"
-        ]
+          "Section 3 PMLA (Money Laundering)",
+          "Section 318 BNS (Cheating \u2014 financial channel)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0048",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-6139",
+        "evidence_number": "EV-2026-1517",
         "case_id": "case-0048",
-        "evidence_type": "BANK_STATEMENT",
+        "evidence_type": "CDR_RECORD",
         "description": "Evidentiary material seized for FIR-2026-636",
-        "collected_at": "2025-12-17T10:00:00+00:00"
+        "collected_at": "2025-09-27T10:00:00+00:00"
       }
     },
     {
@@ -3330,76 +3365,86 @@
         "district": "Hubballi-Dharwad",
         "station_name": "Indiranagar PS",
         "offence_category": "Organized Extortion & Protection Racketeering",
-        "incident_date": "2025-11-19T10:00:00+00:00",
-        "status": "INVESTIGATION_IN_PROGRESS",
+        "incident_date": "2026-01-08T10:00:00+00:00",
+        "status": "CHARGESHEET_FILED",
         "summary": "Case registered regarding suspected organized extortion & protection racketeering involving syndicates in Hubballi-Dharwad.",
         "sections": [
           "Section 61 BNS (Criminal Conspiracy)",
           "Section 238 BNS (Trespass)"
-        ]
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0049",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-7723",
+        "evidence_number": "EV-2026-7861",
         "case_id": "case-0049",
-        "evidence_type": "BANK_STATEMENT",
+        "evidence_type": "SEIZED_DEVICE",
         "description": "Evidentiary material seized for FIR-2026-984",
-        "collected_at": "2025-11-19T10:00:00+00:00"
+        "collected_at": "2026-01-08T10:00:00+00:00"
       }
     },
     {
       "id": "case-0050",
       "entity_type": "Case",
       "properties": {
-        "fir_number": "FIR-2026-993",
-        "title": "Investigation into Theft & Property Crime at Mangaluru",
-        "district": "Mangaluru",
-        "station_name": "Hebbal PS",
-        "offence_category": "Theft & Property Crime",
-        "incident_date": "2025-10-18T10:00:00+00:00",
-        "status": "CHARGESHEET_FILED",
-        "summary": "Case registered regarding suspected theft & property crime involving syndicates in Mangaluru.",
+        "fir_number": "FIR-2026-522",
+        "title": "Investigation into Cyber Financial Fraud & Phishing at Belagavi",
+        "district": "Belagavi",
+        "station_name": "Ulsoor PS",
+        "offence_category": "Cyber Financial Fraud & Phishing",
+        "incident_date": "2025-09-21T10:00:00+00:00",
+        "status": "INVESTIGATION_IN_PROGRESS",
+        "summary": "Case registered regarding suspected cyber financial fraud & phishing involving syndicates in Belagavi.",
         "sections": [
-          "Section 303 BNS (Theft)",
-          "Section 305 BNS (Vehicle Theft)",
-          "Section 309 BNS (Robbery)"
-        ]
+          "Section 61 BNS (Criminal Conspiracy)",
+          "Section 238 BNS (Trespass)"
+        ],
+        "assigned_officer_id": null
       }
     },
     {
       "id": "evidence-0050",
       "entity_type": "Evidence",
       "properties": {
-        "evidence_number": "EV-2026-7173",
+        "evidence_number": "EV-2026-2020",
         "case_id": "case-0050",
-        "evidence_type": "CCTV_FOOTAGE",
-        "description": "Evidentiary material seized for FIR-2026-993",
-        "collected_at": "2025-10-18T10:00:00+00:00"
+        "evidence_type": "SEIZED_DEVICE",
+        "description": "Evidentiary material seized for FIR-2026-522",
+        "collected_at": "2025-09-21T10:00:00+00:00"
       }
     },
     {
       "id": "phone-0001",
       "entity_type": "Phone",
       "properties": {
-        "phone_number": "9845281594",
-        "imei": "867023833912293",
-        "carrier": "Vodafone-Idea"
+        "phone_number": "9845643878",
+        "imei": "869416685175320",
+        "carrier": "BSNL"
       }
     },
     {
       "id": "phone-0002",
       "entity_type": "Phone",
       "properties": {
-        "phone_number": "9845808699",
-        "imei": "865650132372257",
+        "phone_number": "9845428993",
+        "imei": "864049240745780",
         "carrier": "BSNL"
       }
     },
     {
       "id": "phone-0003",
+      "entity_type": "Phone",
+      "properties": {
+        "phone_number": "9845659024",
+        "imei": "865650132372257",
+        "carrier": "BSNL"
+      }
+    },
+    {
+      "id": "phone-0004",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845301603",
@@ -3408,7 +3453,7 @@
       }
     },
     {
-      "id": "phone-0004",
+      "id": "phone-0005",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845685196",
@@ -3417,7 +3462,7 @@
       }
     },
     {
-      "id": "phone-0005",
+      "id": "phone-0006",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845908634",
@@ -3426,7 +3471,7 @@
       }
     },
     {
-      "id": "phone-0006",
+      "id": "phone-0007",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845603110",
@@ -3435,7 +3480,7 @@
       }
     },
     {
-      "id": "phone-0007",
+      "id": "phone-0008",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845701334",
@@ -3444,7 +3489,7 @@
       }
     },
     {
-      "id": "phone-0008",
+      "id": "phone-0009",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845910616",
@@ -3453,7 +3498,7 @@
       }
     },
     {
-      "id": "phone-0009",
+      "id": "phone-0010",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845144109",
@@ -3462,7 +3507,7 @@
       }
     },
     {
-      "id": "phone-0010",
+      "id": "phone-0011",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845563864",
@@ -3471,7 +3516,7 @@
       }
     },
     {
-      "id": "phone-0011",
+      "id": "phone-0012",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845324381",
@@ -3480,7 +3525,7 @@
       }
     },
     {
-      "id": "phone-0012",
+      "id": "phone-0013",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845243941",
@@ -3489,7 +3534,7 @@
       }
     },
     {
-      "id": "phone-0013",
+      "id": "phone-0014",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845802371",
@@ -3498,7 +3543,7 @@
       }
     },
     {
-      "id": "phone-0014",
+      "id": "phone-0015",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845533377",
@@ -3507,7 +3552,7 @@
       }
     },
     {
-      "id": "phone-0015",
+      "id": "phone-0016",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845105433",
@@ -3516,7 +3561,7 @@
       }
     },
     {
-      "id": "phone-0016",
+      "id": "phone-0017",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845600641",
@@ -3525,7 +3570,7 @@
       }
     },
     {
-      "id": "phone-0017",
+      "id": "phone-0018",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845436768",
@@ -3534,7 +3579,7 @@
       }
     },
     {
-      "id": "phone-0018",
+      "id": "phone-0019",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845661147",
@@ -3543,7 +3588,7 @@
       }
     },
     {
-      "id": "phone-0019",
+      "id": "phone-0020",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845978292",
@@ -3552,7 +3597,7 @@
       }
     },
     {
-      "id": "phone-0020",
+      "id": "phone-0021",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845926236",
@@ -3561,7 +3606,7 @@
       }
     },
     {
-      "id": "phone-0021",
+      "id": "phone-0022",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845139286",
@@ -3570,7 +3615,7 @@
       }
     },
     {
-      "id": "phone-0022",
+      "id": "phone-0023",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845451317",
@@ -3579,7 +3624,7 @@
       }
     },
     {
-      "id": "phone-0023",
+      "id": "phone-0024",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845240718",
@@ -3588,7 +3633,7 @@
       }
     },
     {
-      "id": "phone-0024",
+      "id": "phone-0025",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845386090",
@@ -3597,7 +3642,7 @@
       }
     },
     {
-      "id": "phone-0025",
+      "id": "phone-0026",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845866634",
@@ -3606,7 +3651,7 @@
       }
     },
     {
-      "id": "phone-0026",
+      "id": "phone-0027",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845929179",
@@ -3615,7 +3660,7 @@
       }
     },
     {
-      "id": "phone-0027",
+      "id": "phone-0028",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845967161",
@@ -3624,7 +3669,7 @@
       }
     },
     {
-      "id": "phone-0028",
+      "id": "phone-0029",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845801765",
@@ -3633,7 +3678,7 @@
       }
     },
     {
-      "id": "phone-0029",
+      "id": "phone-0030",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845600646",
@@ -3642,7 +3687,7 @@
       }
     },
     {
-      "id": "phone-0030",
+      "id": "phone-0031",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845502206",
@@ -3651,7 +3696,7 @@
       }
     },
     {
-      "id": "phone-0031",
+      "id": "phone-0032",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845445637",
@@ -3660,7 +3705,7 @@
       }
     },
     {
-      "id": "phone-0032",
+      "id": "phone-0033",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845826420",
@@ -3669,7 +3714,7 @@
       }
     },
     {
-      "id": "phone-0033",
+      "id": "phone-0034",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845588002",
@@ -3678,7 +3723,7 @@
       }
     },
     {
-      "id": "phone-0034",
+      "id": "phone-0035",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845819400",
@@ -3687,7 +3732,7 @@
       }
     },
     {
-      "id": "phone-0035",
+      "id": "phone-0036",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845329772",
@@ -3696,7 +3741,7 @@
       }
     },
     {
-      "id": "phone-0036",
+      "id": "phone-0037",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845260626",
@@ -3705,7 +3750,7 @@
       }
     },
     {
-      "id": "phone-0037",
+      "id": "phone-0038",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845894139",
@@ -3714,7 +3759,7 @@
       }
     },
     {
-      "id": "phone-0038",
+      "id": "phone-0039",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845691573",
@@ -3723,7 +3768,7 @@
       }
     },
     {
-      "id": "phone-0039",
+      "id": "phone-0040",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845700521",
@@ -3732,7 +3777,7 @@
       }
     },
     {
-      "id": "phone-0040",
+      "id": "phone-0041",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845444056",
@@ -3741,7 +3786,7 @@
       }
     },
     {
-      "id": "phone-0041",
+      "id": "phone-0042",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845851742",
@@ -3750,7 +3795,7 @@
       }
     },
     {
-      "id": "phone-0042",
+      "id": "phone-0043",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845635167",
@@ -3759,7 +3804,7 @@
       }
     },
     {
-      "id": "phone-0043",
+      "id": "phone-0044",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845638179",
@@ -3768,7 +3813,7 @@
       }
     },
     {
-      "id": "phone-0044",
+      "id": "phone-0045",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845685941",
@@ -3777,7 +3822,7 @@
       }
     },
     {
-      "id": "phone-0045",
+      "id": "phone-0046",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845515182",
@@ -3786,7 +3831,7 @@
       }
     },
     {
-      "id": "phone-0046",
+      "id": "phone-0047",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845461264",
@@ -3795,7 +3840,7 @@
       }
     },
     {
-      "id": "phone-0047",
+      "id": "phone-0048",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845172371",
@@ -3804,7 +3849,7 @@
       }
     },
     {
-      "id": "phone-0048",
+      "id": "phone-0049",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845528728",
@@ -3813,7 +3858,7 @@
       }
     },
     {
-      "id": "phone-0049",
+      "id": "phone-0050",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845501058",
@@ -3822,7 +3867,7 @@
       }
     },
     {
-      "id": "phone-0050",
+      "id": "phone-0051",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845815894",
@@ -3831,7 +3876,7 @@
       }
     },
     {
-      "id": "phone-0051",
+      "id": "phone-0052",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845287143",
@@ -3840,7 +3885,7 @@
       }
     },
     {
-      "id": "phone-0052",
+      "id": "phone-0053",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845892911",
@@ -3849,7 +3894,7 @@
       }
     },
     {
-      "id": "phone-0053",
+      "id": "phone-0054",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845657772",
@@ -3858,7 +3903,7 @@
       }
     },
     {
-      "id": "phone-0054",
+      "id": "phone-0055",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845462974",
@@ -3867,7 +3912,7 @@
       }
     },
     {
-      "id": "phone-0055",
+      "id": "phone-0056",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845860242",
@@ -3876,7 +3921,7 @@
       }
     },
     {
-      "id": "phone-0056",
+      "id": "phone-0057",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845948799",
@@ -3885,7 +3930,7 @@
       }
     },
     {
-      "id": "phone-0057",
+      "id": "phone-0058",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845352356",
@@ -3894,7 +3939,7 @@
       }
     },
     {
-      "id": "phone-0058",
+      "id": "phone-0059",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845722795",
@@ -3903,7 +3948,7 @@
       }
     },
     {
-      "id": "phone-0059",
+      "id": "phone-0060",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845356622",
@@ -3912,7 +3957,7 @@
       }
     },
     {
-      "id": "phone-0060",
+      "id": "phone-0061",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845560285",
@@ -3921,7 +3966,7 @@
       }
     },
     {
-      "id": "phone-0061",
+      "id": "phone-0062",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845345536",
@@ -3930,7 +3975,7 @@
       }
     },
     {
-      "id": "phone-0062",
+      "id": "phone-0063",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845250219",
@@ -3939,7 +3984,7 @@
       }
     },
     {
-      "id": "phone-0063",
+      "id": "phone-0064",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845415098",
@@ -3948,7 +3993,7 @@
       }
     },
     {
-      "id": "phone-0064",
+      "id": "phone-0065",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845756401",
@@ -3957,7 +4002,7 @@
       }
     },
     {
-      "id": "phone-0065",
+      "id": "phone-0066",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845149161",
@@ -3966,7 +4011,7 @@
       }
     },
     {
-      "id": "phone-0066",
+      "id": "phone-0067",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845923975",
@@ -3975,7 +4020,7 @@
       }
     },
     {
-      "id": "phone-0067",
+      "id": "phone-0068",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845528090",
@@ -3984,7 +4029,7 @@
       }
     },
     {
-      "id": "phone-0068",
+      "id": "phone-0069",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845292811",
@@ -3993,7 +4038,7 @@
       }
     },
     {
-      "id": "phone-0069",
+      "id": "phone-0070",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845415344",
@@ -4002,7 +4047,7 @@
       }
     },
     {
-      "id": "phone-0070",
+      "id": "phone-0071",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845354655",
@@ -4011,7 +4056,7 @@
       }
     },
     {
-      "id": "phone-0071",
+      "id": "phone-0072",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845778120",
@@ -4020,7 +4065,7 @@
       }
     },
     {
-      "id": "phone-0072",
+      "id": "phone-0073",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845154040",
@@ -4029,7 +4074,7 @@
       }
     },
     {
-      "id": "phone-0073",
+      "id": "phone-0074",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845176319",
@@ -4038,7 +4083,7 @@
       }
     },
     {
-      "id": "phone-0074",
+      "id": "phone-0075",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845319036",
@@ -4047,7 +4092,7 @@
       }
     },
     {
-      "id": "phone-0075",
+      "id": "phone-0076",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845322096",
@@ -4056,7 +4101,7 @@
       }
     },
     {
-      "id": "phone-0076",
+      "id": "phone-0077",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845883159",
@@ -4065,7 +4110,7 @@
       }
     },
     {
-      "id": "phone-0077",
+      "id": "phone-0078",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845678897",
@@ -4074,7 +4119,7 @@
       }
     },
     {
-      "id": "phone-0078",
+      "id": "phone-0079",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845659572",
@@ -4083,7 +4128,7 @@
       }
     },
     {
-      "id": "phone-0079",
+      "id": "phone-0080",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845374267",
@@ -4092,7 +4137,7 @@
       }
     },
     {
-      "id": "phone-0080",
+      "id": "phone-0081",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845203398",
@@ -4101,7 +4146,7 @@
       }
     },
     {
-      "id": "phone-0081",
+      "id": "phone-0082",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845312994",
@@ -4110,7 +4155,7 @@
       }
     },
     {
-      "id": "phone-0082",
+      "id": "phone-0083",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845147936",
@@ -4119,7 +4164,7 @@
       }
     },
     {
-      "id": "phone-0083",
+      "id": "phone-0084",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845680189",
@@ -4128,7 +4173,7 @@
       }
     },
     {
-      "id": "phone-0084",
+      "id": "phone-0085",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845305721",
@@ -4137,7 +4182,7 @@
       }
     },
     {
-      "id": "phone-0085",
+      "id": "phone-0086",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845697467",
@@ -4146,7 +4191,7 @@
       }
     },
     {
-      "id": "phone-0086",
+      "id": "phone-0087",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845677390",
@@ -4155,7 +4200,7 @@
       }
     },
     {
-      "id": "phone-0087",
+      "id": "phone-0088",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845900441",
@@ -4164,7 +4209,7 @@
       }
     },
     {
-      "id": "phone-0088",
+      "id": "phone-0089",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845583214",
@@ -4173,7 +4218,7 @@
       }
     },
     {
-      "id": "phone-0089",
+      "id": "phone-0090",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845246757",
@@ -4182,7 +4227,7 @@
       }
     },
     {
-      "id": "phone-0090",
+      "id": "phone-0091",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845649395",
@@ -4191,7 +4236,7 @@
       }
     },
     {
-      "id": "phone-0091",
+      "id": "phone-0092",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845901467",
@@ -4200,7 +4245,7 @@
       }
     },
     {
-      "id": "phone-0092",
+      "id": "phone-0093",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845983472",
@@ -4209,7 +4254,7 @@
       }
     },
     {
-      "id": "phone-0093",
+      "id": "phone-0094",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845841521",
@@ -4218,7 +4263,7 @@
       }
     },
     {
-      "id": "phone-0094",
+      "id": "phone-0095",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845630299",
@@ -4227,7 +4272,7 @@
       }
     },
     {
-      "id": "phone-0095",
+      "id": "phone-0096",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845747847",
@@ -4236,7 +4281,7 @@
       }
     },
     {
-      "id": "phone-0096",
+      "id": "phone-0097",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845116495",
@@ -4245,7 +4290,7 @@
       }
     },
     {
-      "id": "phone-0097",
+      "id": "phone-0098",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845117538",
@@ -4254,7 +4299,7 @@
       }
     },
     {
-      "id": "phone-0098",
+      "id": "phone-0099",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845626611",
@@ -4263,7 +4308,7 @@
       }
     },
     {
-      "id": "phone-0099",
+      "id": "phone-0100",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845212214",
@@ -4272,7 +4317,7 @@
       }
     },
     {
-      "id": "phone-0100",
+      "id": "phone-0101",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845352674",
@@ -4281,7 +4326,7 @@
       }
     },
     {
-      "id": "phone-0101",
+      "id": "phone-0102",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845380310",
@@ -4290,7 +4335,7 @@
       }
     },
     {
-      "id": "phone-0102",
+      "id": "phone-0103",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845491172",
@@ -4299,7 +4344,7 @@
       }
     },
     {
-      "id": "phone-0103",
+      "id": "phone-0104",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845692447",
@@ -4308,7 +4353,7 @@
       }
     },
     {
-      "id": "phone-0104",
+      "id": "phone-0105",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845817269",
@@ -4317,7 +4362,7 @@
       }
     },
     {
-      "id": "phone-0105",
+      "id": "phone-0106",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845497687",
@@ -4326,7 +4371,7 @@
       }
     },
     {
-      "id": "phone-0106",
+      "id": "phone-0107",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845836986",
@@ -4335,7 +4380,7 @@
       }
     },
     {
-      "id": "phone-0107",
+      "id": "phone-0108",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845986392",
@@ -4344,7 +4389,7 @@
       }
     },
     {
-      "id": "phone-0108",
+      "id": "phone-0109",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845653815",
@@ -4353,7 +4398,7 @@
       }
     },
     {
-      "id": "phone-0109",
+      "id": "phone-0110",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845321686",
@@ -4362,7 +4407,7 @@
       }
     },
     {
-      "id": "phone-0110",
+      "id": "phone-0111",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845148823",
@@ -4371,7 +4416,7 @@
       }
     },
     {
-      "id": "phone-0111",
+      "id": "phone-0112",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845669408",
@@ -4380,7 +4425,7 @@
       }
     },
     {
-      "id": "phone-0112",
+      "id": "phone-0113",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845116418",
@@ -4389,7 +4434,7 @@
       }
     },
     {
-      "id": "phone-0113",
+      "id": "phone-0114",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845888795",
@@ -4398,7 +4443,7 @@
       }
     },
     {
-      "id": "phone-0114",
+      "id": "phone-0115",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845413814",
@@ -4407,7 +4452,7 @@
       }
     },
     {
-      "id": "phone-0115",
+      "id": "phone-0116",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845928897",
@@ -4416,7 +4461,7 @@
       }
     },
     {
-      "id": "phone-0116",
+      "id": "phone-0117",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845156304",
@@ -4425,7 +4470,7 @@
       }
     },
     {
-      "id": "phone-0117",
+      "id": "phone-0118",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845979414",
@@ -4434,7 +4479,7 @@
       }
     },
     {
-      "id": "phone-0118",
+      "id": "phone-0119",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845911131",
@@ -4443,7 +4488,7 @@
       }
     },
     {
-      "id": "phone-0119",
+      "id": "phone-0120",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845921609",
@@ -4452,7 +4497,7 @@
       }
     },
     {
-      "id": "phone-0120",
+      "id": "phone-0121",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845339220",
@@ -4461,25 +4506,25 @@
       }
     },
     {
-      "id": "phone-0121",
-      "entity_type": "Phone",
-      "properties": {
-        "phone_number": "9845294760",
-        "imei": "867685806676812",
-        "carrier": "Airtel"
-      }
-    },
-    {
       "id": "phone-0122",
       "entity_type": "Phone",
       "properties": {
-        "phone_number": "9845936821",
-        "imei": "862443424720261",
+        "phone_number": "9845812711",
+        "imei": "862509165920797",
         "carrier": "Vodafone-Idea"
       }
     },
     {
       "id": "phone-0123",
+      "entity_type": "Phone",
+      "properties": {
+        "phone_number": "9845847748",
+        "imei": "862443424720261",
+        "carrier": "Vodafone-Idea"
+      }
+    },
+    {
+      "id": "phone-0124",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845498458",
@@ -4488,7 +4533,7 @@
       }
     },
     {
-      "id": "phone-0124",
+      "id": "phone-0125",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845478221",
@@ -4497,7 +4542,7 @@
       }
     },
     {
-      "id": "phone-0125",
+      "id": "phone-0126",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845566339",
@@ -4506,7 +4551,7 @@
       }
     },
     {
-      "id": "phone-0126",
+      "id": "phone-0127",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845296494",
@@ -4515,7 +4560,7 @@
       }
     },
     {
-      "id": "phone-0127",
+      "id": "phone-0128",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845127537",
@@ -4524,7 +4569,7 @@
       }
     },
     {
-      "id": "phone-0128",
+      "id": "phone-0129",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845503951",
@@ -4533,7 +4578,7 @@
       }
     },
     {
-      "id": "phone-0129",
+      "id": "phone-0130",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845917018",
@@ -4542,7 +4587,7 @@
       }
     },
     {
-      "id": "phone-0130",
+      "id": "phone-0131",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845277735",
@@ -4551,7 +4596,7 @@
       }
     },
     {
-      "id": "phone-0131",
+      "id": "phone-0132",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845617077",
@@ -4560,7 +4605,7 @@
       }
     },
     {
-      "id": "phone-0132",
+      "id": "phone-0133",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845389366",
@@ -4569,7 +4614,7 @@
       }
     },
     {
-      "id": "phone-0133",
+      "id": "phone-0134",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845478666",
@@ -4578,7 +4623,7 @@
       }
     },
     {
-      "id": "phone-0134",
+      "id": "phone-0135",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845212168",
@@ -4587,7 +4632,7 @@
       }
     },
     {
-      "id": "phone-0135",
+      "id": "phone-0136",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845448354",
@@ -4596,7 +4641,7 @@
       }
     },
     {
-      "id": "phone-0136",
+      "id": "phone-0137",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845551533",
@@ -4605,7 +4650,7 @@
       }
     },
     {
-      "id": "phone-0137",
+      "id": "phone-0138",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845602278",
@@ -4614,7 +4659,7 @@
       }
     },
     {
-      "id": "phone-0138",
+      "id": "phone-0139",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845405605",
@@ -4623,7 +4668,7 @@
       }
     },
     {
-      "id": "phone-0139",
+      "id": "phone-0140",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845494322",
@@ -4632,7 +4677,7 @@
       }
     },
     {
-      "id": "phone-0140",
+      "id": "phone-0141",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845691240",
@@ -4641,7 +4686,7 @@
       }
     },
     {
-      "id": "phone-0141",
+      "id": "phone-0142",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845936433",
@@ -4650,7 +4695,7 @@
       }
     },
     {
-      "id": "phone-0142",
+      "id": "phone-0143",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845245939",
@@ -4659,7 +4704,7 @@
       }
     },
     {
-      "id": "phone-0143",
+      "id": "phone-0144",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845790658",
@@ -4668,7 +4713,7 @@
       }
     },
     {
-      "id": "phone-0144",
+      "id": "phone-0145",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845710527",
@@ -4677,7 +4722,7 @@
       }
     },
     {
-      "id": "phone-0145",
+      "id": "phone-0146",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845835716",
@@ -4686,7 +4731,7 @@
       }
     },
     {
-      "id": "phone-0146",
+      "id": "phone-0147",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845274418",
@@ -4695,7 +4740,7 @@
       }
     },
     {
-      "id": "phone-0147",
+      "id": "phone-0148",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845111060",
@@ -4704,7 +4749,7 @@
       }
     },
     {
-      "id": "phone-0148",
+      "id": "phone-0149",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845567432",
@@ -4713,7 +4758,7 @@
       }
     },
     {
-      "id": "phone-0149",
+      "id": "phone-0150",
       "entity_type": "Phone",
       "properties": {
         "phone_number": "9845461724",
@@ -4722,25 +4767,34 @@
       }
     },
     {
-      "id": "phone-0150",
-      "entity_type": "Phone",
-      "properties": {
-        "phone_number": "9845409783",
-        "imei": "862511664110637",
-        "carrier": "Airtel"
-      }
-    },
-    {
       "id": "account-0001",
       "entity_type": "Account",
       "properties": {
-        "account_number": "ACC-9470321015",
-        "bank_name": "ICICI Bank",
-        "ifsc_code": "SBIN2037"
+        "account_number": "ACC-6880115912",
+        "bank_name": "Axis Bank",
+        "ifsc_code": "SBIN6362"
       }
     },
     {
       "id": "account-0002",
+      "entity_type": "Account",
+      "properties": {
+        "account_number": "ACC-3499480048",
+        "bank_name": "State Bank of India",
+        "ifsc_code": "SBIN8511"
+      }
+    },
+    {
+      "id": "account-0003",
+      "entity_type": "Account",
+      "properties": {
+        "account_number": "ACC-8289800644",
+        "bank_name": "State Bank of India",
+        "ifsc_code": "SBIN9756"
+      }
+    },
+    {
+      "id": "account-0004",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-2708176663",
@@ -4749,7 +4803,7 @@
       }
     },
     {
-      "id": "account-0003",
+      "id": "account-0005",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-7419751815",
@@ -4758,7 +4812,7 @@
       }
     },
     {
-      "id": "account-0004",
+      "id": "account-0006",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-3482206102",
@@ -4767,7 +4821,7 @@
       }
     },
     {
-      "id": "account-0005",
+      "id": "account-0007",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-8680705725",
@@ -4776,7 +4830,7 @@
       }
     },
     {
-      "id": "account-0006",
+      "id": "account-0008",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-2973888646",
@@ -4785,7 +4839,7 @@
       }
     },
     {
-      "id": "account-0007",
+      "id": "account-0009",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-7190276026",
@@ -4794,7 +4848,7 @@
       }
     },
     {
-      "id": "account-0008",
+      "id": "account-0010",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-8086684009",
@@ -4803,7 +4857,7 @@
       }
     },
     {
-      "id": "account-0009",
+      "id": "account-0011",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-9990826771",
@@ -4812,7 +4866,7 @@
       }
     },
     {
-      "id": "account-0010",
+      "id": "account-0012",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-5648960780",
@@ -4821,7 +4875,7 @@
       }
     },
     {
-      "id": "account-0011",
+      "id": "account-0013",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-6300607425",
@@ -4830,7 +4884,7 @@
       }
     },
     {
-      "id": "account-0012",
+      "id": "account-0014",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-1004665657",
@@ -4839,7 +4893,7 @@
       }
     },
     {
-      "id": "account-0013",
+      "id": "account-0015",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-8215470878",
@@ -4848,7 +4902,7 @@
       }
     },
     {
-      "id": "account-0014",
+      "id": "account-0016",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-8282534126",
@@ -4857,7 +4911,7 @@
       }
     },
     {
-      "id": "account-0015",
+      "id": "account-0017",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-3980840461",
@@ -4866,7 +4920,7 @@
       }
     },
     {
-      "id": "account-0016",
+      "id": "account-0018",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-6278286600",
@@ -4875,7 +4929,7 @@
       }
     },
     {
-      "id": "account-0017",
+      "id": "account-0019",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-5738214525",
@@ -4884,7 +4938,7 @@
       }
     },
     {
-      "id": "account-0018",
+      "id": "account-0020",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-5883933127",
@@ -4893,7 +4947,7 @@
       }
     },
     {
-      "id": "account-0019",
+      "id": "account-0021",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-9883760207",
@@ -4902,7 +4956,7 @@
       }
     },
     {
-      "id": "account-0020",
+      "id": "account-0022",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-5999842516",
@@ -4911,7 +4965,7 @@
       }
     },
     {
-      "id": "account-0021",
+      "id": "account-0023",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-8243746556",
@@ -4920,7 +4974,7 @@
       }
     },
     {
-      "id": "account-0022",
+      "id": "account-0024",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-4850837385",
@@ -4929,7 +4983,7 @@
       }
     },
     {
-      "id": "account-0023",
+      "id": "account-0025",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-6944371787",
@@ -4938,7 +4992,7 @@
       }
     },
     {
-      "id": "account-0024",
+      "id": "account-0026",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-4397648387",
@@ -4947,7 +5001,7 @@
       }
     },
     {
-      "id": "account-0025",
+      "id": "account-0027",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-3768624284",
@@ -4956,7 +5010,7 @@
       }
     },
     {
-      "id": "account-0026",
+      "id": "account-0028",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-3965572185",
@@ -4965,7 +5019,7 @@
       }
     },
     {
-      "id": "account-0027",
+      "id": "account-0029",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-3188382776",
@@ -4974,7 +5028,7 @@
       }
     },
     {
-      "id": "account-0028",
+      "id": "account-0030",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-3775278048",
@@ -4983,7 +5037,7 @@
       }
     },
     {
-      "id": "account-0029",
+      "id": "account-0031",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-2657365938",
@@ -4992,7 +5046,7 @@
       }
     },
     {
-      "id": "account-0030",
+      "id": "account-0032",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-9894928830",
@@ -5001,7 +5055,7 @@
       }
     },
     {
-      "id": "account-0031",
+      "id": "account-0033",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-9306142066",
@@ -5010,7 +5064,7 @@
       }
     },
     {
-      "id": "account-0032",
+      "id": "account-0034",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-7736142481",
@@ -5019,7 +5073,7 @@
       }
     },
     {
-      "id": "account-0033",
+      "id": "account-0035",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-3933213766",
@@ -5028,7 +5082,7 @@
       }
     },
     {
-      "id": "account-0034",
+      "id": "account-0036",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-9661615016",
@@ -5037,7 +5091,7 @@
       }
     },
     {
-      "id": "account-0035",
+      "id": "account-0037",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-2126077199",
@@ -5046,7 +5100,7 @@
       }
     },
     {
-      "id": "account-0036",
+      "id": "account-0038",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-8589679668",
@@ -5055,7 +5109,7 @@
       }
     },
     {
-      "id": "account-0037",
+      "id": "account-0039",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-9943959352",
@@ -5064,7 +5118,7 @@
       }
     },
     {
-      "id": "account-0038",
+      "id": "account-0040",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-3645901955",
@@ -5073,7 +5127,7 @@
       }
     },
     {
-      "id": "account-0039",
+      "id": "account-0041",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-2331039957",
@@ -5082,7 +5136,7 @@
       }
     },
     {
-      "id": "account-0040",
+      "id": "account-0042",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-6698349136",
@@ -5091,7 +5145,7 @@
       }
     },
     {
-      "id": "account-0041",
+      "id": "account-0043",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-2024939794",
@@ -5100,7 +5154,7 @@
       }
     },
     {
-      "id": "account-0042",
+      "id": "account-0044",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-9266213260",
@@ -5109,7 +5163,7 @@
       }
     },
     {
-      "id": "account-0043",
+      "id": "account-0045",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-5531313426",
@@ -5118,7 +5172,7 @@
       }
     },
     {
-      "id": "account-0044",
+      "id": "account-0046",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-9644330231",
@@ -5127,7 +5181,7 @@
       }
     },
     {
-      "id": "account-0045",
+      "id": "account-0047",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-5998623100",
@@ -5136,7 +5190,7 @@
       }
     },
     {
-      "id": "account-0046",
+      "id": "account-0048",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-2113457241",
@@ -5145,7 +5199,7 @@
       }
     },
     {
-      "id": "account-0047",
+      "id": "account-0049",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-9046449694",
@@ -5154,7 +5208,7 @@
       }
     },
     {
-      "id": "account-0048",
+      "id": "account-0050",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-7138902282",
@@ -5163,7 +5217,7 @@
       }
     },
     {
-      "id": "account-0049",
+      "id": "account-0051",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-3695232998",
@@ -5172,7 +5226,7 @@
       }
     },
     {
-      "id": "account-0050",
+      "id": "account-0052",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-7488758768",
@@ -5181,7 +5235,7 @@
       }
     },
     {
-      "id": "account-0051",
+      "id": "account-0053",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-6011717427",
@@ -5190,7 +5244,7 @@
       }
     },
     {
-      "id": "account-0052",
+      "id": "account-0054",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-4321422584",
@@ -5199,7 +5253,7 @@
       }
     },
     {
-      "id": "account-0053",
+      "id": "account-0055",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-3185386258",
@@ -5208,7 +5262,7 @@
       }
     },
     {
-      "id": "account-0054",
+      "id": "account-0056",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-2050340486",
@@ -5217,7 +5271,7 @@
       }
     },
     {
-      "id": "account-0055",
+      "id": "account-0057",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-1644608746",
@@ -5226,7 +5280,7 @@
       }
     },
     {
-      "id": "account-0056",
+      "id": "account-0058",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-6259253237",
@@ -5235,7 +5289,7 @@
       }
     },
     {
-      "id": "account-0057",
+      "id": "account-0059",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-6669078244",
@@ -5244,7 +5298,7 @@
       }
     },
     {
-      "id": "account-0058",
+      "id": "account-0060",
       "entity_type": "Account",
       "properties": {
         "account_number": "ACC-1226225156",
@@ -5253,54 +5307,36 @@
       }
     },
     {
-      "id": "account-0059",
-      "entity_type": "Account",
-      "properties": {
-        "account_number": "ACC-5215140451",
-        "bank_name": "Axis Bank",
-        "ifsc_code": "SBIN2129"
-      }
-    },
-    {
-      "id": "account-0060",
-      "entity_type": "Account",
-      "properties": {
-        "account_number": "ACC-9061615990",
-        "bank_name": "ICICI Bank",
-        "ifsc_code": "SBIN6090"
-      }
-    },
-    {
       "id": "intel-0001",
       "entity_type": "IntelligenceReport",
       "properties": {
-        "report_id": "INTEL-2026-435",
+        "report_id": "INTEL-2026-147",
         "title": "Special Intelligence Assessment #1",
         "source_agency": "State Intelligence Bureau",
         "classification_level": "CONFIDENTIAL",
-        "summary": "Field intelligence report detailing suspicious activities in Bengaluru City."
+        "summary": "Field intelligence report detailing suspicious activities in Mangaluru."
       }
     },
     {
       "id": "intel-0002",
       "entity_type": "IntelligenceReport",
       "properties": {
-        "report_id": "INTEL-2026-477",
+        "report_id": "INTEL-2026-576",
         "title": "Special Intelligence Assessment #2",
         "source_agency": "State Intelligence Bureau",
         "classification_level": "CONFIDENTIAL",
-        "summary": "Field intelligence report detailing suspicious activities in Bengaluru Rural."
+        "summary": "Field intelligence report detailing suspicious activities in Mysuru."
       }
     },
     {
       "id": "intel-0003",
       "entity_type": "IntelligenceReport",
       "properties": {
-        "report_id": "INTEL-2026-903",
+        "report_id": "INTEL-2026-188",
         "title": "Special Intelligence Assessment #3",
         "source_agency": "State Intelligence Bureau",
         "classification_level": "CONFIDENTIAL",
-        "summary": "Field intelligence report detailing suspicious activities in Mysuru."
+        "summary": "Field intelligence report detailing suspicious activities in Hubballi-Dharwad."
       }
     },
     {
@@ -5311,128 +5347,128 @@
         "title": "Special Intelligence Assessment #4",
         "source_agency": "State Intelligence Bureau",
         "classification_level": "CONFIDENTIAL",
-        "summary": "Field intelligence report detailing suspicious activities in Hubballi-Dharwad."
+        "summary": "Field intelligence report detailing suspicious activities in Bengaluru Rural."
       }
     },
     {
       "id": "intel-0005",
       "entity_type": "IntelligenceReport",
       "properties": {
-        "report_id": "INTEL-2026-894",
+        "report_id": "INTEL-2026-903",
         "title": "Special Intelligence Assessment #5",
-        "source_agency": "State Intelligence Bureau",
-        "classification_level": "CONFIDENTIAL",
-        "summary": "Field intelligence report detailing suspicious activities in Bengaluru Rural."
-      }
-    },
-    {
-      "id": "intel-0006",
-      "entity_type": "IntelligenceReport",
-      "properties": {
-        "report_id": "INTEL-2026-106",
-        "title": "Special Intelligence Assessment #6",
-        "source_agency": "State Intelligence Bureau",
-        "classification_level": "CONFIDENTIAL",
-        "summary": "Field intelligence report detailing suspicious activities in Mangaluru."
-      }
-    },
-    {
-      "id": "intel-0007",
-      "entity_type": "IntelligenceReport",
-      "properties": {
-        "report_id": "INTEL-2026-654",
-        "title": "Special Intelligence Assessment #7",
         "source_agency": "State Intelligence Bureau",
         "classification_level": "CONFIDENTIAL",
         "summary": "Field intelligence report detailing suspicious activities in Mysuru."
       }
     },
     {
+      "id": "intel-0006",
+      "entity_type": "IntelligenceReport",
+      "properties": {
+        "report_id": "INTEL-2026-477",
+        "title": "Special Intelligence Assessment #6",
+        "source_agency": "State Intelligence Bureau",
+        "classification_level": "CONFIDENTIAL",
+        "summary": "Field intelligence report detailing suspicious activities in Hubballi-Dharwad."
+      }
+    },
+    {
+      "id": "intel-0007",
+      "entity_type": "IntelligenceReport",
+      "properties": {
+        "report_id": "INTEL-2026-894",
+        "title": "Special Intelligence Assessment #7",
+        "source_agency": "State Intelligence Bureau",
+        "classification_level": "CONFIDENTIAL",
+        "summary": "Field intelligence report detailing suspicious activities in Bengaluru Rural."
+      }
+    },
+    {
       "id": "intel-0008",
       "entity_type": "IntelligenceReport",
       "properties": {
-        "report_id": "INTEL-2026-101",
+        "report_id": "INTEL-2026-106",
         "title": "Special Intelligence Assessment #8",
-        "source_agency": "State Intelligence Bureau",
-        "classification_level": "CONFIDENTIAL",
-        "summary": "Field intelligence report detailing suspicious activities in Belagavi."
-      }
-    },
-    {
-      "id": "intel-0009",
-      "entity_type": "IntelligenceReport",
-      "properties": {
-        "report_id": "INTEL-2026-855",
-        "title": "Special Intelligence Assessment #9",
-        "source_agency": "State Intelligence Bureau",
-        "classification_level": "CONFIDENTIAL",
-        "summary": "Field intelligence report detailing suspicious activities in Belagavi."
-      }
-    },
-    {
-      "id": "intel-0010",
-      "entity_type": "IntelligenceReport",
-      "properties": {
-        "report_id": "INTEL-2026-310",
-        "title": "Special Intelligence Assessment #10",
-        "source_agency": "State Intelligence Bureau",
-        "classification_level": "CONFIDENTIAL",
-        "summary": "Field intelligence report detailing suspicious activities in Hubballi-Dharwad."
-      }
-    },
-    {
-      "id": "intel-0011",
-      "entity_type": "IntelligenceReport",
-      "properties": {
-        "report_id": "INTEL-2026-603",
-        "title": "Special Intelligence Assessment #11",
-        "source_agency": "State Intelligence Bureau",
-        "classification_level": "CONFIDENTIAL",
-        "summary": "Field intelligence report detailing suspicious activities in Bengaluru City."
-      }
-    },
-    {
-      "id": "intel-0012",
-      "entity_type": "IntelligenceReport",
-      "properties": {
-        "report_id": "INTEL-2026-386",
-        "title": "Special Intelligence Assessment #12",
-        "source_agency": "State Intelligence Bureau",
-        "classification_level": "CONFIDENTIAL",
-        "summary": "Field intelligence report detailing suspicious activities in Bengaluru City."
-      }
-    },
-    {
-      "id": "intel-0013",
-      "entity_type": "IntelligenceReport",
-      "properties": {
-        "report_id": "INTEL-2026-337",
-        "title": "Special Intelligence Assessment #13",
-        "source_agency": "State Intelligence Bureau",
-        "classification_level": "CONFIDENTIAL",
-        "summary": "Field intelligence report detailing suspicious activities in Hubballi-Dharwad."
-      }
-    },
-    {
-      "id": "intel-0014",
-      "entity_type": "IntelligenceReport",
-      "properties": {
-        "report_id": "INTEL-2026-481",
-        "title": "Special Intelligence Assessment #14",
         "source_agency": "State Intelligence Bureau",
         "classification_level": "CONFIDENTIAL",
         "summary": "Field intelligence report detailing suspicious activities in Mangaluru."
       }
     },
     {
+      "id": "intel-0009",
+      "entity_type": "IntelligenceReport",
+      "properties": {
+        "report_id": "INTEL-2026-654",
+        "title": "Special Intelligence Assessment #9",
+        "source_agency": "State Intelligence Bureau",
+        "classification_level": "CONFIDENTIAL",
+        "summary": "Field intelligence report detailing suspicious activities in Mysuru."
+      }
+    },
+    {
+      "id": "intel-0010",
+      "entity_type": "IntelligenceReport",
+      "properties": {
+        "report_id": "INTEL-2026-101",
+        "title": "Special Intelligence Assessment #10",
+        "source_agency": "State Intelligence Bureau",
+        "classification_level": "CONFIDENTIAL",
+        "summary": "Field intelligence report detailing suspicious activities in Belagavi."
+      }
+    },
+    {
+      "id": "intel-0011",
+      "entity_type": "IntelligenceReport",
+      "properties": {
+        "report_id": "INTEL-2026-855",
+        "title": "Special Intelligence Assessment #11",
+        "source_agency": "State Intelligence Bureau",
+        "classification_level": "CONFIDENTIAL",
+        "summary": "Field intelligence report detailing suspicious activities in Belagavi."
+      }
+    },
+    {
+      "id": "intel-0012",
+      "entity_type": "IntelligenceReport",
+      "properties": {
+        "report_id": "INTEL-2026-310",
+        "title": "Special Intelligence Assessment #12",
+        "source_agency": "State Intelligence Bureau",
+        "classification_level": "CONFIDENTIAL",
+        "summary": "Field intelligence report detailing suspicious activities in Hubballi-Dharwad."
+      }
+    },
+    {
+      "id": "intel-0013",
+      "entity_type": "IntelligenceReport",
+      "properties": {
+        "report_id": "INTEL-2026-603",
+        "title": "Special Intelligence Assessment #13",
+        "source_agency": "State Intelligence Bureau",
+        "classification_level": "CONFIDENTIAL",
+        "summary": "Field intelligence report detailing suspicious activities in Bengaluru City."
+      }
+    },
+    {
+      "id": "intel-0014",
+      "entity_type": "IntelligenceReport",
+      "properties": {
+        "report_id": "INTEL-2026-386",
+        "title": "Special Intelligence Assessment #14",
+        "source_agency": "State Intelligence Bureau",
+        "classification_level": "CONFIDENTIAL",
+        "summary": "Field intelligence report detailing suspicious activities in Bengaluru City."
+      }
+    },
+    {
       "id": "intel-0015",
       "entity_type": "IntelligenceReport",
       "properties": {
-        "report_id": "INTEL-2026-617",
+        "report_id": "INTEL-2026-965",
         "title": "Special Intelligence Assessment #15",
         "source_agency": "State Intelligence Bureau",
         "classification_level": "CONFIDENTIAL",
-        "summary": "Field intelligence report detailing suspicious activities in Bengaluru Rural."
+        "summary": "Field intelligence report detailing suspicious activities in Hubballi-Dharwad."
       }
     }
   ],
@@ -5445,9 +5481,9 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-505",
+        "source_id": "FIR-2026-141",
         "timestamp": "2025-11-07T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-505",
+        "extracted_fact": "Named as accused in FIR-2026-141",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -5460,9 +5496,9 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-505",
+        "source_id": "FIR-2026-141",
         "timestamp": "2025-11-07T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-505",
+        "extracted_fact": "Named as accused in FIR-2026-141",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -5475,9 +5511,9 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-505",
+        "source_id": "FIR-2026-141",
         "timestamp": "2025-11-07T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-505",
+        "extracted_fact": "Evidence indexed under FIR-2026-141",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -6225,9 +6261,9 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-270",
+        "source_id": "FIR-2026-207",
         "timestamp": "2025-09-21T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-270",
+        "extracted_fact": "Named as accused in FIR-2026-207",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -6240,9 +6276,9 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-270",
+        "source_id": "FIR-2026-207",
         "timestamp": "2025-09-21T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-270",
+        "extracted_fact": "Named as accused in FIR-2026-207",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -6255,9 +6291,9 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-270",
+        "source_id": "FIR-2026-207",
         "timestamp": "2025-09-21T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-270",
+        "extracted_fact": "Named as accused in FIR-2026-207",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -6270,9 +6306,9 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-270",
+        "source_id": "FIR-2026-207",
         "timestamp": "2025-09-21T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-270",
+        "extracted_fact": "Evidence indexed under FIR-2026-207",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -6781,7 +6817,7 @@
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-424",
-        "timestamp": "2025-12-25T10:00:00+00:00",
+        "timestamp": "2025-10-15T10:00:00+00:00",
         "extracted_fact": "Named as accused in FIR-2026-424",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
@@ -6796,7 +6832,7 @@
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-424",
-        "timestamp": "2025-12-25T10:00:00+00:00",
+        "timestamp": "2025-10-15T10:00:00+00:00",
         "extracted_fact": "Named as accused in FIR-2026-424",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
@@ -6811,7 +6847,7 @@
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-424",
-        "timestamp": "2025-12-25T10:00:00+00:00",
+        "timestamp": "2025-10-15T10:00:00+00:00",
         "extracted_fact": "Evidence indexed under FIR-2026-424",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
@@ -6825,9 +6861,9 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-543",
-        "timestamp": "2025-11-05T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-543",
+        "source_id": "FIR-2026-886",
+        "timestamp": "2025-09-26T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-886",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -6840,24 +6876,24 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-543",
-        "timestamp": "2025-11-05T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-543",
+        "source_id": "FIR-2026-886",
+        "timestamp": "2025-09-26T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-886",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0031-person-0058",
-      "source_id": "person-0058",
+      "id": "edge-acc-case-0031-person-0056",
+      "source_id": "person-0056",
       "target_id": "case-0031",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-430",
-        "timestamp": "2025-12-09T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-430",
+        "source_id": "FIR-2026-268",
+        "timestamp": "2025-09-24T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-268",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -6870,24 +6906,24 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-430",
-        "timestamp": "2025-12-09T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-430",
+        "source_id": "FIR-2026-268",
+        "timestamp": "2025-09-24T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-268",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0032-person-0059",
-      "source_id": "person-0059",
+      "id": "edge-acc-case-0032-person-0058",
+      "source_id": "person-0058",
       "target_id": "case-0032",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-740",
-        "timestamp": "2025-12-20T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-740",
+        "source_id": "FIR-2026-228",
+        "timestamp": "2025-10-27T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-228",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -6900,39 +6936,24 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-740",
-        "timestamp": "2025-12-20T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-740",
+        "source_id": "FIR-2026-228",
+        "timestamp": "2025-10-27T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-228",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0033-person-0060",
-      "source_id": "person-0060",
+      "id": "edge-acc-case-0033-person-0059",
+      "source_id": "person-0059",
       "target_id": "case-0033",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-945",
-        "timestamp": "2025-10-19T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-945",
-        "derivation_method": "DIRECT_RECORD",
-        "confidence": 1.0
-      }
-    },
-    {
-      "id": "edge-acc-case-0033-person-0061",
-      "source_id": "person-0061",
-      "target_id": "case-0033",
-      "edge_type": "ACCUSED_IN",
-      "weight": 1.0,
-      "provenance": {
-        "source_type": "FIR",
-        "source_id": "FIR-2026-945",
-        "timestamp": "2025-10-19T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-945",
+        "source_id": "FIR-2026-774",
+        "timestamp": "2025-09-27T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-774",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -6945,39 +6966,24 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-945",
-        "timestamp": "2025-10-19T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-945",
+        "source_id": "FIR-2026-774",
+        "timestamp": "2025-09-27T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-774",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0034-person-0062",
-      "source_id": "person-0062",
+      "id": "edge-acc-case-0034-person-0058",
+      "source_id": "person-0058",
       "target_id": "case-0034",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-609",
-        "timestamp": "2025-12-10T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-609",
-        "derivation_method": "DIRECT_RECORD",
-        "confidence": 1.0
-      }
-    },
-    {
-      "id": "edge-acc-case-0034-person-0063",
-      "source_id": "person-0063",
-      "target_id": "case-0034",
-      "edge_type": "ACCUSED_IN",
-      "weight": 1.0,
-      "provenance": {
-        "source_type": "FIR",
-        "source_id": "FIR-2026-609",
-        "timestamp": "2025-12-10T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-609",
+        "source_id": "FIR-2026-756",
+        "timestamp": "2026-01-07T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-756",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -6990,39 +6996,39 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-609",
-        "timestamp": "2025-12-10T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-609",
+        "source_id": "FIR-2026-756",
+        "timestamp": "2026-01-07T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-756",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0035-person-0064",
-      "source_id": "person-0064",
+      "id": "edge-acc-case-0035-person-0060",
+      "source_id": "person-0060",
       "target_id": "case-0035",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-564",
-        "timestamp": "2025-12-15T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-564",
+        "source_id": "FIR-2026-757",
+        "timestamp": "2025-12-03T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-757",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0035-person-0065",
-      "source_id": "person-0065",
+      "id": "edge-acc-case-0035-person-0061",
+      "source_id": "person-0061",
       "target_id": "case-0035",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-564",
-        "timestamp": "2025-12-15T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-564",
+        "source_id": "FIR-2026-757",
+        "timestamp": "2025-12-03T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-757",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -7035,39 +7041,39 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-564",
-        "timestamp": "2025-12-15T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-564",
+        "source_id": "FIR-2026-757",
+        "timestamp": "2025-12-03T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-757",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0036-person-0058",
-      "source_id": "person-0058",
+      "id": "edge-acc-case-0036-person-0061",
+      "source_id": "person-0061",
       "target_id": "case-0036",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-982",
-        "timestamp": "2025-11-06T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-982",
+        "source_id": "FIR-2026-550",
+        "timestamp": "2025-10-09T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-550",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0036-person-0033",
-      "source_id": "person-0033",
+      "id": "edge-acc-case-0036-person-0030",
+      "source_id": "person-0030",
       "target_id": "case-0036",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-982",
-        "timestamp": "2025-11-06T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-982",
+        "source_id": "FIR-2026-550",
+        "timestamp": "2025-10-09T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-550",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -7080,24 +7086,24 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-982",
-        "timestamp": "2025-11-06T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-982",
+        "source_id": "FIR-2026-550",
+        "timestamp": "2025-10-09T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-550",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0037-person-0056",
-      "source_id": "person-0056",
+      "id": "edge-acc-case-0037-person-0055",
+      "source_id": "person-0055",
       "target_id": "case-0037",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-577",
-        "timestamp": "2025-09-22T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-577",
+        "source_id": "FIR-2026-233",
+        "timestamp": "2025-12-07T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-233",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -7110,24 +7116,24 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-577",
-        "timestamp": "2025-09-22T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-577",
+        "source_id": "FIR-2026-233",
+        "timestamp": "2025-12-07T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-233",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0038-person-0054",
-      "source_id": "person-0054",
+      "id": "edge-acc-case-0038-person-0062",
+      "source_id": "person-0062",
       "target_id": "case-0038",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-933",
-        "timestamp": "2025-11-06T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-933",
+        "source_id": "FIR-2026-151",
+        "timestamp": "2025-09-22T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-151",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -7140,24 +7146,39 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-933",
-        "timestamp": "2025-11-06T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-933",
+        "source_id": "FIR-2026-151",
+        "timestamp": "2025-09-22T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-151",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0039-person-0066",
-      "source_id": "person-0066",
+      "id": "edge-acc-case-0039-person-0063",
+      "source_id": "person-0063",
       "target_id": "case-0039",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-123",
-        "timestamp": "2025-10-28T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-123",
+        "source_id": "FIR-2026-294",
+        "timestamp": "2025-11-08T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-294",
+        "derivation_method": "DIRECT_RECORD",
+        "confidence": 1.0
+      }
+    },
+    {
+      "id": "edge-acc-case-0039-person-0064",
+      "source_id": "person-0064",
+      "target_id": "case-0039",
+      "edge_type": "ACCUSED_IN",
+      "weight": 1.0,
+      "provenance": {
+        "source_type": "FIR",
+        "source_id": "FIR-2026-294",
+        "timestamp": "2025-11-08T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-294",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -7170,24 +7191,24 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-123",
-        "timestamp": "2025-10-28T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-123",
+        "source_id": "FIR-2026-294",
+        "timestamp": "2025-11-08T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-294",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0040-person-0067",
-      "source_id": "person-0067",
+      "id": "edge-acc-case-0040-person-0056",
+      "source_id": "person-0056",
       "target_id": "case-0040",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-606",
-        "timestamp": "2025-09-24T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-606",
+        "source_id": "FIR-2026-346",
+        "timestamp": "2025-09-20T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-346",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -7200,24 +7221,24 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-606",
-        "timestamp": "2025-09-24T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-606",
+        "source_id": "FIR-2026-346",
+        "timestamp": "2025-09-20T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-346",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0041-person-0068",
-      "source_id": "person-0068",
+      "id": "edge-acc-case-0041-person-0056",
+      "source_id": "person-0056",
       "target_id": "case-0041",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-844",
-        "timestamp": "2025-11-25T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-844",
+        "source_id": "FIR-2026-649",
+        "timestamp": "2025-10-05T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-649",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -7230,24 +7251,39 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-844",
-        "timestamp": "2025-11-25T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-844",
+        "source_id": "FIR-2026-649",
+        "timestamp": "2025-10-05T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-649",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0042-person-0069",
-      "source_id": "person-0069",
+      "id": "edge-acc-case-0042-person-0056",
+      "source_id": "person-0056",
       "target_id": "case-0042",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-616",
-        "timestamp": "2025-12-25T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-616",
+        "source_id": "FIR-2026-152",
+        "timestamp": "2025-10-05T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-152",
+        "derivation_method": "DIRECT_RECORD",
+        "confidence": 1.0
+      }
+    },
+    {
+      "id": "edge-acc-case-0042-person-0038",
+      "source_id": "person-0038",
+      "target_id": "case-0042",
+      "edge_type": "ACCUSED_IN",
+      "weight": 1.0,
+      "provenance": {
+        "source_type": "FIR",
+        "source_id": "FIR-2026-152",
+        "timestamp": "2025-10-05T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-152",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -7260,24 +7296,39 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-616",
-        "timestamp": "2025-12-25T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-616",
+        "source_id": "FIR-2026-152",
+        "timestamp": "2025-10-05T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-152",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0043-person-0070",
-      "source_id": "person-0070",
+      "id": "edge-acc-case-0043-person-0065",
+      "source_id": "person-0065",
       "target_id": "case-0043",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-913",
-        "timestamp": "2025-10-25T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-913",
+        "source_id": "FIR-2026-199",
+        "timestamp": "2025-10-06T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-199",
+        "derivation_method": "DIRECT_RECORD",
+        "confidence": 1.0
+      }
+    },
+    {
+      "id": "edge-acc-case-0043-person-0066",
+      "source_id": "person-0066",
+      "target_id": "case-0043",
+      "edge_type": "ACCUSED_IN",
+      "weight": 1.0,
+      "provenance": {
+        "source_type": "FIR",
+        "source_id": "FIR-2026-199",
+        "timestamp": "2025-10-06T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-199",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -7290,39 +7341,24 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-913",
-        "timestamp": "2025-10-25T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-913",
+        "source_id": "FIR-2026-199",
+        "timestamp": "2025-10-06T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-199",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0044-person-0071",
-      "source_id": "person-0071",
+      "id": "edge-acc-case-0044-person-0057",
+      "source_id": "person-0057",
       "target_id": "case-0044",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-146",
-        "timestamp": "2025-12-22T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-146",
-        "derivation_method": "DIRECT_RECORD",
-        "confidence": 1.0
-      }
-    },
-    {
-      "id": "edge-acc-case-0044-person-0072",
-      "source_id": "person-0072",
-      "target_id": "case-0044",
-      "edge_type": "ACCUSED_IN",
-      "weight": 1.0,
-      "provenance": {
-        "source_type": "FIR",
-        "source_id": "FIR-2026-146",
-        "timestamp": "2025-12-22T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-146",
+        "source_id": "FIR-2026-612",
+        "timestamp": "2025-11-05T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-612",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -7335,38 +7371,23 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-146",
-        "timestamp": "2025-12-22T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-146",
+        "source_id": "FIR-2026-612",
+        "timestamp": "2025-11-05T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-612",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0045-person-0073",
-      "source_id": "person-0073",
+      "id": "edge-acc-case-0045-person-0061",
+      "source_id": "person-0061",
       "target_id": "case-0045",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-435",
-        "timestamp": "2025-10-27T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-435",
-        "derivation_method": "DIRECT_RECORD",
-        "confidence": 1.0
-      }
-    },
-    {
-      "id": "edge-acc-case-0045-person-0075",
-      "source_id": "person-0075",
-      "target_id": "case-0045",
-      "edge_type": "ACCUSED_IN",
-      "weight": 1.0,
-      "provenance": {
-        "source_type": "FIR",
-        "source_id": "FIR-2026-435",
-        "timestamp": "2025-10-27T10:00:00+00:00",
+        "timestamp": "2025-12-03T10:00:00+00:00",
         "extracted_fact": "Named as accused in FIR-2026-435",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
@@ -7381,37 +7402,37 @@
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-435",
-        "timestamp": "2025-10-27T10:00:00+00:00",
+        "timestamp": "2025-12-03T10:00:00+00:00",
         "extracted_fact": "Evidence indexed under FIR-2026-435",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0046-person-0073",
-      "source_id": "person-0073",
+      "id": "edge-acc-case-0046-person-0067",
+      "source_id": "person-0067",
       "target_id": "case-0046",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-825",
-        "timestamp": "2025-10-28T10:00:00+00:00",
+        "timestamp": "2025-11-29T10:00:00+00:00",
         "extracted_fact": "Named as accused in FIR-2026-825",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0046-person-0036",
-      "source_id": "person-0036",
+      "id": "edge-acc-case-0046-person-0068",
+      "source_id": "person-0068",
       "target_id": "case-0046",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-825",
-        "timestamp": "2025-10-28T10:00:00+00:00",
+        "timestamp": "2025-11-29T10:00:00+00:00",
         "extracted_fact": "Named as accused in FIR-2026-825",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
@@ -7426,23 +7447,23 @@
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-825",
-        "timestamp": "2025-10-28T10:00:00+00:00",
+        "timestamp": "2025-11-29T10:00:00+00:00",
         "extracted_fact": "Evidence indexed under FIR-2026-825",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0047-person-0076",
-      "source_id": "person-0076",
+      "id": "edge-acc-case-0047-person-0069",
+      "source_id": "person-0069",
       "target_id": "case-0047",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-371",
+        "source_id": "FIR-2026-915",
         "timestamp": "2025-10-10T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-371",
+        "extracted_fact": "Named as accused in FIR-2026-915",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -7455,38 +7476,23 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-371",
+        "source_id": "FIR-2026-915",
         "timestamp": "2025-10-10T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-371",
+        "extracted_fact": "Evidence indexed under FIR-2026-915",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0048-person-0073",
-      "source_id": "person-0073",
+      "id": "edge-acc-case-0048-person-0070",
+      "source_id": "person-0070",
       "target_id": "case-0048",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-636",
-        "timestamp": "2025-12-17T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-636",
-        "derivation_method": "DIRECT_RECORD",
-        "confidence": 1.0
-      }
-    },
-    {
-      "id": "edge-acc-case-0048-person-0018",
-      "source_id": "person-0018",
-      "target_id": "case-0048",
-      "edge_type": "ACCUSED_IN",
-      "weight": 1.0,
-      "provenance": {
-        "source_type": "FIR",
-        "source_id": "FIR-2026-636",
-        "timestamp": "2025-12-17T10:00:00+00:00",
+        "timestamp": "2025-09-27T10:00:00+00:00",
         "extracted_fact": "Named as accused in FIR-2026-636",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
@@ -7501,7 +7507,7 @@
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-636",
-        "timestamp": "2025-12-17T10:00:00+00:00",
+        "timestamp": "2025-09-27T10:00:00+00:00",
         "extracted_fact": "Evidence indexed under FIR-2026-636",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
@@ -7516,7 +7522,7 @@
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-984",
-        "timestamp": "2025-11-19T10:00:00+00:00",
+        "timestamp": "2026-01-08T10:00:00+00:00",
         "extracted_fact": "Named as accused in FIR-2026-984",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
@@ -7531,7 +7537,7 @@
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-984",
-        "timestamp": "2025-11-19T10:00:00+00:00",
+        "timestamp": "2026-01-08T10:00:00+00:00",
         "extracted_fact": "Named as accused in FIR-2026-984",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
@@ -7546,7 +7552,7 @@
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-984",
-        "timestamp": "2025-11-19T10:00:00+00:00",
+        "timestamp": "2026-01-08T10:00:00+00:00",
         "extracted_fact": "Named as accused in FIR-2026-984",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
@@ -7561,23 +7567,38 @@
       "provenance": {
         "source_type": "FIR",
         "source_id": "FIR-2026-984",
-        "timestamp": "2025-11-19T10:00:00+00:00",
+        "timestamp": "2026-01-08T10:00:00+00:00",
         "extracted_fact": "Evidence indexed under FIR-2026-984",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
     },
     {
-      "id": "edge-acc-case-0050-person-0058",
-      "source_id": "person-0058",
+      "id": "edge-acc-case-0050-person-0071",
+      "source_id": "person-0071",
       "target_id": "case-0050",
       "edge_type": "ACCUSED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-993",
-        "timestamp": "2025-10-18T10:00:00+00:00",
-        "extracted_fact": "Named as accused in FIR-2026-993",
+        "source_id": "FIR-2026-522",
+        "timestamp": "2025-09-21T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-522",
+        "derivation_method": "DIRECT_RECORD",
+        "confidence": 1.0
+      }
+    },
+    {
+      "id": "edge-acc-case-0050-person-0072",
+      "source_id": "person-0072",
+      "target_id": "case-0050",
+      "edge_type": "ACCUSED_IN",
+      "weight": 1.0,
+      "provenance": {
+        "source_type": "FIR",
+        "source_id": "FIR-2026-522",
+        "timestamp": "2025-09-21T10:00:00+00:00",
+        "extracted_fact": "Named as accused in FIR-2026-522",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -7590,9 +7611,9 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "FIR",
-        "source_id": "FIR-2026-993",
-        "timestamp": "2025-10-18T10:00:00+00:00",
-        "extracted_fact": "Evidence indexed under FIR-2026-993",
+        "source_id": "FIR-2026-522",
+        "timestamp": "2025-09-21T10:00:00+00:00",
+        "extracted_fact": "Evidence indexed under FIR-2026-522",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 1.0
       }
@@ -9398,8 +9419,8 @@
       }
     },
     {
-      "id": "edge-ph-person-0028-phone-0121",
-      "source_id": "person-0028",
+      "id": "edge-ph-person-0022-phone-0121",
+      "source_id": "person-0022",
       "target_id": "phone-0121",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9407,14 +9428,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0121",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Rafiq Desai",
+        "extracted_fact": "SIM card subscription attributed to Nazia Murthy",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0020-phone-0122",
-      "source_id": "person-0020",
+      "id": "edge-ph-person-0078-phone-0122",
+      "source_id": "person-0078",
       "target_id": "phone-0122",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9422,14 +9443,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0122",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Fatima Naidu",
+        "extracted_fact": "SIM card subscription attributed to Praveen Malhotra",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0030-phone-0123",
-      "source_id": "person-0030",
+      "id": "edge-ph-person-0020-phone-0123",
+      "source_id": "person-0020",
       "target_id": "phone-0123",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9437,14 +9458,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0123",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Siddaramaiah Kamath",
+        "extracted_fact": "SIM card subscription attributed to Fatima Naidu",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0029-phone-0124",
-      "source_id": "person-0029",
+      "id": "edge-ph-person-0030-phone-0124",
+      "source_id": "person-0030",
       "target_id": "phone-0124",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9452,14 +9473,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0124",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Kiran Murthy",
+        "extracted_fact": "SIM card subscription attributed to Siddaramaiah Kamath",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0016-phone-0125",
-      "source_id": "person-0016",
+      "id": "edge-ph-person-0029-phone-0125",
+      "source_id": "person-0029",
       "target_id": "phone-0125",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9467,14 +9488,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0125",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Kumar Singh",
+        "extracted_fact": "SIM card subscription attributed to Kiran Murthy",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0017-phone-0126",
-      "source_id": "person-0017",
+      "id": "edge-ph-person-0016-phone-0126",
+      "source_id": "person-0016",
       "target_id": "phone-0126",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9482,14 +9503,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0126",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Venkatesh Reddy",
+        "extracted_fact": "SIM card subscription attributed to Kumar Singh",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0030-phone-0127",
-      "source_id": "person-0030",
+      "id": "edge-ph-person-0017-phone-0127",
+      "source_id": "person-0017",
       "target_id": "phone-0127",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9497,14 +9518,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0127",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Siddaramaiah Kamath",
+        "extracted_fact": "SIM card subscription attributed to Venkatesh Reddy",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0034-phone-0128",
-      "source_id": "person-0034",
+      "id": "edge-ph-person-0030-phone-0128",
+      "source_id": "person-0030",
       "target_id": "phone-0128",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9512,7 +9533,7 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0128",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Prasad Kumar",
+        "extracted_fact": "SIM card subscription attributed to Siddaramaiah Kamath",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
@@ -9533,8 +9554,8 @@
       }
     },
     {
-      "id": "edge-ph-person-0027-phone-0130",
-      "source_id": "person-0027",
+      "id": "edge-ph-person-0034-phone-0130",
+      "source_id": "person-0034",
       "target_id": "phone-0130",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9542,14 +9563,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0130",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Selvam Ansari",
+        "extracted_fact": "SIM card subscription attributed to Prasad Kumar",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0037-phone-0131",
-      "source_id": "person-0037",
+      "id": "edge-ph-person-0027-phone-0131",
+      "source_id": "person-0027",
       "target_id": "phone-0131",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9557,14 +9578,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0131",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Rohan Naik",
+        "extracted_fact": "SIM card subscription attributed to Selvam Ansari",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0015-phone-0132",
-      "source_id": "person-0015",
+      "id": "edge-ph-person-0037-phone-0132",
+      "source_id": "person-0037",
       "target_id": "phone-0132",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9572,14 +9593,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0132",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Rajesh Iyer",
+        "extracted_fact": "SIM card subscription attributed to Rohan Naik",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0039-phone-0133",
-      "source_id": "person-0039",
+      "id": "edge-ph-person-0015-phone-0133",
+      "source_id": "person-0015",
       "target_id": "phone-0133",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9587,14 +9608,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0133",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Srinivas Singh",
+        "extracted_fact": "SIM card subscription attributed to Rajesh Iyer",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0035-phone-0134",
-      "source_id": "person-0035",
+      "id": "edge-ph-person-0039-phone-0134",
+      "source_id": "person-0039",
       "target_id": "phone-0134",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9602,14 +9623,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0134",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Madhu Sharma",
+        "extracted_fact": "SIM card subscription attributed to Srinivas Singh",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0031-phone-0135",
-      "source_id": "person-0031",
+      "id": "edge-ph-person-0035-phone-0135",
+      "source_id": "person-0035",
       "target_id": "phone-0135",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9617,14 +9638,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0135",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Nagesh Gupta",
+        "extracted_fact": "SIM card subscription attributed to Madhu Sharma",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0023-phone-0136",
-      "source_id": "person-0023",
+      "id": "edge-ph-person-0031-phone-0136",
+      "source_id": "person-0031",
       "target_id": "phone-0136",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9632,14 +9653,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0136",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Ravi Naidu",
+        "extracted_fact": "SIM card subscription attributed to Nagesh Gupta",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0030-phone-0137",
-      "source_id": "person-0030",
+      "id": "edge-ph-person-0023-phone-0137",
+      "source_id": "person-0023",
       "target_id": "phone-0137",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9647,7 +9668,7 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0137",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Siddaramaiah Kamath",
+        "extracted_fact": "SIM card subscription attributed to Ravi Naidu",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
@@ -9668,8 +9689,8 @@
       }
     },
     {
-      "id": "edge-ph-person-0018-phone-0139",
-      "source_id": "person-0018",
+      "id": "edge-ph-person-0030-phone-0139",
+      "source_id": "person-0030",
       "target_id": "phone-0139",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9677,14 +9698,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0139",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Shivakumar Khan",
+        "extracted_fact": "SIM card subscription attributed to Siddaramaiah Kamath",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0038-phone-0140",
-      "source_id": "person-0038",
+      "id": "edge-ph-person-0018-phone-0140",
+      "source_id": "person-0018",
       "target_id": "phone-0140",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9692,14 +9713,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0140",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Deepak Verma",
+        "extracted_fact": "SIM card subscription attributed to Shivakumar Khan",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0041-phone-0141",
-      "source_id": "person-0041",
+      "id": "edge-ph-person-0038-phone-0141",
+      "source_id": "person-0038",
       "target_id": "phone-0141",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9707,14 +9728,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0141",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Khalid Murthy",
+        "extracted_fact": "SIM card subscription attributed to Deepak Verma",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0026-phone-0142",
-      "source_id": "person-0026",
+      "id": "edge-ph-person-0041-phone-0142",
+      "source_id": "person-0041",
       "target_id": "phone-0142",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9722,14 +9743,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0142",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Saleem Sheikh",
+        "extracted_fact": "SIM card subscription attributed to Khalid Murthy",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0040-phone-0143",
-      "source_id": "person-0040",
+      "id": "edge-ph-person-0026-phone-0143",
+      "source_id": "person-0026",
       "target_id": "phone-0143",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9737,14 +9758,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0143",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Sowmya Iyer",
+        "extracted_fact": "SIM card subscription attributed to Saleem Sheikh",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0033-phone-0144",
-      "source_id": "person-0033",
+      "id": "edge-ph-person-0040-phone-0144",
+      "source_id": "person-0040",
       "target_id": "phone-0144",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9752,14 +9773,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0144",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Murugan Gowda",
+        "extracted_fact": "SIM card subscription attributed to Sowmya Iyer",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0032-phone-0145",
-      "source_id": "person-0032",
+      "id": "edge-ph-person-0033-phone-0145",
+      "source_id": "person-0033",
       "target_id": "phone-0145",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9767,14 +9788,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0145",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Saleem Reddy",
+        "extracted_fact": "SIM card subscription attributed to Murugan Gowda",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0017-phone-0146",
-      "source_id": "person-0017",
+      "id": "edge-ph-person-0032-phone-0146",
+      "source_id": "person-0032",
       "target_id": "phone-0146",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9782,14 +9803,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0146",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Venkatesh Reddy",
+        "extracted_fact": "SIM card subscription attributed to Saleem Reddy",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0025-phone-0147",
-      "source_id": "person-0025",
+      "id": "edge-ph-person-0017-phone-0147",
+      "source_id": "person-0017",
       "target_id": "phone-0147",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9797,14 +9818,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0147",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Azeez Naidu",
+        "extracted_fact": "SIM card subscription attributed to Venkatesh Reddy",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0020-phone-0148",
-      "source_id": "person-0020",
+      "id": "edge-ph-person-0025-phone-0148",
+      "source_id": "person-0025",
       "target_id": "phone-0148",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9812,14 +9833,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0148",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Fatima Naidu",
+        "extracted_fact": "SIM card subscription attributed to Azeez Naidu",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0017-phone-0149",
-      "source_id": "person-0017",
+      "id": "edge-ph-person-0020-phone-0149",
+      "source_id": "person-0020",
       "target_id": "phone-0149",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9827,14 +9848,14 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0149",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Venkatesh Reddy",
+        "extracted_fact": "SIM card subscription attributed to Fatima Naidu",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
-      "id": "edge-ph-person-0020-phone-0150",
-      "source_id": "person-0020",
+      "id": "edge-ph-person-0017-phone-0150",
+      "source_id": "person-0017",
       "target_id": "phone-0150",
       "edge_type": "USED_PHONE",
       "weight": 1.0,
@@ -9842,34 +9863,72 @@
         "source_type": "CDR",
         "source_id": "CDR-phone-0150",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "SIM card subscription attributed to Fatima Naidu",
+        "extracted_fact": "SIM card subscription attributed to Venkatesh Reddy",
         "derivation_method": "TELECOM_KYC",
         "confidence": 0.95
       }
     },
     {
       "id": "edge-call-alpha-1",
-      "source_id": "person-0022",
-      "target_id": "person-0015",
+      "source_id": "person-0020",
+      "target_id": "person-0017",
       "edge_type": "CONNECTED_TO",
-      "weight": 1.0,
+      "weight": 0.8,
       "properties": {
-        "call_count": 24,
+        "call_count": 8,
         "channel": "VOICE_CALL"
       },
       "provenance": {
         "source_type": "CDR",
-        "source_id": "CDR-SWEEP-566",
+        "source_id": "CDR-SWEEP-218",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "24 telecommunication interactions logged",
+        "extracted_fact": "8 telecommunication interactions logged",
         "derivation_method": "CALL_RECORD",
         "confidence": 0.9
       }
     },
     {
       "id": "edge-call-alpha-2",
-      "source_id": "person-0017",
-      "target_id": "person-0019",
+      "source_id": "person-0015",
+      "target_id": "person-0016",
+      "edge_type": "CONNECTED_TO",
+      "weight": 1.0,
+      "properties": {
+        "call_count": 22,
+        "channel": "VOICE_CALL"
+      },
+      "provenance": {
+        "source_type": "CDR",
+        "source_id": "CDR-SWEEP-451",
+        "timestamp": "2026-01-15T10:00:00+00:00",
+        "extracted_fact": "22 telecommunication interactions logged",
+        "derivation_method": "CALL_RECORD",
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "edge-call-alpha-3",
+      "source_id": "person-0025",
+      "target_id": "person-0023",
+      "edge_type": "CONNECTED_TO",
+      "weight": 1.0,
+      "properties": {
+        "call_count": 16,
+        "channel": "VOICE_CALL"
+      },
+      "provenance": {
+        "source_type": "CDR",
+        "source_id": "CDR-SWEEP-633",
+        "timestamp": "2026-01-15T10:00:00+00:00",
+        "extracted_fact": "16 telecommunication interactions logged",
+        "derivation_method": "CALL_RECORD",
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "edge-call-alpha-4",
+      "source_id": "person-0078",
+      "target_id": "person-0016",
       "edge_type": "CONNECTED_TO",
       "weight": 1.0,
       "properties": {
@@ -9878,7 +9937,7 @@
       },
       "provenance": {
         "source_type": "CDR",
-        "source_id": "CDR-SWEEP-456",
+        "source_id": "CDR-SWEEP-199",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "33 telecommunication interactions logged",
         "derivation_method": "CALL_RECORD",
@@ -9886,9 +9945,9 @@
       }
     },
     {
-      "id": "edge-call-alpha-3",
-      "source_id": "person-0078",
-      "target_id": "person-0012",
+      "id": "edge-call-alpha-5",
+      "source_id": "person-0025",
+      "target_id": "person-0022",
       "edge_type": "CONNECTED_TO",
       "weight": 1.0,
       "properties": {
@@ -9897,7 +9956,7 @@
       },
       "provenance": {
         "source_type": "CDR",
-        "source_id": "CDR-SWEEP-839",
+        "source_id": "CDR-SWEEP-426",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "31 telecommunication interactions logged",
         "derivation_method": "CALL_RECORD",
@@ -9905,85 +9964,47 @@
       }
     },
     {
-      "id": "edge-call-alpha-4",
-      "source_id": "person-0025",
-      "target_id": "person-0016",
-      "edge_type": "CONNECTED_TO",
-      "weight": 0.7,
-      "properties": {
-        "call_count": 7,
-        "channel": "VOICE_CALL"
-      },
-      "provenance": {
-        "source_type": "CDR",
-        "source_id": "CDR-SWEEP-407",
-        "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "7 telecommunication interactions logged",
-        "derivation_method": "CALL_RECORD",
-        "confidence": 0.9
-      }
-    },
-    {
-      "id": "edge-call-alpha-5",
-      "source_id": "person-0012",
-      "target_id": "person-0023",
-      "edge_type": "CONNECTED_TO",
-      "weight": 1.0,
-      "properties": {
-        "call_count": 10,
-        "channel": "VOICE_CALL"
-      },
-      "provenance": {
-        "source_type": "CDR",
-        "source_id": "CDR-SWEEP-123",
-        "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "10 telecommunication interactions logged",
-        "derivation_method": "CALL_RECORD",
-        "confidence": 0.9
-      }
-    },
-    {
       "id": "edge-call-alpha-6",
-      "source_id": "person-0021",
-      "target_id": "person-0078",
+      "source_id": "person-0013",
+      "target_id": "person-0015",
       "edge_type": "CONNECTED_TO",
-      "weight": 0.9,
+      "weight": 0.5,
       "properties": {
-        "call_count": 9,
+        "call_count": 5,
         "channel": "VOICE_CALL"
       },
       "provenance": {
         "source_type": "CDR",
-        "source_id": "CDR-SWEEP-793",
+        "source_id": "CDR-SWEEP-929",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "9 telecommunication interactions logged",
+        "extracted_fact": "5 telecommunication interactions logged",
         "derivation_method": "CALL_RECORD",
         "confidence": 0.9
       }
     },
     {
       "id": "edge-call-alpha-7",
-      "source_id": "person-0016",
-      "target_id": "person-0025",
+      "source_id": "person-0014",
+      "target_id": "person-0011",
       "edge_type": "CONNECTED_TO",
       "weight": 1.0,
       "properties": {
-        "call_count": 18,
+        "call_count": 24,
         "channel": "VOICE_CALL"
       },
       "provenance": {
         "source_type": "CDR",
-        "source_id": "CDR-SWEEP-628",
+        "source_id": "CDR-SWEEP-763",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "18 telecommunication interactions logged",
+        "extracted_fact": "24 telecommunication interactions logged",
         "derivation_method": "CALL_RECORD",
         "confidence": 0.9
       }
     },
     {
       "id": "edge-call-alpha-8",
-      "source_id": "person-0016",
-      "target_id": "person-0019",
+      "source_id": "person-0014",
+      "target_id": "person-0021",
       "edge_type": "CONNECTED_TO",
       "weight": 1.0,
       "properties": {
@@ -9992,7 +10013,7 @@
       },
       "provenance": {
         "source_type": "CDR",
-        "source_id": "CDR-SWEEP-438",
+        "source_id": "CDR-SWEEP-858",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "13 telecommunication interactions logged",
         "derivation_method": "CALL_RECORD",
@@ -10001,27 +10022,8 @@
     },
     {
       "id": "edge-call-alpha-9",
-      "source_id": "person-0024",
-      "target_id": "person-0018",
-      "edge_type": "CONNECTED_TO",
-      "weight": 1.0,
-      "properties": {
-        "call_count": 17,
-        "channel": "VOICE_CALL"
-      },
-      "provenance": {
-        "source_type": "CDR",
-        "source_id": "CDR-SWEEP-916",
-        "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "17 telecommunication interactions logged",
-        "derivation_method": "CALL_RECORD",
-        "confidence": 0.9
-      }
-    },
-    {
-      "id": "edge-call-alpha-10",
-      "source_id": "person-0023",
-      "target_id": "person-0021",
+      "source_id": "person-0018",
+      "target_id": "person-0019",
       "edge_type": "CONNECTED_TO",
       "weight": 1.0,
       "properties": {
@@ -10030,7 +10032,7 @@
       },
       "provenance": {
         "source_type": "CDR",
-        "source_id": "CDR-SWEEP-290",
+        "source_id": "CDR-SWEEP-665",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "14 telecommunication interactions logged",
         "derivation_method": "CALL_RECORD",
@@ -10038,7 +10040,64 @@
       }
     },
     {
+      "id": "edge-call-alpha-10",
+      "source_id": "person-0016",
+      "target_id": "person-0078",
+      "edge_type": "CONNECTED_TO",
+      "weight": 1.0,
+      "properties": {
+        "call_count": 38,
+        "channel": "VOICE_CALL"
+      },
+      "provenance": {
+        "source_type": "CDR",
+        "source_id": "CDR-SWEEP-536",
+        "timestamp": "2026-01-15T10:00:00+00:00",
+        "extracted_fact": "38 telecommunication interactions logged",
+        "derivation_method": "CALL_RECORD",
+        "confidence": 0.9
+      }
+    },
+    {
       "id": "edge-call-alpha-11",
+      "source_id": "person-0025",
+      "target_id": "person-0014",
+      "edge_type": "CONNECTED_TO",
+      "weight": 1.0,
+      "properties": {
+        "call_count": 28,
+        "channel": "VOICE_CALL"
+      },
+      "provenance": {
+        "source_type": "CDR",
+        "source_id": "CDR-SWEEP-744",
+        "timestamp": "2026-01-15T10:00:00+00:00",
+        "extracted_fact": "28 telecommunication interactions logged",
+        "derivation_method": "CALL_RECORD",
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "edge-call-alpha-12",
+      "source_id": "person-0016",
+      "target_id": "person-0013",
+      "edge_type": "CONNECTED_TO",
+      "weight": 1.0,
+      "properties": {
+        "call_count": 43,
+        "channel": "VOICE_CALL"
+      },
+      "provenance": {
+        "source_type": "CDR",
+        "source_id": "CDR-SWEEP-773",
+        "timestamp": "2026-01-15T10:00:00+00:00",
+        "extracted_fact": "43 telecommunication interactions logged",
+        "derivation_method": "CALL_RECORD",
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "edge-call-alpha-13",
       "source_id": "person-0024",
       "target_id": "person-0017",
       "edge_type": "CONNECTED_TO",
@@ -10057,7 +10116,7 @@
       }
     },
     {
-      "id": "edge-call-alpha-12",
+      "id": "edge-call-alpha-14",
       "source_id": "person-0017",
       "target_id": "person-0018",
       "edge_type": "CONNECTED_TO",
@@ -10076,7 +10135,7 @@
       }
     },
     {
-      "id": "edge-call-alpha-13",
+      "id": "edge-call-alpha-15",
       "source_id": "person-0023",
       "target_id": "person-0011",
       "edge_type": "CONNECTED_TO",
@@ -10095,7 +10154,7 @@
       }
     },
     {
-      "id": "edge-call-alpha-14",
+      "id": "edge-call-alpha-16",
       "source_id": "person-0019",
       "target_id": "person-0023",
       "edge_type": "CONNECTED_TO",
@@ -10114,7 +10173,7 @@
       }
     },
     {
-      "id": "edge-call-alpha-15",
+      "id": "edge-call-alpha-17",
       "source_id": "person-0014",
       "target_id": "person-0023",
       "edge_type": "CONNECTED_TO",
@@ -10133,7 +10192,7 @@
       }
     },
     {
-      "id": "edge-call-alpha-16",
+      "id": "edge-call-alpha-18",
       "source_id": "person-0022",
       "target_id": "person-0016",
       "edge_type": "CONNECTED_TO",
@@ -10152,7 +10211,7 @@
       }
     },
     {
-      "id": "edge-call-alpha-17",
+      "id": "edge-call-alpha-19",
       "source_id": "person-0014",
       "target_id": "person-0015",
       "edge_type": "CONNECTED_TO",
@@ -10171,7 +10230,7 @@
       }
     },
     {
-      "id": "edge-call-alpha-18",
+      "id": "edge-call-alpha-20",
       "source_id": "person-0078",
       "target_id": "person-0019",
       "edge_type": "CONNECTED_TO",
@@ -10190,7 +10249,7 @@
       }
     },
     {
-      "id": "edge-call-alpha-19",
+      "id": "edge-call-alpha-21",
       "source_id": "person-0023",
       "target_id": "person-0020",
       "edge_type": "CONNECTED_TO",
@@ -10209,7 +10268,7 @@
       }
     },
     {
-      "id": "edge-call-alpha-20",
+      "id": "edge-call-alpha-22",
       "source_id": "person-0014",
       "target_id": "person-0016",
       "edge_type": "CONNECTED_TO",
@@ -10228,7 +10287,7 @@
       }
     },
     {
-      "id": "edge-call-alpha-21",
+      "id": "edge-call-alpha-23",
       "source_id": "person-0025",
       "target_id": "person-0020",
       "edge_type": "CONNECTED_TO",
@@ -10247,7 +10306,7 @@
       }
     },
     {
-      "id": "edge-call-alpha-22",
+      "id": "edge-call-alpha-24",
       "source_id": "person-0020",
       "target_id": "person-0025",
       "edge_type": "CONNECTED_TO",
@@ -10266,7 +10325,7 @@
       }
     },
     {
-      "id": "edge-call-alpha-23",
+      "id": "edge-call-alpha-25",
       "source_id": "person-0013",
       "target_id": "person-0021",
       "edge_type": "CONNECTED_TO",
@@ -10285,9 +10344,9 @@
       }
     },
     {
-      "id": "edge-call-alpha-24",
-      "source_id": "person-0014",
-      "target_id": "person-0078",
+      "id": "edge-call-beta-1",
+      "source_id": "person-0029",
+      "target_id": "person-0041",
       "edge_type": "CONNECTED_TO",
       "weight": 1.0,
       "properties": {
@@ -10304,9 +10363,9 @@
       }
     },
     {
-      "id": "edge-call-alpha-25",
-      "source_id": "person-0016",
-      "target_id": "person-0078",
+      "id": "edge-call-beta-2",
+      "source_id": "person-0031",
+      "target_id": "person-0041",
       "edge_type": "CONNECTED_TO",
       "weight": 1.0,
       "properties": {
@@ -10323,7 +10382,7 @@
       }
     },
     {
-      "id": "edge-call-beta-1",
+      "id": "edge-call-beta-3",
       "source_id": "person-0038",
       "target_id": "person-0032",
       "edge_type": "CONNECTED_TO",
@@ -10342,7 +10401,7 @@
       }
     },
     {
-      "id": "edge-call-beta-2",
+      "id": "edge-call-beta-4",
       "source_id": "person-0038",
       "target_id": "person-0032",
       "edge_type": "CONNECTED_TO",
@@ -10361,7 +10420,7 @@
       }
     },
     {
-      "id": "edge-call-beta-3",
+      "id": "edge-call-beta-5",
       "source_id": "person-0031",
       "target_id": "person-0034",
       "edge_type": "CONNECTED_TO",
@@ -10380,7 +10439,7 @@
       }
     },
     {
-      "id": "edge-call-beta-4",
+      "id": "edge-call-beta-6",
       "source_id": "person-0035",
       "target_id": "person-0028",
       "edge_type": "CONNECTED_TO",
@@ -10399,7 +10458,7 @@
       }
     },
     {
-      "id": "edge-call-beta-5",
+      "id": "edge-call-beta-7",
       "source_id": "person-0040",
       "target_id": "person-0035",
       "edge_type": "CONNECTED_TO",
@@ -10418,7 +10477,7 @@
       }
     },
     {
-      "id": "edge-call-beta-6",
+      "id": "edge-call-beta-8",
       "source_id": "person-0037",
       "target_id": "person-0026",
       "edge_type": "CONNECTED_TO",
@@ -10437,7 +10496,7 @@
       }
     },
     {
-      "id": "edge-call-beta-7",
+      "id": "edge-call-beta-9",
       "source_id": "person-0032",
       "target_id": "person-0039",
       "edge_type": "CONNECTED_TO",
@@ -10456,7 +10515,7 @@
       }
     },
     {
-      "id": "edge-call-beta-8",
+      "id": "edge-call-beta-10",
       "source_id": "person-0041",
       "target_id": "person-0032",
       "edge_type": "CONNECTED_TO",
@@ -10475,7 +10534,7 @@
       }
     },
     {
-      "id": "edge-call-beta-9",
+      "id": "edge-call-beta-11",
       "source_id": "person-0040",
       "target_id": "person-0033",
       "edge_type": "CONNECTED_TO",
@@ -10494,7 +10553,7 @@
       }
     },
     {
-      "id": "edge-call-beta-10",
+      "id": "edge-call-beta-12",
       "source_id": "person-0026",
       "target_id": "person-0038",
       "edge_type": "CONNECTED_TO",
@@ -10513,7 +10572,7 @@
       }
     },
     {
-      "id": "edge-call-beta-11",
+      "id": "edge-call-beta-13",
       "source_id": "person-0027",
       "target_id": "person-0030",
       "edge_type": "CONNECTED_TO",
@@ -10532,7 +10591,7 @@
       }
     },
     {
-      "id": "edge-call-beta-12",
+      "id": "edge-call-beta-14",
       "source_id": "person-0035",
       "target_id": "person-0028",
       "edge_type": "CONNECTED_TO",
@@ -10551,7 +10610,7 @@
       }
     },
     {
-      "id": "edge-call-beta-13",
+      "id": "edge-call-beta-15",
       "source_id": "person-0041",
       "target_id": "person-0034",
       "edge_type": "CONNECTED_TO",
@@ -10570,7 +10629,7 @@
       }
     },
     {
-      "id": "edge-call-beta-14",
+      "id": "edge-call-beta-16",
       "source_id": "person-0029",
       "target_id": "person-0030",
       "edge_type": "CONNECTED_TO",
@@ -10589,7 +10648,7 @@
       }
     },
     {
-      "id": "edge-call-beta-15",
+      "id": "edge-call-beta-17",
       "source_id": "person-0037",
       "target_id": "person-0034",
       "edge_type": "CONNECTED_TO",
@@ -10608,7 +10667,7 @@
       }
     },
     {
-      "id": "edge-call-beta-16",
+      "id": "edge-call-beta-18",
       "source_id": "person-0040",
       "target_id": "person-0034",
       "edge_type": "CONNECTED_TO",
@@ -10627,7 +10686,7 @@
       }
     },
     {
-      "id": "edge-call-beta-17",
+      "id": "edge-call-beta-19",
       "source_id": "person-0029",
       "target_id": "person-0037",
       "edge_type": "CONNECTED_TO",
@@ -10646,7 +10705,7 @@
       }
     },
     {
-      "id": "edge-call-beta-18",
+      "id": "edge-call-beta-20",
       "source_id": "person-0033",
       "target_id": "person-0030",
       "edge_type": "CONNECTED_TO",
@@ -10665,7 +10724,7 @@
       }
     },
     {
-      "id": "edge-call-beta-19",
+      "id": "edge-call-beta-21",
       "source_id": "person-0034",
       "target_id": "person-0031",
       "edge_type": "CONNECTED_TO",
@@ -10684,7 +10743,7 @@
       }
     },
     {
-      "id": "edge-call-beta-20",
+      "id": "edge-call-beta-22",
       "source_id": "person-0029",
       "target_id": "person-0038",
       "edge_type": "CONNECTED_TO",
@@ -10703,7 +10762,7 @@
       }
     },
     {
-      "id": "edge-call-beta-21",
+      "id": "edge-call-beta-23",
       "source_id": "person-0037",
       "target_id": "person-0039",
       "edge_type": "CONNECTED_TO",
@@ -10722,7 +10781,7 @@
       }
     },
     {
-      "id": "edge-call-beta-22",
+      "id": "edge-call-beta-24",
       "source_id": "person-0039",
       "target_id": "person-0028",
       "edge_type": "CONNECTED_TO",
@@ -10741,7 +10800,7 @@
       }
     },
     {
-      "id": "edge-call-beta-23",
+      "id": "edge-call-beta-25",
       "source_id": "person-0032",
       "target_id": "person-0039",
       "edge_type": "CONNECTED_TO",
@@ -10760,28 +10819,9 @@
       }
     },
     {
-      "id": "edge-call-beta-24",
-      "source_id": "person-0027",
-      "target_id": "person-0035",
-      "edge_type": "CONNECTED_TO",
-      "weight": 1.0,
-      "properties": {
-        "call_count": 25,
-        "channel": "VOICE_CALL"
-      },
-      "provenance": {
-        "source_type": "CDR",
-        "source_id": "CDR-SWEEP-645",
-        "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "25 telecommunication interactions logged",
-        "derivation_method": "CALL_RECORD",
-        "confidence": 0.9
-      }
-    },
-    {
-      "id": "edge-call-beta-25",
-      "source_id": "person-0034",
-      "target_id": "person-0035",
+      "id": "edge-call-delta-1",
+      "source_id": "person-0042",
+      "target_id": "person-0047",
       "edge_type": "CONNECTED_TO",
       "weight": 1.0,
       "properties": {
@@ -10790,7 +10830,7 @@
       },
       "provenance": {
         "source_type": "CDR",
-        "source_id": "CDR-SWEEP-272",
+        "source_id": "CDR-SWEEP-387",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "37 telecommunication interactions logged",
         "derivation_method": "CALL_RECORD",
@@ -10798,27 +10838,46 @@
       }
     },
     {
-      "id": "edge-call-delta-1",
-      "source_id": "person-0047",
-      "target_id": "person-0046",
+      "id": "edge-call-delta-2",
+      "source_id": "person-0050",
+      "target_id": "person-0044",
       "edge_type": "CONNECTED_TO",
       "weight": 1.0,
       "properties": {
-        "call_count": 21,
+        "call_count": 23,
         "channel": "VOICE_CALL"
       },
       "provenance": {
         "source_type": "CDR",
-        "source_id": "CDR-SWEEP-686",
+        "source_id": "CDR-SWEEP-820",
         "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "21 telecommunication interactions logged",
+        "extracted_fact": "23 telecommunication interactions logged",
         "derivation_method": "CALL_RECORD",
         "confidence": 0.9
       }
     },
     {
-      "id": "edge-call-delta-2",
+      "id": "edge-call-delta-3",
       "source_id": "person-0046",
+      "target_id": "person-0050",
+      "edge_type": "CONNECTED_TO",
+      "weight": 1.0,
+      "properties": {
+        "call_count": 39,
+        "channel": "VOICE_CALL"
+      },
+      "provenance": {
+        "source_type": "CDR",
+        "source_id": "CDR-SWEEP-373",
+        "timestamp": "2026-01-15T10:00:00+00:00",
+        "extracted_fact": "39 telecommunication interactions logged",
+        "derivation_method": "CALL_RECORD",
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "edge-call-delta-4",
+      "source_id": "person-0050",
       "target_id": "person-0043",
       "edge_type": "CONNECTED_TO",
       "weight": 1.0,
@@ -10836,7 +10895,7 @@
       }
     },
     {
-      "id": "edge-call-delta-3",
+      "id": "edge-call-delta-5",
       "source_id": "person-0048",
       "target_id": "person-0042",
       "edge_type": "CONNECTED_TO",
@@ -10855,7 +10914,7 @@
       }
     },
     {
-      "id": "edge-call-delta-4",
+      "id": "edge-call-delta-6",
       "source_id": "person-0044",
       "target_id": "person-0050",
       "edge_type": "CONNECTED_TO",
@@ -10874,7 +10933,7 @@
       }
     },
     {
-      "id": "edge-call-delta-5",
+      "id": "edge-call-delta-7",
       "source_id": "person-0047",
       "target_id": "person-0045",
       "edge_type": "CONNECTED_TO",
@@ -10893,7 +10952,7 @@
       }
     },
     {
-      "id": "edge-call-delta-6",
+      "id": "edge-call-delta-8",
       "source_id": "person-0044",
       "target_id": "person-0046",
       "edge_type": "CONNECTED_TO",
@@ -10912,7 +10971,7 @@
       }
     },
     {
-      "id": "edge-call-delta-7",
+      "id": "edge-call-delta-9",
       "source_id": "person-0048",
       "target_id": "person-0049",
       "edge_type": "CONNECTED_TO",
@@ -10931,7 +10990,7 @@
       }
     },
     {
-      "id": "edge-call-delta-8",
+      "id": "edge-call-delta-10",
       "source_id": "person-0043",
       "target_id": "person-0048",
       "edge_type": "CONNECTED_TO",
@@ -10945,44 +11004,6 @@
         "source_id": "CDR-SWEEP-867",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "35 telecommunication interactions logged",
-        "derivation_method": "CALL_RECORD",
-        "confidence": 0.9
-      }
-    },
-    {
-      "id": "edge-call-delta-9",
-      "source_id": "person-0046",
-      "target_id": "person-0047",
-      "edge_type": "CONNECTED_TO",
-      "weight": 1.0,
-      "properties": {
-        "call_count": 32,
-        "channel": "VOICE_CALL"
-      },
-      "provenance": {
-        "source_type": "CDR",
-        "source_id": "CDR-SWEEP-599",
-        "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "32 telecommunication interactions logged",
-        "derivation_method": "CALL_RECORD",
-        "confidence": 0.9
-      }
-    },
-    {
-      "id": "edge-call-delta-10",
-      "source_id": "person-0047",
-      "target_id": "person-0042",
-      "edge_type": "CONNECTED_TO",
-      "weight": 0.8,
-      "properties": {
-        "call_count": 8,
-        "channel": "VOICE_CALL"
-      },
-      "provenance": {
-        "source_type": "CDR",
-        "source_id": "CDR-SWEEP-848",
-        "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "8 telecommunication interactions logged",
         "derivation_method": "CALL_RECORD",
         "confidence": 0.9
       }
@@ -12518,14 +12539,14 @@
       }
     },
     {
-      "id": "edge-intel-person-0025-intel-0001",
-      "source_id": "person-0025",
+      "id": "edge-intel-person-0013-intel-0001",
+      "source_id": "person-0013",
       "target_id": "intel-0001",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-435",
+        "source_id": "INTEL-2026-147",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "Subject flagged in intelligence memo",
         "derivation_method": "DIRECT_RECORD",
@@ -12533,14 +12554,14 @@
       }
     },
     {
-      "id": "edge-intel-person-0011-intel-0001",
-      "source_id": "person-0011",
+      "id": "edge-intel-person-0025-intel-0001",
+      "source_id": "person-0025",
       "target_id": "intel-0001",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-435",
+        "source_id": "INTEL-2026-147",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "Subject flagged in intelligence memo",
         "derivation_method": "DIRECT_RECORD",
@@ -12555,7 +12576,7 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-477",
+        "source_id": "INTEL-2026-576",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "Subject flagged in intelligence memo",
         "derivation_method": "DIRECT_RECORD",
@@ -12563,44 +12584,59 @@
       }
     },
     {
-      "id": "edge-intel-person-0078-intel-0002",
-      "source_id": "person-0078",
+      "id": "edge-intel-person-0016-intel-0002",
+      "source_id": "person-0016",
       "target_id": "intel-0002",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "INTEL_REPORT",
+        "source_id": "INTEL-2026-576",
+        "timestamp": "2026-01-15T10:00:00+00:00",
+        "extracted_fact": "Subject flagged in intelligence memo",
+        "derivation_method": "DIRECT_RECORD",
+        "confidence": 0.88
+      }
+    },
+    {
+      "id": "edge-intel-person-0025-intel-0003",
+      "source_id": "person-0025",
+      "target_id": "intel-0003",
+      "edge_type": "MENTIONED_IN",
+      "weight": 1.0,
+      "provenance": {
+        "source_type": "INTEL_REPORT",
+        "source_id": "INTEL-2026-188",
+        "timestamp": "2026-01-15T10:00:00+00:00",
+        "extracted_fact": "Subject flagged in intelligence memo",
+        "derivation_method": "DIRECT_RECORD",
+        "confidence": 0.88
+      }
+    },
+    {
+      "id": "edge-intel-person-0011-intel-0003",
+      "source_id": "person-0011",
+      "target_id": "intel-0003",
+      "edge_type": "MENTIONED_IN",
+      "weight": 1.0,
+      "provenance": {
+        "source_type": "INTEL_REPORT",
+        "source_id": "INTEL-2026-188",
+        "timestamp": "2026-01-15T10:00:00+00:00",
+        "extracted_fact": "Subject flagged in intelligence memo",
+        "derivation_method": "DIRECT_RECORD",
+        "confidence": 0.88
+      }
+    },
+    {
+      "id": "edge-intel-person-0020-intel-0004",
+      "source_id": "person-0020",
+      "target_id": "intel-0004",
+      "edge_type": "MENTIONED_IN",
+      "weight": 1.0,
+      "provenance": {
+        "source_type": "INTEL_REPORT",
         "source_id": "INTEL-2026-477",
-        "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "Subject flagged in intelligence memo",
-        "derivation_method": "DIRECT_RECORD",
-        "confidence": 0.88
-      }
-    },
-    {
-      "id": "edge-intel-person-0018-intel-0003",
-      "source_id": "person-0018",
-      "target_id": "intel-0003",
-      "edge_type": "MENTIONED_IN",
-      "weight": 1.0,
-      "provenance": {
-        "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-903",
-        "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "Subject flagged in intelligence memo",
-        "derivation_method": "DIRECT_RECORD",
-        "confidence": 0.88
-      }
-    },
-    {
-      "id": "edge-intel-person-0078-intel-0003",
-      "source_id": "person-0078",
-      "target_id": "intel-0003",
-      "edge_type": "MENTIONED_IN",
-      "weight": 1.0,
-      "provenance": {
-        "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-903",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "Subject flagged in intelligence memo",
         "derivation_method": "DIRECT_RECORD",
@@ -12623,9 +12659,39 @@
       }
     },
     {
-      "id": "edge-intel-person-0023-intel-0004",
-      "source_id": "person-0023",
-      "target_id": "intel-0004",
+      "id": "edge-intel-person-0018-intel-0005",
+      "source_id": "person-0018",
+      "target_id": "intel-0005",
+      "edge_type": "MENTIONED_IN",
+      "weight": 1.0,
+      "provenance": {
+        "source_type": "INTEL_REPORT",
+        "source_id": "INTEL-2026-903",
+        "timestamp": "2026-01-15T10:00:00+00:00",
+        "extracted_fact": "Subject flagged in intelligence memo",
+        "derivation_method": "DIRECT_RECORD",
+        "confidence": 0.88
+      }
+    },
+    {
+      "id": "edge-intel-person-0078-intel-0005",
+      "source_id": "person-0078",
+      "target_id": "intel-0005",
+      "edge_type": "MENTIONED_IN",
+      "weight": 1.0,
+      "provenance": {
+        "source_type": "INTEL_REPORT",
+        "source_id": "INTEL-2026-903",
+        "timestamp": "2026-01-15T10:00:00+00:00",
+        "extracted_fact": "Subject flagged in intelligence memo",
+        "derivation_method": "DIRECT_RECORD",
+        "confidence": 0.88
+      }
+    },
+    {
+      "id": "edge-intel-person-0078-intel-0006",
+      "source_id": "person-0078",
+      "target_id": "intel-0006",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
@@ -12638,9 +12704,24 @@
       }
     },
     {
-      "id": "edge-intel-person-0018-intel-0005",
+      "id": "edge-intel-person-0023-intel-0006",
+      "source_id": "person-0023",
+      "target_id": "intel-0006",
+      "edge_type": "MENTIONED_IN",
+      "weight": 1.0,
+      "provenance": {
+        "source_type": "INTEL_REPORT",
+        "source_id": "INTEL-2026-477",
+        "timestamp": "2026-01-15T10:00:00+00:00",
+        "extracted_fact": "Subject flagged in intelligence memo",
+        "derivation_method": "DIRECT_RECORD",
+        "confidence": 0.88
+      }
+    },
+    {
+      "id": "edge-intel-person-0018-intel-0007",
       "source_id": "person-0018",
-      "target_id": "intel-0005",
+      "target_id": "intel-0007",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
@@ -12653,9 +12734,9 @@
       }
     },
     {
-      "id": "edge-intel-person-0013-intel-0005",
+      "id": "edge-intel-person-0013-intel-0007",
       "source_id": "person-0013",
-      "target_id": "intel-0005",
+      "target_id": "intel-0007",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
@@ -12668,9 +12749,9 @@
       }
     },
     {
-      "id": "edge-intel-person-0011-intel-0006",
-      "source_id": "person-0011",
-      "target_id": "intel-0006",
+      "id": "edge-intel-person-0026-intel-0008",
+      "source_id": "person-0026",
+      "target_id": "intel-0008",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
@@ -12683,9 +12764,9 @@
       }
     },
     {
-      "id": "edge-intel-person-0014-intel-0006",
-      "source_id": "person-0014",
-      "target_id": "intel-0006",
+      "id": "edge-intel-person-0029-intel-0008",
+      "source_id": "person-0029",
+      "target_id": "intel-0008",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
@@ -12698,9 +12779,9 @@
       }
     },
     {
-      "id": "edge-intel-person-0011-intel-0007",
-      "source_id": "person-0011",
-      "target_id": "intel-0007",
+      "id": "edge-intel-person-0026-intel-0009",
+      "source_id": "person-0026",
+      "target_id": "intel-0009",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
@@ -12713,9 +12794,9 @@
       }
     },
     {
-      "id": "edge-intel-person-0016-intel-0007",
-      "source_id": "person-0016",
-      "target_id": "intel-0007",
+      "id": "edge-intel-person-0031-intel-0009",
+      "source_id": "person-0031",
+      "target_id": "intel-0009",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
@@ -12728,9 +12809,9 @@
       }
     },
     {
-      "id": "edge-intel-person-0038-intel-0008",
+      "id": "edge-intel-person-0038-intel-0010",
       "source_id": "person-0038",
-      "target_id": "intel-0008",
+      "target_id": "intel-0010",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
@@ -12743,9 +12824,9 @@
       }
     },
     {
-      "id": "edge-intel-person-0039-intel-0008",
+      "id": "edge-intel-person-0039-intel-0010",
       "source_id": "person-0039",
-      "target_id": "intel-0008",
+      "target_id": "intel-0010",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
@@ -12758,9 +12839,9 @@
       }
     },
     {
-      "id": "edge-intel-person-0035-intel-0009",
+      "id": "edge-intel-person-0035-intel-0011",
       "source_id": "person-0035",
-      "target_id": "intel-0009",
+      "target_id": "intel-0011",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
@@ -12773,9 +12854,9 @@
       }
     },
     {
-      "id": "edge-intel-person-0027-intel-0009",
+      "id": "edge-intel-person-0027-intel-0011",
       "source_id": "person-0027",
-      "target_id": "intel-0009",
+      "target_id": "intel-0011",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
@@ -12788,9 +12869,9 @@
       }
     },
     {
-      "id": "edge-intel-person-0033-intel-0010",
+      "id": "edge-intel-person-0033-intel-0012",
       "source_id": "person-0033",
-      "target_id": "intel-0010",
+      "target_id": "intel-0012",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
@@ -12803,9 +12884,9 @@
       }
     },
     {
-      "id": "edge-intel-person-0032-intel-0010",
+      "id": "edge-intel-person-0032-intel-0012",
       "source_id": "person-0032",
-      "target_id": "intel-0010",
+      "target_id": "intel-0012",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
@@ -12818,74 +12899,14 @@
       }
     },
     {
-      "id": "edge-intel-person-0030-intel-0011",
+      "id": "edge-intel-person-0030-intel-0013",
       "source_id": "person-0030",
-      "target_id": "intel-0011",
-      "edge_type": "MENTIONED_IN",
-      "weight": 1.0,
-      "provenance": {
-        "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-603",
-        "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "Subject flagged in intelligence memo",
-        "derivation_method": "DIRECT_RECORD",
-        "confidence": 0.88
-      }
-    },
-    {
-      "id": "edge-intel-person-0037-intel-0011",
-      "source_id": "person-0037",
-      "target_id": "intel-0011",
-      "edge_type": "MENTIONED_IN",
-      "weight": 1.0,
-      "provenance": {
-        "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-603",
-        "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "Subject flagged in intelligence memo",
-        "derivation_method": "DIRECT_RECORD",
-        "confidence": 0.88
-      }
-    },
-    {
-      "id": "edge-intel-person-0027-intel-0012",
-      "source_id": "person-0027",
-      "target_id": "intel-0012",
-      "edge_type": "MENTIONED_IN",
-      "weight": 1.0,
-      "provenance": {
-        "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-386",
-        "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "Subject flagged in intelligence memo",
-        "derivation_method": "DIRECT_RECORD",
-        "confidence": 0.88
-      }
-    },
-    {
-      "id": "edge-intel-person-0040-intel-0012",
-      "source_id": "person-0040",
-      "target_id": "intel-0012",
-      "edge_type": "MENTIONED_IN",
-      "weight": 1.0,
-      "provenance": {
-        "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-386",
-        "timestamp": "2026-01-15T10:00:00+00:00",
-        "extracted_fact": "Subject flagged in intelligence memo",
-        "derivation_method": "DIRECT_RECORD",
-        "confidence": 0.88
-      }
-    },
-    {
-      "id": "edge-intel-person-0039-intel-0013",
-      "source_id": "person-0039",
       "target_id": "intel-0013",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-337",
+        "source_id": "INTEL-2026-603",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "Subject flagged in intelligence memo",
         "derivation_method": "DIRECT_RECORD",
@@ -12900,7 +12921,7 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-337",
+        "source_id": "INTEL-2026-603",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "Subject flagged in intelligence memo",
         "derivation_method": "DIRECT_RECORD",
@@ -12908,14 +12929,14 @@
       }
     },
     {
-      "id": "edge-intel-person-0043-intel-0014",
-      "source_id": "person-0043",
+      "id": "edge-intel-person-0042-intel-0014",
+      "source_id": "person-0042",
       "target_id": "intel-0014",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-481",
+        "source_id": "INTEL-2026-386",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "Subject flagged in intelligence memo",
         "derivation_method": "DIRECT_RECORD",
@@ -12923,14 +12944,14 @@
       }
     },
     {
-      "id": "edge-intel-person-0050-intel-0014",
-      "source_id": "person-0050",
+      "id": "edge-intel-person-0045-intel-0014",
+      "source_id": "person-0045",
       "target_id": "intel-0014",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-481",
+        "source_id": "INTEL-2026-386",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "Subject flagged in intelligence memo",
         "derivation_method": "DIRECT_RECORD",
@@ -12945,7 +12966,7 @@
       "weight": 1.0,
       "provenance": {
         "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-617",
+        "source_id": "INTEL-2026-965",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "Subject flagged in intelligence memo",
         "derivation_method": "DIRECT_RECORD",
@@ -12953,19 +12974,33 @@
       }
     },
     {
-      "id": "edge-intel-person-0043-intel-0015",
-      "source_id": "person-0043",
+      "id": "edge-intel-person-0047-intel-0015",
+      "source_id": "person-0047",
       "target_id": "intel-0015",
       "edge_type": "MENTIONED_IN",
       "weight": 1.0,
       "provenance": {
         "source_type": "INTEL_REPORT",
-        "source_id": "INTEL-2026-617",
+        "source_id": "INTEL-2026-965",
         "timestamp": "2026-01-15T10:00:00+00:00",
         "extracted_fact": "Subject flagged in intelligence memo",
         "derivation_method": "DIRECT_RECORD",
         "confidence": 0.88
       }
+    },
+    {
+      "id": "edge-demo-acc-1",
+      "source_id": "person-0001",
+      "target_id": "case-0001",
+      "edge_type": "ACCUSED_IN",
+      "weight": 1.0
+    },
+    {
+      "id": "edge-demo-acc-2",
+      "source_id": "person-0002",
+      "target_id": "case-0016",
+      "edge_type": "ACCUSED_IN",
+      "weight": 1.0
     }
   ]
 }

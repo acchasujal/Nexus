@@ -268,11 +268,11 @@ def test_document_d_ambiguous_identity_resolution_candidate_only(client, sp_toke
       - Status is REVIEW_REQUIRED.
       - Absolute Invariant: NO automatic identity fusion, no canonical graph mutation.
     """
-    # Use canonical name known to exist in demo graph: "Vikram Sharma" (person-0001)
-    text = "Inspector states that Vikram Sharma submitted the preliminary investigation report."
+    # Use canonical name known to exist in demo graph: "Rafiq Khan" (person-0001)
+    text = "Inspector states that Rafiq Khan submitted the preliminary investigation report."
     up_res = client.post(
         "/api/v1/documents",
-        files={"file": ("vikram_report.txt", text.encode("utf-8"), "text/plain")},
+        files={"file": ("rafiq_report.txt", text.encode("utf-8"), "text/plain")},
         data={"source_type": DocumentSourceType.POLICE_REPORT.value, "case_id": "case-0001"},
     )
     assert up_res.status_code == 200
@@ -283,7 +283,7 @@ def test_document_d_ambiguous_identity_resolution_candidate_only(client, sp_toke
     result = ext_res.json()
 
     person_cand = next(e for e in result["candidate_entities"] if e["entity_type"] == "PERSON")
-    assert person_cand["surface_text"] == "Vikram Sharma"
+    assert person_cand["surface_text"] == "Rafiq Khan"
 
     # Status must be REVIEW_REQUIRED (not automatic MATCHED or CONFIRMED)
     assert person_cand["resolution_status"] == CandidateResolutionStatus.REVIEW_REQUIRED.value

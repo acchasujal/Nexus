@@ -456,10 +456,14 @@ def evaluate_ground_truth_dataset(
             gt_pairs.append((pair[0], pair[1]))
 
     pred_pairs: list[tuple[str, str]] = []
+    seen_roots: set[str] = set()
     for item in planted:
         pair = item.get("pair", [])
         if len(pair) == 2:
             root_id = pair[0]
+            if root_id in seen_roots:
+                continue
+            seen_roots.add(root_id)
             node = engine.store.nodes.get(root_id)
             if node:
                 props = node.properties or {}
@@ -469,7 +473,7 @@ def evaluate_ground_truth_dataset(
                         "phone_number": props.get("phone_number"),
                         "vehicle_number": props.get("vehicle_number"),
                     },
-                    confidence_threshold=0.45,
+                    confidence_threshold=0.70,
                 )
                 for m in matches:
                     if m.matched_node_id != root_id:

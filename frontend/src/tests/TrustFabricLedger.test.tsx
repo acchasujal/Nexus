@@ -165,7 +165,7 @@ describe('Trust Fabric & Merkle Ledger UI (Audit.tsx)', () => {
 
     // Merkle modal opens
     expect(await screen.findByText('Section 63 BSA Merkle Audit Inclusion Certificate', {}, { timeout: 10000 })).toBeInTheDocument()
-    expect(screen.getByText(/MATHEMATICALLY VERIFIED/i)).toBeInTheDocument()
+    expect(await screen.findByText(/MATHEMATICALLY VERIFIED/i, {}, { timeout: 10000 })).toBeInTheDocument()
     expect(screen.getByText(/Step 1 \(right\)/i)).toBeInTheDocument()
   })
 })
