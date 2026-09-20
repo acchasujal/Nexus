@@ -584,9 +584,31 @@ export default function Audit() {
                 Evaluating cryptographic Merkle path against permissioned ledger blocks...
               </div>
             ) : selectedProof.error ? (
-              <div className="p-3 bg-red-950/40 border border-red-800 text-red-300 rounded-lg">
-                <AlertTriangle className="h-4 w-4 inline mr-1 text-red-400" />
-                {selectedProof.error}
+              <div className="p-4 bg-amber-950/30 border border-amber-800/60 text-amber-200 rounded-lg space-y-3">
+                <div className="flex items-start gap-2">
+                  <Clock className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-semibold text-sm text-neutral-100">Pending Blockchain Anchor Batch</p>
+                    <p className="text-xs text-amber-300/80 leading-relaxed">
+                      This audit event has been recorded with a SHA-256 integrity digest and chained, but has not yet been batched into an immutable ledger block.
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-2 border-t border-amber-800/40 flex items-center justify-between">
+                  <span className="text-[11px] text-neutral-400">Anchor this event to the permissioned ledger now:</span>
+                  <button
+                    onClick={async () => {
+                      await handleCreateAnchor()
+                      if (selectedProofEventId) {
+                        await handleInspectProof(selectedProofEventId)
+                      }
+                    }}
+                    disabled={isAnchoring}
+                    className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded font-sans text-xs font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {isAnchoring ? 'Anchoring...' : 'Anchor Batch Now'}
+                  </button>
+                </div>
               </div>
             ) : selectedProof.data ? (
               <div className="space-y-3">

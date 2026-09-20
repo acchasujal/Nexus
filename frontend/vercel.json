@@ -8,7 +8,7 @@
       "destination": "https://nexus-4djk.onrender.com/api/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/).*)",
       "destination": "/index.html"
     }
   ]

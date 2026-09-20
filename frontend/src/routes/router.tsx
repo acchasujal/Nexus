@@ -8,6 +8,7 @@ import type { UserRole } from '@shared/contracts/api'
 
 // Eager-loaded Shell pages
 import Login from '@/pages/Login'
+import Patterns from '@/pages/Patterns'
 
 // Lazy-loaded routes
 const Worklist = lazy(() => import('@/pages/Worklist'))
@@ -15,7 +16,6 @@ const NetworkExplorer = lazy(() => import('@/pages/NetworkExplorer'))
 const EntityFusion = lazy(() => import('@/pages/EntityFusion'))
 const LeadInbox = lazy(() => import('@/pages/LeadInbox'))
 const Entities = lazy(() => import('@/pages/Entities'))
-const Patterns = lazy(() => import('@/pages/Patterns'))
 const Timeline = lazy(() => import('@/pages/Timeline'))
 const Evidence = lazy(() => import('@/pages/Evidence'))
 const Copilot = lazy(() => import('@/pages/Copilot'))

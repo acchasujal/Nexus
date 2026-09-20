@@ -35,5 +35,5 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_BASE_URL
-        value: "https://nexus-backend.onrender.com"
+        value: "https://nexus-4djk.onrender.com"
 

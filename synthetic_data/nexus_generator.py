@@ -56,6 +56,47 @@ def _pick_bns_sections(category: str) -> list[str]:
     entries = NEXUS_BNS_SECTIONS_BY_CATEGORY.get(category) or NEXUS_BNS_SECTIONS_BY_CATEGORY.get("Other IPC", [])
     return [label for _, label, _ in entries[:3]] if entries else ["Section 61 BNS (Criminal Conspiracy)"]
 
+
+def _generate_investigative_title(category: str, district: str, index: int) -> str:
+    """Generate realistic, diverse, context-rich investigative case titles."""
+    themes: dict[str, list[str]] = {
+        "Narcotics & Drug Trafficking": [
+            f"Coastal Narcotics Supply Chain — {district}",
+            f"Cross-Border Synthetic Drug Distribution — {district}",
+            f"Transit Corridor Contraband Interception — {district}",
+            f"Maritime Cargo Narcotics Operation — {district}",
+            f"High-Purity Heroin Distribution Ring — {district}",
+        ],
+        "Cyber Financial Fraud & Phishing": [
+            f"Cyber-Financial Mule Account Network — {district}",
+            f"Multi-Tiered Phishing & OTP Syndicate — {district}",
+            f"Unauthorized API Gateway Transfer Ring — {district}",
+            f"Digital Impersonation & Wire Divergence — {district}",
+        ],
+        "Hawala & Money Laundering": [
+            f"Cross-Border Hawala Layering Scheme — {district}",
+            f"Off-the-Book Cash Smurfing Network — {district}",
+            f"Trade-Based Hawala Settlement Pipeline — {district}",
+            f"Multi-District Shadow Banking Conduit — {district}",
+        ],
+        "Organized Extortion & Protection Racketeering": [
+            f"Organized Protection & Extortion Ring — {district}",
+            f"Real Estate Coercion & Intimidation Syndicate — {district}",
+            f"Commercial Protection Racket — {district}",
+        ],
+        "Illegal Arms Trafficking": [
+            f"Clandestine Firearm Influx & Smuggling — {district}",
+            f"Inter-State Ordnance Procurement Network — {district}",
+            f"Illegal Munitions Distribution Depot — {district}",
+        ],
+    }
+    candidates = themes.get(category, [
+        f"Targeted Syndicate Operation — {district}",
+        f"Cross-Jurisdiction Conspiracy Investigation — {district}",
+        f"Coordinated Criminal Network Inquiry — {district}",
+    ])
+    return candidates[index % len(candidates)]
+
 def generate_nexus_synthetic_dataset(
     seed: int = 42,
     num_cases: int = 50,
@@ -313,7 +354,7 @@ def generate_nexus_synthetic_dataset(
             "entity_type": GraphEntityType.CASE.value,
             "properties": {
                 "fir_number": fir_no,
-                "title": f"Investigation into {category} at {district}",
+                "title": _generate_investigative_title(category, district, i),
                 "district": district,
                 "station_name": station,
                 "offence_category": category,

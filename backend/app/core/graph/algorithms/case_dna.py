@@ -18,6 +18,7 @@ Governing Principles:
 from __future__ import annotations
 
 import math
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -35,6 +36,34 @@ from backend.app.core.graph.algorithms.utils import (
 from shared.contracts.api import CaseDNA, CaseDNAMatchResponse
 
 
+def resolve_case_id(store: GraphStore, identifier: str) -> str:
+    """Resolve an input identifier (e.g. 'CASE-141', 'FIR-2026-141', 'case-0001') to a canonical Case node_id."""
+    raw = safe_str(identifier).strip()
+    if raw in store.nodes and store.nodes[raw].entity_type == "Case":
+        return raw
+    if raw.lower() in store.nodes and store.nodes[raw.lower()].entity_type == "Case":
+        return raw.lower()
+
+    # Extract digits from query e.g. CASE-141 -> 141, FIR-2026-141 -> 141
+    digits = re.findall(r"\d+", raw)
+    last_digits = digits[-1] if digits else None
+
+    for nid, node in store.nodes.items():
+        if node.entity_type != "Case":
+            continue
+        fir = str(node.properties.get("fir_number", ""))
+        if raw.lower() == fir.lower() or raw.lower() in fir.lower():
+            return nid
+        if last_digits:
+            fir_digits = re.findall(r"\d+", fir)
+            if fir_digits and (fir_digits[-1] == last_digits or last_digits in fir_digits):
+                return nid
+            nid_digits = re.findall(r"\d+", nid)
+            if nid_digits and int(nid_digits[-1]) == int(last_digits):
+                return nid
+    return raw
+
+
 def _jaccard(a: frozenset[str], b: frozenset[str]) -> float:
     if not a and not b:
         return 0.0
@@ -48,8 +77,8 @@ def compute_case_dna_profile(
     case_b_id: str,
 ) -> CaseDNA | None:
     """Compute explainable 5-vector Case DNA similarity between two cases."""
-    cid_a = safe_str(case_a_id)
-    cid_b = safe_str(case_b_id)
+    cid_a = resolve_case_id(store, case_a_id)
+    cid_b = resolve_case_id(store, case_b_id)
 
     feat_a = _extract_case_features(store, cid_a)
     feat_b = _extract_case_features(store, cid_b)
@@ -68,23 +97,41 @@ def compute_case_dna_profile(
         _jaccard(feat_a.accused_ids, feat_b.accused_ids),
         _jaccard(feat_a.accused_names, feat_b.accused_names)
     )
+    has_shared_accused = bool((feat_a.accused_ids & feat_b.accused_ids) or (feat_a.accused_names & feat_b.accused_names))
+    has_shared_phone = bool(feat_a.accused_phones & feat_b.accused_phones)
+
     section_overlap = _jaccard(feat_a.section_ids, feat_b.section_ids)
     crime_overlap = _jaccard(feat_a.crime_sub_head_ids, feat_b.crime_sub_head_ids)
-    struct_sim = round(0.5 * accused_overlap + 0.3 * section_overlap + 0.2 * crime_overlap, 3)
+    
+    if has_shared_accused:
+        struct_sim = round(max(0.75, 0.6 * accused_overlap + 0.25 * section_overlap + 0.15 * crime_overlap), 3)
+    else:
+        struct_sim = round(0.5 * accused_overlap + 0.3 * section_overlap + 0.2 * crime_overlap, 3)
 
     # 2. Communication Similarity (Shared phone clusters & phone numbers)
     phone_overlap = _jaccard(feat_a.accused_phones, feat_b.accused_phones)
     phone_cluster_overlap = _jaccard(feat_a.phone_cluster_ids, feat_b.phone_cluster_ids)
-    comm_sim = round(0.6 * phone_overlap + 0.4 * phone_cluster_overlap, 3)
+    if has_shared_phone:
+        comm_sim = round(max(0.80, 0.7 * phone_overlap + 0.3 * phone_cluster_overlap), 3)
+    else:
+        comm_sim = round(0.6 * phone_overlap + 0.4 * phone_cluster_overlap, 3)
 
     # 3. Financial Similarity (Account & transaction overlap)
-    # Check bank accounts linked to cases or accused
-    fin_sim = 0.85 if ("hawala" in title_a.lower() or "hawala" in title_b.lower() or "cyber" in title_a.lower()) and struct_sim > 0.1 else round(struct_sim * 0.7, 3)
+    # Strong financial link if shared accused and phone exist across syndicate cases
+    if has_shared_accused and has_shared_phone:
+        fin_sim = 0.78
+    elif ("hawala" in title_a.lower() or "hawala" in title_b.lower() or "cyber" in title_a.lower()) and struct_sim > 0.1:
+        fin_sim = 0.65
+    else:
+        fin_sim = round(struct_sim * 0.5, 3)
 
     # 4. Location Similarity (District and police station match)
     same_dist = 1.0 if feat_a.district and feat_a.district == feat_b.district else 0.0
     same_ps = 1.0 if feat_a.police_station and feat_a.police_station == feat_b.police_station else 0.0
     loc_sim = round(0.6 * same_ps + 0.4 * same_dist, 3)
+    if has_shared_accused and loc_sim == 0.0:
+        # Cross-district syndicate operation
+        loc_sim = 0.60
 
     # 5. Temporal Similarity (Time lag in days)
     temp_sim = 0.0
@@ -92,10 +139,9 @@ def compute_case_dna_profile(
     time_b = feat_b.reported_at or (datetime.fromisoformat(node_b.properties["incident_date"]) if node_b and node_b.properties.get("incident_date") else None)
     if time_a and time_b:
         diff_days = abs((time_a - time_b).total_seconds()) / 86400.0
-        temp_sim = round(max(0.0, 1.0 - (diff_days / 60.0)), 3)
+        temp_sim = round(max(0.2, 1.0 - (diff_days / 120.0)), 3)
     else:
-        temp_sim = 0.5
-
+        temp_sim = 0.65
 
     # Composite Overall Score (Weighted harmonic/linear aggregation)
     overall = round(
@@ -165,12 +211,12 @@ def match_case_dna(
     top_k: int = 10,
 ) -> CaseDNAMatchResponse:
     """Find top matching cases using explainable Case DNA multi-dimensional profiling."""
-    target_id = safe_str(target_case_id)
-    all_case_ids = [n.node_id for n in nodes_of_type(store, "Case") if n.node_id != target_id]
+    canonical_id = resolve_case_id(store, target_case_id)
+    all_case_ids = [n.node_id for n in nodes_of_type(store, "Case") if n.node_id != canonical_id]
 
     matches: list[CaseDNA] = []
     for other_id in all_case_ids:
-        dna = compute_case_dna_profile(store, target_id, other_id)
+        dna = compute_case_dna_profile(store, canonical_id, other_id)
         if dna and dna.overall_similarity > 0.05:
             matches.append(dna)
 
@@ -185,7 +231,7 @@ def match_case_dna(
         all_shared.update(m.shared_entities)
 
     return CaseDNAMatchResponse(
-        target_case_id=target_id,
+        target_case_id=safe_str(target_case_id),
         similar_cases=top_matches,
         average_similarity=avg_sim,
         highest_similarity=highest_sim,
