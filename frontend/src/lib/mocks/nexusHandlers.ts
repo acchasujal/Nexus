@@ -1217,10 +1217,22 @@ export const nexusHandlers = [
         { id: 'person-0040', label: 'Ramesh Hegde', entity_type: 'Person' },
       ],
       removed_nodes: [],
-      added_edges: [
-        { id: 'e-bridge-1', source_id: 'person-0040', target_id: 'case-0141', edge_type: 'ACCUSED_IN' },
+      added_relationships: [
+        'e-bridge-1',
       ],
-      removed_edges: [],
+      removed_relationships: [],
+      modified_node_count: 0,
+      modified_relationship_count: 0,
+      pulses: [],
+      summary: {
+        added_node_count: 1,
+        removed_node_count: 0,
+        modified_node_count: 0,
+        added_relationship_count: 1,
+        removed_relationship_count: 0,
+        modified_relationship_count: 0,
+        pulse_count: 0,
+      },
     })
   }),
 ]
