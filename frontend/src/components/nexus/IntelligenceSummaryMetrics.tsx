@@ -30,7 +30,7 @@ export function IntelligenceSummaryMetrics() {
 
   // Derive real network changes from proactive diff
   const addedNodes = diff?.added_nodes?.length ?? 0
-  const addedEdges = diff?.added_edges?.length ?? 0
+  const addedEdges = diff?.added_relationships?.length ?? 0
   const totalChanges = addedNodes + addedEdges
 
   return (

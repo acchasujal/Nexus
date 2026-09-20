@@ -2224,7 +2224,43 @@ def create_nexus_router() -> APIRouter:
         audit_service: AuditService = Depends(get_audit_service),
     ) -> NetworkDiffResponse:
         """Execute deterministic pure O(N+E) snapshot comparison."""
-        diff_res = proactive_svc.compute_network_diff(before, after)
+        # The Intelligence Center's default demo pair is served by the explicit
+        # BEFORE/AFTER graph below.  The generic proactive service stores the
+        # repository artifact snapshots, which intentionally do not include the
+        # demo-only bridge projection.  Keep the API's default pair on the same
+        # graph used by /nexus/network so a 200 response cannot silently report
+        # an empty diff while the rendered AFTER graph contains E-BRIDGE.
+        if before == "snap-baseline-v1" and after == "snap-current":
+            before_node_ids = {node.id for node in BEFORE_NODES}
+            after_node_ids = {node.id for node in AFTER_NODES}
+            before_edge_ids = {edge.id for edge in BEFORE_EDGES}
+            after_edge_ids = {edge.id for edge in AFTER_EDGES}
+            added_nodes = sorted(after_node_ids - before_node_ids)
+            added_relationships = sorted(after_edge_ids - before_edge_ids)
+            removed_nodes = sorted(before_node_ids - after_node_ids)
+            removed_relationships = sorted(before_edge_ids - after_edge_ids)
+            diff_res = NetworkDiffResponse(
+                before_snapshot_id=before,
+                after_snapshot_id=after,
+                added_nodes=added_nodes,
+                removed_nodes=removed_nodes,
+                added_relationships=added_relationships,
+                removed_relationships=removed_relationships,
+                modified_node_count=0,
+                modified_relationship_count=0,
+                pulses=[],
+                summary={
+                    "added_node_count": len(added_nodes),
+                    "removed_node_count": len(removed_nodes),
+                    "modified_node_count": 0,
+                    "added_relationship_count": len(added_relationships),
+                    "removed_relationship_count": len(removed_relationships),
+                    "modified_relationship_count": 0,
+                    "pulse_count": 0,
+                },
+            )
+        else:
+            diff_res = proactive_svc.compute_network_diff(before, after)
         audit_service.record(
             event_type=AuditEventType.NETWORK_EXPLORED,
             actor_id=principal.user_id,
