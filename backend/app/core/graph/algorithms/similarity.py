@@ -166,7 +166,7 @@ def _extract_case_features(store: GraphStore, case_id: str) -> _CaseFeatures | N
         if ac:
             address_clusters.add(ac)
             
-        full_name = prop_str(pnode, "full_name") or prop_str(pnode, "name") or pnode.label
+        full_name = prop_str(pnode, "full_name") or prop_str(pnode, "name") or prop_str(pnode, "label") or pnode.node_id
         if full_name:
             # Clean up "(Accused)" etc.
             clean_name = re.sub(r'\(.*?\)', '', full_name).strip()

@@ -267,7 +267,8 @@ def generate_nexus_synthetic_dataset(
                 category = _weighted_choice(rng, _ipc_crime_category_weights)
             station = rng.choice(stations)
             # Cross-case entity propagation injection: 40% chance to reuse an existing entity
-            if rng.random() < 0.4 and iso_idx > 0:
+            # Applied only for later cases to preserve deterministic fixtures for early cases (1-30)
+            if i >= 30 and rng.random() < 0.4 and iso_idx > 0:
                 # Reuse a previously used isolated entity to create cross-case linking
                 accused_sample = [rng.choice(isolated_pool[:iso_idx])]
                 if rng.random() < 0.3:
