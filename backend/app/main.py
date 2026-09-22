@@ -137,22 +137,15 @@ def create_app(
         audit_service=audit_svc,
     )
 
-    # Seed baseline audit events if ledger has only genesis block
-    if len(app.state.permissioned_ledger.chain) <= 1:
-        initial_events = [
-            (AuditEventType.INVESTIGATION_VIEWED, "officer-sharma", "CASE-141", "Case", {"role": "INVESTIGATOR", "station": "Central Crime Branch"}),
-            (AuditEventType.GRAPH_QUERY_EXECUTED, "officer-sharma", "person-0001", "Person", {"role": "INVESTIGATOR", "depth": 2}),
-            (AuditEventType.ENTITY_RESOLUTION_EXECUTED, "analyst-reddy", "person-0001", "Person", {"role": "ANALYST", "resolution": "CONFIRMED"}),
-            (AuditEventType.SIMILARITY_SEARCH_EXECUTED, "officer-sharma", "CASE-141", "Case", {"role": "INVESTIGATOR", "top_k": 10}),
-            (AuditEventType.EVIDENCE_VERIFIED, "officer-sharma", "SRC-FIR-141", "Evidence", {"role": "INVESTIGATOR", "status": "AUTHENTIC"}),
-        ]
-        for ev_type, actor, entity_id, entity_type, details in initial_events:
-            audit_svc.record(event_type=ev_type, actor_id=actor, case_id="CASE-141", entity_id=entity_id, entity_type=entity_type, details=details)
+    # Explicit, idempotent demo bootstrap (production startup only verifies state)
+    if cfg.auth_mode == "demo" or not cfg.is_production:
         try:
-            app.state.audit_anchor_service.anchor_audit_batch(limit=50, actor_id="system-boot")
-            logger.info("Successfully anchored initial Section 63 BSA audit batch #1 to ledger.")
+            app.state.audit_anchor_service.bootstrap_demo_audit()
+            logger.info("AuditAnchorService: Explicit demo audit bootstrap completed successfully.")
         except Exception as exc:
-            logger.warning("Failed to anchor initial audit batch: %s", exc)
+            logger.warning("Failed to bootstrap demo audit events: %s", exc)
+    else:
+        logger.info("Production mode: Audit bootstrap skipped; production audit ledger state verified.")
 
     # ── Middleware and error handlers ────────────────────────────────────────
     install_error_handlers(app)

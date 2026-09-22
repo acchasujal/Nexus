@@ -162,6 +162,46 @@ class AuditAnchorService:
         proof_data["timestamp"] = event.get("timestamp")
         return proof_data
 
+    def get_event_proof_status(
+        self,
+        event_id: str,
+        anchor_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Retrieve proof data with explicit proof states: VERIFIED, NOT_YET_ANCHORED, UNKNOWN_EVENT."""
+        event = self._audit.get_event(event_id)
+        if not event:
+            return {
+                "event_id": event_id,
+                "status": "UNKNOWN_EVENT",
+                "verified": False,
+                "reason": f"Event '{event_id}' was not found in the authoritative audit repository.",
+            }
+
+        event_hash = event.get("integrity_hash")
+        if not event_hash:
+            return {
+                "event_id": event_id,
+                "status": "NOT_YET_ANCHORED",
+                "verified": False,
+                "reason": f"Event '{event_id}' does not have an integrity hash yet.",
+            }
+
+        proof_data = self._ledger.generate_audit_inclusion_proof(event_hash, anchor_id=anchor_id)
+        if not proof_data:
+            return {
+                "event_id": event_id,
+                "status": "NOT_YET_ANCHORED",
+                "verified": False,
+                "reason": f"Event '{event_id}' is recorded in audit log but has not yet been anchored to the blockchain ledger.",
+            }
+
+        proof_data["event_id"] = event_id
+        proof_data["status"] = "VERIFIED"
+        proof_data["event_type"] = event.get("event_type")
+        proof_data["actor_id"] = event.get("actor_id")
+        proof_data["timestamp"] = event.get("timestamp")
+        return proof_data
+
     def verify_event_proof(
         self,
         event_id: str,
@@ -185,4 +225,66 @@ class AuditAnchorService:
         )
         res["event_id"] = event_id
         return res
+
+    def bootstrap_demo_audit(self, force: bool = False) -> str:
+        """Explicit, idempotent demo audit bootstrap.
+        
+        Requirements:
+        - Separate demo namespace
+        - Persistent dataset marker
+        - Deterministic anchor ID
+        - Idempotency key (repeated execution creates no duplicates)
+        """
+        DEMO_AUDIT_NAMESPACE = "nexus_demo_bsa_audit"
+        DEMO_ANCHOR_ID = "ANCHOR-2026-DEMO-001"
+
+        if not force and getattr(self, "_demo_bootstrapped", False):
+            return DEMO_ANCHOR_ID
+
+        existing = self.get_anchor(DEMO_ANCHOR_ID)
+        if existing and not force:
+            self._demo_bootstrapped = True
+            return DEMO_ANCHOR_ID
+
+        initial_events = [
+            ("EVT-DEMO-001", AuditEventType.INVESTIGATION_VIEWED, "officer-sharma", "CASE-141", "Case", {"role": "INVESTIGATOR", "station": "Central Crime Branch", "namespace": DEMO_AUDIT_NAMESPACE}),
+            ("EVT-DEMO-002", AuditEventType.GRAPH_QUERY_EXECUTED, "officer-sharma", "person-0001", "Person", {"role": "INVESTIGATOR", "depth": 2, "namespace": DEMO_AUDIT_NAMESPACE}),
+            ("EVT-DEMO-003", AuditEventType.ENTITY_RESOLUTION_EXECUTED, "analyst-reddy", "person-0001", "Person", {"role": "ANALYST", "resolution": "CONFIRMED", "namespace": DEMO_AUDIT_NAMESPACE}),
+            ("EVT-DEMO-004", AuditEventType.SIMILARITY_SEARCH_EXECUTED, "officer-sharma", "CASE-141", "Case", {"role": "INVESTIGATOR", "top_k": 10, "namespace": DEMO_AUDIT_NAMESPACE}),
+            ("EVT-DEMO-005", AuditEventType.EVIDENCE_VERIFIED, "officer-sharma", "SRC-FIR-141", "Evidence", {"role": "INVESTIGATOR", "status": "AUTHENTIC", "namespace": DEMO_AUDIT_NAMESPACE}),
+        ]
+
+        event_hashes: list[str] = []
+        for evt_id, ev_type, actor, entity_id, entity_type, details in initial_events:
+            existing_evt = self._audit.get_event(evt_id)
+            if not existing_evt:
+                self._audit.record(
+                    event_type=ev_type,
+                    actor_id=actor,
+                    case_id="CASE-141",
+                    entity_id=entity_id,
+                    entity_type=entity_type,
+                    details=details,
+                    event_id=evt_id,
+                )
+                created_evt = self._audit.get_event(evt_id)
+                h = created_evt.get("integrity_hash") if created_evt else None
+                if h:
+                    event_hashes.append(h)
+            else:
+                h = existing_evt.get("integrity_hash")
+                if h:
+                    event_hashes.append(h)
+
+        if not self.get_anchor(DEMO_ANCHOR_ID) and event_hashes:
+            self._ledger.append_anchor(
+                anchor_id=DEMO_ANCHOR_ID,
+                batch_start="EVT-DEMO-001",
+                batch_end="EVT-DEMO-005",
+                event_hashes=event_hashes,
+                participant=LedgerParticipant.POLICE_HQ,
+            )
+
+        self._demo_bootstrapped = True
+        return DEMO_ANCHOR_ID
 

@@ -153,6 +153,7 @@ class AuditService:
         entity_type: str | None = None,
         request_id: str | None = None,
         details: dict[str, Any] | None = None,
+        event_id: str | None = None,
     ) -> str | None:
         """Record an audit event without ever throwing exceptions to callers."""
         try:
@@ -165,7 +166,7 @@ class AuditService:
 
             now_iso = _utcnow().isoformat()
             payload = {
-                "id": str(uuid.uuid4()),
+                "id": event_id or str(uuid.uuid4()),
                 "event_type": event_type.value if hasattr(event_type, "value") else str(event_type),
                 "action": event_type.value if hasattr(event_type, "value") else str(event_type),
                 "actor_id": actor_id,

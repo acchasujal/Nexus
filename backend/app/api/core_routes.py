@@ -1170,9 +1170,9 @@ def create_core_router() -> APIRouter:
         if not principal.can_view_audit_log():
             raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges to view audit cryptographic proofs.")
 
-        proof_data = anchor_svc.get_event_proof(event_id, anchor_id=anchor_id)
-        if proof_data is None:
-            raise HTTPException(status_code=404, detail=f"No blockchain anchor found containing audit event '{event_id}'.")
+        proof_data = anchor_svc.get_event_proof_status(event_id, anchor_id=anchor_id)
+        if proof_data.get("status") == "UNKNOWN_EVENT":
+            raise HTTPException(status_code=404, detail=f"No audit event found for '{event_id}'.")
 
         return proof_data
 
