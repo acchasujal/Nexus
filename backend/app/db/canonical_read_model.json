@@ -1,0 +1,858 @@
+{
+  "dataset_version": "NCRB_CALIBRATED:v1",
+  "generated_at": "2026-09-22T18:18:38.489851+00:00",
+  "snapshots": {
+    "snap-baseline-v1": {
+      "snapshot_id": "snap-baseline-v1",
+      "case_scope": "GLOBAL",
+      "created_at": "2026-08-25T10:00:00Z",
+      "node_count": 445,
+      "edge_count": 486,
+      "version": "v1.0",
+      "dataset_version": "NCRB_CALIBRATED:v1"
+    },
+    "snap-current": {
+      "snapshot_id": "snap-current",
+      "case_scope": "GLOBAL",
+      "created_at": "2026-08-25T12:00:00Z",
+      "node_count": 441,
+      "edge_count": 491,
+      "version": "v1.1",
+      "dataset_version": "NCRB_CALIBRATED:v1"
+    }
+  },
+  "network_delta": {
+    "before_snapshot_id": "snap-baseline-v1",
+    "after_snapshot_id": "snap-current",
+    "added_nodes": [
+      "P-RAFIQ",
+      "PH-UNIFIED",
+      "P-VIKRAM",
+      "P-SUNIEL"
+    ],
+    "removed_nodes": [
+      "P-RAFIQ-K",
+      "P-RAFIQ-A",
+      "PH-A",
+      "PH-B",
+      "P-VIKRAM-S",
+      "P-BIKRAM-S",
+      "P-SUNIEL-S",
+      "P-SUNIL-S"
+    ],
+    "added_relationships": [
+      "E-BRIDGE",
+      "E-COMM-DK",
+      "E-TXN-55",
+      "E-TXN-71",
+      "E-BRIDGE-2",
+      "E-TXN-HWL",
+      "E-BRIDGE-3",
+      "E-USEPH-1",
+      "E-USEPH-2"
+    ],
+    "removed_relationships": [
+      "E-ACCUSE-141",
+      "E-ACCUSE-207",
+      "E-USEPH-A",
+      "E-USEPH-B"
+    ],
+    "added_node_count": 4,
+    "removed_node_count": 8,
+    "added_relationship_count": 9,
+    "removed_relationship_count": 4,
+    "dataset_version": "NCRB_CALIBRATED:v1"
+  },
+  "pulses": [
+    {
+      "pulse_id": "pulse-0082",
+      "change_ids": [
+        "E-BRIDGE",
+        "E-COMM-DK",
+        "E-TXN-55"
+      ],
+      "signal_headline": "Cross-Jurisdiction Syndicate Conduit Detected",
+      "review_priority": "CRITICAL_REVIEW",
+      "time_window": [
+        "2026-02-11T09:30:00Z",
+        "2026-08-24T18:00:00Z"
+      ],
+      "evidence_refs": [
+        "SRC-FIR-141",
+        "SRC-FIR-207",
+        "SRC-CDR-A12",
+        "SRC-CDR-B31",
+        "SRC-TXN-55"
+      ],
+      "support_level": 0.94,
+      "uncertainty": 0.06,
+      "action_window": "Immediate",
+      "abstained": false,
+      "generated_at": "2026-08-24T18:05:00Z",
+      "affected_entities": [
+        "P-RAFIQ",
+        "P-DEEPAK",
+        "ACC-7731",
+        "ACC-9914"
+      ],
+      "affected_cases": [
+        "CASE-141",
+        "CASE-207"
+      ],
+      "assessment": [
+        {
+          "claim_id": "claim-141-1",
+          "target_relationship_id": "E-BRIDGE",
+          "evidence_ref": "SRC-FIR-141",
+          "state": "SUPPORTS",
+          "source_quality": 0.96,
+          "freshness_days": 12,
+          "rationale": "Direct FIR naming corroborated with verified MSISDN +91 98450 11223."
+        },
+        {
+          "claim_id": "claim-141-2",
+          "target_relationship_id": "E-COMM-DK",
+          "evidence_ref": "SRC-CDR-B31",
+          "state": "SUPPORTS",
+          "source_quality": 0.92,
+          "freshness_days": 14,
+          "rationale": "CDR record indicates recurring calls during contraband transit window."
+        },
+        {
+          "claim_id": "claim-141-3",
+          "target_relationship_id": "E-TXN-55",
+          "evidence_ref": "SRC-TXN-55",
+          "state": "SUPPORTS",
+          "source_quality": 0.95,
+          "freshness_days": 8,
+          "rationale": "Bank wire statement matches peeling chain layer transfer."
+        }
+      ],
+      "forecast": {
+        "forecast_id": "fc-0082-1",
+        "pulse_id": "pulse-0082",
+        "target_state": "JURISDICTION_SHIFT",
+        "time_window": [
+          "2026-08-25T00:00:00Z",
+          "2026-08-30T00:00:00Z"
+        ],
+        "support_level": 0.92,
+        "uncertainty": 0.08,
+        "action_window": "Within 48 hours",
+        "suggested_verification": "Verify carrier subscriber certificate and corroborate vehicle KA-01-AB-1001",
+        "abstained": false,
+        "abstention_reason": null
+      },
+      "verification_plan": [
+        {
+          "verification_id": "verif-01",
+          "target_claim": "Cell handover validation",
+          "missing_evidence_type": "TOWER_DUMP",
+          "recommended_action": "Issue Section 63 BSA production notice to telecom provider for cell tower dump",
+          "responsible_role": "INVESTIGATOR",
+          "status": "PENDING"
+        },
+        {
+          "verification_id": "verif-02",
+          "target_claim": "Smurfing termination",
+          "missing_evidence_type": "BANK_FREEZE",
+          "recommended_action": "Freeze identified mule account ACC-7731 via FIU-IND alert channel",
+          "responsible_role": "SUPERVISOR",
+          "status": "PENDING"
+        }
+      ]
+    },
+    {
+      "pulse_id": "pulse-0091",
+      "change_ids": [
+        "E-BRIDGE-2",
+        "E-TXN-HWL"
+      ],
+      "signal_headline": "Hawala Peeling Route Emergence",
+      "review_priority": "CRITICAL_REVIEW",
+      "time_window": [
+        "2026-03-15T11:00:00Z",
+        "2026-08-24T18:00:00Z"
+      ],
+      "evidence_refs": [
+        "SRC-FIR-305",
+        "SRC-FIR-412"
+      ],
+      "support_level": 0.91,
+      "uncertainty": 0.09,
+      "action_window": "24 hours",
+      "abstained": false,
+      "generated_at": "2026-08-24T18:10:00Z",
+      "affected_entities": [
+        "P-VIKRAM",
+        "ACC-4491",
+        "ACC-9914"
+      ],
+      "affected_cases": [
+        "CASE-305",
+        "CASE-412"
+      ],
+      "assessment": [
+        {
+          "claim_id": "claim-305-1",
+          "target_relationship_id": "E-BRIDGE-2",
+          "evidence_ref": "SRC-FIR-305",
+          "state": "SUPPORTS",
+          "source_quality": 0.93,
+          "freshness_days": 18,
+          "rationale": "Accused resolved across Mangaluru narcotics and Hubballi cyber cases."
+        }
+      ],
+      "forecast": {
+        "forecast_id": "fc-0091-1",
+        "pulse_id": "pulse-0091",
+        "target_state": "FINANCIAL_ROUTE_TRANSITION",
+        "time_window": [
+          "2026-08-25T00:00:00Z",
+          "2026-08-30T00:00:00Z"
+        ],
+        "support_level": 0.89,
+        "uncertainty": 0.11,
+        "action_window": "Within 24 hours",
+        "suggested_verification": "Freeze account ACC-4491 and subpoena transaction logs",
+        "abstained": false,
+        "abstention_reason": null
+      },
+      "verification_plan": [
+        {
+          "verification_id": "verif-03",
+          "target_claim": "Fund trace verification",
+          "missing_evidence_type": "BANK_STATEMENT",
+          "recommended_action": "Request certified bank statement from HDFC Bank",
+          "responsible_role": "INVESTIGATOR",
+          "status": "PENDING"
+        }
+      ]
+    },
+    {
+      "pulse_id": "pulse-0104",
+      "change_ids": [
+        "E-BRIDGE-3"
+      ],
+      "signal_headline": "Vehicle Carrier Conduit Identified",
+      "review_priority": "PRIORITY_REVIEW",
+      "time_window": [
+        "2026-04-02T10:15:00Z",
+        "2026-08-24T18:00:00Z"
+      ],
+      "evidence_refs": [
+        "SRC-FIR-501",
+        "SRC-FIR-502"
+      ],
+      "support_level": 0.88,
+      "uncertainty": 0.12,
+      "action_window": "48 hours",
+      "abstained": false,
+      "generated_at": "2026-08-24T18:15:00Z",
+      "affected_entities": [
+        "P-SUNIEL",
+        "VEH-1001"
+      ],
+      "affected_cases": [
+        "CASE-501",
+        "CASE-502"
+      ],
+      "assessment": [
+        {
+          "claim_id": "claim-501-1",
+          "target_relationship_id": "E-BRIDGE-3",
+          "evidence_ref": "SRC-FIR-501",
+          "state": "SUPPORTS",
+          "source_quality": 0.9,
+          "freshness_days": 25,
+          "rationale": "Logistics coordinator vehicle registration confirmed in both FIRs."
+        }
+      ],
+      "forecast": {
+        "forecast_id": "fc-0104-1",
+        "pulse_id": "pulse-0104",
+        "target_state": "NETWORK_RESTRUCTURING",
+        "time_window": [
+          "2026-08-25T00:00:00Z",
+          "2026-08-30T00:00:00Z"
+        ],
+        "support_level": 0.85,
+        "uncertainty": 0.15,
+        "action_window": "Within 48 hours",
+        "suggested_verification": "Inspect FASTag sensor toll passage records",
+        "abstained": false,
+        "abstention_reason": null
+      },
+      "verification_plan": [
+        {
+          "verification_id": "verif-04",
+          "target_claim": "FASTag vehicle verification",
+          "missing_evidence_type": "TOLL_DATA",
+          "recommended_action": "Subpoena NHAI toll gate transit logs for KA-01-AB-1001",
+          "responsible_role": "INVESTIGATOR",
+          "status": "PENDING"
+        }
+      ]
+    }
+  ],
+  "primary_pulse": {
+    "pulse_id": "pulse-0082",
+    "change_ids": [
+      "E-BRIDGE",
+      "E-COMM-DK",
+      "E-TXN-55"
+    ],
+    "signal_headline": "Cross-Jurisdiction Syndicate Conduit Detected",
+    "review_priority": "CRITICAL_REVIEW",
+    "time_window": [
+      "2026-02-11T09:30:00Z",
+      "2026-08-24T18:00:00Z"
+    ],
+    "evidence_refs": [
+      "SRC-FIR-141",
+      "SRC-FIR-207",
+      "SRC-CDR-A12",
+      "SRC-CDR-B31",
+      "SRC-TXN-55"
+    ],
+    "support_level": 0.94,
+    "uncertainty": 0.06,
+    "action_window": "Immediate",
+    "abstained": false,
+    "generated_at": "2026-08-24T18:05:00Z",
+    "affected_entities": [
+      "P-RAFIQ",
+      "P-DEEPAK",
+      "ACC-7731",
+      "ACC-9914"
+    ],
+    "affected_cases": [
+      "CASE-141",
+      "CASE-207"
+    ],
+    "assessment": [
+      {
+        "claim_id": "claim-141-1",
+        "target_relationship_id": "E-BRIDGE",
+        "evidence_ref": "SRC-FIR-141",
+        "state": "SUPPORTS",
+        "source_quality": 0.96,
+        "freshness_days": 12,
+        "rationale": "Direct FIR naming corroborated with verified MSISDN +91 98450 11223."
+      },
+      {
+        "claim_id": "claim-141-2",
+        "target_relationship_id": "E-COMM-DK",
+        "evidence_ref": "SRC-CDR-B31",
+        "state": "SUPPORTS",
+        "source_quality": 0.92,
+        "freshness_days": 14,
+        "rationale": "CDR record indicates recurring calls during contraband transit window."
+      },
+      {
+        "claim_id": "claim-141-3",
+        "target_relationship_id": "E-TXN-55",
+        "evidence_ref": "SRC-TXN-55",
+        "state": "SUPPORTS",
+        "source_quality": 0.95,
+        "freshness_days": 8,
+        "rationale": "Bank wire statement matches peeling chain layer transfer."
+      }
+    ],
+    "forecast": {
+      "forecast_id": "fc-0082-1",
+      "pulse_id": "pulse-0082",
+      "target_state": "JURISDICTION_SHIFT",
+      "time_window": [
+        "2026-08-25T00:00:00Z",
+        "2026-08-30T00:00:00Z"
+      ],
+      "support_level": 0.92,
+      "uncertainty": 0.08,
+      "action_window": "Within 48 hours",
+      "suggested_verification": "Verify carrier subscriber certificate and corroborate vehicle KA-01-AB-1001",
+      "abstained": false,
+      "abstention_reason": null
+    },
+    "verification_plan": [
+      {
+        "verification_id": "verif-01",
+        "target_claim": "Cell handover validation",
+        "missing_evidence_type": "TOWER_DUMP",
+        "recommended_action": "Issue Section 63 BSA production notice to telecom provider for cell tower dump",
+        "responsible_role": "INVESTIGATOR",
+        "status": "PENDING"
+      },
+      {
+        "verification_id": "verif-02",
+        "target_claim": "Smurfing termination",
+        "missing_evidence_type": "BANK_FREEZE",
+        "recommended_action": "Freeze identified mule account ACC-7731 via FIU-IND alert channel",
+        "responsible_role": "SUPERVISOR",
+        "status": "PENDING"
+      }
+    ]
+  },
+  "kpis": {
+    "active_pulses_count": 3,
+    "critical_pulses_count": 2,
+    "evidence_percent": 100,
+    "supported_claims": 5,
+    "total_claims": 5,
+    "affected_cases_count": 6,
+    "added_nodes": 4,
+    "added_edges": 9,
+    "total_changes": 13
+  },
+  "affected_investigations": [
+    "CASE-141",
+    "CASE-207",
+    "CASE-305",
+    "CASE-412",
+    "CASE-501",
+    "CASE-502"
+  ],
+  "cases": [
+    {
+      "case_id": "CASE-141",
+      "fir_number": "FIR-2026-141",
+      "title": "FIR No. 141/2026 \u2014 Inter-State Cargo Smuggling",
+      "district": "Mysuru",
+      "status": "UNDER_INVESTIGATION",
+      "priority": "HIGH",
+      "last_activity": "2026-08-24T18:00:00Z",
+      "evidence_state": "LINKED_VERIFIED",
+      "jurisdictions": [
+        "Mysuru",
+        "Bengaluru City"
+      ],
+      "linked_cases": [
+        "CASE-207"
+      ],
+      "pending_verification": 1,
+      "assigned_officer": "Insp. Ramesh Rao",
+      "latest_signal": "Cross-jurisdiction telecom & smurfing link to CASE-207",
+      "next_action": "Issue Section 63 BSA production notice for cell tower dump"
+    },
+    {
+      "case_id": "CASE-207",
+      "fir_number": "FIR-2026-207",
+      "title": "FIR No. 207/2026 \u2014 Peeling Chain Cyber Fraud",
+      "district": "Bengaluru City",
+      "status": "UNDER_INVESTIGATION",
+      "priority": "HIGH",
+      "last_activity": "2026-08-24T18:00:00Z",
+      "evidence_state": "LINKED_VERIFIED",
+      "jurisdictions": [
+        "Bengaluru City",
+        "Mysuru"
+      ],
+      "linked_cases": [
+        "CASE-141"
+      ],
+      "pending_verification": 1,
+      "assigned_officer": "Insp. Priya Sharma",
+      "latest_signal": "Hawala money conduit to Axis mule account ACC-7731",
+      "next_action": "Freeze mule account ACC-7731 via FIU-IND channel"
+    },
+    {
+      "case_id": "CASE-305",
+      "fir_number": "FIR-2026-305",
+      "title": "FIR No. 305/2026 \u2014 Inter-District Narcotics Distribution",
+      "district": "Mangaluru",
+      "status": "EVIDENCE_GATHERING",
+      "priority": "CRITICAL",
+      "last_activity": "2026-08-24T16:30:00Z",
+      "evidence_state": "PARTIAL",
+      "jurisdictions": [
+        "Mangaluru",
+        "Hubballi-Dharwad"
+      ],
+      "linked_cases": [
+        "CASE-412"
+      ],
+      "pending_verification": 2,
+      "assigned_officer": "ACP Suresh Patil",
+      "latest_signal": "Alias overlap resolved with Bikram Sarma in CASE-412",
+      "next_action": "Verify bank statement for account ACC-4491"
+    },
+    {
+      "case_id": "CASE-412",
+      "fir_number": "FIR-2026-412",
+      "title": "FIR No. 412/2026 \u2014 Hawala Peeling Network Operation",
+      "district": "Hubballi-Dharwad",
+      "status": "UNDER_INVESTIGATION",
+      "priority": "CRITICAL",
+      "last_activity": "2026-08-24T16:30:00Z",
+      "evidence_state": "LINKED_VERIFIED",
+      "jurisdictions": [
+        "Hubballi-Dharwad",
+        "Mangaluru"
+      ],
+      "linked_cases": [
+        "CASE-305"
+      ],
+      "pending_verification": 1,
+      "assigned_officer": "Insp. Anita K",
+      "latest_signal": "Layered fund routing through syndicate clearing nodes",
+      "next_action": "Obtain carrier CDR handover certificate"
+    },
+    {
+      "case_id": "CASE-501",
+      "fir_number": "FIR-2026-501",
+      "title": "FIR No. 501/2026 \u2014 Transshipment Cargo Conduit",
+      "district": "Belagavi",
+      "status": "EVIDENCE_GATHERING",
+      "priority": "MEDIUM",
+      "last_activity": "2026-08-24T14:00:00Z",
+      "evidence_state": "CORROBORATED",
+      "jurisdictions": [
+        "Belagavi",
+        "Vijayapura"
+      ],
+      "linked_cases": [
+        "CASE-502"
+      ],
+      "pending_verification": 1,
+      "assigned_officer": "Insp. Vijay Naik",
+      "latest_signal": "Vehicle KA-01-AB-1001 shared with CASE-502",
+      "next_action": "Confirm RTO vehicle ownership transfer certificate"
+    },
+    {
+      "case_id": "CASE-502",
+      "fir_number": "FIR-2026-502",
+      "title": "FIR No. 502/2026 \u2014 Inter-State Supply Network",
+      "district": "Vijayapura",
+      "status": "EVIDENCE_GATHERING",
+      "priority": "MEDIUM",
+      "last_activity": "2026-08-24T14:00:00Z",
+      "evidence_state": "CORROBORATED",
+      "jurisdictions": [
+        "Vijayapura",
+        "Belagavi"
+      ],
+      "linked_cases": [
+        "CASE-501"
+      ],
+      "pending_verification": 1,
+      "assigned_officer": "Insp. Mahesh Joshi",
+      "latest_signal": "Logistics operative Suniel Shetty linked to vehicle KA-01-AB-1001",
+      "next_action": "Inspect toll plaza FASTag passage timestamps"
+    }
+  ],
+  "worklist": [
+    {
+      "case_id": "CASE-141",
+      "fir_number": "FIR-2026-141",
+      "title": "FIR No. 141/2026 \u2014 Inter-State Cargo Smuggling",
+      "district": "Mysuru",
+      "status": "UNDER_INVESTIGATION",
+      "priority": "HIGH",
+      "last_activity": "2026-08-24T18:00:00Z",
+      "evidence_state": "LINKED_VERIFIED",
+      "jurisdictions": [
+        "Mysuru",
+        "Bengaluru City"
+      ],
+      "linked_cases": [
+        "CASE-207"
+      ],
+      "pending_verification": 1,
+      "assigned_officer": "Insp. Ramesh Rao",
+      "latest_signal": "Cross-jurisdiction telecom & smurfing link to CASE-207",
+      "next_action": "Issue Section 63 BSA production notice for cell tower dump"
+    },
+    {
+      "case_id": "CASE-207",
+      "fir_number": "FIR-2026-207",
+      "title": "FIR No. 207/2026 \u2014 Peeling Chain Cyber Fraud",
+      "district": "Bengaluru City",
+      "status": "UNDER_INVESTIGATION",
+      "priority": "HIGH",
+      "last_activity": "2026-08-24T18:00:00Z",
+      "evidence_state": "LINKED_VERIFIED",
+      "jurisdictions": [
+        "Bengaluru City",
+        "Mysuru"
+      ],
+      "linked_cases": [
+        "CASE-141"
+      ],
+      "pending_verification": 1,
+      "assigned_officer": "Insp. Priya Sharma",
+      "latest_signal": "Hawala money conduit to Axis mule account ACC-7731",
+      "next_action": "Freeze mule account ACC-7731 via FIU-IND channel"
+    },
+    {
+      "case_id": "CASE-305",
+      "fir_number": "FIR-2026-305",
+      "title": "FIR No. 305/2026 \u2014 Inter-District Narcotics Distribution",
+      "district": "Mangaluru",
+      "status": "EVIDENCE_GATHERING",
+      "priority": "CRITICAL",
+      "last_activity": "2026-08-24T16:30:00Z",
+      "evidence_state": "PARTIAL",
+      "jurisdictions": [
+        "Mangaluru",
+        "Hubballi-Dharwad"
+      ],
+      "linked_cases": [
+        "CASE-412"
+      ],
+      "pending_verification": 2,
+      "assigned_officer": "ACP Suresh Patil",
+      "latest_signal": "Alias overlap resolved with Bikram Sarma in CASE-412",
+      "next_action": "Verify bank statement for account ACC-4491"
+    },
+    {
+      "case_id": "CASE-412",
+      "fir_number": "FIR-2026-412",
+      "title": "FIR No. 412/2026 \u2014 Hawala Peeling Network Operation",
+      "district": "Hubballi-Dharwad",
+      "status": "UNDER_INVESTIGATION",
+      "priority": "CRITICAL",
+      "last_activity": "2026-08-24T16:30:00Z",
+      "evidence_state": "LINKED_VERIFIED",
+      "jurisdictions": [
+        "Hubballi-Dharwad",
+        "Mangaluru"
+      ],
+      "linked_cases": [
+        "CASE-305"
+      ],
+      "pending_verification": 1,
+      "assigned_officer": "Insp. Anita K",
+      "latest_signal": "Layered fund routing through syndicate clearing nodes",
+      "next_action": "Obtain carrier CDR handover certificate"
+    },
+    {
+      "case_id": "CASE-501",
+      "fir_number": "FIR-2026-501",
+      "title": "FIR No. 501/2026 \u2014 Transshipment Cargo Conduit",
+      "district": "Belagavi",
+      "status": "EVIDENCE_GATHERING",
+      "priority": "MEDIUM",
+      "last_activity": "2026-08-24T14:00:00Z",
+      "evidence_state": "CORROBORATED",
+      "jurisdictions": [
+        "Belagavi",
+        "Vijayapura"
+      ],
+      "linked_cases": [
+        "CASE-502"
+      ],
+      "pending_verification": 1,
+      "assigned_officer": "Insp. Vijay Naik",
+      "latest_signal": "Vehicle KA-01-AB-1001 shared with CASE-502",
+      "next_action": "Confirm RTO vehicle ownership transfer certificate"
+    },
+    {
+      "case_id": "CASE-502",
+      "fir_number": "FIR-2026-502",
+      "title": "FIR No. 502/2026 \u2014 Inter-State Supply Network",
+      "district": "Vijayapura",
+      "status": "EVIDENCE_GATHERING",
+      "priority": "MEDIUM",
+      "last_activity": "2026-08-24T14:00:00Z",
+      "evidence_state": "CORROBORATED",
+      "jurisdictions": [
+        "Vijayapura",
+        "Belagavi"
+      ],
+      "linked_cases": [
+        "CASE-501"
+      ],
+      "pending_verification": 1,
+      "assigned_officer": "Insp. Mahesh Joshi",
+      "latest_signal": "Logistics operative Suniel Shetty linked to vehicle KA-01-AB-1001",
+      "next_action": "Inspect toll plaza FASTag passage timestamps"
+    }
+  ],
+  "case_dna_index": {
+    "CASE-141": {
+      "target_case_id": "CASE-141",
+      "similar_cases": [
+        {
+          "case_pair": [
+            "CASE-141",
+            "CASE-207"
+          ],
+          "case_a_title": "FIR No. 141/2026 \u2014 Inter-State Cargo Smuggling",
+          "case_b_title": "FIR No. 207/2026 \u2014 Peeling Chain Cyber Fraud",
+          "overall_similarity": 0.88,
+          "structure_similarity": 0.85,
+          "communication_similarity": 0.92,
+          "financial_similarity": 0.84,
+          "location_similarity": 0.9,
+          "temporal_similarity": 0.89,
+          "shared_entities": [
+            "P-RAFIQ",
+            "PH-UNIFIED",
+            "ACC-7731"
+          ],
+          "explanation": "High topological and communication similarity (0.92) across Mysuru and Bengaluru syndicates via unified suspect Rafiq Khan and peeling chain transfers.",
+          "evidence_refs": [
+            "SRC-FIR-141",
+            "SRC-FIR-207",
+            "SRC-CDR-A12",
+            "SRC-CDR-B31",
+            "SRC-TXN-55"
+          ],
+          "derivation_class": "DERIVED",
+          "dataset_version": "NCRB_CALIBRATED:v1",
+          "snapshot_id": "snap-current"
+        },
+        {
+          "case_pair": [
+            "CASE-141",
+            "CASE-501"
+          ],
+          "case_a_title": "FIR No. 141/2026 \u2014 Inter-State Cargo Smuggling",
+          "case_b_title": "FIR No. 501/2026 \u2014 Transshipment Cargo Conduit",
+          "overall_similarity": 0.62,
+          "structure_similarity": 0.65,
+          "communication_similarity": 0.6,
+          "financial_similarity": 0.55,
+          "location_similarity": 0.7,
+          "temporal_similarity": 0.6,
+          "shared_entities": [
+            "VEH-1001"
+          ],
+          "explanation": "Moderate structural match sharing logistics transit pattern along NH-48 corridor.",
+          "evidence_refs": [
+            "SRC-FIR-141",
+            "SRC-FIR-501"
+          ],
+          "derivation_class": "DERIVED",
+          "dataset_version": "NCRB_CALIBRATED:v1",
+          "snapshot_id": "snap-current"
+        }
+      ],
+      "average_similarity": 0.75,
+      "highest_similarity": 0.88,
+      "top_shared_entities": [
+        "P-RAFIQ",
+        "PH-UNIFIED",
+        "ACC-7731",
+        "VEH-1001"
+      ],
+      "dataset_version": "NCRB_CALIBRATED:v1"
+    },
+    "CASE-207": {
+      "target_case_id": "CASE-207",
+      "similar_cases": [
+        {
+          "case_pair": [
+            "CASE-207",
+            "CASE-141"
+          ],
+          "case_a_title": "FIR No. 207/2026 \u2014 Peeling Chain Cyber Fraud",
+          "case_b_title": "FIR No. 141/2026 \u2014 Inter-State Cargo Smuggling",
+          "overall_similarity": 0.88,
+          "structure_similarity": 0.85,
+          "communication_similarity": 0.92,
+          "financial_similarity": 0.84,
+          "location_similarity": 0.9,
+          "temporal_similarity": 0.89,
+          "shared_entities": [
+            "P-RAFIQ",
+            "PH-UNIFIED",
+            "ACC-7731"
+          ],
+          "explanation": "High topological and communication similarity (0.92) across Mysuru and Bengaluru syndicates via unified suspect Rafiq Khan and peeling chain transfers.",
+          "evidence_refs": [
+            "SRC-FIR-141",
+            "SRC-FIR-207",
+            "SRC-CDR-A12",
+            "SRC-CDR-B31",
+            "SRC-TXN-55"
+          ],
+          "derivation_class": "DERIVED",
+          "dataset_version": "NCRB_CALIBRATED:v1",
+          "snapshot_id": "snap-current"
+        }
+      ],
+      "average_similarity": 0.88,
+      "highest_similarity": 0.88,
+      "top_shared_entities": [
+        "P-RAFIQ",
+        "PH-UNIFIED",
+        "ACC-7731"
+      ],
+      "dataset_version": "NCRB_CALIBRATED:v1"
+    }
+  },
+  "hotspots": [
+    {
+      "district": "Bengaluru City",
+      "risk_category": "CYBER_FRAUD_HUB",
+      "incident_count": 42,
+      "active_syndicates": [
+        "Cyber Hawala Syndicate"
+      ]
+    },
+    {
+      "district": "Mysuru",
+      "risk_category": "CONTRABAND_TRANSIT",
+      "incident_count": 28,
+      "active_syndicates": [
+        "Coastal Narcotics Syndicate"
+      ]
+    }
+  ],
+  "communities": [
+    {
+      "community_id": "COMM-ALPHA",
+      "name": "Coastal Narcotics Syndicate",
+      "node_count": 18
+    },
+    {
+      "community_id": "COMM-BETA",
+      "name": "Cyber Hawala Syndicate",
+      "node_count": 14
+    }
+  ],
+  "bridges": [
+    {
+      "edge_id": "E-BRIDGE",
+      "source": "CASE-141",
+      "target": "CASE-207",
+      "bridge_type": "CONNECTS_CASES",
+      "connector_entity": "P-RAFIQ"
+    }
+  ],
+  "identity_drifts": [
+    {
+      "entity_id": "person-0001",
+      "canonical_name": "Rafiq Khan",
+      "drift_count": 3,
+      "resolved_aliases": [
+        "Rafiq Ahmed",
+        "Rafi",
+        "Chhota"
+      ]
+    }
+  ],
+  "network_adaptations": [
+    {
+      "adaptation_id": "adapt-001",
+      "primary_entity": "P-RAFIQ",
+      "trigger_event": "SIM swap observed in cell handover",
+      "delta_status": "OBSERVED"
+    }
+  ],
+  "audit_fixture_metadata": {
+    "demo_namespace": "DEMO_FORENSIC_SEED",
+    "anchor_id": "ANCHOR-DEMO-001",
+    "merkle_root": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "dataset_version": "NCRB_CALIBRATED:v1",
+    "seed_event_ids": [
+      "evt-demo-seed-001",
+      "evt-demo-seed-002",
+      "evt-demo-seed-003"
+    ],
+    "chain_length": 3,
+    "status": "ANCHORED"
+  },
+  "checksum": "sha256:f37d59ae885a507a86d3674517885d260de7ffd00f62e15ab5ac634605950b7d"
+}
