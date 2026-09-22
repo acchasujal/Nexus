@@ -64,14 +64,14 @@ CASE_141 = NexusGraphNode(
     entity_type="Case",
     label="FIR 141/2026 — Trafficking",
     case_ids=["CASE-141"],
-    properties={"fir_number": "141/2026", "station": "Mysuru South WS PS", "district": "Mysuru", "offence": "Human Trafficking (BNS 143)"},
+    properties={"fir_number": "FIR 141/2026", "station": "Mysuru South WS PS", "district": "Mysuru", "offence": "Human Trafficking (BNS 143)"},
 )
 CASE_207 = NexusGraphNode(
     id="CASE-207",
     entity_type="Case",
     label="FIR 207/2026 — Fraud",
     case_ids=["CASE-207"],
-    properties={"fir_number": "207/2026", "station": "Bengaluru CEN PS", "district": "Bengaluru", "offence": "Financial Fraud (BNS 318)"},
+    properties={"fir_number": "FIR 207/2026", "station": "Bengaluru CEN PS", "district": "Bengaluru", "offence": "Financial Fraud (BNS 318)"},
 )
 P_MEENA = NexusGraphNode(
     id="P-MEENA",
@@ -121,14 +121,14 @@ CASE_305 = NexusGraphNode(
     entity_type="Case",
     label="FIR 305/2026 — Cyber Fraud",
     case_ids=["CASE-305"],
-    properties={"fir_number": "305/2026", "station": "Indiranagar PS", "district": "Bengaluru", "offence": "IT Act 66D & Fraud"},
+    properties={"fir_number": "FIR 305/2026", "station": "Indiranagar PS", "district": "Bengaluru", "offence": "IT Act 66D & Fraud"},
 )
 CASE_412 = NexusGraphNode(
     id="CASE-412",
     entity_type="Case",
     label="FIR 412/2026 — Hawala Syndicate",
     case_ids=["CASE-412"],
-    properties={"fir_number": "412/2026", "station": "Domlur Cyber PS", "district": "Bengaluru", "offence": "Organized Crime (BNS 111)"},
+    properties={"fir_number": "FIR 412/2026", "station": "Domlur Cyber PS", "district": "Bengaluru", "offence": "Organized Crime (BNS 111)"},
 )
 P_VIKRAM_S = NexusGraphNode(
     id="P-VIKRAM-S",
@@ -157,14 +157,14 @@ CASE_501 = NexusGraphNode(
     entity_type="Case",
     label="FIR 501/2026 — Narcotics Ring",
     case_ids=["CASE-501"],
-    properties={"fir_number": "501/2026", "station": "Jayanagar PS", "district": "Bengaluru", "offence": "NDPS Act 21(c)"},
+    properties={"fir_number": "FIR 501/2026", "station": "Jayanagar PS", "district": "Bengaluru", "offence": "NDPS Act 21(c)"},
 )
 CASE_502 = NexusGraphNode(
     id="CASE-502",
     entity_type="Case",
     label="FIR 502/2026 — Smuggling Ring",
     case_ids=["CASE-502"],
-    properties={"fir_number": "502/2026", "station": "Commercial Street PS", "district": "Bengaluru", "offence": "Customs & Contraband"},
+    properties={"fir_number": "FIR 502/2026", "station": "Commercial Street PS", "district": "Bengaluru", "offence": "Customs & Contraband"},
 )
 P_SUNIEL_S = NexusGraphNode(
     id="P-SUNIEL-S",

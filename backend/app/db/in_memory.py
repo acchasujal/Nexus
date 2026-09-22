@@ -527,11 +527,16 @@ class InMemoryBackendRepository:
             if not provenance.get("source_id") and edge.get("source_record_id"):
                 provenance["source_id"] = str(edge["source_record_id"])
 
+            props = dict(edge.get("properties", {}))
+            props["id"] = edge.get("id") or f"rel_{src}_{etype}_{tgt}"
+            props["weight"] = weight
+            props["provenance"] = provenance
+
             adj_edge = AdjEdge(
                 source_id=src,
                 target_id=tgt,
                 edge_type=etype,
-                properties={"weight": weight, "provenance": provenance},
+                properties=props,
             )
             store.adj.setdefault(src, []).append(adj_edge)
             store.radj.setdefault(tgt, []).append(adj_edge)

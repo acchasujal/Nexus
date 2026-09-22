@@ -231,7 +231,7 @@ class ProactiveIntelligenceService:
             for ae in adj_edges:
                 if ae.source_id in existing_nids and ae.target_id in existing_nids:
                     props = dict(ae.properties)
-                    eid = props.get("id") or f"edge-{ae.source_id}-{ae.target_id}"
+                    eid = props.get("id") or getattr(ae, "id", None) or f"rel_{ae.source_id}_{ae.edge_type}_{ae.target_id}"
                     edges.append(
                         NexusGraphEdge(
                             id=eid,
@@ -326,6 +326,7 @@ class ProactiveIntelligenceService:
         if raw_diff.added_relationships:
             # Group added edges by affected endpoints
             affected_nodes: set[str] = set()
+            affected_cases: set[str] = set()
             edge_refs: list[str] = []
 
             for rel_id in raw_diff.added_relationships:
@@ -335,6 +336,22 @@ class ProactiveIntelligenceService:
                 if len(parts) >= 4:
                     affected_nodes.add(parts[1])
                     affected_nodes.add(parts[3])
+
+            for nid in list(affected_nodes):
+                node_rec = after_store.nodes.get(nid) or before_store.nodes.get(nid)
+                if node_rec:
+                    if node_rec.entity_type in ("Case", "CASE"):
+                        affected_cases.add(node_rec.node_id)
+                    for cid in node_rec.properties.get("case_ids", []):
+                        affected_cases.add(cid)
+
+            for adj_list in after_store.adj.values():
+                for ae in adj_list:
+                    if ae.properties.get("id") in raw_diff.added_relationships:
+                        for cid in ae.properties.get("case_ids", []):
+                            affected_cases.add(cid)
+                        affected_nodes.add(ae.source_id)
+                        affected_nodes.add(ae.target_id)
 
             # Generate Pulse 1: Network Expansion
             pulse_id = f"pulse-{abs(hash(tuple(raw_diff.added_relationships[:5]))) % 10000:04d}"
@@ -396,7 +413,7 @@ class ProactiveIntelligenceService:
                     forecast=forecast,
                     verification_plan=verifications,
                     affected_entities=sorted(list(affected_nodes)),
-                    affected_cases=self.repo.case_ids[:2],
+                    affected_cases=sorted(list(affected_cases)) if affected_cases else self.repo.case_ids[:2],
                 )
             )
 
@@ -467,17 +484,23 @@ class ProactiveIntelligenceService:
         diff = diff_graph_snapshots(baseline_store, current_store)
         diff_pulses = self._filter_network_pulses(diff, baseline_store, current_store)
 
-        # Merge dynamic pulses from closed-loop propagation with diff pulses
-        pulse_map: dict[str, NetworkPulseItem] = {p.pulse_id: p for p in diff_pulses}
+        # Ground in canonical read model pulses
+        from backend.app.services.canonical_read_model import get_canonical_read_model
+        rm = get_canonical_read_model()
+        pulse_map: dict[str, NetworkPulseItem] = {}
+        for p in rm.get("pulses", []):
+            try:
+                pulse_map[p["pulse_id"]] = NetworkPulseItem(**p)
+            except Exception:
+                pass
+
+        # Merge diff pulses
+        for p in diff_pulses:
+            pulse_map[p.pulse_id] = p
+
+        # Merge dynamic pulses from closed-loop propagation
         for dp_id, dp in self._dynamic_pulses.items():
             pulse_map[dp_id] = dp
-
-        # If diff pulses did not produce items, ground in canonical read model
-        if not pulse_map:
-            from backend.app.services.canonical_read_model import get_canonical_read_model
-            rm = get_canonical_read_model()
-            for p in rm.get("pulses", []):
-                pulse_map[p["pulse_id"]] = NetworkPulseItem(**p)
 
         pulses = list(pulse_map.values())
 

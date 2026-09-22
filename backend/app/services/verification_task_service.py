@@ -245,6 +245,8 @@ class VerificationTaskService:
         pulses: list[Any] = []
         if self._proactive_svc and hasattr(self._proactive_svc, "list_active_pulses"):
             pulses = self._proactive_svc.list_active_pulses(case_id=case_id)
+            if not any(p.pulse_id == clean_pulse_id for p in pulses):
+                pulses = self._proactive_svc.list_active_pulses()
 
         target_pulse = next((p for p in pulses if p.pulse_id == clean_pulse_id), None)
         if not target_pulse:
