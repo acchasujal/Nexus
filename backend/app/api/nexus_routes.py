@@ -62,6 +62,7 @@ from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.db.ingestion.pipeline import CsvIngestionPipeline
 from backend.app.services.audit_service import AuditEventType, AuditService
+from backend.app.services.canonical_read_model import get_intelligence_bootstrap_payload
 from backend.app.services.copilot_service import CopilotService
 from shared.contracts.api import (
     AcknowledgePulseRequest,
@@ -1801,6 +1802,30 @@ def create_nexus_router() -> APIRouter:
             verification_timestamp=datetime.now(timezone.utc).isoformat(),
             failure_reason=None if is_verified else "Cryptographic hash mismatch. Source content altered."
         )
+
+    # ── Intelligence Center Bootstrap (P0) ─────────────────────────────────
+
+    @router.get("/nexus/intelligence/bootstrap", response_model=IntelligenceBootstrapResponse)
+    def get_intelligence_bootstrap(
+        principal: Principal = Depends(get_principal),
+        audit_service: AuditService = Depends(get_audit_service),
+    ) -> IntelligenceBootstrapResponse:
+        """
+        Fast authoritative intelligence center bootstrap payload (P0).
+        Returns summary KPIs, primary network pulse, primary network diff summary,
+        and affected investigations directly from the versioned canonical read model.
+        """
+        payload = get_intelligence_bootstrap_payload()
+        audit_service.record(
+            event_type=AuditEventType.INTELLIGENCE_PULSE_ACKNOWLEDGED,
+            actor_id=principal.user_id,
+            details={
+                "action": "INTELLIGENCE_BOOTSTRAP",
+                "dataset_version": payload.dataset_version,
+                "snapshot_id": payload.snapshot_id,
+            },
+        )
+        return payload
 
     # ── Hotspots & Repeat Offender Intelligence Routes ─────────────────────
 
