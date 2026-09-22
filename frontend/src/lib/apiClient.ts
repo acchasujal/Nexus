@@ -407,11 +407,23 @@ export const apiClient = {
   },
   getNexusNetwork: (params?: {
     snapshot?: 'before' | 'after'
+    snapshot_id?: string
+    case_id?: string
+    target_case_id?: string
+    entity_id?: string
+    node_id?: string
+    focus?: string
     entity_types?: string[]
     case_ids?: string[]
   }) => {
     const query = new URLSearchParams()
     if (params?.snapshot) query.set('snapshot', params.snapshot)
+    if (params?.snapshot_id) query.set('snapshot_id', params.snapshot_id)
+    if (params?.case_id) query.set('case_id', params.case_id)
+    if (params?.target_case_id) query.set('target_case_id', params.target_case_id)
+    if (params?.entity_id) query.set('entity_id', params.entity_id)
+    if (params?.node_id) query.set('node_id', params.node_id)
+    if (params?.focus) query.set('focus', params.focus)
     if (params?.entity_types?.length) query.set('entity_types', params.entity_types.join(','))
     if (params?.case_ids?.length) query.set('case_ids', params.case_ids.join(','))
     const qs = query.toString()

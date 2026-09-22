@@ -283,7 +283,13 @@ export default function NetworkExplorer() {
     Boolean(isCaseScoped && !useUnifiedNetwork)
   )
   const demoQuery = useNexusNetwork(
-    replay,
+    {
+      snapshot: replay,
+      case_id: caseIdParam || undefined,
+      target_case_id: targetCaseIdParam || undefined,
+      entity_id: nodeIdParam || undefined,
+      focus: focusParam || undefined,
+    },
     useUnifiedNetwork
   )
   const diff = useSnapshotDiff(replay === 'after' && useUnifiedNetwork && demoQuery.data?.state === 'after')

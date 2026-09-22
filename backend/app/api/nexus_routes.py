@@ -1079,12 +1079,23 @@ def create_nexus_router() -> APIRouter:
         snapshot: str = Query("before", description="Snapshot name or before/after"),
         snapshot_id: str | None = Query(None, description="Explicit snapshot ID"),
         case_id: str | None = Query(None, description="Filter by case ID"),
+        target_case_id: str | None = Query(None, description="Filter by target case ID for cross-case focus"),
+        entity_id: str | None = Query(None, description="Focus anchor entity ID"),
+        node_id: str | None = Query(None, description="Alias for entity_id"),
+        focus: str | None = Query(None, description="Focus scope: 1hop, 2hop, crosscase, community"),
         principal: Principal = Depends(get_principal),
         audit: AuditService = Depends(get_audit_service),
         proactive_svc: Any = Depends(get_proactive_intelligence_service),
     ) -> NexusNetworkResponse:
         target_snap = snapshot_id or snapshot
-        resp = proactive_svc.resolve_snapshot_network(target_snap, case_id=case_id)
+        resolved_entity = entity_id or node_id
+        resp = proactive_svc.resolve_snapshot_network(
+            target_snap,
+            case_id=case_id,
+            target_case_id=target_case_id,
+            entity_id=resolved_entity,
+            focus=focus,
+        )
         audit.record(
             event_type=AuditEventType.NETWORK_EXPLORED,
             actor_id=principal.user_id,

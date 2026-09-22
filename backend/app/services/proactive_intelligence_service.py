@@ -152,19 +152,68 @@ class ProactiveIntelligenceService:
         self,
         snapshot_id: str | None = None,
         case_id: str | None = None,
+        target_case_id: str | None = None,
+        entity_id: str | None = None,
+        focus: str | None = None,
     ) -> NexusNetworkResponse:
-        """Resolve full or case-scoped network graph for a given snapshot ID."""
+        """Resolve full, focused, or case-scoped network graph for a given snapshot ID."""
         canon_id = resolve_snapshot_id(snapshot_id)
         store = self.get_snapshot_store(canon_id)
         if store is None:
             store = self.repo.to_graph_store()
 
+        # Determine target nodes if focus is requested
+        allowed_nids: set[str] | None = None
+        norm_focus = str(focus).lower().replace("-", "").replace("_", "") if focus else None
+
+        if entity_id and entity_id in store.nodes:
+            one_hop = {entity_id}
+            for ae in store.adj.get(entity_id, []):
+                one_hop.add(ae.target_id)
+            for ae in store.radj.get(entity_id, []):
+                one_hop.add(ae.source_id)
+
+            if norm_focus == "1hop":
+                allowed_nids = one_hop
+            elif norm_focus == "2hop":
+                two_hop = set(one_hop)
+                for n in one_hop:
+                    for ae in store.adj.get(n, []):
+                        two_hop.add(ae.target_id)
+                    for ae in store.radj.get(n, []):
+                        two_hop.add(ae.source_id)
+                allowed_nids = two_hop
+            elif norm_focus == "community":
+                node_badges = store.nodes[entity_id].properties.get("badges", [])
+                comm_badges = [b for b in node_badges if "COMMUNITY" in str(b)]
+                if comm_badges:
+                    comm_nids = {
+                        nid for nid, rec in store.nodes.items()
+                        if any(b in rec.properties.get("badges", []) for b in comm_badges)
+                    }
+                    allowed_nids = comm_nids
+                else:
+                    allowed_nids = one_hop
+            else:
+                allowed_nids = one_hop
+
+        elif case_id and target_case_id:
+            allowed_nids = {
+                nid for nid, rec in store.nodes.items()
+                if case_id in rec.properties.get("case_ids", [])
+                or target_case_id in rec.properties.get("case_ids", [])
+                or nid in (case_id, target_case_id)
+            }
+
         nodes: list[NexusGraphNode] = []
         for nid, n in store.nodes.items():
+            if allowed_nids is not None and nid not in allowed_nids:
+                continue
             props = dict(n.properties)
             case_ids = props.get("case_ids", [])
-            if case_id and case_id not in case_ids and nid != case_id:
-                continue
+            if case_id and not target_case_id and allowed_nids is None:
+                if case_id not in case_ids and nid != case_id:
+                    continue
             nodes.append(
                 NexusGraphNode(
                     id=nid,
