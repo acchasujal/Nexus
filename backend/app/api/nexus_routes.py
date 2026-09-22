@@ -434,233 +434,33 @@ INITIAL_CANDIDATE = ResolutionCandidate(
     ],
 )
 
-CASE_141 = NexusGraphNode(
-    id="CASE-141",
-    entity_type="Case",
-    label="FIR 141/2026 — Trafficking",
-    case_ids=["CASE-141"],
-    properties={"fir_number": "141/2026", "station": "Mysuru South WS PS", "district": "Mysuru", "offence": "Human Trafficking (BNS 143)"},
+from backend.app.core.graph.demo_snapshots import (
+    BEFORE_NODES,
+    BEFORE_EDGES,
+    AFTER_NODES,
+    AFTER_EDGES,
+    make_edge,
+    resolve_snapshot_id,
+    get_canonical_snapshot_store,
+    CASE_141,
+    CASE_207,
+    CASE_305,
+    CASE_412,
+    CASE_501,
+    CASE_502,
+    P_MEENA,
+    P_DEEPAK,
+    ACC_7731,
+    ACC_9914,
+    ACC_4491,
+    PH_A,
+    PH_B,
+    P_VIKRAM_S,
+    P_BIKRAM_S,
+    P_SUNIEL_S,
+    P_SUNIL_S,
+    VEH_1001,
 )
-CASE_207 = NexusGraphNode(
-    id="CASE-207",
-    entity_type="Case",
-    label="FIR 207/2026 — Fraud",
-    case_ids=["CASE-207"],
-    properties={"fir_number": "207/2026", "station": "Bengaluru CEN PS", "district": "Bengaluru", "offence": "Financial Fraud (BNS 318)"},
-)
-P_MEENA = NexusGraphNode(
-    id="P-MEENA",
-    entity_type="Person",
-    label="Meena Devi (Victim)",
-    case_ids=["CASE-141"],
-    properties={"role": "Victim", "statement": "dated 2026-02-13"},
-)
-P_DEEPAK = NexusGraphNode(
-    id="P-DEEPAK",
-    entity_type="Person",
-    label="Deepak Rao (Associate)",
-    case_ids=["CASE-207"],
-    properties={"role": "Co-accused", "phone": "+91 99801 55210"},
-)
-ACC_7731 = NexusGraphNode(
-    id="ACC-7731",
-    entity_type="Account",
-    label="ACC-7731 (Axis)",
-    case_ids=["CASE-141"],
-    properties={"bank": "Axis Bank", "holder": "Rafiq Khan"},
-)
-ACC_9914 = NexusGraphNode(
-    id="ACC-9914",
-    entity_type="Account",
-    label="ACC-9914 (Axis)",
-    case_ids=["CASE-207"],
-    properties={"bank": "Axis Bank", "holder": "Deepak Rao"},
-)
-PH_A = NexusGraphNode(
-    id="PH-A",
-    entity_type="Phone",
-    label="+91 98450 11223 (CDR: Mysuru)",
-    case_ids=["CASE-141"],
-    properties={"number": "+91 98450 11223", "seen_in": "cdr_mysuru_feb.csv"},
-)
-PH_B = NexusGraphNode(
-    id="PH-B",
-    entity_type="Phone",
-    label="+91 98450 11223 (CDR: Bengaluru)",
-    case_ids=["CASE-207"],
-    properties={"number": "+91 98450 11223", "seen_in": "cdr_bengaluru_mar.csv"},
-)
-
-CASE_305 = NexusGraphNode(
-    id="CASE-305",
-    entity_type="Case",
-    label="FIR 305/2026 — Cyber Fraud",
-    case_ids=["CASE-305"],
-    properties={"fir_number": "305/2026", "station": "Indiranagar PS", "district": "Bengaluru", "offence": "IT Act 66D & Fraud"},
-)
-CASE_412 = NexusGraphNode(
-    id="CASE-412",
-    entity_type="Case",
-    label="FIR 412/2026 — Hawala Syndicate",
-    case_ids=["CASE-412"],
-    properties={"fir_number": "412/2026", "station": "Domlur Cyber PS", "district": "Bengaluru", "offence": "Organized Crime (BNS 111)"},
-)
-P_VIKRAM_S = NexusGraphNode(
-    id="P-VIKRAM-S",
-    entity_type="Person",
-    label="Vikram Sharma (Accused)",
-    case_ids=["CASE-305"],
-    properties={"role": "Accused", "phone": "+91 98450 77310", "national_id": "XXXX-XXXX-4491"},
-)
-P_BIKRAM_S = NexusGraphNode(
-    id="P-BIKRAM-S",
-    entity_type="Person",
-    label="Bikram Sarma (Accused)",
-    case_ids=["CASE-412"],
-    properties={"role": "Accused", "phone": "+91 98450 77310", "national_id": "XXXX-XXXX-4491"},
-)
-ACC_4491 = NexusGraphNode(
-    id="ACC-4491",
-    entity_type="Account",
-    label="ACC-4491 (HDFC)",
-    case_ids=["CASE-412"],
-    properties={"bank": "HDFC Bank", "holder": "Bikram Sarma"},
-)
-
-CASE_501 = NexusGraphNode(
-    id="CASE-501",
-    entity_type="Case",
-    label="FIR 501/2026 — Narcotics Ring",
-    case_ids=["CASE-501"],
-    properties={"fir_number": "501/2026", "station": "Jayanagar PS", "district": "Bengaluru", "offence": "NDPS Act 21(c)"},
-)
-CASE_502 = NexusGraphNode(
-    id="CASE-502",
-    entity_type="Case",
-    label="FIR 502/2026 — Extortion & Logistics",
-    case_ids=["CASE-502"],
-    properties={"fir_number": "502/2026", "station": "Tilak Nagar PS", "district": "Bengaluru", "offence": "Extortion (BNS 308)"},
-)
-P_SUNIEL_S = NexusGraphNode(
-    id="P-SUNIEL-S",
-    entity_type="Person",
-    label="Suniel Shetty (Accused)",
-    case_ids=["CASE-501"],
-    properties={"role": "Accused", "vehicle": "KA-01-AB-1001", "address": "Jayanagar Bengaluru"},
-)
-P_SUNIL_S = NexusGraphNode(
-    id="P-SUNIL-S",
-    entity_type="Person",
-    label="Sunil Shetty (Accused)",
-    case_ids=["CASE-502"],
-    properties={"role": "Accused", "vehicle": "KA-01-AB-1001", "address": "4th Block Jayanagar"},
-)
-VEH_1001 = NexusGraphNode(
-    id="VEH-1001",
-    entity_type="Vehicle",
-    label="KA-01-AB-1001 (Toyota Fortuner)",
-    case_ids=["CASE-501", "CASE-502"],
-    properties={"registration": "KA-01-AB-1001", "vehicle": "KA-01-AB-1001"},
-)
-
-BEFORE_NODES = [
-    CASE_141, CASE_207, CASE_305, CASE_412, CASE_501, CASE_502,
-    P_MEENA, P_DEEPAK, ACC_7731, ACC_9914, ACC_4491, VEH_1001, PH_A, PH_B,
-    NexusGraphNode(id="P-RAFIQ-K", entity_type="Person", label="Rafiq Khan (Accused)", case_ids=["CASE-141"], properties={"role": "Accused", "phone": "+91 98450 11223"}),
-    NexusGraphNode(id="P-RAFIQ-A", entity_type="Person", label="Rafiq Ahmed (Accused)", case_ids=["CASE-207"], properties={"role": "Accused", "phone": "+91 98450 11223"}),
-    P_VIKRAM_S, P_BIKRAM_S,
-    P_SUNIEL_S, P_SUNIL_S,
-]
-
-def make_edge(
-    edge_id: str, src: str, tgt: str, edge_type: str, deriv: Literal["FACT", "DERIVED", "HYPOTHESIS"],
-    conf: float, rec_at: str, case_ids: list[str], ev_ids: list[str],
-) -> NexusGraphEdge:
-    return NexusGraphEdge(
-        id=edge_id, source_id=src, target_id=tgt, edge_type=edge_type, weight=1.0, confidence=conf,
-        derivation_class=deriv, recorded_at=rec_at, case_ids=case_ids, properties={"evidence_ids": ev_ids},
-    )
-
-BEFORE_EDGES = [
-    make_edge("E-ACCUSE-141", "P-RAFIQ-K", "CASE-141", "ACCUSED_IN", "FACT", 1.0, "2026-02-11T09:30:00Z", ["CASE-141"], ["SRC-FIR-141"]),
-    make_edge("E-VICTIM-141", "P-MEENA", "CASE-141", "VICTIM_IN", "FACT", 1.0, "2026-02-11T09:30:00Z", ["CASE-141"], ["SRC-FIR-141"]),
-    make_edge("E-USEPH-A", "P-RAFIQ-K", "PH-A", "USES_PHONE", "FACT", 0.98, "2026-02-14T22:41:05Z", ["CASE-141"], ["SRC-CDR-A12"]),
-    make_edge("E-OWN-7731", "P-RAFIQ-K", "ACC-7731", "OWNS_ACCOUNT", "FACT", 0.95, "2026-02-12T10:00:00Z", ["CASE-141"], ["SRC-FIR-141"]),
-    make_edge("E-ACCUSE-207", "P-RAFIQ-A", "CASE-207", "ACCUSED_IN", "FACT", 1.0, "2026-03-02T14:15:00Z", ["CASE-207"], ["SRC-FIR-207"]),
-    make_edge("E-COACC-207", "P-DEEPAK", "CASE-207", "CO_ACCUSED_IN", "FACT", 1.0, "2026-03-02T14:15:00Z", ["CASE-207"], ["SRC-FIR-207"]),
-    make_edge("E-USEPH-B", "P-RAFIQ-A", "PH-B", "USES_PHONE", "FACT", 0.98, "2026-03-05T02:12:44Z", ["CASE-207"], ["SRC-CDR-B31"]),
-    make_edge("E-OWN-9914", "P-DEEPAK", "ACC-9914", "OWNS_ACCOUNT", "FACT", 0.95, "2026-03-02T14:15:00Z", ["CASE-207"], ["SRC-FIR-207"]),
-    make_edge("E-TXN-55", "ACC-9914", "ACC-7731", "TRANSFERRED_TO", "FACT", 1.0, "2026-03-09T11:03:00Z", ["CASE-207", "CASE-141"], ["SRC-TXN-55"]),
-    make_edge("E-TXN-71", "ACC-9914", "ACC-7731", "TRANSFERRED_TO", "FACT", 1.0, "2026-03-11T16:47:00Z", ["CASE-207", "CASE-141"], ["SRC-TXN-71"]),
-    make_edge("E-ACCUSE-305", "P-VIKRAM-S", "CASE-305", "ACCUSED_IN", "FACT", 1.0, "2026-03-15T11:00:00Z", ["CASE-305"], ["SRC-FIR-305"]),
-    make_edge("E-ACCUSE-412", "P-BIKRAM-S", "CASE-412", "ACCUSED_IN", "FACT", 1.0, "2026-03-22T16:30:00Z", ["CASE-412"], ["SRC-FIR-412"]),
-    make_edge("E-OWN-4491", "P-BIKRAM-S", "ACC-4491", "OWNS_ACCOUNT", "FACT", 0.95, "2026-03-22T16:30:00Z", ["CASE-412"], ["SRC-FIR-412"]),
-    make_edge("E-TXN-HWL", "ACC-4491", "ACC-9914", "TRANSFERRED_TO", "FACT", 0.90, "2026-03-25T12:00:00Z", ["CASE-412", "CASE-207"], ["SRC-FIR-412"]),
-    make_edge("E-ACCUSE-501", "P-SUNIEL-S", "CASE-501", "ACCUSED_IN", "FACT", 1.0, "2026-04-02T10:15:00Z", ["CASE-501"], ["SRC-FIR-501"]),
-    make_edge("E-ACCUSE-502", "P-SUNIL-S", "CASE-502", "ACCUSED_IN", "FACT", 1.0, "2026-04-18T14:40:00Z", ["CASE-502"], ["SRC-FIR-502"]),
-    make_edge("E-VEH-501", "P-SUNIEL-S", "VEH-1001", "OPERATES_VEHICLE", "FACT", 0.95, "2026-04-02T10:15:00Z", ["CASE-501"], ["SRC-FIR-501"]),
-    make_edge("E-VEH-502", "P-SUNIL-S", "VEH-1001", "OPERATES_VEHICLE", "FACT", 0.95, "2026-04-18T14:40:00Z", ["CASE-502"], ["SRC-FIR-502"]),
-]
-
-AFTER_NODES = [
-    CASE_141, CASE_207, CASE_305, CASE_412, CASE_501, CASE_502,
-    P_MEENA, P_DEEPAK, ACC_7731, ACC_9914, ACC_4491, VEH_1001,
-    NexusGraphNode(
-        id="P-RAFIQ",
-        entity_type="Person",
-        label="Rafiq Khan / Rafiq Ahmed",
-        case_ids=["CASE-141", "CASE-207"],
-        badges=["CROSS_CASE_BRIDGE", "COMMUNITY-C1"],
-        properties={"role": "Accused in both FIRs", "phone": "+91 98450 11223", "aliases": ["Rafiq Khan", "Rafiq Ahmed"]},
-    ),
-    NexusGraphNode(
-        id="PH-UNIFIED",
-        entity_type="Phone",
-        label="+91 98450 11223 (shared)",
-        case_ids=["CASE-141", "CASE-207"],
-        properties={"number": "+91 98450 11223", "seen_in": "cdr_mysuru_feb.csv, cdr_bengaluru_mar.csv"},
-    ),
-    NexusGraphNode(
-        id="P-VIKRAM",
-        entity_type="Person",
-        label="Vikram Sharma / Bikram Sarma",
-        case_ids=["CASE-305", "CASE-412"],
-        badges=["CROSS_CASE_BRIDGE", "COMMUNITY-C2"],
-        properties={"role": "Hawala Operator & Cyber Fraudster", "phone": "+91 98450 77310", "national_id": "XXXX-XXXX-4491"},
-    ),
-    NexusGraphNode(
-        id="P-SUNIEL",
-        entity_type="Person",
-        label="Suniel Shetty / Sunil Shetty",
-        case_ids=["CASE-501", "CASE-502"],
-        badges=["CROSS_CASE_BRIDGE", "COMMUNITY-C3"],
-        properties={"role": "Syndicate Logistics Coordinator", "vehicle": "KA-01-AB-1001", "aliases": ["Suniel Shetty", "Sunil Shetty"]},
-    ),
-]
-
-AFTER_EDGES = [
-    make_edge("E-ACCUSE-141", "P-RAFIQ", "CASE-141", "ACCUSED_IN", "FACT", 1.0, "2026-02-11T09:30:00Z", ["CASE-141"], ["SRC-FIR-141"]),
-    make_edge("E-VICTIM-141", "P-MEENA", "CASE-141", "VICTIM_IN", "FACT", 1.0, "2026-02-11T09:30:00Z", ["CASE-141"], ["SRC-FIR-141"]),
-    make_edge("E-USEPH-1", "P-RAFIQ", "PH-UNIFIED", "USES_PHONE", "FACT", 0.98, "2026-02-14T22:41:05Z", ["CASE-141"], ["SRC-CDR-A12"]),
-    make_edge("E-USEPH-2", "P-RAFIQ", "PH-UNIFIED", "USES_PHONE", "FACT", 0.98, "2026-03-05T02:12:44Z", ["CASE-207"], ["SRC-CDR-B31"]),
-    make_edge("E-OWN-7731", "P-RAFIQ", "ACC-7731", "OWNS_ACCOUNT", "FACT", 0.95, "2026-02-12T10:00:00Z", ["CASE-141"], ["SRC-FIR-141"]),
-    make_edge("E-ACCUSE-207", "P-RAFIQ", "CASE-207", "ACCUSED_IN", "FACT", 1.0, "2026-03-02T14:15:00Z", ["CASE-207"], ["SRC-FIR-207"]),
-    make_edge("E-COACC-207", "P-DEEPAK", "CASE-207", "CO_ACCUSED_IN", "FACT", 1.0, "2026-03-02T14:15:00Z", ["CASE-207"], ["SRC-FIR-207"]),
-    make_edge("E-OWN-9914", "P-DEEPAK", "ACC-9914", "OWNS_ACCOUNT", "FACT", 0.95, "2026-03-02T14:15:00Z", ["CASE-207"], ["SRC-FIR-207"]),
-    make_edge("E-COMM-DK", "P-RAFIQ", "P-DEEPAK", "COMMUNICATED_WITH", "DERIVED", 0.91, "2026-03-05T02:12:44Z", ["CASE-141", "CASE-207"], ["SRC-CDR-B31"]),
-    make_edge("E-TXN-55", "ACC-9914", "ACC-7731", "TRANSFERRED_TO", "FACT", 1.0, "2026-03-09T11:03:00Z", ["CASE-207", "CASE-141"], ["SRC-TXN-55"]),
-    make_edge("E-TXN-71", "ACC-9914", "ACC-7731", "TRANSFERRED_TO", "FACT", 1.0, "2026-03-11T16:47:00Z", ["CASE-207", "CASE-141"], ["SRC-TXN-71"]),
-    make_edge("E-BRIDGE", "CASE-141", "CASE-207", "CONNECTS_CASES", "DERIVED", 0.86, "2026-08-24T18:00:00Z", ["CASE-141", "CASE-207"], ["SRC-FIR-141", "SRC-FIR-207", "SRC-CDR-A12", "SRC-CDR-B31"]),
-    make_edge("E-ACCUSE-305-A", "P-VIKRAM", "CASE-305", "ACCUSED_IN", "FACT", 1.0, "2026-03-15T11:00:00Z", ["CASE-305"], ["SRC-FIR-305"]),
-    make_edge("E-ACCUSE-412-A", "P-VIKRAM", "CASE-412", "ACCUSED_IN", "FACT", 1.0, "2026-03-22T16:30:00Z", ["CASE-412"], ["SRC-FIR-412"]),
-    make_edge("E-OWN-4491-A", "P-VIKRAM", "ACC-4491", "OWNS_ACCOUNT", "FACT", 0.95, "2026-03-22T16:30:00Z", ["CASE-412"], ["SRC-FIR-412"]),
-    make_edge("E-TXN-HWL", "ACC-4491", "ACC-9914", "TRANSFERRED_TO", "FACT", 0.90, "2026-03-25T12:00:00Z", ["CASE-412", "CASE-207"], ["SRC-FIR-412"]),
-    make_edge("E-BRIDGE-2", "CASE-305", "CASE-412", "CONNECTS_CASES", "DERIVED", 0.92, "2026-08-24T18:00:00Z", ["CASE-305", "CASE-412"], ["SRC-FIR-305", "SRC-FIR-412"]),
-    make_edge("E-ACCUSE-501-A", "P-SUNIEL", "CASE-501", "ACCUSED_IN", "FACT", 1.0, "2026-04-02T10:15:00Z", ["CASE-501"], ["SRC-FIR-501"]),
-    make_edge("E-ACCUSE-502-A", "P-SUNIEL", "CASE-502", "ACCUSED_IN", "FACT", 1.0, "2026-04-18T14:40:00Z", ["CASE-502"], ["SRC-FIR-502"]),
-    make_edge("E-VEH-UNIFIED", "P-SUNIEL", "VEH-1001", "OPERATES_VEHICLE", "FACT", 0.95, "2026-04-18T14:40:00Z", ["CASE-501", "CASE-502"], ["SRC-FIR-501", "SRC-FIR-502"]),
-    make_edge("E-BRIDGE-3", "CASE-501", "CASE-502", "CONNECTS_CASES", "DERIVED", 0.88, "2026-08-24T18:00:00Z", ["CASE-501", "CASE-502"], ["SRC-FIR-501", "SRC-FIR-502"]),
-]
 
 BRIDGE_LEAD = NexusLead(
     id="LEAD-1",
@@ -1277,76 +1077,19 @@ def create_nexus_router() -> APIRouter:
     def get_nexus_network(
         snapshot: str = Query("before", description="Snapshot name or before/after"),
         snapshot_id: str | None = Query(None, description="Explicit snapshot ID"),
+        case_id: str | None = Query(None, description="Filter by case ID"),
         principal: Principal = Depends(get_principal),
         audit: AuditService = Depends(get_audit_service),
-        repo: InMemoryBackendRepository = Depends(get_repository),
+        proactive_svc: Any = Depends(get_proactive_intelligence_service),
     ) -> NexusNetworkResponse:
-        nodes_data = list(repo.nodes.values())
-        edges_data = repo.edges
-        node_case_ids = _propagate_case_ids(nodes_data, edges_data)
-
-        nodes = []
-        for nid, n in repo.nodes.items():
-            props = n.get("properties", {})
-            nodes.append(NexusGraphNode(
-                id=nid,
-                entity_type=n.get("entity_type", "Person"),
-                label=str(props.get("full_name") or props.get("name") or nid),
-                case_ids=list(node_case_ids.get(nid, set())),
-                properties=props,
-                badges=n.get("badges", []),
-            ))
-
-        edges = []
-        for e in edges_data:
-            eid = e.get("id") or f"edge-{e['source_id']}-{e['target_id']}"
-            edges.append(NexusGraphEdge(
-                id=eid,
-                source_id=e["source_id"],
-                target_id=e["target_id"],
-                edge_type=e.get("edge_type", "CONNECTED_TO"),
-                weight=float(e.get("weight", 1.0)),
-                confidence=float(e.get("confidence", 1.0)),
-                derivation_class="FACT",
-                recorded_at=datetime.now(timezone.utc).isoformat(),
-                case_ids=[],
-                properties=e.get("properties", {}),
-            ))
-
         target_snap = snapshot_id or snapshot
-        is_after = target_snap in ("after", "current", CANONICAL_SNAPSHOT_CURRENT)
-        active_snapshot_id = CANONICAL_SNAPSHOT_CURRENT if is_after else CANONICAL_SNAPSHOT_BASELINE
-        state_str = "after" if is_after else "before"
-
-        pool_nodes = AFTER_NODES if is_after else BEFORE_NODES
-        pool_edges = AFTER_EDGES if is_after else BEFORE_EDGES
-        existing_nids = {n.id for n in nodes}
-        for dn in pool_nodes:
-            if dn.id not in existing_nids:
-                nodes.append(dn)
-                existing_nids.add(dn.id)
-
-        existing_eids = {e.id for e in edges}
-        for de in pool_edges:
-            if de.id not in existing_eids:
-                edges.append(de)
-                existing_eids.add(de.id)
-
+        resp = proactive_svc.resolve_snapshot_network(target_snap, case_id=case_id)
         audit.record(
             event_type=AuditEventType.NETWORK_EXPLORED,
             actor_id=principal.user_id,
-            details={"snapshot": active_snapshot_id, "total_nodes": len(nodes), "total_edges": len(edges)},
+            details={"snapshot": resp.snapshot_id, "total_nodes": resp.total_nodes, "total_edges": resp.total_edges},
         )
-
-        return NexusNetworkResponse(
-            snapshot_id=active_snapshot_id,
-            state=state_str,
-            nodes=nodes,
-            edges=edges,
-            total_nodes=len(nodes),
-            total_edges=len(edges),
-            dataset_version=CANONICAL_DATASET_VERSION,
-        )
+        return resp
 
     @router.get("/nexus/network/diff", response_model=SnapshotDiffResponse)
     def get_snapshot_diff(
@@ -2199,43 +1942,7 @@ def create_nexus_router() -> APIRouter:
         audit_service: AuditService = Depends(get_audit_service),
     ) -> NetworkDiffResponse:
         """Execute deterministic pure O(N+E) snapshot comparison."""
-        # The Intelligence Center's default demo pair is served by the explicit
-        # BEFORE/AFTER graph below.  The generic proactive service stores the
-        # repository artifact snapshots, which intentionally do not include the
-        # demo-only bridge projection.  Keep the API's default pair on the same
-        # graph used by /nexus/network so a 200 response cannot silently report
-        # an empty diff while the rendered AFTER graph contains E-BRIDGE.
-        if before == "snap-baseline-v1" and after == "snap-current":
-            before_node_ids = {node.id for node in BEFORE_NODES}
-            after_node_ids = {node.id for node in AFTER_NODES}
-            before_edge_ids = {edge.id for edge in BEFORE_EDGES}
-            after_edge_ids = {edge.id for edge in AFTER_EDGES}
-            added_nodes = sorted(after_node_ids - before_node_ids)
-            added_relationships = sorted(after_edge_ids - before_edge_ids)
-            removed_nodes = sorted(before_node_ids - after_node_ids)
-            removed_relationships = sorted(before_edge_ids - after_edge_ids)
-            diff_res = NetworkDiffResponse(
-                before_snapshot_id=before,
-                after_snapshot_id=after,
-                added_nodes=added_nodes,
-                removed_nodes=removed_nodes,
-                added_relationships=added_relationships,
-                removed_relationships=removed_relationships,
-                modified_node_count=0,
-                modified_relationship_count=0,
-                pulses=[],
-                summary={
-                    "added_node_count": len(added_nodes),
-                    "removed_node_count": len(removed_nodes),
-                    "modified_node_count": 0,
-                    "added_relationship_count": len(added_relationships),
-                    "removed_relationship_count": len(removed_relationships),
-                    "modified_relationship_count": 0,
-                    "pulse_count": 0,
-                },
-            )
-        else:
-            diff_res = proactive_svc.compute_network_diff(before, after)
+        diff_res = proactive_svc.compute_network_diff(before, after)
         audit_service.record(
             event_type=AuditEventType.NETWORK_EXPLORED,
             actor_id=principal.user_id,

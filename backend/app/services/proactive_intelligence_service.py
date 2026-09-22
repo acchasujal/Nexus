@@ -18,8 +18,15 @@ from typing import Any
 
 from backend.app.core.graph.algorithms.snapshot_diff import diff_graph_snapshots
 from backend.app.core.graph.algorithms.utils import GraphStore
+from backend.app.core.graph.demo_snapshots import (
+    get_canonical_snapshot_store,
+    resolve_snapshot_id,
+)
 from backend.app.db.in_memory import InMemoryBackendRepository
 from shared.contracts.api import (
+    CANONICAL_DATASET_VERSION,
+    CANONICAL_SNAPSHOT_BASELINE,
+    CANONICAL_SNAPSHOT_CURRENT,
     EpistemicState,
     EvidenceAssessmentItem,
     ForecastItem,
@@ -27,6 +34,9 @@ from shared.contracts.api import (
     GraphSnapshotSummary,
     NetworkDiffResponse,
     NetworkPulseItem,
+    NexusGraphEdge,
+    NexusGraphNode,
+    NexusNetworkResponse,
     ReviewPriority,
     UserRole,
     VerificationActionItem,
@@ -51,22 +61,24 @@ class ProactiveIntelligenceService:
 
     def _initialize_baseline_snapshots(self) -> None:
         """Create initial point-in-time snapshots for testing and demo."""
-        store = self.repo.to_graph_store()
-        baseline_id = "snap-baseline-v1"
-        self._snapshots[baseline_id] = {
-            "snapshot_id": baseline_id,
+        baseline_store = get_canonical_snapshot_store(CANONICAL_SNAPSHOT_BASELINE, self.repo)
+        current_store = get_canonical_snapshot_store(CANONICAL_SNAPSHOT_CURRENT, self.repo)
+
+        self._snapshots[CANONICAL_SNAPSHOT_BASELINE] = {
+            "snapshot_id": CANONICAL_SNAPSHOT_BASELINE,
             "case_scope": "GLOBAL",
             "created_at": "2026-08-25T10:00:00+00:00",
-            "store": store,
-            "node_count": len(store.nodes),
-            "edge_count": sum(len(edges) for edges in store.adj.values()),
+            "store": baseline_store,
+            "node_count": len(baseline_store.nodes),
+            "edge_count": sum(len(edges) for edges in baseline_store.adj.values()),
             "version": "v1.0",
+            "dataset_version": CANONICAL_DATASET_VERSION,
         }
 
     def get_latest_snapshot_id(self) -> str:
         """Return the snapshot ID of the most recent snapshot."""
         if not self._snapshots:
-            return "snap-baseline-v1"
+            return CANONICAL_SNAPSHOT_CURRENT
         sorted_snaps = sorted(
             self._snapshots.values(),
             key=lambda s: s.get("created_at", ""),
@@ -98,6 +110,7 @@ class ProactiveIntelligenceService:
                     node_count=snap["node_count"],
                     edge_count=snap["edge_count"],
                     version=snap["version"],
+                    dataset_version=snap.get("dataset_version", CANONICAL_DATASET_VERSION),
                 )
             )
         return sorted(results, key=lambda s: s.created_at, reverse=True)
@@ -113,6 +126,7 @@ class ProactiveIntelligenceService:
             "node_count": len(store.nodes),
             "edge_count": sum(len(edges) for edges in store.adj.values()),
             "version": "v1.1",
+            "dataset_version": CANONICAL_DATASET_VERSION,
         }
         self._snapshots[snapshot_id] = snap_data
         return GraphSnapshotSummary(
@@ -122,27 +136,100 @@ class ProactiveIntelligenceService:
             node_count=snap_data["node_count"],
             edge_count=snap_data["edge_count"],
             version=snap_data["version"],
+            dataset_version=snap_data["dataset_version"],
         )
 
     def get_snapshot_store(self, snapshot_id: str) -> GraphStore | None:
-        """Retrieve the GraphStore associated with a snapshot ID."""
+        """Retrieve the GraphStore associated with a snapshot ID with alias resolution."""
+        canon_id = resolve_snapshot_id(snapshot_id)
+        if canon_id in self._snapshots:
+            return self._snapshots[canon_id]["store"]
         if snapshot_id in self._snapshots:
             return self._snapshots[snapshot_id]["store"]
-        return None
+        return get_canonical_snapshot_store(canon_id, self.repo)
+
+    def resolve_snapshot_network(
+        self,
+        snapshot_id: str | None = None,
+        case_id: str | None = None,
+    ) -> NexusNetworkResponse:
+        """Resolve full or case-scoped network graph for a given snapshot ID."""
+        canon_id = resolve_snapshot_id(snapshot_id)
+        store = self.get_snapshot_store(canon_id)
+        if store is None:
+            store = self.repo.to_graph_store()
+
+        nodes: list[NexusGraphNode] = []
+        for nid, n in store.nodes.items():
+            props = dict(n.properties)
+            case_ids = props.get("case_ids", [])
+            if case_id and case_id not in case_ids and nid != case_id:
+                continue
+            nodes.append(
+                NexusGraphNode(
+                    id=nid,
+                    entity_type=n.entity_type,
+                    label=str(props.get("full_name") or props.get("label") or props.get("name") or nid),
+                    case_ids=case_ids,
+                    badges=props.get("badges", []),
+                    properties=props,
+                )
+            )
+
+        existing_nids = {n.id for n in nodes}
+        edges: list[NexusGraphEdge] = []
+        for src, adj_edges in store.adj.items():
+            for ae in adj_edges:
+                if ae.source_id in existing_nids and ae.target_id in existing_nids:
+                    props = dict(ae.properties)
+                    eid = props.get("id") or f"edge-{ae.source_id}-{ae.target_id}"
+                    edges.append(
+                        NexusGraphEdge(
+                            id=eid,
+                            source_id=ae.source_id,
+                            target_id=ae.target_id,
+                            edge_type=ae.edge_type,
+                            weight=float(props.get("weight", 1.0)),
+                            confidence=float(props.get("confidence", 1.0)),
+                            derivation_class=props.get("derivation_class", "FACT"),
+                            recorded_at=props.get("recorded_at", _utcnow().isoformat()),
+                            case_ids=props.get("case_ids", []),
+                            properties=props,
+                        )
+                    )
+
+        state_str = "after" if canon_id == CANONICAL_SNAPSHOT_CURRENT else "before"
+        return NexusNetworkResponse(
+            snapshot_id=canon_id,
+            state=state_str,
+            nodes=nodes,
+            edges=edges,
+            total_nodes=len(nodes),
+            total_edges=len(edges),
+            dataset_version=CANONICAL_DATASET_VERSION,
+        )
 
     # ── 2. NetworkDiff & Pulse Engine (P0) ────────────────────────────────────
 
     def compute_network_diff(
         self,
-        before_snapshot_id: str,
-        after_snapshot_id: str,
+        before_snapshot_id: str = CANONICAL_SNAPSHOT_BASELINE,
+        after_snapshot_id: str = CANONICAL_SNAPSHOT_CURRENT,
     ) -> NetworkDiffResponse:
         """
         Compare two snapshots, compute deterministic structural diff, and generate
         qualified NetworkPulse items with evidence assessments, forecasts, and verification plans.
         """
-        before_store = self.get_snapshot_store(before_snapshot_id) or self.repo.to_graph_store()
-        after_store = self.get_snapshot_store(after_snapshot_id) or self.repo.to_graph_store()
+        before_id = resolve_snapshot_id(before_snapshot_id)
+        after_id = resolve_snapshot_id(after_snapshot_id)
+
+        before_store = self.get_snapshot_store(before_id)
+        after_store = self.get_snapshot_store(after_id)
+
+        if before_store is None:
+            before_store = self.repo.to_graph_store()
+        if after_store is None:
+            after_store = self.repo.to_graph_store()
 
         # Execute pure O(N+E) snapshot diff
         raw_diff = diff_graph_snapshots(before_store, after_store)
@@ -161,8 +248,8 @@ class ProactiveIntelligenceService:
         }
 
         return NetworkDiffResponse(
-            before_snapshot_id=before_snapshot_id,
-            after_snapshot_id=after_snapshot_id,
+            before_snapshot_id=before_id,
+            after_snapshot_id=after_id,
             added_nodes=raw_diff.added_nodes,
             removed_nodes=raw_diff.removed_nodes,
             added_relationships=raw_diff.added_relationships,
@@ -171,6 +258,7 @@ class ProactiveIntelligenceService:
             modified_relationship_count=raw_diff.summary.modified_relationship_count,
             pulses=pulses,
             summary=summary_dict,
+            dataset_version=CANONICAL_DATASET_VERSION,
         )
 
     def _filter_network_pulses(
@@ -325,96 +413,24 @@ class ProactiveIntelligenceService:
         case_id: str | None = None,
     ) -> list[NetworkPulseItem]:
         """List current active pulses from recent snapshots."""
-        store = self.repo.to_graph_store()
-        baseline_store = self.get_snapshot_store("snap-baseline-v1") or store
-        diff = diff_graph_snapshots(baseline_store, store)
-        diff_pulses = self._filter_network_pulses(diff, baseline_store, store)
+        baseline_store = self.get_snapshot_store(CANONICAL_SNAPSHOT_BASELINE) or self.repo.to_graph_store()
+        current_store = self.get_snapshot_store(CANONICAL_SNAPSHOT_CURRENT) or self.repo.to_graph_store()
+        diff = diff_graph_snapshots(baseline_store, current_store)
+        diff_pulses = self._filter_network_pulses(diff, baseline_store, current_store)
 
         # Merge dynamic pulses from closed-loop propagation with diff pulses
         pulse_map: dict[str, NetworkPulseItem] = {p.pulse_id: p for p in diff_pulses}
         for dp_id, dp in self._dynamic_pulses.items():
             pulse_map[dp_id] = dp
-        pulses = list(pulse_map.values())
 
-        if not pulses:
-            # Generate deterministic active demonstration pulse grounded in ground-truth data
-            demo_pulse_id = "pulse-0082"
-            pulses = [
-                NetworkPulseItem(
-                    pulse_id=demo_pulse_id,
-                    change_ids=["rel_person-0002_COMMUNICATED_WITH_person-0073"],
-                    signal_headline="Cross-Investigation Network Bridge Detected",
-                    review_priority=ReviewPriority.CRITICAL_REVIEW,
-                    time_window=("2026-08-20T14:30:00Z", "2026-08-22T18:00:00Z"),
-                    evidence_refs=["EV-CDR-2026-0491", "EV-BANK-IMPS-8812"],
-                    support_level=0.94,
-                    uncertainty=0.06,
-                    action_window="Within 48 hours",
-                    abstained=False,
-                    generated_at=_utcnow().isoformat(),
-                    assessment=[
-                        EvidenceAssessmentItem(
-                            claim_id=f"claim-{demo_pulse_id}-1",
-                            target_relationship_id="rel_person-0002_COMMUNICATED_WITH_person-0073",
-                            evidence_ref="EV-CDR-2026-0491",
-                            state=EpistemicState.SUPPORTS,
-                            rationale="Official telecom CDR log records 14 calls across 3 days between suspect and broker.",
-                            source_quality=0.98,
-                            freshness_days=1,
-                        ),
-                        EvidenceAssessmentItem(
-                            claim_id=f"claim-{demo_pulse_id}-2",
-                            target_relationship_id="rel_account-0012_TRANSFERRED_MONEY_TO_account-0088",
-                            evidence_ref="EV-BANK-IMPS-8812",
-                            state=EpistemicState.SUPPORTS,
-                            rationale="Layered IMPS fund transfer of ₹4,50,000 matches extortion timeline.",
-                            source_quality=0.95,
-                            freshness_days=2,
-                        ),
-                        EvidenceAssessmentItem(
-                            claim_id=f"claim-{demo_pulse_id}-3",
-                            target_relationship_id="rel_person-0073_USES_PHONE_phone-0099",
-                            evidence_ref="EV-FIELD-INTEL-012",
-                            state=EpistemicState.MISSING,
-                            rationale="Burner device IMEI linkage lacks independent subscriber corroboration.",
-                            source_quality=0.50,
-                            freshness_days=14,
-                        ),
-                    ],
-                    forecast=ForecastItem(
-                        forecast_id=f"fc-{demo_pulse_id}",
-                        pulse_id=demo_pulse_id,
-                        target_state=ForecastTarget.JURISDICTION_SHIFT,
-                        time_window=("2026-08-25T00:00:00Z", "2026-08-28T00:00:00Z"),
-                        support_level=0.91,
-                        uncertainty=0.09,
-                        action_window="Within 48 hours",
-                        suggested_verification="Coordinate with Mumbai Cyber Cell to inspect ATM CCTV cash peeler footage.",
-                        abstained=False,
-                        abstention_reason=None,
-                    ),
-                    verification_plan=[
-                        VerificationActionItem(
-                            verification_id=f"verif-{demo_pulse_id}-1",
-                            target_claim="Verify subscriber identity of burner MSISDN",
-                            missing_evidence_type="Section 94 BNSS CAF Record",
-                            recommended_action="Issue Section 94 BNSS requisition to telecom provider for CAF documentation.",
-                            responsible_role=UserRole.INVESTIGATOR,
-                            status="PENDING",
-                        ),
-                        VerificationActionItem(
-                            verification_id=f"verif-{demo_pulse_id}-2",
-                            target_claim="Corroborate ATM withdrawal location",
-                            missing_evidence_type="Bank CCTV Excerpt",
-                            recommended_action="Inspect ATM security camera footage for transaction UTR IMPS-8812.",
-                            responsible_role=UserRole.ANALYST,
-                            status="PENDING",
-                        ),
-                    ],
-                    affected_entities=["person-0002", "person-0073"],
-                    affected_cases=self.repo.case_ids[:2],
-                )
-            ]
+        # If diff pulses did not produce items, ground in canonical read model
+        if not pulse_map:
+            from backend.app.services.canonical_read_model import get_canonical_read_model
+            rm = get_canonical_read_model()
+            for p in rm.get("pulses", []):
+                pulse_map[p["pulse_id"]] = NetworkPulseItem(**p)
+
+        pulses = list(pulse_map.values())
 
         if priority:
             pulses = [p for p in pulses if p.review_priority == priority]
