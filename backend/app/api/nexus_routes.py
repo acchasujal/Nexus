@@ -1004,6 +1004,7 @@ def create_nexus_router() -> APIRouter:
         audit: AuditService = Depends(get_audit_service),
         repo: InMemoryBackendRepository = Depends(get_repository),
         graph_repo: GraphRepository = Depends(get_graph_repository),
+        proactive_svc: Any = Depends(get_proactive_intelligence_service),
     ) -> ResolutionDecisionResponse:
         status_map = {"CONFIRM": "CONFIRMED", "REJECT": "REJECTED", "DEFER": "DEFERRED"}
         c_data = repo.review_candidates.get(candidate_id)
@@ -1019,6 +1020,13 @@ def create_nexus_router() -> APIRouter:
             target_cand.decided_at = datetime.now(timezone.utc).isoformat()
             target_cand.decided_by = authoritative_decided_by
             _demo_state.decision_count += 1
+
+            new_snap_id = CANONICAL_SNAPSHOT_CURRENT if body.decision == "CONFIRM" else None
+            affected = [target_cand.left.node_id, target_cand.right.node_id] if body.decision == "CONFIRM" else []
+
+            if body.decision == "CONFIRM":
+                proactive_svc.create_snapshot(CANONICAL_SNAPSHOT_CURRENT)
+
             audit.record(
                 event_type=AuditEventType.ENTITY_RESOLUTION_EXECUTED,
                 actor_id=principal.user_id,
@@ -1031,13 +1039,14 @@ def create_nexus_router() -> APIRouter:
                     "officer_id": officer_identity.officer_id,
                     "badge_number": officer_identity.badge_number,
                     "client_provided_decided_by": body.decided_by,
+                    "new_snapshot_id": new_snap_id,
                 },
             )
             return ResolutionDecisionResponse(
                 candidate_id=target_cand.id,
                 status=target_cand.status,
-                affected_node_ids=[target_cand.left.node_id, target_cand.right.node_id] if body.decision == "CONFIRM" else [],
-                new_snapshot_id="SNAP-AFTER-001" if body.decision == "CONFIRM" else None,
+                affected_node_ids=affected,
+                new_snapshot_id=new_snap_id,
             )
 
         new_status = status_map[body.decision]
@@ -1047,10 +1056,13 @@ def create_nexus_router() -> APIRouter:
             repo.review_candidates[candidate_id]["decided_at"] = datetime.now(timezone.utc).isoformat()
         
         affected = []
+        new_snap_id = None
         if body.decision == "CONFIRM":
             repo.merge_nodes(c_data["incoming_record_id"], c_data["candidate_node_id"])
             graph_repo.replace_store(repo.to_graph_store())
             affected = [c_data["candidate_node_id"]]
+            new_snap_id = f"snap-confirmed-{candidate_id.lower()}"
+            proactive_svc.create_snapshot(new_snap_id)
 
         audit.record(
             event_type=AuditEventType.ENTITY_RESOLUTION_EXECUTED,
@@ -1064,6 +1076,7 @@ def create_nexus_router() -> APIRouter:
                 "officer_id": officer_identity.officer_id,
                 "badge_number": officer_identity.badge_number,
                 "client_provided_decided_by": body.decided_by,
+                "new_snapshot_id": new_snap_id,
             },
         )
 
@@ -1071,7 +1084,7 @@ def create_nexus_router() -> APIRouter:
             candidate_id=candidate_id,
             status=new_status,
             affected_node_ids=affected,
-            new_snapshot_id="SNAP-REAL",
+            new_snapshot_id=new_snap_id,
         )
 
     @router.get("/nexus/network", response_model=NexusNetworkResponse)
