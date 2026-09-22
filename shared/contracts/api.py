@@ -17,6 +17,12 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+# ── Canonical Constants ────────────────────────────────────────────────────────
+CANONICAL_DATASET_VERSION: str = "NCRB_CALIBRATED:v1"
+CANONICAL_SNAPSHOT_BASELINE: str = "snap-baseline-v1"
+CANONICAL_SNAPSHOT_CURRENT: str = "snap-current"
+
+
 # ── Enums ─────────────────────────────────────────────────────────────────────
 
 class UserRole(str, Enum):
@@ -983,6 +989,7 @@ class GraphSnapshotSummary(BaseModel):
     node_count: int
     edge_count: int
     version: str = "v1"
+    dataset_version: str = CANONICAL_DATASET_VERSION
 
 
 class NetworkDiffResponse(BaseModel):
@@ -996,6 +1003,87 @@ class NetworkDiffResponse(BaseModel):
     modified_relationship_count: int = 0
     pulses: list[NetworkPulseItem] = Field(default_factory=list)
     summary: dict[str, Any] = Field(default_factory=dict)
+    dataset_version: str = CANONICAL_DATASET_VERSION
+
+
+class NexusGraphNode(BaseModel):
+    id: str
+    entity_type: str
+    label: str
+    case_ids: list[str] = Field(default_factory=list)
+    badges: list[str] = Field(default_factory=list)
+    properties: dict[str, Any] = Field(default_factory=dict)
+
+
+class NexusGraphEdge(BaseModel):
+    id: str
+    source_id: str
+    target_id: str
+    edge_type: str
+    weight: float = 1.0
+    confidence: float = 1.0
+    derivation_class: str = "FACT"  # FACT, DERIVED, HYPOTHESIS
+    recorded_at: str = Field(default_factory=lambda: _utcnow().isoformat())
+    case_ids: list[str] = Field(default_factory=list)
+    properties: dict[str, Any] = Field(default_factory=dict)
+
+
+class NexusNetworkResponse(BaseModel):
+    snapshot_id: str
+    state: str = "after"  # "before", "after", or snapshot ID
+    nodes: list[NexusGraphNode] = Field(default_factory=list)
+    edges: list[NexusGraphEdge] = Field(default_factory=list)
+    total_nodes: int = 0
+    total_edges: int = 0
+    dataset_version: str = CANONICAL_DATASET_VERSION
+
+
+class SnapshotDiffResponse(BaseModel):
+    before_snapshot_id: str
+    after_snapshot_id: str
+    added_node_ids: list[str] = Field(default_factory=list)
+    removed_node_ids: list[str] = Field(default_factory=list)
+    changed_node_ids: list[str] = Field(default_factory=list)
+    added_edge_ids: list[str] = Field(default_factory=list)
+    removed_edge_ids: list[str] = Field(default_factory=list)
+    changed_edge_ids: list[str] = Field(default_factory=list)
+    dataset_version: str = CANONICAL_DATASET_VERSION
+
+
+class IntelligenceKPIs(BaseModel):
+    active_pulses_count: int = 0
+    critical_pulses_count: int = 0
+    evidence_percent: int = 100
+    supported_claims: int = 0
+    total_claims: int = 0
+    affected_cases_count: int = 0
+    added_nodes: int = 0
+    added_edges: int = 0
+    total_changes: int = 0
+
+
+class IntelligenceBootstrapResponse(BaseModel):
+    dataset_version: str = CANONICAL_DATASET_VERSION
+    snapshot_id: str = CANONICAL_SNAPSHOT_CURRENT
+    baseline_snapshot_id: str = CANONICAL_SNAPSHOT_BASELINE
+    kpis: IntelligenceKPIs = Field(default_factory=IntelligenceKPIs)
+    primary_pulse: NetworkPulseItem | None = None
+    primary_diff: NetworkDiffResponse | None = None
+    affected_cases: list[str] = Field(default_factory=list)
+    generated_at: str = Field(default_factory=lambda: _utcnow().isoformat())
+
+
+class InvestigationContext(BaseModel):
+    case_id: str | None = None
+    target_case_id: str | None = None
+    entity_id: str | None = None
+    evidence_id: str | None = None
+    change_id: str | None = None
+    relationship_id: str | None = None
+    snapshot_id: str | None = None
+    feature_type: str | None = None
+    focus: str | None = None  # "1hop", "2hop", "crosscase", "community"
+    drawer: str | None = None  # "entity", "relationship", "evidence"
 
 
 # ── P1-A Cross-Jurisdiction Intelligence Pulse Routing Contracts ─────────────
@@ -1246,6 +1334,8 @@ class CaseDNA(BaseModel):
     explanation: str
     evidence_refs: list[str] = Field(default_factory=list)
     derivation_class: str = "DERIVED"
+    dataset_version: str = CANONICAL_DATASET_VERSION
+    snapshot_id: str = CANONICAL_SNAPSHOT_CURRENT
 
 
 class CaseDNAMatchResponse(BaseModel):
@@ -1254,6 +1344,7 @@ class CaseDNAMatchResponse(BaseModel):
     average_similarity: float = 0.0
     highest_similarity: float = 0.0
     top_shared_entities: list[str] = Field(default_factory=list)
+    dataset_version: str = CANONICAL_DATASET_VERSION
 
 
 # ── A3 IntelligenceEvent Unified Domain Contract ─────────────────────────────

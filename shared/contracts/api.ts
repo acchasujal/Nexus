@@ -5,6 +5,10 @@
  * Kept in sync with shared/contracts/api.py.
  */
 
+export const CANONICAL_DATASET_VERSION = 'NCRB_CALIBRATED:v1'
+export const CANONICAL_SNAPSHOT_BASELINE = 'snap-baseline-v1'
+export const CANONICAL_SNAPSHOT_CURRENT = 'snap-current'
+
 export type UserRole = 'INVESTIGATOR' | 'ANALYST' | 'SUPERVISOR' | 'ADMIN' | 'IO' | 'SHO' | 'SP'
 
 export type ResolutionStatus = 'MATCHED' | 'PROBABLE_MATCH' | 'REVIEW_REQUIRED' | 'NOT_MATCHED'
@@ -716,11 +720,12 @@ export interface NexusGraphEdge {
 
 export interface NexusNetworkResponse {
   snapshot_id: string
-  state: 'before' | 'after'
+  state: 'before' | 'after' | string
   nodes: NexusGraphNode[]
   edges: NexusGraphEdge[]
   total_nodes: number
   total_edges: number
+  dataset_version?: string
 }
 
 export interface SnapshotDiffResponse {
@@ -732,6 +737,7 @@ export interface SnapshotDiffResponse {
   added_edge_ids: string[]
   removed_edge_ids: string[]
   changed_edge_ids: string[]
+  dataset_version?: string
 }
 
 export interface ResolutionCandidateRecord {
@@ -1098,6 +1104,7 @@ export interface GraphSnapshotSummary {
   node_count: number
   edge_count: number
   version: string
+  dataset_version?: string
 }
 
 export interface NetworkDiffResponse {
@@ -1111,6 +1118,43 @@ export interface NetworkDiffResponse {
   modified_relationship_count: number
   pulses: NetworkPulseItem[]
   summary: Record<string, any>
+  dataset_version?: string
+}
+
+export interface IntelligenceKPIs {
+  active_pulses_count: number
+  critical_pulses_count: number
+  evidence_percent: number
+  supported_claims: number
+  total_claims: number
+  affected_cases_count: number
+  added_nodes: number
+  added_edges: number
+  total_changes: number
+}
+
+export interface IntelligenceBootstrapResponse {
+  dataset_version: string
+  snapshot_id: string
+  baseline_snapshot_id: string
+  kpis: IntelligenceKPIs
+  primary_pulse?: NetworkPulseItem | null
+  primary_diff?: NetworkDiffResponse | null
+  affected_cases: string[]
+  generated_at: string
+}
+
+export interface InvestigationContext {
+  case_id?: string
+  target_case_id?: string
+  entity_id?: string
+  evidence_id?: string
+  change_id?: string
+  relationship_id?: string
+  snapshot_id?: string
+  feature_type?: string
+  focus?: '1hop' | '2hop' | 'crosscase' | 'community'
+  drawer?: 'entity' | 'relationship' | 'evidence'
 }
 
 // ── P1-A Cross-Jurisdiction Intelligence Pulse Routing Contracts ─────────────
@@ -1308,6 +1352,8 @@ export interface CaseDNA {
   explanation: string
   evidence_refs: string[]
   derivation_class: string
+  dataset_version?: string
+  snapshot_id?: string
 }
 
 export interface CaseDNAMatchResponse {
@@ -1316,6 +1362,7 @@ export interface CaseDNAMatchResponse {
   average_similarity: number
   highest_similarity: number
   top_shared_entities: string[]
+  dataset_version?: string
 }
 
 // ── A3 IntelligenceEvent Unified Domain Contract ─────────────────────────────

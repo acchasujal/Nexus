@@ -107,6 +107,16 @@ from shared.contracts.api import (
     NetworkDiffResponse,
     NetworkPulseItem,
     ReviewPriority,
+    CANONICAL_DATASET_VERSION,
+    CANONICAL_SNAPSHOT_BASELINE,
+    CANONICAL_SNAPSHOT_CURRENT,
+    NexusGraphNode,
+    NexusGraphEdge,
+    NexusNetworkResponse,
+    SnapshotDiffResponse,
+    IntelligenceKPIs,
+    IntelligenceBootstrapResponse,
+    InvestigationContext,
     AssignVerificationTaskRequest,
     AttachEvidenceRequest,
     CreateVerificationTaskRequest,
@@ -139,48 +149,6 @@ class NexusSourceRecord(BaseModel):
     locator: str
     raw_excerpt: str
     occurred_at: str
-
-
-class NexusGraphNode(BaseModel):
-    id: str
-    entity_type: str
-    label: str
-    case_ids: list[str]
-    badges: list[str] = Field(default_factory=list)
-    properties: dict[str, Any] = Field(default_factory=dict)
-
-
-class NexusGraphEdge(BaseModel):
-    id: str
-    source_id: str
-    target_id: str
-    edge_type: str
-    weight: float = 1.0
-    confidence: float = 1.0
-    derivation_class: Literal["FACT", "DERIVED", "HYPOTHESIS"] = "FACT"
-    recorded_at: str
-    case_ids: list[str]
-    properties: dict[str, Any] = Field(default_factory=dict)
-
-
-class NexusNetworkResponse(BaseModel):
-    snapshot_id: str
-    state: Literal["before", "after"]
-    nodes: list[NexusGraphNode]
-    edges: list[NexusGraphEdge]
-    total_nodes: int
-    total_edges: int
-
-
-class SnapshotDiffResponse(BaseModel):
-    before_snapshot_id: str
-    after_snapshot_id: str
-    added_node_ids: list[str]
-    removed_node_ids: list[str]
-    changed_node_ids: list[str]
-    added_edge_ids: list[str]
-    removed_edge_ids: list[str]
-    changed_edge_ids: list[str]
 
 
 class ResolutionCandidateRecord(BaseModel):
@@ -1307,7 +1275,8 @@ def create_nexus_router() -> APIRouter:
 
     @router.get("/nexus/network", response_model=NexusNetworkResponse)
     def get_nexus_network(
-        snapshot: Literal["before", "after"] = Query("before"),
+        snapshot: str = Query("before", description="Snapshot name or before/after"),
+        snapshot_id: str | None = Query(None, description="Explicit snapshot ID"),
         principal: Principal = Depends(get_principal),
         audit: AuditService = Depends(get_audit_service),
         repo: InMemoryBackendRepository = Depends(get_repository),
@@ -1344,8 +1313,13 @@ def create_nexus_router() -> APIRouter:
                 properties=e.get("properties", {}),
             ))
 
-        pool_nodes = AFTER_NODES if snapshot == "after" else BEFORE_NODES
-        pool_edges = AFTER_EDGES if snapshot == "after" else BEFORE_EDGES
+        target_snap = snapshot_id or snapshot
+        is_after = target_snap in ("after", "current", CANONICAL_SNAPSHOT_CURRENT)
+        active_snapshot_id = CANONICAL_SNAPSHOT_CURRENT if is_after else CANONICAL_SNAPSHOT_BASELINE
+        state_str = "after" if is_after else "before"
+
+        pool_nodes = AFTER_NODES if is_after else BEFORE_NODES
+        pool_edges = AFTER_EDGES if is_after else BEFORE_EDGES
         existing_nids = {n.id for n in nodes}
         for dn in pool_nodes:
             if dn.id not in existing_nids:
@@ -1361,16 +1335,17 @@ def create_nexus_router() -> APIRouter:
         audit.record(
             event_type=AuditEventType.NETWORK_EXPLORED,
             actor_id=principal.user_id,
-            details={"snapshot": snapshot, "total_nodes": len(nodes), "total_edges": len(edges)},
+            details={"snapshot": active_snapshot_id, "total_nodes": len(nodes), "total_edges": len(edges)},
         )
 
         return NexusNetworkResponse(
-            snapshot_id="SNAP-REAL",
-            state=snapshot,
+            snapshot_id=active_snapshot_id,
+            state=state_str,
             nodes=nodes,
             edges=edges,
             total_nodes=len(nodes),
             total_edges=len(edges),
+            dataset_version=CANONICAL_DATASET_VERSION,
         )
 
     @router.get("/nexus/network/diff", response_model=SnapshotDiffResponse)
@@ -1383,8 +1358,8 @@ def create_nexus_router() -> APIRouter:
         after_eids = {e.id for e in AFTER_EDGES}
 
         return SnapshotDiffResponse(
-            before_snapshot_id="SNAP-BEFORE-001",
-            after_snapshot_id="SNAP-AFTER-001",
+            before_snapshot_id=CANONICAL_SNAPSHOT_BASELINE,
+            after_snapshot_id=CANONICAL_SNAPSHOT_CURRENT,
             added_node_ids=sorted(list(after_nids - before_nids)),
             removed_node_ids=sorted(list(before_nids - after_nids)),
             changed_node_ids=[],
