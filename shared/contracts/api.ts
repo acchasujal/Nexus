@@ -1121,6 +1121,8 @@ export interface NetworkDiffResponse {
   removed_nodes: string[]
   added_relationships: string[]
   removed_relationships: string[]
+  added_edges?: string[]
+  removed_edges?: string[]
   modified_node_count: number
   modified_relationship_count: number
   pulses: NetworkPulseItem[]

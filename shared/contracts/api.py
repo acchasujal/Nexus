@@ -1006,11 +1006,23 @@ class NetworkDiffResponse(BaseModel):
     removed_nodes: list[str] = Field(default_factory=list)
     added_relationships: list[str] = Field(default_factory=list)
     removed_relationships: list[str] = Field(default_factory=list)
+    added_edges: list[str] = Field(default_factory=list)
+    removed_edges: list[str] = Field(default_factory=list)
     modified_node_count: int = 0
     modified_relationship_count: int = 0
     pulses: list[NetworkPulseItem] = Field(default_factory=list)
     summary: dict[str, Any] = Field(default_factory=dict)
     dataset_version: str = CANONICAL_DATASET_VERSION
+
+    def model_post_init(self, __context: Any) -> None:
+        if not self.added_edges and self.added_relationships:
+            self.added_edges = list(self.added_relationships)
+        elif not self.added_relationships and self.added_edges:
+            self.added_relationships = list(self.added_edges)
+        if not self.removed_edges and self.removed_relationships:
+            self.removed_edges = list(self.removed_relationships)
+        elif not self.removed_relationships and self.removed_edges:
+            self.removed_relationships = list(self.removed_edges)
 
 
 class NexusGraphNode(BaseModel):
