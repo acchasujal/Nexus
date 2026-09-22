@@ -478,6 +478,13 @@ class InvestigationSummaryResponse(BaseModel):
     accused_count: int
     evidence_count: int
     priority_rank: int
+    priority: str = "HIGH"
+    latest_signal: str | None = None
+    next_action: str | None = None
+    pending_verification: int = 0
+    assigned_officer: str | None = None
+    jurisdictions: list[str] = Field(default_factory=list)
+    linked_cases: list[str] = Field(default_factory=list)
 
 
 class InvestigationDetailResponse(BaseModel):

@@ -466,6 +466,13 @@ export interface InvestigationSummaryResponse {
   clock?: ClockResponse
   unresolved_dependency_count?: number
   risk_rank?: number
+  priority?: string
+  latest_signal?: string
+  next_action?: string
+  pending_verification?: number
+  assigned_officer?: string
+  jurisdictions?: string[]
+  linked_cases?: string[]
 }
 
 export interface InvestigationDetailResponse {

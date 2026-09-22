@@ -4,6 +4,7 @@ import { DataTable, type ColumnDef } from '@/components/DataTable'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { apiClient } from '@/lib/apiClient'
+import { buildInvestigativeUrl } from '@/lib/investigationContext'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { SectionCard } from '@/components/ui/SectionCard'
@@ -16,6 +17,7 @@ import {
   ArrowRight,
   Briefcase,
   MapPin,
+  AlertCircle,
 } from 'lucide-react'
 import { CsvIngestionPanel } from '@/components/CsvIngestionPanel'
 
@@ -36,6 +38,12 @@ interface InvestigationItem {
   updated_at?: string
   days_open?: number
   io_name?: string
+  latest_signal?: string
+  next_action?: string
+  pending_verification?: number
+  assigned_officer?: string
+  jurisdictions?: string[]
+  linked_cases?: string[]
 }
 
 export default function Worklist() {
@@ -130,17 +138,38 @@ export default function Worklist() {
       cell: (row) => (
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-blue-600 shrink-0" />
-          <span className="font-semibold text-neutral-900">{row.fir_number || row.id}</span>
+          <div>
+            <span className="font-semibold text-neutral-900">{row.fir_number || row.id}</span>
+            {row.priority && (
+              <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                row.priority === 'CRITICAL' ? 'bg-red-100 text-red-800' :
+                row.priority === 'HIGH' ? 'bg-amber-100 text-amber-800' :
+                'bg-blue-100 text-blue-800'
+              }`}>
+                {row.priority}
+              </span>
+            )}
+          </div>
         </div>
       ),
     },
     {
-      header: 'Case Title & Offence',
+      header: 'Case Title & Attention Signal',
       accessorKey: 'title',
       cell: (row) => (
-        <div>
+        <div className="space-y-0.5 max-w-md">
           <div className="font-medium text-neutral-900">{row.title}</div>
           <div className="text-xs text-neutral-500">{row.offence_category}</div>
+          {row.latest_signal && (
+            <div className="text-[11px] text-amber-700 font-medium">
+              ⚡ {row.latest_signal}
+            </div>
+          )}
+          {row.next_action && (
+            <div className="text-[11px] text-blue-700 font-medium">
+              ↳ Next: {row.next_action}
+            </div>
+          )}
         </div>
       ),
     },
@@ -187,14 +216,14 @@ export default function Worklist() {
       cell: (row) => (
         <div className="flex items-center gap-2">
           <Link
-            to={`/cases/${row.id}`}
+            to={buildInvestigativeUrl(`/cases/${row.id}`, { case_id: row.id, feature_type: 'WORKLIST' })}
             onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-1 text-xs text-blue-700 hover:text-blue-900 font-semibold p-1 hover:bg-blue-50 rounded transition-colors"
           >
             Open <ArrowRight className="h-3 w-3" />
           </Link>
           <Link
-            to={`/cases/${row.id}?tab=network`}
+            to={buildInvestigativeUrl('/network', { case_id: row.id, feature_type: 'WORKLIST', focus: '1hop' })}
             onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 font-semibold p-1 hover:bg-emerald-50 rounded transition-colors"
           >
@@ -320,7 +349,7 @@ export default function Worklist() {
           <DataTable
             columns={columns}
             data={filteredData}
-            onRowClick={(row) => navigate(`/cases/${row.id}`)}
+            onRowClick={(row) => navigate(buildInvestigativeUrl(`/cases/${row.id}`, { case_id: row.id, feature_type: 'WORKLIST' }))}
           />
         )}
       </SectionCard>

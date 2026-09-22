@@ -555,6 +555,13 @@ class InMemoryBackendRepository:
                     accused_count=accused_count,
                     evidence_count=evidence_count,
                     priority_rank=accused_count * 2 + evidence_count,
+                    priority=props.get("priority", "HIGH"),
+                    latest_signal=props.get("latest_signal"),
+                    next_action=props.get("next_action"),
+                    pending_verification=props.get("pending_verification", 0),
+                    assigned_officer=props.get("assigned_officer"),
+                    jurisdictions=props.get("jurisdictions", []),
+                    linked_cases=props.get("linked_cases", []),
                 )
             )
 
