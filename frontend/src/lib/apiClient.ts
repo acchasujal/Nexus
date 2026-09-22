@@ -486,6 +486,10 @@ export const apiClient = {
       qs ? `/api/v1/nexus/pulses?${qs}` : '/api/v1/nexus/pulses'
     )
   },
+  getIntelligenceBootstrap: () =>
+    apiFetch<import('@shared/contracts/api').IntelligenceBootstrapResponse>(
+      '/api/v1/nexus/intelligence/bootstrap'
+    ),
 
   // ── P1-A Cross-Jurisdiction Intelligence Pulse Dissemination Methods ─────
   getIntelligencePulseInbox: (caseId?: string, district?: string) => {

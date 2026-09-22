@@ -211,6 +211,15 @@ export function useNetworkPulses(priority?: string, caseId?: string) {
   })
 }
 
+export function useIntelligenceBootstrap() {
+  return useQuery({
+    queryKey: ['nexus', 'intelligence', 'bootstrap'],
+    queryFn: () => apiClient.getIntelligenceBootstrap(),
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  })
+}
+
 // ── P1-A Cross-Jurisdiction Intelligence Pulse Dissemination Hooks ───────────
 
 export function useIntelligencePulseInbox(caseId?: string, district?: string) {

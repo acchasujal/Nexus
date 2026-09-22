@@ -5,15 +5,20 @@ import {
   Eye, RefreshCw, ChevronDown, ChevronUp, Network, Clock, ExternalLink,
   HelpCircle,
 } from 'lucide-react'
-import { useNetworkPulses } from '@/hooks/useNexus'
+import { useIntelligenceBootstrap, useNetworkPulses } from '@/hooks/useNexus'
 import type { NetworkPulseItem } from '@shared/contracts/api'
 
 export function NetworkPulsePanel() {
-  const { data: pulses = [], isLoading, refetch } = useNetworkPulses()
+  const { data: bootstrap, isLoading: isBootstrapLoading } = useIntelligenceBootstrap()
+  const { data: pulses = [], isLoading: isPulsesLoading, refetch } = useNetworkPulses()
   const [selectedPulse, setSelectedPulse] = useState<NetworkPulseItem | null>(null)
   const [isWhyExpanded, setIsWhyExpanded] = useState<boolean>(true)
 
-  if (isLoading) {
+  const effectivePulses = pulses.length > 0
+    ? pulses
+    : (bootstrap?.primary_pulse ? [bootstrap.primary_pulse] : [])
+
+  if (isPulsesLoading && isBootstrapLoading && effectivePulses.length === 0) {
     return (
       <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 text-xs text-blue-800 flex items-center gap-2">
         <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
@@ -22,7 +27,7 @@ export function NetworkPulsePanel() {
     )
   }
 
-  const active = selectedPulse || pulses[0]
+  const active = selectedPulse || effectivePulses[0]
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-xs space-y-4">
@@ -39,7 +44,7 @@ export function NetworkPulsePanel() {
         </div>
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">
-            {pulses.length} Active Pulse{pulses.length === 1 ? '' : 's'}
+            {effectivePulses.length} Active Pulse{effectivePulses.length === 1 ? '' : 's'}
           </span>
           <button
             onClick={() => void refetch()}
@@ -51,7 +56,7 @@ export function NetworkPulsePanel() {
         </div>
       </div>
 
-      {pulses.length === 0 ? (
+      {effectivePulses.length === 0 ? (
         <div className="text-center py-6 text-xs text-neutral-500">
           No active network pulses detected in the current window.
         </div>
@@ -59,7 +64,7 @@ export function NetworkPulsePanel() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Pulses list */}
           <div className="space-y-2 lg:col-span-1 border-r border-neutral-100 pr-0 lg:pr-3">
-            {pulses.map((p) => {
+            {effectivePulses.map((p) => {
               const isSelected = active?.pulse_id === p.pulse_id
               const isCrit = p.review_priority === 'CRITICAL_REVIEW'
               return (
