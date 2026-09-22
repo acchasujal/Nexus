@@ -1086,6 +1086,47 @@ class InvestigationContext(BaseModel):
     drawer: str | None = None  # "entity", "relationship", "evidence"
 
 
+class EpistemicDeltaState(str, Enum):
+    OBSERVED = "OBSERVED"
+    DERIVED = "DERIVED"
+    PROPOSED = "PROPOSED"
+    CONFIRMED = "CONFIRMED"
+
+
+class NetworkDeltaNode(BaseModel):
+    node_id: str
+    entity_type: str
+    label: str
+    epistemic_state: EpistemicDeltaState = EpistemicDeltaState.OBSERVED
+    properties: dict[str, Any] = Field(default_factory=dict)
+
+
+class NetworkDeltaRelationship(BaseModel):
+    relationship_id: str
+    source_id: str
+    target_id: str
+    edge_type: str
+    epistemic_state: EpistemicDeltaState = EpistemicDeltaState.OBSERVED
+    confidence: float = 1.0
+    evidence_refs: list[str] = Field(default_factory=list)
+    properties: dict[str, Any] = Field(default_factory=dict)
+
+
+class NetworkDelta(BaseModel):
+    delta_id: str
+    before_snapshot_id: str = CANONICAL_SNAPSHOT_BASELINE
+    after_snapshot_id: str = CANONICAL_SNAPSHOT_CURRENT
+    dataset_version: str = CANONICAL_DATASET_VERSION
+    status: EpistemicDeltaState = EpistemicDeltaState.PROPOSED
+    triggering_evidence: list[str] = Field(default_factory=list)
+    added_nodes: list[NetworkDeltaNode] = Field(default_factory=list)
+    removed_node_ids: list[str] = Field(default_factory=list)
+    added_relationships: list[NetworkDeltaRelationship] = Field(default_factory=list)
+    removed_relationship_ids: list[str] = Field(default_factory=list)
+    proposed_interpretation: str = ""
+    rationale: str = ""
+
+
 # ── P1-A Cross-Jurisdiction Intelligence Pulse Routing Contracts ─────────────
 
 class PulseDeliveryStatus(str, Enum):

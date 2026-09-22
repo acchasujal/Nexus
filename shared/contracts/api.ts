@@ -1157,6 +1157,42 @@ export interface InvestigationContext {
   drawer?: 'entity' | 'relationship' | 'evidence'
 }
 
+export type EpistemicDeltaState = 'OBSERVED' | 'DERIVED' | 'PROPOSED' | 'CONFIRMED'
+
+export interface NetworkDeltaNode {
+  node_id: string
+  entity_type: string
+  label: string
+  epistemic_state: EpistemicDeltaState
+  properties?: Record<string, any>
+}
+
+export interface NetworkDeltaRelationship {
+  relationship_id: string
+  source_id: string
+  target_id: string
+  edge_type: string
+  epistemic_state: EpistemicDeltaState
+  confidence: number
+  evidence_refs: string[]
+  properties?: Record<string, any>
+}
+
+export interface NetworkDelta {
+  delta_id: string
+  before_snapshot_id: string
+  after_snapshot_id: string
+  dataset_version: string
+  status: EpistemicDeltaState
+  triggering_evidence: string[]
+  added_nodes: NetworkDeltaNode[]
+  removed_node_ids: string[]
+  added_relationships: NetworkDeltaRelationship[]
+  removed_relationship_ids: string[]
+  proposed_interpretation: string
+  rationale: string
+}
+
 // ── P1-A Cross-Jurisdiction Intelligence Pulse Routing Contracts ─────────────
 
 export type PulseDeliveryStatus = 

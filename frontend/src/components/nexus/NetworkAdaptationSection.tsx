@@ -272,7 +272,10 @@ export function NetworkAdaptationSection() {
 
                     <div className="flex items-center gap-3 pt-1">
                       <div className="flex-1 bg-white p-2.5 rounded-md border border-neutral-200 shadow-2xs">
-                        <span className="block text-[10px] font-bold text-neutral-400 uppercase">Previous Direct Link</span>
+                        <div className="flex items-center justify-between">
+                          <span className="block text-[10px] font-bold text-neutral-400 uppercase">Previous Direct Link</span>
+                          <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-neutral-100 text-neutral-600 font-bold">OBSERVED</span>
+                        </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <code className="text-xs font-bold text-neutral-700">{a.previous_path[0]}</code>
                           <ArrowRight className="h-3 w-3 text-neutral-400" />
@@ -284,7 +287,16 @@ export function NetworkAdaptationSection() {
                       <ArrowRight className="h-4 w-4 text-neutral-400 shrink-0" />
 
                       <div className="flex-1 bg-white p-2.5 rounded-md border border-blue-200 shadow-2xs">
-                        <span className="block text-[10px] font-bold text-blue-800 uppercase">Substituted Proxy Conduit</span>
+                        <div className="flex items-center justify-between">
+                          <span className="block text-[10px] font-bold text-blue-800 uppercase">Substituted Proxy Conduit</span>
+                          <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                            a.review_status === 'CONFIRMED'
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              : 'bg-amber-100 text-amber-800 border border-amber-200'
+                          }`}>
+                            {a.review_status === 'CONFIRMED' ? 'CONFIRMED' : 'PROPOSED'}
+                          </span>
+                        </div>
                         <div className="flex items-center gap-1 flex-wrap mt-0.5">
                           <code className="text-xs font-bold text-neutral-700">{a.new_path[0]}</code>
                           <ArrowRight className="h-3 w-3 text-neutral-400" />
