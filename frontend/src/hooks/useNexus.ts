@@ -19,8 +19,20 @@ export function useDecideCandidate() {
   return useMutation({
     mutationFn: ({ id, req }: { id: string; req: ResolutionDecisionRequest }) =>
       apiClient.decideResolutionCandidate(id, req),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['nexus'] })
+    onSuccess: (data) => {
+      // Scoped invalidation: only invalidate affected candidate, snapshots, diff, pulses, and bootstrap
+      void qc.invalidateQueries({ queryKey: ['nexus', 'candidates'] })
+      void qc.invalidateQueries({ queryKey: ['nexus', 'snapshots'] })
+      void qc.invalidateQueries({ queryKey: ['nexus', 'diff'] })
+      void qc.invalidateQueries({ queryKey: ['nexus', 'proactive-diff'] })
+      void qc.invalidateQueries({ queryKey: ['nexus', 'network'] })
+      void qc.invalidateQueries({ queryKey: ['nexus', 'pulses'] })
+      void qc.invalidateQueries({ queryKey: ['nexus', 'intelligence', 'bootstrap'] })
+      if (data?.affected_node_ids?.length) {
+        for (const nodeId of data.affected_node_ids) {
+          void qc.invalidateQueries({ queryKey: ['entities', 'network', nodeId] })
+        }
+      }
     },
   })
 }
@@ -110,7 +122,9 @@ export function useDecideLead() {
     mutationFn: ({ id, req }: { id: string; req: NexusLeadDecisionRequest }) =>
       apiClient.decideLead(id, req),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['nexus'] })
+      void qc.invalidateQueries({ queryKey: ['nexus', 'leads'] })
+      void qc.invalidateQueries({ queryKey: ['nexus', 'pulses'] })
+      void qc.invalidateQueries({ queryKey: ['nexus', 'intelligence', 'bootstrap'] })
     },
   })
 }

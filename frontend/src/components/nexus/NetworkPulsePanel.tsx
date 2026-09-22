@@ -126,12 +126,12 @@ export function NetworkPulsePanel() {
 
                 {/* Primary Action Buttons */}
                 <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-neutral-200/60">
-                  {active.affected_entities.length > 0 && (
+                  {active.affected_entities?.length > 0 && (
                     <Link
                       to={buildInvestigativeUrl('/network', {
-                        case_id: active.affected_cases[0],
-                        entity_id: active.affected_entities[0],
-                        change_id: active.change_ids[0],
+                        case_id: active.affected_cases?.[0],
+                        entity_id: active.affected_entities?.[0],
+                        change_id: active.change_ids?.[0],
                         snapshot_id: 'snap-current',
                         feature_type: 'PULSE',
                         focus: '1hop',
@@ -145,9 +145,9 @@ export function NetworkPulsePanel() {
                   )}
                   <Link
                     to={buildInvestigativeUrl('/timeline', {
-                      case_id: active.affected_cases[0],
-                      entity_id: active.affected_entities[0],
-                      change_id: active.change_ids[0],
+                      case_id: active.affected_cases?.[0],
+                      entity_id: active.affected_entities?.[0],
+                      change_id: active.change_ids?.[0],
                       feature_type: 'PULSE',
                     })}
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 font-bold text-[11px] transition shadow-2xs cursor-pointer"
@@ -155,11 +155,11 @@ export function NetworkPulsePanel() {
                     <Clock className="h-3 w-3" />
                     View Timeline
                   </Link>
-                  {active.affected_cases.length > 0 && (
+                  {active.affected_cases?.length > 0 && (
                     <Link
                       to={buildInvestigativeUrl(`/cases/${encodeURIComponent(active.affected_cases[0])}`, {
-                        case_id: active.affected_cases[0],
-                        target_case_id: active.affected_cases[1],
+                        case_id: active.affected_cases?.[0],
+                        target_case_id: active.affected_cases?.[1],
                         feature_type: 'PULSE',
                       })}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 font-bold text-[11px] transition shadow-2xs cursor-pointer"
