@@ -153,17 +153,32 @@ def build_canonical_read_model() -> dict[str, Any]:
     added_nodes = ["P-RAFIQ", "PH-UNIFIED", "P-VIKRAM", "P-SUNIEL"]
     removed_nodes = ["P-RAFIQ-K", "P-RAFIQ-A", "PH-A", "PH-B", "P-VIKRAM-S", "P-BIKRAM-S", "P-SUNIEL-S", "P-SUNIL-S"]
     added_relationships = [
+        "E-ACCUSE-305-A",
+        "E-ACCUSE-412-A",
+        "E-ACCUSE-501-A",
+        "E-ACCUSE-502-A",
         "E-BRIDGE",
-        "E-COMM-DK",
-        "E-TXN-55",
-        "E-TXN-71",
         "E-BRIDGE-2",
-        "E-TXN-HWL",
         "E-BRIDGE-3",
+        "E-COMM-DK",
+        "E-OWN-4491-A",
         "E-USEPH-1",
         "E-USEPH-2",
+        "E-VEH-UNIFIED",
     ]
-    removed_relationships = ["E-ACCUSE-141", "E-ACCUSE-207", "E-USEPH-A", "E-USEPH-B"]
+    removed_relationships = [
+        "E-ACCUSE-141",
+        "E-ACCUSE-207",
+        "E-ACCUSE-305",
+        "E-ACCUSE-412",
+        "E-ACCUSE-501",
+        "E-ACCUSE-502",
+        "E-OWN-4491",
+        "E-USEPH-A",
+        "E-USEPH-B",
+        "E-VEH-501",
+        "E-VEH-502",
+    ]
 
     network_delta = {
         "before_snapshot_id": CANONICAL_SNAPSHOT_BASELINE,
@@ -182,7 +197,7 @@ def build_canonical_read_model() -> dict[str, Any]:
     # 3. Canonical Primary Network Pulse
     primary_pulse = {
         "pulse_id": "pulse-0082",
-        "change_ids": ["E-BRIDGE", "E-COMM-DK", "E-TXN-55"],
+        "change_ids": ["E-BRIDGE", "E-COMM-DK"],
         "signal_headline": "Cross-Jurisdiction Syndicate Conduit Detected",
         "review_priority": "CRITICAL_REVIEW",
         "time_window": ["2026-02-11T09:30:00Z", "2026-08-24T18:00:00Z"],
@@ -259,7 +274,7 @@ def build_canonical_read_model() -> dict[str, Any]:
         primary_pulse,
         {
             "pulse_id": "pulse-0091",
-            "change_ids": ["E-BRIDGE-2", "E-TXN-HWL"],
+            "change_ids": ["E-BRIDGE-2"],
             "signal_headline": "Hawala Peeling Route Emergence",
             "review_priority": "CRITICAL_REVIEW",
             "time_window": ["2026-03-15T11:00:00Z", "2026-08-24T18:00:00Z"],
@@ -547,6 +562,89 @@ def build_canonical_read_model() -> dict[str, Any]:
                 "delta_status": "OBSERVED",
             }
         ],
+        "evidence_lookup": {
+            "SRC-FIR-141": {
+                "evidence_id": "SRC-FIR-141",
+                "case_id": "CASE-141",
+                "source_type": "FIR",
+                "locator": "fir_141_2026.pdf — page 2, row 4",
+                "excerpt": "Accused: Rafiq Khan, s/o Iqbal Khan, age 35, res. Hootagalli, Mysuru. Mobile disclosed: +91 98450 11223.",
+                "status": "VERIFIED",
+                "hash": "2f6a96ef1d0b38bc9381c855a02cfc2de25df963ebefc0bb4f04c0ec23a85b9b",
+            },
+            "SRC-FIR-207": {
+                "evidence_id": "SRC-FIR-207",
+                "case_id": "CASE-207",
+                "source_type": "FIR",
+                "locator": "fir_207_2026.pdf — page 1, row 7",
+                "excerpt": "Accused: Rafiq Ahmed, s/o Iqbal Khan, age 35, res. Hootagalli Colony, Mysuru. Mobile: +91 98450 11223.",
+                "status": "VERIFIED",
+                "hash": "7d9959e19d7b42aa1527c70c04f9810f60c70428efb0451a44e59174df44b4c7",
+            },
+            "SRC-CDR-A12": {
+                "evidence_id": "SRC-CDR-A12",
+                "case_id": "CASE-141",
+                "source_type": "CDR",
+                "locator": "cdr_mysuru_feb.csv — row 1287",
+                "excerpt": "2026-02-14T22:41:05Z, +91 98450 11223 -> +91 99801 55210, duration 412s, cell 4701-Hootagalli.",
+                "status": "VERIFIED",
+                "hash": "a189f7d466f289cf30c49eb9e782d09bb2f35d283ad6f73db5817cbe30c50009",
+            },
+            "SRC-CDR-B31": {
+                "evidence_id": "SRC-CDR-B31",
+                "case_id": "CASE-207",
+                "source_type": "CDR",
+                "locator": "cdr_bengaluru_mar.csv — row 4402",
+                "excerpt": "2026-03-05T02:12:44Z, +91 98450 11223 -> +91 98450 77310, duration 96s, cell 6112-Whitefield.",
+                "status": "VERIFIED",
+                "hash": "20b2241cfb25a3d7637841c7b3991c0e3a6c116d790d9326e6ef1c3cb16ff369",
+            },
+            "SRC-TXN-55": {
+                "evidence_id": "SRC-TXN-55",
+                "case_id": "CASE-141",
+                "source_type": "BANK_TXN",
+                "locator": "txns_axis_9914.csv — row 55",
+                "excerpt": "2026-03-09T11:03:00Z, ACC-9914 -> ACC-7731, ₹4,80,000, ref NIFT/20260309/5521.",
+                "status": "VERIFIED",
+                "hash": "f68d90fae134df39c5957d191295bcfcfbc8732890ae15bb7c44040a455dc87c",
+            },
+            "SRC-FIR-305": {
+                "evidence_id": "SRC-FIR-305",
+                "case_id": "CASE-305",
+                "source_type": "FIR",
+                "locator": "fir_305_2026.pdf — page 2, row 3",
+                "excerpt": "Accused: Vikram Sharma, age 32, res. Indiranagar Bengaluru. Mobile: +91 98450 77310.",
+                "status": "VERIFIED",
+                "hash": "37f40778cba2207b1a646c2415d8f6f578dfca4b9671d18f553f1915eafe7539",
+            },
+            "SRC-FIR-412": {
+                "evidence_id": "SRC-FIR-412",
+                "case_id": "CASE-412",
+                "source_type": "FIR",
+                "locator": "fir_412_2026.pdf — page 1, row 5",
+                "excerpt": "Accused: Bikram Sarma, age 32, res. Domlur Layout Bengaluru. Mobile: +91 98450 77310.",
+                "status": "VERIFIED",
+                "hash": "0f622d0577d612ec9bb399991207e78696b99480ffda32cf16995642a8b9e69c",
+            },
+            "SRC-FIR-501": {
+                "evidence_id": "SRC-FIR-501",
+                "case_id": "CASE-501",
+                "source_type": "FIR",
+                "locator": "fir_501_2026.pdf — page 3, row 2",
+                "excerpt": "Accused: Suniel Shetty, s/o R. Shetty, age 41. Vehicle: KA-01-AB-1001.",
+                "status": "VERIFIED",
+                "hash": "848e02611a91e55ec746bf9971ceea3a58e3eb99b514ca597db2bfbe5f27c3d7",
+            },
+            "SRC-FIR-502": {
+                "evidence_id": "SRC-FIR-502",
+                "case_id": "CASE-502",
+                "source_type": "FIR",
+                "locator": "fir_502_2026.pdf — page 2, row 8",
+                "excerpt": "Accused: Sunil Shetty, s/o R. Shetty, age 41. Vehicle: KA-01-AB-1001.",
+                "status": "VERIFIED",
+                "hash": "b2fbb1b93f1ea1a9420b784a92c3a525f0a78cae08bb39c90380f2b3886196dc",
+            },
+        },
         "audit_fixture_metadata": audit_fixture_metadata,
     }
 

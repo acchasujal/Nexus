@@ -137,6 +137,36 @@ class InMemoryBackendRepository:
         self.nodes = {str(node["id"]): dict(node) for node in raw.get("nodes", [])}
         self.edges = [dict(edge) for edge in raw.get("edges", [])]
         self._seed_default_source_records()
+        self._seed_default_canonical_graph()
+
+    def _seed_default_canonical_graph(self) -> None:
+        """Seed canonical demonstration cases and nodes to ensure consistent investigative worklist."""
+        from backend.app.core.graph.demo_snapshots import BEFORE_NODES, BEFORE_EDGES
+        for n in BEFORE_NODES:
+            if n.id not in self.nodes:
+                self.nodes[n.id] = {
+                    "id": n.id,
+                    "entity_type": n.entity_type,
+                    "label": n.label,
+                    "properties": dict(n.properties, case_ids=n.case_ids, badges=n.badges),
+                }
+        existing_edge_ids = {e.get("id") for e in self.edges if isinstance(e, dict)}
+        for e in BEFORE_EDGES:
+            if e.id not in existing_edge_ids:
+                self.edges.append({
+                    "id": e.id,
+                    "source": e.source_id,
+                    "target": e.target_id,
+                    "source_id": e.source_id,
+                    "target_id": e.target_id,
+                    "edge_type": e.edge_type,
+                    "weight": e.weight,
+                    "confidence": e.confidence,
+                    "derivation_class": e.derivation_class,
+                    "recorded_at": e.recorded_at,
+                    "case_ids": e.case_ids,
+                    "properties": dict(e.properties),
+                })
 
     def _seed_default_source_records(self) -> None:
         """Seed canonical forensic source records so citations resolve deterministically."""
@@ -520,7 +550,7 @@ class InMemoryBackendRepository:
         district: str | None = None,
         category: str | None = None,
         status: str | None = None,
-        limit: int = 50,
+        limit: int = 100,
     ) -> list[InvestigationSummaryResponse]:
         cases = [n for n in self.nodes.values() if n.get("entity_type") in ("Case", "CASE")]
         summaries: list[InvestigationSummaryResponse] = []
