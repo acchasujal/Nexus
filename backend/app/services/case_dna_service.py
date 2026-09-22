@@ -14,7 +14,7 @@ from backend.app.auth.principal import Principal
 from backend.app.core.graph.algorithms.case_dna import match_case_dna
 from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.services.audit_service import AuditEventType, AuditService
-from shared.contracts.api import CaseDNAMatchResponse
+from shared.contracts.api import CANONICAL_DATASET_VERSION, CaseDNAMatchResponse
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,7 @@ class CaseDNAService:
     ) -> None:
         self.repo = repository
         self.audit = audit_service
+        self._cache: dict[tuple[str, str, int], CaseDNAMatchResponse] = {}
 
     def get_case_dna_matches(
         self,
@@ -37,20 +38,27 @@ class CaseDNAService:
         principal: Principal | None = None,
     ) -> CaseDNAMatchResponse:
         """Find structurally similar cases using 5-vector topological Case DNA profiles."""
+        cache_key = (case_id, CANONICAL_DATASET_VERSION, top_k)
+        if cache_key in self._cache:
+            return self._cache[cache_key]
+
         store = getattr(self.repo, "store", None)
         if store is None and hasattr(self.repo, "to_graph_store"):
             store = self.repo.to_graph_store()
         if store is None:
-            return CaseDNAMatchResponse(
-
+            empty_resp = CaseDNAMatchResponse(
                 target_case_id=case_id,
                 similar_cases=[],
                 average_similarity=0.0,
                 highest_similarity=0.0,
                 top_shared_entities=[],
+                dataset_version=CANONICAL_DATASET_VERSION,
             )
+            return empty_resp
 
         response = match_case_dna(store, target_case_id=case_id, top_k=top_k)
+        response.dataset_version = CANONICAL_DATASET_VERSION
+        self._cache[cache_key] = response
 
         # Append immutable audit event
         try:

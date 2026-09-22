@@ -15,6 +15,7 @@
  */
 
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Dna,
   GitCompare,
@@ -28,11 +29,14 @@ import {
   ChevronRight,
   Info,
   Search,
+  Network,
+  FileText,
 } from 'lucide-react'
 import { useCaseDNA } from '@/hooks/useNexus'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
+import { buildInvestigativeUrl } from '@/lib/investigationContext'
 import type { CaseDNA } from '@shared/contracts/api'
 
 interface CaseDNASectionProps {
@@ -426,6 +430,55 @@ export function CaseDNASection({ initialCaseId = 'CASE-141' }: CaseDNASectionPro
                       </div>
                     </div>
                   )}
+
+                  {/* Investigative Actions */}
+                  <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                    <Link
+                      to={buildInvestigativeUrl('/network', {
+                        case_id: active.case_pair[0],
+                        target_case_id: active.case_pair[1],
+                        feature_type: 'CASE_DNA',
+                        focus: 'crosscase',
+                      })}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                    >
+                      <Network className="w-3.5 h-3.5" />
+                      Compare Network
+                    </Link>
+                    <Link
+                      to={buildInvestigativeUrl('/evidence', {
+                        case_id: active.case_pair[0],
+                        target_case_id: active.case_pair[1],
+                        feature_type: 'CASE_DNA',
+                      })}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-slate-500" />
+                      View Shared Evidence
+                    </Link>
+                    <Link
+                      to={buildInvestigativeUrl(`/cases/${encodeURIComponent(active.case_pair[1])}`, {
+                        case_id: active.case_pair[1],
+                        target_case_id: active.case_pair[0],
+                        feature_type: 'CASE_DNA',
+                      })}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                      Open Related Investigation ({active.case_pair[1]})
+                    </Link>
+                    <Link
+                      to={buildInvestigativeUrl('/timeline', {
+                        case_id: active.case_pair[0],
+                        target_case_id: active.case_pair[1],
+                        feature_type: 'CASE_DNA',
+                      })}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                    >
+                      <Clock className="w-3.5 h-3.5 text-slate-500" />
+                      Timeline Pair View
+                    </Link>
+                  </div>
 
                   {/* Section 63 BSA Evidence Citations */}
                   <div className="pt-4 border-t border-slate-100 bg-slate-50/50 -mx-6 -mb-6 p-6 rounded-b-xl">
