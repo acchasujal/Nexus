@@ -6,6 +6,7 @@ import {
   HelpCircle,
 } from 'lucide-react'
 import { useIntelligenceBootstrap, useNetworkPulses } from '@/hooks/useNexus'
+import { buildInvestigativeUrl } from '@/lib/investigationContext'
 import type { NetworkPulseItem } from '@shared/contracts/api'
 
 export function NetworkPulsePanel() {
@@ -127,7 +128,15 @@ export function NetworkPulsePanel() {
                 <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-neutral-200/60">
                   {active.affected_entities.length > 0 && (
                     <Link
-                      to={`/network?node_id=${encodeURIComponent(active.affected_entities[0])}`}
+                      to={buildInvestigativeUrl('/network', {
+                        case_id: active.affected_cases[0],
+                        entity_id: active.affected_entities[0],
+                        change_id: active.change_ids[0],
+                        snapshot_id: 'snap-current',
+                        feature_type: 'PULSE',
+                        focus: '1hop',
+                        drawer: 'entity',
+                      })}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition shadow-2xs cursor-pointer"
                     >
                       <Network className="h-3 w-3" />
@@ -135,7 +144,12 @@ export function NetworkPulsePanel() {
                     </Link>
                   )}
                   <Link
-                    to="/timeline"
+                    to={buildInvestigativeUrl('/timeline', {
+                      case_id: active.affected_cases[0],
+                      entity_id: active.affected_entities[0],
+                      change_id: active.change_ids[0],
+                      feature_type: 'PULSE',
+                    })}
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 font-bold text-[11px] transition shadow-2xs cursor-pointer"
                   >
                     <Clock className="h-3 w-3" />
@@ -143,7 +157,11 @@ export function NetworkPulsePanel() {
                   </Link>
                   {active.affected_cases.length > 0 && (
                     <Link
-                      to={`/cases/${encodeURIComponent(active.affected_cases[0])}`}
+                      to={buildInvestigativeUrl(`/cases/${encodeURIComponent(active.affected_cases[0])}`, {
+                        case_id: active.affected_cases[0],
+                        target_case_id: active.affected_cases[1],
+                        feature_type: 'PULSE',
+                      })}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 font-bold text-[11px] transition shadow-2xs cursor-pointer"
                     >
                       <ExternalLink className="h-3 w-3" />
