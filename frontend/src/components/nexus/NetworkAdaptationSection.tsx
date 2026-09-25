@@ -386,7 +386,7 @@ export function NetworkAdaptationSection() {
                   {/* Next Action Links */}
                   <div className="mt-3 flex items-center gap-2 pt-2 border-t border-neutral-100">
                     <Link
-                      to={`/network?node_id=${encodeURIComponent(a.primary_entity_id)}`}
+                      to={`/network?node_id=${encodeURIComponent(a.primary_entity_id)}&snapshot_id=snap-current&focus=2hop&drawer=true&feature_type=NETWORK_ADAPTATION`}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition shadow-2xs cursor-pointer"
                     >
                       <Network className="h-3 w-3" />

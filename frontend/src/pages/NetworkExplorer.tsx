@@ -158,11 +158,13 @@ export default function NetworkExplorer() {
   const nodeIdParam = searchParams.get('node_id')
   const batchIdParam = searchParams.get('batch_id')
   const snapshotParam = searchParams.get('snapshot')
+  const snapshotIdParam = searchParams.get('snapshot_id')
+  const effectiveSnapshotParam = snapshotParam || snapshotIdParam
   const focusParam = searchParams.get('focus')
   const caseFocusParam = searchParams.get('case_focus')
   
   const drawerParam = searchParams.get('drawer') === 'true'
-  const [replay, setReplay] = useState<ReplayState>(snapshotParam === 'after' ? 'after' : 'before')
+  const [replay, setReplay] = useState<ReplayState>(effectiveSnapshotParam === 'after' || effectiveSnapshotParam === 'snap-current' ? 'after' : 'before')
   const [edgeId, setEdgeId] = useState<string | null>(null)
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(drawerParam ? nodeIdParam : null)
   const validFocusModes = ['ALL', '1HOP', '2HOP', 'CROSS_CASE'] as const
@@ -182,7 +184,7 @@ export default function NetworkExplorer() {
 
   // URL changes from Back/Forward or external navigation are the only state sync direction.
   useEffect(() => {
-    setReplay(snapshotParam === 'after' ? 'after' : 'before')
+    setReplay(effectiveSnapshotParam === 'after' || effectiveSnapshotParam === 'snap-current' ? 'after' : 'before')
     const nextFocus = focusParam?.toUpperCase().replace('-', '')
     setDensityMode(validFocusModes.includes(nextFocus as FocusMode) ? nextFocus as FocusMode : 'ALL')
     if (drawerParam) {
@@ -190,7 +192,7 @@ export default function NetworkExplorer() {
     } else {
       setSelectedEntityId(null)
     }
-  }, [snapshotParam, focusParam, nodeIdParam, drawerParam])
+  }, [effectiveSnapshotParam, focusParam, nodeIdParam, drawerParam])
 
   const batchNetwork = useBatchNetwork(batchIdParam, Boolean(batchIdParam))
   const candidatesQuery = useResolutionCandidates()
@@ -262,7 +264,7 @@ export default function NetworkExplorer() {
   const isEntityPath = Boolean((effectiveSourceId && !isCaseId(effectiveSourceId)) || (effectiveTargetId && !isCaseId(effectiveTargetId)))
 
   // Use the unified cross-case network for global view, snapshot diff replays, or case views when not exploring specific non-case entities
-  const useUnifiedNetwork = !isEntityPath && (isGlobalNetwork || Boolean(snapshotParam) || Boolean(isCaseScoped && !isEntityScoped) || isCasePath)
+  const useUnifiedNetwork = !isEntityPath && (isGlobalNetwork || Boolean(effectiveSnapshotParam) || Boolean(isCaseScoped && !isEntityScoped) || isCasePath)
 
   const hasSelection = Boolean(isGlobalNetwork || batchIdParam || useUnifiedNetwork || isCaseScoped || isEntityScoped || effectiveSourceId || effectiveTargetId)
 

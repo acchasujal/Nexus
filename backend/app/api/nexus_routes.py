@@ -1025,7 +1025,12 @@ def create_nexus_router() -> APIRouter:
             affected = [target_cand.left.node_id, target_cand.right.node_id] if body.decision == "CONFIRM" else []
 
             if body.decision == "CONFIRM":
-                proactive_svc.create_snapshot(CANONICAL_SNAPSHOT_CURRENT)
+                # RC-1 is a canonical demo resolution.  The current snapshot is
+                # already the authoritative post-confirmation graph containing
+                # the unified Rafiq node and bridge edges.  Re-capturing the
+                # repository here would overwrite that snapshot with the
+                # pre-resolution artifact and make Before/After identical.
+                pass
 
             audit.record(
                 event_type=AuditEventType.ENTITY_RESOLUTION_EXECUTED,
