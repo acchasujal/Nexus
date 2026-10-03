@@ -24,6 +24,7 @@ import {
   useRepeatOffenderRadar,
   useCombinedBridgeSignals,
   useNetworkPulses,
+  useIntelligenceBootstrap,
 } from '@/hooks/useNexus'
 import { apiClient } from '@/lib/apiClient'
 import { HotspotDrilldownModal } from '@/components/nexus/HotspotDrilldownModal'
@@ -64,12 +65,14 @@ export default function Patterns() {
   const [minCasesFilter, setMinCasesFilter] = useState<number>(2)
   const [evidenceDrawerId, setEvidenceDrawerId] = useState<string | null>(null)
 
+  const bootstrapQuery = useIntelligenceBootstrap()
+
   // Intelligence queries
   const {
     data: pulses,
     isLoading: isPulsesLoading,
     refetch: refetchPulses,
-  } = useNetworkPulses()
+  } = useNetworkPulses(undefined, undefined, !bootstrapQuery.isPending)
 
   const {
     data: hotspots,

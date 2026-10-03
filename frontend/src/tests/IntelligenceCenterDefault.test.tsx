@@ -14,6 +14,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { setupServer } from 'msw/node'
+import { http, HttpResponse } from 'msw'
 import { nexusHandlers } from '@/lib/mocks/nexusHandlers'
 import Patterns from '@/pages/Patterns'
 import { Sidebar } from '@/components/Sidebar'
@@ -44,6 +45,16 @@ function renderWithClient(ui: React.ReactElement, initialPath = '/intelligence')
 }
 
 describe('NEXUS Intelligence Center Defaults & Information Architecture', () => {
+  it('shows unavailable rather than an empty queue when intelligence requests fail', async () => {
+    server.use(
+      http.get(/\/api\/v1\/nexus\/intelligence\/bootstrap/, () => new HttpResponse(null, { status: 503 })),
+      http.get(/\/api\/v1\/nexus\/pulses/, () => new HttpResponse(null, { status: 503 })),
+    )
+    renderWithClient(<Patterns />)
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Network pulses are unavailable'))
+    expect(screen.queryByText('No active network pulses detected in the current window.')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Unavailable')).toHaveLength(5)
+  })
   beforeEach(() => {
     window.localStorage.setItem('nexus_role', 'INVESTIGATOR')
   })

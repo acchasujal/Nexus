@@ -10,22 +10,28 @@ import { buildInvestigativeUrl } from '@/lib/investigationContext'
 import type { NetworkPulseItem } from '@shared/contracts/api'
 
 export function NetworkPulsePanel() {
-  const { data: bootstrap, isLoading: isBootstrapLoading } = useIntelligenceBootstrap()
-  const { data: pulses = [], isLoading: isPulsesLoading, refetch } = useNetworkPulses()
+  const { data: bootstrap, isPending: isBootstrapLoading, isError: isBootstrapError, refetch: refetchBootstrap } = useIntelligenceBootstrap()
+  const { data: pulses, isPending: isPulsesLoading, isError: isPulsesError, refetch } = useNetworkPulses(undefined, undefined, !isBootstrapLoading)
   const [selectedPulse, setSelectedPulse] = useState<NetworkPulseItem | null>(null)
   const [isWhyExpanded, setIsWhyExpanded] = useState<boolean>(true)
 
-  const effectivePulses = pulses.length > 0
+  const effectivePulses = pulses !== undefined
     ? pulses
     : (bootstrap?.primary_pulse ? [bootstrap.primary_pulse] : [])
 
-  if (isPulsesLoading && isBootstrapLoading && effectivePulses.length === 0) {
+  if (isBootstrapLoading && effectivePulses.length === 0) {
     return (
       <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 text-xs text-blue-800 flex items-center gap-2">
         <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
         <span>Scanning for proactive network changes...</span>
       </div>
     )
+  }
+
+  if (isBootstrapError && isPulsesError && pulses === undefined) {
+    return <div role="alert" className="rounded-xl border border-neutral-200 bg-white p-4">
+      Network pulses are unavailable. <button onClick={() => { void refetchBootstrap(); void refetch() }}>Retry</button>
+    </div>
   }
 
   const active = selectedPulse || effectivePulses[0]
@@ -45,7 +51,7 @@ export function NetworkPulsePanel() {
         </div>
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">
-            {effectivePulses.length} Active Pulse{effectivePulses.length === 1 ? '' : 's'}
+            {pulses === undefined ? (isPulsesLoading ? 'Loading pulse queue' : 'Pulse queue unavailable') : `${effectivePulses.length} Active Pulse${effectivePulses.length === 1 ? '' : 's'}`}
           </span>
           <button
             onClick={() => void refetch()}

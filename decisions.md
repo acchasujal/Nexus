@@ -443,3 +443,9 @@ This document is the **single source of truth** for material architectural, secu
 - **Reason:** Ensures complete domain consistency and statutory alignment with contemporary Indian criminal law as mandated for the Ministry of Home Affairs (MHA) and National Crime Records Bureau (NCRB).
 - **Consequences:** Proactive intelligence pulses, evidence assessments, verification tasks, and dossier exports consistently cite authoritative BNS/BNSS/BSA statutes with zero legacy CrPC/IPC leakage into investigator-facing workflows.
 
+
+## ADR-0017: Canonical intelligence reads independent of external projection (EXTENSION)
+
+- **Decision:** Exempt only GET bootstrap, pulse, diff, and snapshot-list endpoints from Neo4j projection readiness. Their existing principal, RBAC, and audit dependencies remain intact. Live graph operations and mutations retain the gate. Required Neo4j startup policy still fails closed; degraded policy keeps canonical intelligence usable.
+- **Reason:** These endpoints operate on the canonical read model and deterministic snapshots, so external projection connectivity is not their data dependency. Bootstrap uses the existing snapshot diff service to align structural change counts with the diff endpoint.
+- **Consequences:** Canonical intelligence availability does not imply a healthy external graph. Readiness continues to expose degraded connection/projection status with bounded probes. Login navigation follows committed authentication state and does not wait for analytics.

@@ -27,15 +27,18 @@ RepositoryType = InMemoryBackendRepository | PostgresBackendRepository | Any
 
 
 async def require_graph_projection(request: Request) -> None:
-    """Graph projection gate: selected Neo4j must never serve a memory graph when unready.
-
-    When Neo4j is operational (connected and projection synced), data operations
-    proceed cleanly. If not operational, fail with 503 rather than serving an un-synced graph.
-    """
+    """Gate live graph operations while keeping canonical read data available."""
     if request.app.state.settings.graph_backend != "neo4j":
         return
     path = request.url.path.removeprefix("/api/v1").rstrip("/") or "/"
     if path in {"/", "/health", "/ready", "/system/status", "/auth/login"}:
+        return
+    # These handlers read the versioned canonical model or immutable snapshots,
+    # not the external projection. Their principal and audit dependencies still run.
+    if request.method == "GET" and path in {
+        "/nexus/intelligence/bootstrap", "/nexus/pulses", "/nexus/diff",
+        "/nexus/snapshots",
+    }:
         return
     
     neo4j_conn = getattr(request.app.state, "neo4j", None)

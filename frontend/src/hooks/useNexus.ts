@@ -222,10 +222,12 @@ export function useProactiveDiff(before = 'snap-baseline-v1', after = 'snap-curr
   })
 }
 
-export function useNetworkPulses(priority?: string, caseId?: string) {
+export function useNetworkPulses(priority?: string, caseId?: string, enabled = true) {
   return useQuery({
     queryKey: ['nexus', 'pulses', priority, caseId],
     queryFn: () => apiClient.getPulses(priority, caseId),
+    enabled,
+    retry: false,
     staleTime: 2 * 60 * 1000,
   })
 }
@@ -235,7 +237,7 @@ export function useIntelligenceBootstrap() {
     queryKey: ['nexus', 'intelligence', 'bootstrap'],
     queryFn: () => apiClient.getIntelligenceBootstrap(),
     staleTime: 5 * 60 * 1000,
-    retry: 2,
+    retry: false,
   })
 }
 

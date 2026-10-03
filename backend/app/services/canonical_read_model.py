@@ -689,7 +689,7 @@ def save_canonical_read_model(model: dict[str, Any]) -> None:
         logger.warning("Could not persist canonical read model to disk: %s", e)
 
 
-def get_intelligence_bootstrap_payload() -> IntelligenceBootstrapResponse:
+def get_intelligence_bootstrap_payload(network_diff: NetworkDiffResponse | None = None) -> IntelligenceBootstrapResponse:
     """Return compact, fast bootstrap response from the authoritative read model."""
     model = get_canonical_read_model()
     kpis_data = model.get("kpis", {})
@@ -717,6 +717,14 @@ def get_intelligence_bootstrap_payload() -> IntelligenceBootstrapResponse:
         },
         dataset_version=model.get("dataset_version", CANONICAL_DATASET_VERSION),
     )
+
+    if network_diff is not None:
+        primary_diff = network_diff
+        kpis = kpis.model_copy(update={
+            "added_nodes": len(network_diff.added_nodes),
+            "added_edges": len(network_diff.added_relationships),
+            "total_changes": len(network_diff.added_nodes) + len(network_diff.added_relationships),
+        })
 
     return IntelligenceBootstrapResponse(
         dataset_version=model.get("dataset_version", CANONICAL_DATASET_VERSION),

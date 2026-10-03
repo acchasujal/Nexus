@@ -1838,13 +1838,14 @@ def create_nexus_router() -> APIRouter:
     def get_intelligence_bootstrap(
         principal: Principal = Depends(get_principal),
         audit_service: AuditService = Depends(get_audit_service),
+        proactive_svc: Any = Depends(get_proactive_intelligence_service),
     ) -> IntelligenceBootstrapResponse:
         """
         Fast authoritative intelligence center bootstrap payload (P0).
         Returns summary KPIs, primary network pulse, primary network diff summary,
         and affected investigations directly from the versioned canonical read model.
         """
-        payload = get_intelligence_bootstrap_payload()
+        payload = get_intelligence_bootstrap_payload(proactive_svc.compute_network_diff())
         audit_service.record(
             event_type=AuditEventType.INTELLIGENCE_PULSE_ACKNOWLEDGED,
             actor_id=principal.user_id,

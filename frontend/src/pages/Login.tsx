@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import type { UserRole } from '@shared/contracts/api'
 import { 
@@ -74,7 +74,6 @@ const AUTHORIZED_OFFICERS: OfficerProfile[] = [
 
 export default function Login() {
   const { role, login, isAuthenticated } = useAuth()
-  const navigate = useNavigate()
   const location = useLocation()
 
   const [username, setUsername] = useState('')
@@ -131,8 +130,8 @@ export default function Login() {
         password: password || 'nexus-demo-passcode',
         role: targetRole,
       })
-      const destination = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/intelligence'
-      navigate(destination, { replace: true })
+      // The authenticated render above redirects after session state commits.
+      // Navigating here can race the protected shell's authentication check.
     } catch (err: any) {
       const msg = err?.message || 'Authentication failed. Please verify your officer credentials.'
       setErrorMessage(msg)

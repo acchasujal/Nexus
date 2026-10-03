@@ -13,7 +13,7 @@ from typing import Literal
 from urllib.parse import urlsplit
 import re
 
-from pydantic import Field, SecretStr, field_validator, model_validator
+from pydantic import AliasChoices, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -50,11 +50,12 @@ class Settings(BaseSettings):
     database_url: str = Field(default="", alias="DATABASE_URL", repr=False, exclude=True)
     graph_backend: Literal["memory", "neo4j"] = Field(default="memory", alias="GRAPH_BACKEND")
     neo4j_uri: str = Field(default="", alias="NEO4J_URI", repr=False)
-    neo4j_user: str = Field(default="", alias="NEO4J_USER", repr=False)
+    neo4j_user: str = Field(default="", alias="NEO4J_USER", validation_alias=AliasChoices("NEO4J_USER", "NEO4J_USERNAME"), repr=False)
     neo4j_password: SecretStr = Field(default=SecretStr(""), alias="NEO4J_PASSWORD", exclude=True)
     neo4j_database: str = Field(default="neo4j", alias="NEO4J_DATABASE")
     neo4j_connection_timeout: float = Field(default=5.0, gt=0, le=120, alias="NEO4J_CONNECTION_TIMEOUT")
     neo4j_query_timeout: float = Field(default=10.0, gt=0, le=300, alias="NEO4J_QUERY_TIMEOUT")
+    neo4j_probe_timeout: float = Field(default=3.0, gt=0, le=10, alias="NEO4J_PROBE_TIMEOUT")
     neo4j_failure_policy: Literal["required", "degraded"] = Field(
         default="required", alias="NEO4J_FAILURE_POLICY",
     )

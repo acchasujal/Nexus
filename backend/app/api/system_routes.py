@@ -88,6 +88,7 @@ def create_system_router() -> APIRouter:
                 "failure_policy": cfg.neo4j_failure_policy,
                 "operational": graph_operational,
                 "projection": projection_status,
+                "failure_type": connection.failure_type,
             },
             "total_nodes": len(nodes) if graph_operational else 0,
             "total_edges": len(edges) if graph_operational else 0,

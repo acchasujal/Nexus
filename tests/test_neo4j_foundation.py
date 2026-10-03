@@ -224,6 +224,58 @@ def test_client_deadline_closes_hung_startup(driver_factory):
     driver_factory.return_value.close.assert_awaited_once()
 
 
+def test_probe_deadline_is_independent_of_query_timeout(driver_factory, caplog):
+    async def hung():
+        await asyncio.Event().wait()
+
+    driver_factory.return_value.verify_connectivity.side_effect = hung
+    connection = Neo4jConnection(settings(
+        NEO4J_FAILURE_POLICY="degraded", NEO4J_PROBE_TIMEOUT=0.01,
+    ))
+    asyncio.run(connection.start())
+    assert connection.failure_type == "TimeoutError"
+    assert connection.status == "unavailable"
+    assert "type=TimeoutError" in caplog.text
+    assert "database=nexus" in caplog.text
+    asyncio.run(connection.close())
+
+
+def test_canonical_intelligence_survives_external_graph_failure(driver_factory):
+    from shared.contracts.api import CANONICAL_SNAPSHOT_CURRENT
+
+    driver_factory.return_value.verify_connectivity.side_effect = RuntimeError("offline")
+    app = create_app(settings=settings(NEO4J_FAILURE_POLICY="degraded"))
+    with TestClient(app) as client:
+        headers = {"X-User-Role": "ADMIN", "X-User-Id": "officer-001"}
+        bootstrap = client.get("/api/v1/nexus/intelligence/bootstrap", headers=headers)
+        assert bootstrap.status_code == 200
+        payload = bootstrap.json()
+        assert payload["snapshot_id"] == CANONICAL_SNAPSHOT_CURRENT
+        assert payload["kpis"]["active_pulses_count"] > 0
+        assert payload["kpis"]["added_edges"] > 0
+        pulses = client.get("/api/v1/nexus/pulses", headers=headers)
+        assert pulses.status_code == 200
+        assert payload["primary_pulse"]["pulse_id"] in {p["pulse_id"] for p in pulses.json()}
+        diff = client.get("/api/v1/nexus/diff", headers=headers)
+        assert diff.status_code == 200
+        actual_diff = diff.json()
+        bootstrap_diff = payload["primary_diff"]
+        # Pulse assessments include per-request timestamps; structural deltas must match exactly.
+        assert {k: v for k, v in actual_diff.items() if k != "pulses"} == {
+            k: v for k, v in bootstrap_diff.items() if k != "pulses"
+        }
+        assert {p["pulse_id"] for p in actual_diff["pulses"]} == {
+            p["pulse_id"] for p in bootstrap_diff["pulses"]
+        }
+        assert client.get("/api/v1/nexus/network", headers=headers).status_code == 503
+        assert client.post("/api/v1/nexus/snapshots?snapshot_id=test", headers=headers).status_code == 503
+
+
+def test_documented_username_alias():
+    cfg = Settings(_env_file=None, NEO4J_USERNAME="documented-user")
+    assert cfg.neo4j_user == "documented-user"
+
+
 def test_legacy_postgres_fallback_is_unready_and_neo4j_never_falls_back(monkeypatch, driver_factory, caplog):
     from backend.app import main
 

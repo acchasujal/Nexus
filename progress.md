@@ -119,3 +119,11 @@ This document is the **single source of truth** for ongoing engineering, capabil
    - Cryptographically signed intelligence routing envelopes across district police jurisdictions.
 3. **P2 — Privacy-Preserving PSI / MPC Deconfliction Track:**
    - Research track for cryptographic set intersection without raw PII disclosure across external state and central agencies.
+
+## 2026-10-04 - Intelligence availability repair (EXTENSION)
+
+Canonical bootstrap, pulse, diff, and snapshot GET reads remain available when the external Neo4j projection is degraded. Live graph operations and mutations retain the projection gate and existing authorization. Bootstrap structural delta and change KPIs use the same deterministic snapshot comparison as `/nexus/diff`. Login redirects only after authenticated state commits. KPI rendering uses bootstrap first, with pulse enrichment afterward; failed requests show unavailable with manual retry, bounded by a 20-second request timeout.
+
+Neo4j probes have a separate three-second deadline, sanitized exception/code/cause diagnostics, and readiness failure type. Both NEO4J_USER and the documented NEO4J_USERNAME are accepted. One probe outside the sandbox using backend/.env reproduced ServiceUnavailable caused by gaierror (DNS resolution); Render configuration has not been inspected. No credentials changed.
+
+Validation: 39 affected backend tests passed; Ruff passed; ground truth precision/recall 100%. 20 affected frontend tests passed; production TypeScript/Vite build passed. Full suites were not rerun per the outage request. Production deployment verification pending.

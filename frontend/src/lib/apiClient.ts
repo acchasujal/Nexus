@@ -63,6 +63,8 @@ export class ApiError extends Error {
   }
 }
 
+const INTELLIGENCE_REQUEST_TIMEOUT_MS = 20_000
+
 export async function apiFetch<T>(
   path: string,
   options?: RequestInit,
@@ -495,12 +497,14 @@ export const apiClient = {
     if (caseId) params.append('case_id', caseId)
     const qs = params.toString()
     return apiFetch<import('@shared/contracts/api').NetworkPulseItem[]>(
-      qs ? `/api/v1/nexus/pulses?${qs}` : '/api/v1/nexus/pulses'
+      qs ? `/api/v1/nexus/pulses?${qs}` : '/api/v1/nexus/pulses',
+      { signal: AbortSignal.timeout(INTELLIGENCE_REQUEST_TIMEOUT_MS) },
     )
   },
   getIntelligenceBootstrap: () =>
     apiFetch<import('@shared/contracts/api').IntelligenceBootstrapResponse>(
-      '/api/v1/nexus/intelligence/bootstrap'
+      '/api/v1/nexus/intelligence/bootstrap',
+      { signal: AbortSignal.timeout(INTELLIGENCE_REQUEST_TIMEOUT_MS) },
     ),
 
   // ── P1-A Cross-Jurisdiction Intelligence Pulse Dissemination Methods ─────

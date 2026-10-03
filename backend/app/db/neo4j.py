@@ -9,6 +9,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
+import time
+from urllib.parse import urlsplit
 from typing import TYPE_CHECKING, Any
 
 from backend.app.config import Settings
@@ -36,6 +39,7 @@ class Neo4jConnection:
         self._driver: AsyncDriver | None = None
         self.status = "disabled" if settings.graph_backend == "memory" else "not_started"
         self.is_operational = settings.graph_backend == "memory"
+        self.failure_type: str | None = None
 
     @property
     def driver(self) -> AsyncDriver:
@@ -78,12 +82,13 @@ class Neo4jConnection:
             return True
         if self._driver is None:
             return False
+        started = time.monotonic()
         try:
             from neo4j import Query
 
             # Server query timeout plus a client deadline bounds connection/routing
             # and query execution, including a hung or unavailable dependency.
-            deadline = 2 * self._settings.neo4j_connection_timeout + self._settings.neo4j_query_timeout
+            deadline = self._settings.neo4j_probe_timeout
             async with asyncio.timeout(deadline):
                 if verify:
                     await self._driver.verify_connectivity()
@@ -95,15 +100,32 @@ class Neo4jConnection:
                 if len(records) != 1 or records[0]["ok"] != 1:
                     raise Neo4jUnavailableError("Unexpected connectivity probe result")
             self.status = "connected"
+            self.failure_type = None
             return True
         except asyncio.CancelledError:
             self.status = "unavailable"
             self.is_operational = False
             raise
-        except Exception:
+        except Exception as exc:
             self.status = "unavailable"
             self.is_operational = False
-            logger.warning("Neo4j connectivity probe failed; connection unavailable")
+            self.failure_type = type(exc).__name__
+            code = getattr(exc, "code", None)
+            # Only allow standard driver codes; never emit exception messages.
+            safe_code = code if isinstance(code, str) and re.fullmatch(
+                r"Neo\.(ClientError|TransientError|DatabaseError)\.[A-Za-z]+\.[A-Za-z]+", code
+            ) else None
+            cause_types = []
+            cause = exc.__cause__
+            while cause is not None and len(cause_types) < 4:
+                cause_types.append(type(cause).__name__)
+                cause = cause.__cause__
+            logger.warning(
+                "Neo4j connectivity probe failed; type=%s code=%s elapsed_ms=%d database=%s host=%s causes=%s",
+                self.failure_type, safe_code, int((time.monotonic() - started) * 1000),
+                self._settings.neo4j_database, urlsplit(self._settings.neo4j_uri).hostname,
+                cause_types,
+            )
             return False
 
     async def close(self) -> None:
