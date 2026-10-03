@@ -134,6 +134,7 @@ export default function Patterns() {
 
   const handleRefreshAll = async () => {
     await Promise.all([
+      bootstrapQuery.refetch(),
       refetchPulses(),
       refetchHotspots(),
       refetchRadar(),
@@ -191,7 +192,7 @@ export default function Patterns() {
           }`}
         >
           <Activity className="h-4 w-4 text-indigo-600" />
-          Network Pulse ({isPulsesLoading ? '...' : pulses?.length ?? 0})
+          Network Pulse ({bootstrapQuery.isPending || isPulsesLoading ? '...' : pulses?.length ?? bootstrapQuery.data?.kpis.active_pulses_count ?? 'Unavailable'})
         </button>
 
         <button
