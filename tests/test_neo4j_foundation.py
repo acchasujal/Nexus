@@ -28,7 +28,8 @@ def driver_factory(monkeypatch):
 
     driver = MagicMock()
     driver.verify_connectivity = AsyncMock()
-    driver.execute_query = AsyncMock(return_value=([{"ok": 1}], None, ["ok"]))
+    driver.execute_query = AsyncMock(return_value=([], None, []))
+    driver.execute_query.side_effect = lambda query, **kwargs: ([{"ok": 1}], None, ["ok"]) if str(query) == "RETURN 1 AS ok" else ([], None, [])
     driver.close = AsyncMock()
     factory = MagicMock(return_value=driver)
     monkeypatch.setattr(neo4j.AsyncGraphDatabase, "driver", factory)
@@ -140,8 +141,9 @@ def test_degraded_policy_exposes_failure_and_recovers_same_pool(driver_factory, 
         assert result.json()["status"] == "degraded"
         assert result.json()["graph"]["connection"] == "unavailable"
         assert private not in result.text
-        assert client.get("/api/v1/nexus/network").status_code == 503
-        driver.execute_query.side_effect = None
+        assert client.get("/api/v1/nexus/network").status_code == 200
+        assert client.get("/api/v1/graph/stats").status_code == 503
+        driver.execute_query.side_effect = lambda query, **kwargs: ([{"ok": 1}], None, ["ok"]) if str(query) == "RETURN 1 AS ok" else ([], None, [])
         result = client.get("/ready").json()
         assert result["graph"]["connection"] == "connected"
         assert result["graph"]["operational"] is False
@@ -246,7 +248,7 @@ def test_canonical_intelligence_survives_external_graph_failure(driver_factory):
     driver_factory.return_value.verify_connectivity.side_effect = RuntimeError("offline")
     app = create_app(settings=settings(NEO4J_FAILURE_POLICY="degraded"))
     with TestClient(app) as client:
-        headers = {"X-User-Role": "ADMIN", "X-User-Id": "officer-001"}
+        headers = {"X-Role": "ADMIN", "X-User-Id": "officer-001"}
         bootstrap = client.get("/api/v1/nexus/intelligence/bootstrap", headers=headers)
         assert bootstrap.status_code == 200
         payload = bootstrap.json()
@@ -255,6 +257,7 @@ def test_canonical_intelligence_survives_external_graph_failure(driver_factory):
         assert payload["kpis"]["added_edges"] > 0
         pulses = client.get("/api/v1/nexus/pulses", headers=headers)
         assert pulses.status_code == 200
+        assert payload["kpis"]["active_pulses_count"] == len(pulses.json())
         assert payload["primary_pulse"]["pulse_id"] in {p["pulse_id"] for p in pulses.json()}
         diff = client.get("/api/v1/nexus/diff", headers=headers)
         assert diff.status_code == 200
@@ -267,7 +270,17 @@ def test_canonical_intelligence_survives_external_graph_failure(driver_factory):
         assert {p["pulse_id"] for p in actual_diff["pulses"]} == {
             p["pulse_id"] for p in bootstrap_diff["pulses"]
         }
-        assert client.get("/api/v1/nexus/network", headers=headers).status_code == 503
+        assert client.get("/api/v1/nexus/network", headers=headers).status_code == 200
+        for path in (
+            "/investigations", "/timeline", "/audit?limit=50", "/audit/anchors",
+            "/nexus/leads", "/nexus/resolution/candidates",
+            "/nexus/intelligence/identity-drift", "/nexus/intelligence/identity-drift/summary",
+            "/nexus/intelligence/network-adaptation", "/nexus/intelligence/network-adaptation/summary",
+            "/nexus/intelligence/case-dna/CASE-141?top_k=10",
+            "/nexus/intelligence/offenders?min_cases=2&top_k=50",
+        ):
+            assert client.get(f"/api/v1{path}", headers=headers).status_code == 200, path
+        assert client.get("/api/v1/graph/stats", headers=headers).status_code == 503
         assert client.post("/api/v1/nexus/snapshots?snapshot_id=test", headers=headers).status_code == 503
 
 

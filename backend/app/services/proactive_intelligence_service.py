@@ -57,10 +57,12 @@ class ProactiveIntelligenceService:
         self.repo = repository
         self._snapshots: dict[str, dict[str, Any]] = {}
         self._dynamic_pulses: dict[str, NetworkPulseItem] = {}
+        self._canonical_diff_cache: NetworkDiffResponse | None = None
         self._initialize_baseline_snapshots()
 
     def _initialize_baseline_snapshots(self) -> None:
         """Create initial point-in-time snapshots for testing and demo."""
+        self._canonical_diff_cache = None
         baseline_store = get_canonical_snapshot_store(CANONICAL_SNAPSHOT_BASELINE, self.repo)
         current_store = get_canonical_snapshot_store(CANONICAL_SNAPSHOT_CURRENT, self.repo)
 
@@ -129,6 +131,7 @@ class ProactiveIntelligenceService:
             "dataset_version": CANONICAL_DATASET_VERSION,
         }
         self._snapshots[snapshot_id] = snap_data
+        self._canonical_diff_cache = None
         return GraphSnapshotSummary(
             snapshot_id=snap_data["snapshot_id"],
             case_scope=snap_data["case_scope"],
@@ -271,6 +274,9 @@ class ProactiveIntelligenceService:
         """
         before_id = resolve_snapshot_id(before_snapshot_id)
         after_id = resolve_snapshot_id(after_snapshot_id)
+        canonical_pair = before_id == CANONICAL_SNAPSHOT_BASELINE and after_id == CANONICAL_SNAPSHOT_CURRENT
+        if canonical_pair and self._canonical_diff_cache is not None:
+            return self._canonical_diff_cache.model_copy(deep=True)
 
         before_store = self.get_snapshot_store(before_id)
         after_store = self.get_snapshot_store(after_id)
@@ -296,7 +302,7 @@ class ProactiveIntelligenceService:
             "pulse_count": len(pulses),
         }
 
-        return NetworkDiffResponse(
+        result = NetworkDiffResponse(
             before_snapshot_id=before_id,
             after_snapshot_id=after_id,
             added_nodes=raw_diff.added_nodes,
@@ -309,6 +315,9 @@ class ProactiveIntelligenceService:
             summary=summary_dict,
             dataset_version=CANONICAL_DATASET_VERSION,
         )
+        if canonical_pair:
+            self._canonical_diff_cache = result.model_copy(deep=True)
+        return result
 
     def _filter_network_pulses(
         self,
@@ -479,10 +488,7 @@ class ProactiveIntelligenceService:
         case_id: str | None = None,
     ) -> list[NetworkPulseItem]:
         """List current active pulses from recent snapshots."""
-        baseline_store = self.get_snapshot_store(CANONICAL_SNAPSHOT_BASELINE) or self.repo.to_graph_store()
-        current_store = self.get_snapshot_store(CANONICAL_SNAPSHOT_CURRENT) or self.repo.to_graph_store()
-        diff = diff_graph_snapshots(baseline_store, current_store)
-        diff_pulses = self._filter_network_pulses(diff, baseline_store, current_store)
+        diff_pulses = self.compute_network_diff().pulses
 
         # Ground in canonical read model pulses
         from backend.app.services.canonical_read_model import get_canonical_read_model

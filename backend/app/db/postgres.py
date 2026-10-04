@@ -16,14 +16,17 @@ from typing import Any
 try:
     import psycopg
     from psycopg.types.json import Jsonb
+    from psycopg_pool import ConnectionPool
 except ImportError:
     psycopg = None  # type: ignore[assignment]
     Jsonb = None  # type: ignore[assignment]
+    ConnectionPool = None  # type: ignore[assignment]
 
 from backend.app.core.graph.algorithms.utils import AdjEdge, GraphStore, NodeRecord
 from backend.app.core.graph.enums import ResolutionStatus
 from backend.app.db.ingestion.contracts import IngestionBundle, EntityReviewCandidate
 from backend.app.db.ingestion.graph_adapter import validate_graph_references
+from backend.app.db.in_memory import InMemoryBackendRepository
 from shared.contracts.api import (
     AuditLogEntry,
     EvidenceItemResponse,
@@ -70,7 +73,7 @@ def _to_jsonb(obj: Any) -> Jsonb:
         return Jsonb({})
 
 
-class PostgresBackendRepository:
+class PostgresBackendRepository(InMemoryBackendRepository):
     """PostgreSQL-backed repository with write-through persistence and fast graph indexing."""
 
     def __init__(
@@ -79,8 +82,12 @@ class PostgresBackendRepository:
         artifact_path: Path | None = None,
         state_path: Path | None = None,
         reference_time: datetime | None = None,
+        migration_url: str = "",
     ) -> None:
         self.database_url = database_url
+        if psycopg is None or ConnectionPool is None:
+            raise RuntimeError("PostgreSQL driver and pool dependencies are required")
+        self._migration_url = migration_url or database_url
         self.artifact_path = artifact_path
         self.state_path = state_path
         self.reference_time = reference_time or _utcnow()
@@ -97,25 +104,42 @@ class PostgresBackendRepository:
         self.documents: dict[str, dict[str, Any]] = {}
         self.candidate_extractions: dict[str, dict[str, Any]] = {}
         self.candidate_decisions: dict[str, list[dict[str, Any]]] = {}
+        self.canonical_read_model: dict[str, Any] = {}
+        self.lead_read_model: dict[str, Any] = {}
+        self.intelligence_pulses: dict[str, dict[str, Any]] = {}
+        self.identity_drifts: dict[str, dict[str, Any]] = {}
+        self.network_adaptations: dict[str, dict[str, Any]] = {}
+        self.digital_shadows: dict[str, dict[str, Any]] = {}
+        self.intelligence_events: dict[str, dict[str, Any]] = {}
+        self.verification_tasks: dict[str, dict[str, Any]] = {}
+        self.evidence_assessments: dict[str, dict[str, Any]] = {}
+        self.affected_routes: dict[str, dict[str, Any]] = {}
 
-        # 1. Initialize schema
-        self._init_schema()
-
-        # 2. Sync / Load data from PostgreSQL
-        self._load_from_postgres()
-
-        # 3. If PostgreSQL was empty, seed from artifact
-        if not self.nodes:
-            logger.info("PostgreSQL database is empty. Seeding from artifact dataset...")
-            self._seed_from_artifact()
+        self._pool = ConnectionPool(
+            database_url, min_size=1, max_size=4, timeout=5,
+            kwargs={"connect_timeout": 5}, open=False,
+        )
+        try:
+            self._pool.open(wait=True, timeout=5)
+            self._init_schema()
             self._load_from_postgres()
+            if not self.nodes or "CASE-141" not in self.nodes:
+                logger.info("Initializing missing canonical synthetic dataset records...")
+                self._seed_from_artifact()
+                self._load_from_postgres()
+        except Exception:
+            self._pool.close()
+            raise
 
         # 4. Rebuild graph indices
         self._rebuild_indexes()
 
-    def _get_connection(self) -> psycopg.Connection:
-        """Create a new PostgreSQL connection with sensible timeouts."""
-        return psycopg.connect(self.database_url, connect_timeout=15)
+    def _get_connection(self) -> Any:
+        """Borrow a bounded connection; transaction context returns it to the pool."""
+        return self._pool.connection()
+
+    def close(self) -> None:
+        self._pool.close()
 
     def _init_schema(self) -> None:
         """Create tables and indexes if they do not exist."""
@@ -124,7 +148,7 @@ class PostgresBackendRepository:
             return
 
         try:
-            with self._get_connection() as conn:
+            with psycopg.connect(self._migration_url, connect_timeout=5) as conn:
                 with conn.cursor() as cur:
                     cur.execute(schema_path.read_text(encoding="utf-8"))
                 conn.commit()
@@ -181,11 +205,12 @@ class PostgresBackendRepository:
                         })
 
                     # Load source records
-                    cur.execute("SELECT id, batch_id, source_type, locator, raw_excerpt, hash, occurred_at FROM source_records;")
+                    cur.execute("SELECT id, batch_id, source_type, locator, raw_excerpt, hash, occurred_at, metadata FROM source_records;")
                     self.source_records = {}
                     for row in cur.fetchall():
-                        srid, bid, stype, loc, raw, h, occ = row
+                        srid, bid, stype, loc, raw, h, occ, metadata = row
                         self.source_records[srid] = {
+                            **(metadata or {}),
                             "id": srid,
                             "batch_id": bid,
                             "source_type": stype,
@@ -196,10 +221,10 @@ class PostgresBackendRepository:
                         }
 
                     # Load audit events
-                    cur.execute("SELECT id, user_id, user_role, action, entity_type, entity_id, details, timestamp FROM audit_events ORDER BY timestamp ASC;")
+                    cur.execute("SELECT id, user_id, user_role, action, entity_type, entity_id, details, timestamp, integrity_hash, previous_hash FROM audit_events ORDER BY timestamp ASC;")
                     self.audit_events = []
                     for row in cur.fetchall():
-                        aid, uid, urole, act, etype, eid, det, ts = row
+                        aid, uid, urole, act, etype, eid, det, ts, integrity, previous = row
                         self.audit_events.append({
                             "id": aid,
                             "user_id": uid,
@@ -209,6 +234,8 @@ class PostgresBackendRepository:
                             "entity_id": eid,
                             "details": det or {},
                             "timestamp": ts.isoformat() if ts else _utcnow().isoformat(),
+                            "integrity_hash": integrity,
+                            "previous_hash": previous,
                         })
 
                     # Load review candidates
@@ -225,6 +252,12 @@ class PostgresBackendRepository:
                             "evidence_breakdown": ev_bd or {},
                             "incoming_payload": inc_pay or {},
                         }
+
+                    cur.execute("SELECT key, value FROM system_metadata WHERE key LIKE 'repository:%';")
+                    for key, value in cur.fetchall():
+                        namespace = key.removeprefix("repository:")
+                        if namespace in {"documents", "candidate_extractions", "candidate_decisions", "canonical_read_model", "lead_read_model", "intelligence_pulses", "identity_drifts", "network_adaptations", "digital_shadows", "intelligence_events", "verification_tasks", "evidence_assessments", "affected_routes"}:
+                            setattr(self, namespace, value)
 
             logger.info(
                 "Loaded %d nodes, %d edges, %d audit events from PostgreSQL.",
@@ -244,15 +277,10 @@ class PostgresBackendRepository:
         if not art_path.exists():
             art_path = Path(__file__).resolve().parent / "synthetic_graph.json"
 
-        if art_path.exists():
-            raw = json.loads(art_path.read_text(encoding="utf-8"))
-            nodes_data = raw.get("nodes", [])
-            edges_data = raw.get("edges", [])
-        else:
-            from synthetic_data.nexus_generator import generate_nexus_synthetic_dataset
-            dataset = generate_nexus_synthetic_dataset()["dataset"]
-            nodes_data = dataset.get("nodes", [])
-            edges_data = dataset.get("edges", [])
+        from backend.app.db.in_memory import InMemoryBackendRepository
+        seed = InMemoryBackendRepository(artifact_path=art_path, reference_time=self.reference_time)
+        nodes_data = list(seed.nodes.values())
+        edges_data = seed.edges
 
         try:
             with self._get_connection() as conn:
@@ -266,10 +294,7 @@ class PostgresBackendRepository:
                         """
                         INSERT INTO nodes (id, entity_type, properties, updated_at)
                         VALUES (%s, %s, %s, NOW())
-                        ON CONFLICT (id) DO UPDATE SET
-                            entity_type = EXCLUDED.entity_type,
-                            properties = EXCLUDED.properties,
-                            updated_at = NOW();
+                        ON CONFLICT (id) DO NOTHING;
                         """,
                         node_tuples,
                     )
@@ -300,25 +325,18 @@ class PostgresBackendRepository:
                             confidence, provenance, properties
                         )
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (id) DO UPDATE SET
-                            source_id = EXCLUDED.source_id,
-                            target_id = EXCLUDED.target_id,
-                            edge_type = EXCLUDED.edge_type,
-                            weight = EXCLUDED.weight,
-                            start_time = EXCLUDED.start_time,
-                            end_time = EXCLUDED.end_time,
-                            source_record_id = EXCLUDED.source_record_id,
-                            derivation_class = EXCLUDED.derivation_class,
-                            confidence = EXCLUDED.confidence,
-                            provenance = EXCLUDED.provenance,
-                            properties = EXCLUDED.properties;
+                        ON CONFLICT (id) DO NOTHING;
                         """,
                         edge_tuples,
                     )
                 conn.commit()
+            for source in seed.source_records.values():
+                if source["id"] not in self.source_records:
+                    self.store_source_record(source)
             logger.info("Successfully seeded %d nodes and %d edges into PostgreSQL.", len(nodes_data), len(edges_data))
         except Exception as exc:
             logger.error("Failed to seed artifact into PostgreSQL")
+            raise RuntimeError("Synthetic PostgreSQL initialization failed") from exc
 
     def _rebuild_indexes(self) -> None:
         self.incident_edges = {}
@@ -1095,22 +1113,22 @@ class PostgresBackendRepository:
             integrity_hash=computed_hash,
             previous_hash=previous_hash,
         )
-        self.audit_events.append(entry.model_dump())
-
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
                     cur.execute(
                         """
-                        INSERT INTO audit_events (id, user_id, user_role, action, entity_type, entity_id, details, timestamp)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+                        INSERT INTO audit_events (id, user_id, user_role, action, entity_type, entity_id, details, timestamp, integrity_hash, previous_hash)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                         """,
-                        (entry.id, entry.user_id, entry.user_role, entry.action, entry.entity_type, entry.entity_id, Jsonb(entry.details), entry.timestamp),
+                        (entry.id, entry.user_id, entry.user_role, entry.action, entry.entity_type, entry.entity_id, Jsonb(entry.details), entry.timestamp, entry.integrity_hash, entry.previous_hash),
                     )
                 conn.commit()
         except Exception as exc:
             logger.error("Failed to record audit event in PostgreSQL")
+            raise RuntimeError("Audit persistence unavailable") from None
 
+        self.audit_events.append(entry.model_dump())
         return entry
 
     def list_audit_events(self, limit: int = 100) -> list[AuditLogEntry]:
@@ -1123,9 +1141,49 @@ class PostgresBackendRepository:
 
     # ── Document Repository Methods (P1-A) ──────────────────────────────────
 
+    def _persist_metadata(self, namespace: str, value: Any) -> None:
+        with self._get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO system_metadata (key, value) VALUES (%s, %s) "
+                    "ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()",
+                    (f"repository:{namespace}", _to_jsonb(value)),
+                )
+            conn.commit()
+
+    def _save_state(self) -> None:
+        """Persist the shared operational repository methods in one SQL transaction."""
+        namespaces = (
+            "documents", "candidate_extractions", "candidate_decisions",
+            "intelligence_pulses", "identity_drifts", "network_adaptations",
+            "digital_shadows", "intelligence_events", "verification_tasks",
+            "evidence_assessments", "affected_routes",
+        )
+        with self._get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.executemany(
+                    "INSERT INTO system_metadata (key, value) VALUES (%s, %s) "
+                    "ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()",
+                    [(f"repository:{name}", _to_jsonb(getattr(self, name))) for name in namespaces],
+                )
+            conn.commit()
+
+    def get_canonical_read_model(self) -> dict[str, Any]:
+        if not self.canonical_read_model:
+            from backend.app.services.canonical_read_model import get_canonical_read_model
+            model = get_canonical_read_model()
+            self._persist_metadata("canonical_read_model", model)
+            self.canonical_read_model = model
+        return self.canonical_read_model
+
+    def store_lead_read_model(self, leads: dict[str, Any]) -> None:
+        self._persist_metadata("lead_read_model", leads)
+        self.lead_read_model = leads
+
     def store_document(self, doc_record: dict[str, Any]) -> dict[str, Any]:
         """Store or update a document record in repository cache."""
         doc_id = doc_record["document_id"]
+        self._persist_metadata("documents", {**self.documents, doc_id: doc_record})
         self.documents[doc_id] = doc_record
         return doc_record
 
@@ -1150,6 +1208,18 @@ class PostgresBackendRepository:
     def store_source_record(self, source_record: dict[str, Any]) -> dict[str, Any]:
         """Store or update a source record in repository cache."""
         srid = str(source_record["id"])
+        with self._get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO source_records (id, batch_id, source_type, locator, raw_excerpt, hash, occurred_at, metadata) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO UPDATE SET "
+                    "metadata = EXCLUDED.metadata, hash = EXCLUDED.hash, updated_at = NOW()",
+                    (srid, source_record.get("batch_id"), source_record["source_type"],
+                     source_record.get("locator"), source_record.get("raw_excerpt"),
+                     source_record.get("content_hash") or source_record.get("hash"),
+                     source_record.get("occurred_at"), _to_jsonb(source_record)),
+                )
+            conn.commit()
         self.source_records[srid] = dict(source_record)
         return dict(source_record)
 
@@ -1163,6 +1233,7 @@ class PostgresBackendRepository:
     def store_candidate_extraction(self, extraction_record: dict[str, Any]) -> dict[str, Any]:
         """Store or update candidate extraction results for a document in repository cache."""
         doc_id = extraction_record["document_id"]
+        self._persist_metadata("candidate_extractions", {**self.candidate_extractions, doc_id: extraction_record})
         self.candidate_extractions[doc_id] = extraction_record
         return extraction_record
 
@@ -1191,7 +1262,9 @@ class PostgresBackendRepository:
     def store_candidate_decision(self, decision: dict[str, Any]) -> dict[str, Any]:
         """Store an investigator decision on a candidate entity or relationship."""
         cand_id = str(decision["candidate_id"])
-        self.candidate_decisions.setdefault(cand_id, []).append(decision)
+        decisions = [*self.candidate_decisions.get(cand_id, []), decision]
+        self._persist_metadata("candidate_decisions", {**self.candidate_decisions, cand_id: decisions})
+        self.candidate_decisions[cand_id] = decisions
         return decision
 
     def get_candidate_decisions(self, candidate_id: str) -> list[dict[str, Any]]:
@@ -1211,6 +1284,7 @@ class PostgresBackendRepository:
                     entity["status"] = status
                     if resulting_graph_id is not None:
                         entity["resulting_graph_id"] = resulting_graph_id
+                    self._persist_metadata("candidate_extractions", self.candidate_extractions)
                     return entity
         return None
 
@@ -1227,5 +1301,6 @@ class PostgresBackendRepository:
                     rel["status"] = status
                     if resulting_edge_id is not None:
                         rel["resulting_edge_id"] = resulting_edge_id
+                    self._persist_metadata("candidate_extractions", self.candidate_extractions)
                     return rel
         return None

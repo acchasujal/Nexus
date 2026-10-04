@@ -89,3 +89,40 @@ In full production or multi-station enterprise setups:
 - [x] Frontend SPA rewrite rule (`/*` $\rightarrow$ `/index.html`) enabled via `vercel.json`.
 - [x] Dynamic production CORS origin parsing verified.
 - [x] Ground-truth precision/recall benchmark verified at 100%.
+
+## Neon database and private evidence storage (EXTENSION)
+
+The existing project `delicate-frost-27919131` uses branch `production` in
+`aws-us-east-2`. `neon.ts` declares the private `object` bucket and the standalone
+`api` hello function. NEXUS continues to run its Python API on Render; the hello
+function does not serve investigative data. PostgreSQL uses the existing psycopg
+repository and bounded connection pool. Schema initialization uses the direct URL,
+and runtime queries use the pooled URL. Neo4j remains the complementary graph
+projection. Repository reads stay available while that projection is degraded;
+live graph operations report an explicit unavailable state.
+
+Copy these values from the ignored `backend/.env` into Render's environment:
+
+| Key | Source/value |
+| --- | --- |
+| `DATABASE_URL` | Neon pooled connection string |
+| `DATABASE_URL_UNPOOLED` | Neon direct connection string |
+| `NEXUS_REPOSITORY` | `postgres` |
+| `EVIDENCE_STORAGE_BACKEND` | `s3` (Neon's S3-compatible API) |
+| `EVIDENCE_BUCKET` | `object` |
+| `AWS_ENDPOINT_URL_S3` | Neon Object Storage endpoint |
+| `AWS_ACCESS_KEY_ID` | Neon storage access key |
+| `AWS_SECRET_ACCESS_KEY` | Neon storage secret |
+| `AWS_REGION` | Neon generated signing region |
+
+The AWS-prefixed keys configure the compatible client; they do not require an AWS
+account or AWS bucket. Keep existing `NEO4J_*` settings. Source bytes are stored in
+the private bucket under SHA-256 content-addressed keys; document metadata and
+hashes are stored in PostgreSQL. Authorized downloads verify the stored hash and
+record an audit event. No public object URLs are returned.
+
+Project-local Neon skills are installed in `.agents/skills/`; their provenance is
+in `skills-lock.json`. `.codex/config.toml` adds the project-scoped OAuth MCP
+endpoint. CLI sign-in and MCP authentication are separate; reconnect/authenticate
+the MCP client if its tools are not available. Generated `.neon` and `.env*.local`
+files are ignored. Existing global Codex providers and configuration are preserved.

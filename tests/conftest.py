@@ -13,6 +13,9 @@ os.environ.update({
     "ARTIFACT_PATH": "artifacts/nexus_graph/nexus_graph.json",
     "GROQ_API_KEY": "", "GEMINI_API_KEY": "", "OPENAI_API_KEY": "", "LLM_API_KEY": "",
     "PYTHON_DOTENV_DISABLED": "1",
+    "DATABASE_URL_UNPOOLED": "", "EVIDENCE_STORAGE_BACKEND": "disabled",
+    "EVIDENCE_BUCKET": "object", "AWS_ENDPOINT_URL_S3": "",
+    "AWS_ACCESS_KEY_ID": "", "AWS_SECRET_ACCESS_KEY": "",
 })
 
 from backend.app.config import Settings

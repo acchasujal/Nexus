@@ -127,3 +127,43 @@ Canonical bootstrap, pulse, diff, and snapshot GET reads remain available when t
 Neo4j probes have a separate three-second deadline, sanitized exception/code/cause diagnostics, and readiness failure type. Both NEO4J_USER and the documented NEO4J_USERNAME are accepted. One probe outside the sandbox using backend/.env reproduced ServiceUnavailable caused by gaierror (DNS resolution); Render configuration has not been inspected. No credentials changed.
 
 Validation: 39 affected backend tests passed; Ruff passed; ground truth precision/recall 100%. 20 affected frontend tests passed; production TypeScript/Vite build passed. Full suites were not rerun per the outage request. Commit e31444f pushed to main. Production HTTP checks: login 200 with token, health 200, bootstrap/pulse/diff 200 with canonical dataset and snapshot IDs; initial Render reads timed out before login succeeded, then passed on one bounded retry. Fresh headless Chrome confirmed login navigates without refresh, evidence KPIs render, four active pulses appear, and unavailable card count is zero. External graph recovery still requires confirming the Aura hostname/Render configuration.
+
+## 2026-10-04 - Neon setup and operational read availability (EXTENSION)
+
+Fetched and followed the official Neon overview, PostgreSQL, and Object Storage
+skills. Installed Neon CLI 8.0.6 and project-local skills, added the scoped Neon MCP
+OAuth configuration, linked the existing project/production branch without
+overwriting existing configuration, and deployed the configured hello function.
+The existing `object` bucket was confirmed private. Added root Neon config/env
+dependencies and ignored local branch/environment files. CLI sign-in succeeded;
+MCP client authentication is separate and has not been verified in this session.
+
+Copied exact pooled/direct database and Neon storage credentials into the ignored
+`backend/.env`, preserving unrelated settings. The user copied them into Render
+and redeployed. Render readiness confirmed PostgreSQL available, Neo4j unavailable,
+and zero repository nodes/edges on the older deployed code. This is not a successful
+application-data initialization result.
+
+Local changes narrow the shared graph gate to live graph operations, align bootstrap
+counts with the actual pulse queue, share cached deterministic canonical diffs,
+hydrate live graph analytics from Neo4j after projection, and bound frontend retries.
+Graph enrichment failures render unavailable instead of fabricated empty results.
+The PostgreSQL extension pools runtime connections, uses direct schema connections,
+reuses canonical synthetic initialization, persists document/extraction/decision and
+operational metadata, and preserves audit integrity fields. Private source upload
+and authorized, hash-verified download use the Neon S3-compatible endpoint.
+
+An expiring isolated branch `nexus-availability-20261004` was created for schema and
+integration checks (expires 2026-10-06). It loaded 465 synthetic nodes, 504 edges,
+and 10 sources; document metadata survived reopening the repository. A synthetic
+private storage upload/download/hash check passed and its test object was removed.
+Ruff and ground-truth precision/recall passed. Full backend rerun: 913 passed,
+2 existing opt-in tests skipped. Frontend: 161/162 passed in the full run; the one
+timing failure passed with unchanged assertions on a targeted rerun (4/4). The
+TypeScript/Vite build passed. Test isolation now clears the new cloud storage
+settings, and temporary-directory failures cleared using an isolated workspace
+test directory. Production Neon additive initialization completed with 465
+synthetic nodes, 504 edges, 10 sources, and 12 persisted deterministic leads.
+Lead reads and decisions reuse the durable read model across service restarts.
+Atomic cross-service fusion/outbox recovery and external Neo4j restoration are not
+verified and must not be described as completed by this extension.

@@ -59,6 +59,7 @@ from backend.app.core.graph.enums import ResolutionStatus
 from backend.app.core.graph.services.hotspot_service import HotspotService
 from backend.app.core.graph.services.offender_service import OffenderService
 from backend.app.db.in_memory import InMemoryBackendRepository
+from backend.app.db.postgres import PostgresBackendRepository
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.db.ingestion.pipeline import CsvIngestionPipeline
 from backend.app.services.audit_service import AuditEventType, AuditService
@@ -942,7 +943,15 @@ def create_nexus_router() -> APIRouter:
         repo: InMemoryBackendRepository = Depends(get_repository),
     ) -> list[ResolutionCandidate]:
         if not repo.review_candidates:
-            return _demo_state.candidates
+            candidates = [candidate.model_copy(deep=True) for candidate in _demo_state.candidates]
+            for candidate in candidates:
+                decisions = repo.get_candidate_decisions(candidate.id)
+                if decisions:
+                    latest = decisions[-1]
+                    candidate.status = latest["status"]
+                    candidate.decided_at = latest.get("decided_at")
+                    candidate.decided_by = latest.get("decided_by")
+            return candidates
         results = []
         for c_id, c_data in repo.review_candidates.items():
             # Defense-in-depth: never surface NOT_MATCHED entries in the Fusion UI.
@@ -1020,6 +1029,11 @@ def create_nexus_router() -> APIRouter:
             target_cand.decided_at = datetime.now(timezone.utc).isoformat()
             target_cand.decided_by = authoritative_decided_by
             _demo_state.decision_count += 1
+            repo.store_candidate_decision({
+                "candidate_id": candidate_id, "status": target_cand.status,
+                "decided_at": target_cand.decided_at, "decided_by": authoritative_decided_by,
+                "decision": body.decision, "note": body.note,
+            })
 
             new_snap_id = CANONICAL_SNAPSHOT_CURRENT if body.decision == "CONFIRM" else None
             affected = [target_cand.left.node_id, target_cand.right.node_id] if body.decision == "CONFIRM" else []
@@ -1839,13 +1853,17 @@ def create_nexus_router() -> APIRouter:
         principal: Principal = Depends(get_principal),
         audit_service: AuditService = Depends(get_audit_service),
         proactive_svc: Any = Depends(get_proactive_intelligence_service),
+        repo: Any = Depends(get_repository),
     ) -> IntelligenceBootstrapResponse:
         """
         Fast authoritative intelligence center bootstrap payload (P0).
         Returns summary KPIs, primary network pulse, primary network diff summary,
         and affected investigations directly from the versioned canonical read model.
         """
-        payload = get_intelligence_bootstrap_payload(proactive_svc.compute_network_diff())
+        payload = get_intelligence_bootstrap_payload(
+            proactive_svc.compute_network_diff(), proactive_svc.list_active_pulses(),
+            repo.get_canonical_read_model() if isinstance(repo, PostgresBackendRepository) else None,
+        )
         audit_service.record(
             event_type=AuditEventType.INTELLIGENCE_PULSE_ACKNOWLEDGED,
             actor_id=principal.user_id,

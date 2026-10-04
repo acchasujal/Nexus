@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS audit_events (
 CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_events(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_events(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_events(action);
+ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS integrity_hash VARCHAR(128);
+ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS previous_hash VARCHAR(128);
 
 -- 5. Review Candidates Table (Entity Resolution Review Queue)
 CREATE TABLE IF NOT EXISTS review_candidates (
@@ -98,3 +100,5 @@ CREATE TABLE IF NOT EXISTS system_metadata (
     value JSONB NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE source_records ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;

@@ -18,7 +18,7 @@ from __future__ import annotations
 from typing import Any
 
 import jwt
-from fastapi import APIRouter, Depends, Form, HTTPException, Query, Response, File, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, Response, File, UploadFile
 
 from backend.app.api.dependencies import (
     get_audit_anchor_service,
@@ -789,6 +789,38 @@ def create_core_router() -> APIRouter:
             suppress_audit=False,
         )
         return result or doc
+
+    @router.get("/documents/{document_id}/download")
+    def download_document(
+        document_id: str,
+        request: Request,
+        principal: Principal = Depends(get_principal),
+        repo: Any = Depends(get_repository),
+        auth_policy: EvidenceAuthorizationPolicy = Depends(get_evidence_authorization_policy),
+        audit: AuditService = Depends(get_audit_service),
+    ) -> Response:
+        if principal.is_anonymous:
+            raise HTTPException(status_code=401, detail="Authentication required.")
+        doc = repo.get_document(document_id)
+        if doc is None:
+            raise HTTPException(status_code=404, detail="Document not found.")
+        if doc.get("case_id"):
+            allowed, reason = auth_policy.can_access_case(principal, doc["case_id"])
+            if not allowed:
+                raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+        storage = getattr(request.app.state, "evidence_object_storage", None)
+        if storage is None or not doc.get("object_key"):
+            raise HTTPException(status_code=503, detail="Source file storage is unavailable for this document.")
+        try:
+            data = storage.get(doc["object_key"], doc["content_hash"])
+        except ValueError:
+            raise HTTPException(status_code=409, detail="Source file integrity verification failed.") from None
+        except RuntimeError:
+            raise HTTPException(status_code=503, detail="Source file storage is unavailable.") from None
+        audit.record(event_type=AuditEventType.DOCUMENT_VIEWED, actor_id=principal.user_id,
+                     entity_id=document_id, entity_type="Document", case_id=doc.get("case_id"))
+        return Response(content=data, media_type=doc["mime_type"],
+                        headers={"Content-Disposition": "attachment", "Cache-Control": "no-store"})
 
     @router.get("/documents/{document_id}/text", response_model=DocumentTextResponse)
     def get_document_text(

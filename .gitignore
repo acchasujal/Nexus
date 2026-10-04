@@ -54,3 +54,4 @@ Thumbs.db
 tests/scale/results/*.json
 artifacts/runtime_state/
 .test-tmp/
+.neon

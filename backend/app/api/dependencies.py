@@ -31,14 +31,27 @@ async def require_graph_projection(request: Request) -> None:
     if request.app.state.settings.graph_backend != "neo4j":
         return
     path = request.url.path.removeprefix("/api/v1").rstrip("/") or "/"
-    if path in {"/", "/health", "/ready", "/system/status", "/auth/login"}:
-        return
-    # These handlers read the versioned canonical model or immutable snapshots,
-    # not the external projection. Their principal and audit dependencies still run.
-    if request.method == "GET" and path in {
-        "/nexus/intelligence/bootstrap", "/nexus/pulses", "/nexus/diff",
-        "/nexus/snapshots",
-    }:
+    # Operational reads and immutable snapshot exploration are repository-backed.
+    # Gate only live graph traversal/analytics and graph-changing operations.
+    live_graph = (
+        path.startswith("/graph/")
+        or path == "/nexus/path"
+        or path in {"/communities", "/influence/bridges", "/influence/rankings"}
+        or path.startswith("/network/cases/")
+        or (path.startswith(("/entities/", "/cases/")) and path.endswith("/network"))
+    )
+    graph_mutation = request.method != "GET" and (
+        path in {"/ingest", "/nexus/ingest", "/nexus/demo/reset", "/nexus/snapshots"}
+        or path.endswith(("/accept-entity", "/accept-new", "/accept"))
+        or (path.startswith("/nexus/resolution/") and path.endswith("/decision"))
+    )
+    if path.startswith("/nexus/resolution/") and path.endswith("/decision"):
+        try:
+            body = await request.json()
+            graph_mutation = body.get("decision") == "CONFIRM"
+        except (ValueError, AttributeError):
+            pass  # The route's typed validation reports invalid bodies.
+    if not live_graph and not graph_mutation:
         return
     
     neo4j_conn = getattr(request.app.state, "neo4j", None)
@@ -193,7 +206,8 @@ def get_document_service(
 ) -> Any:
     from backend.app.services.document_service import DocumentService
     event_svc = get_intelligence_event_service(request, repo, audit_svc, auth_policy)
-    return DocumentService(repo, audit_svc, intelligence_event_service=event_svc)
+    storage = getattr(request.app.state, "evidence_object_storage", None)
+    return DocumentService(repo, audit_svc, intelligence_event_service=event_svc, object_storage=storage)
 
 
 def get_read_only_graph_view(

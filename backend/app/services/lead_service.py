@@ -80,6 +80,13 @@ class LeadPipelineService:
         self._context_builder = context_builder or GraphRAGContextBuilder(repository, audit_service=audit_service)
         self._llm_client = llm_client
         self._leads_cache: dict[str, NexusLead] = {}
+        stored_leads = getattr(repository, "lead_read_model", {})
+        self._leads_cache = {key: NexusLead(**value) for key, value in stored_leads.items()}
+
+    def _persist_leads(self) -> None:
+        persist = getattr(self._repo, "store_lead_read_model", None)
+        if persist is not None:
+            persist({key: lead.model_dump(mode="json") for key, lead in self._leads_cache.items()})
 
     def get_leads(self, is_resolved: bool = False) -> list[NexusLead]:
         """Return the current set of leads, generating them if cache is empty."""
@@ -255,6 +262,7 @@ class LeadPipelineService:
 
         dur_ms = (time.perf_counter() - t_start) * 1000.0
         logger.info("LeadPipeline: Scanned and generated %d leads in %.2fms", len(self._leads_cache), dur_ms)
+        self._persist_leads()
         return list(self._leads_cache.values())
 
     def _compute_prioritization(
@@ -436,4 +444,5 @@ class LeadPipelineService:
             },
         )
         logger.info("LeadPipeline: Lead '%s' decided as %s by %s", lead_id, decision_upper, authoritative_decided_by)
+        self._persist_leads()
         return lead

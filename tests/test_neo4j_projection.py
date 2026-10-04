@@ -41,7 +41,9 @@ def make_test_settings(**overrides):
 def mock_neo4j_driver():
     driver = MagicMock()
     driver.verify_connectivity = AsyncMock()
-    driver.execute_query = AsyncMock(return_value=([{"ok": 1}], None, ["ok"]))
+    driver.execute_query = AsyncMock(side_effect=lambda query, **kwargs: (
+        ([{"ok": 1}], None, ["ok"]) if "RETURN 1" in query.text else ([], None, [])
+    ))
     driver.close = AsyncMock()
     return driver
 
@@ -250,7 +252,9 @@ def test_operational_neo4j_allows_data_operations_and_reports_ready(monkeypatch)
 
     driver = MagicMock()
     driver.verify_connectivity = AsyncMock()
-    driver.execute_query = AsyncMock(return_value=([{"ok": 1}], None, ["ok"]))
+    driver.execute_query = AsyncMock(side_effect=lambda query, **kwargs: (
+        ([{"ok": 1}], None, ["ok"]) if "RETURN 1" in query.text else ([], None, [])
+    ))
     driver.close = AsyncMock()
     monkeypatch.setattr(neo4j.AsyncGraphDatabase, "driver", MagicMock(return_value=driver))
 

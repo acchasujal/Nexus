@@ -21,6 +21,7 @@ from shared.contracts.api import (
     CANONICAL_SNAPSHOT_CURRENT,
     CaseDNA,
     CaseDNAMatchResponse,
+    EpistemicState,
     GraphSnapshotSummary,
     IntelligenceBootstrapResponse,
     IntelligenceKPIs,
@@ -689,9 +690,13 @@ def save_canonical_read_model(model: dict[str, Any]) -> None:
         logger.warning("Could not persist canonical read model to disk: %s", e)
 
 
-def get_intelligence_bootstrap_payload(network_diff: NetworkDiffResponse | None = None) -> IntelligenceBootstrapResponse:
+def get_intelligence_bootstrap_payload(
+    network_diff: NetworkDiffResponse | None = None,
+    pulses: list[NetworkPulseItem] | None = None,
+    model: dict[str, Any] | None = None,
+) -> IntelligenceBootstrapResponse:
     """Return compact, fast bootstrap response from the authoritative read model."""
-    model = get_canonical_read_model()
+    model = model if model is not None else get_canonical_read_model()
     kpis_data = model.get("kpis", {})
     kpis = IntelligenceKPIs(**kpis_data)
 
@@ -724,6 +729,18 @@ def get_intelligence_bootstrap_payload(network_diff: NetworkDiffResponse | None 
             "added_nodes": len(network_diff.added_nodes),
             "added_edges": len(network_diff.added_relationships),
             "total_changes": len(network_diff.added_nodes) + len(network_diff.added_relationships),
+        })
+
+    if pulses is not None:
+        assessments = [claim for pulse in pulses for claim in pulse.assessment]
+        supported = sum(claim.state == EpistemicState.SUPPORTS for claim in assessments)
+        kpis = kpis.model_copy(update={
+            "active_pulses_count": len(pulses),
+            "critical_pulses_count": sum(p.review_priority == ReviewPriority.CRITICAL_REVIEW for p in pulses),
+            "affected_cases_count": len({case_id for p in pulses for case_id in p.affected_cases}),
+            "supported_claims": supported,
+            "total_claims": len(assessments),
+            "evidence_percent": round(100 * supported / len(assessments)) if assessments else 0,
         })
 
     return IntelligenceBootstrapResponse(

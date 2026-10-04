@@ -48,6 +48,13 @@ class Settings(BaseSettings):
     # ── Database & Graph ─────────────────────────────────────────────────────
     nexus_repository: str = Field(default="memory", alias="NEXUS_REPOSITORY")
     database_url: str = Field(default="", alias="DATABASE_URL", repr=False, exclude=True)
+    database_url_unpooled: str = Field(default="", alias="DATABASE_URL_UNPOOLED", repr=False, exclude=True)
+    evidence_storage_backend: Literal["disabled", "s3"] = Field(default="disabled", alias="EVIDENCE_STORAGE_BACKEND")
+    evidence_bucket: str = Field(default="object", alias="EVIDENCE_BUCKET")
+    storage_endpoint: str = Field(default="", alias="AWS_ENDPOINT_URL_S3", repr=False)
+    storage_region: str = Field(default="us-east-2", alias="AWS_REGION")
+    storage_access_key: SecretStr = Field(default=SecretStr(""), alias="AWS_ACCESS_KEY_ID", repr=False, exclude=True)
+    storage_secret_key: SecretStr = Field(default=SecretStr(""), alias="AWS_SECRET_ACCESS_KEY", repr=False, exclude=True)
     graph_backend: Literal["memory", "neo4j"] = Field(default="memory", alias="GRAPH_BACKEND")
     neo4j_uri: str = Field(default="", alias="NEO4J_URI", repr=False)
     neo4j_user: str = Field(default="", alias="NEO4J_USER", validation_alias=AliasChoices("NEO4J_USER", "NEO4J_USERNAME"), repr=False)

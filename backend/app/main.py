@@ -60,6 +60,7 @@ def create_app(
 
                 repository = PostgresBackendRepository(
                     database_url=cfg.database_url,
+                    migration_url=cfg.database_url_unpooled,
                     artifact_path=artifact_path,
                     state_path=cfg.effective_state_path,
                 )
@@ -95,6 +96,7 @@ def create_app(
                     nodes = list(repository.nodes.values())
                     edges = repository.edges
                     await connection.sync_projection(nodes, edges)
+                    app.state.graph_repo.replace_store(await connection.to_graph_store())
                 except Exception as ex:
                     logger.warning("Failed to project graph into Neo4j: %s", ex)
                     if cfg.neo4j_failure_policy == "required":
@@ -104,6 +106,8 @@ def create_app(
                 yield
         finally:
             await connection.close()
+            if hasattr(repository, "_pool"):
+                repository.close()
 
     # ── FastAPI App ───────────────────────────────────────────────────────────
     app = FastAPI(
@@ -122,6 +126,13 @@ def create_app(
     app.state.settings = cfg
     app.state.neo4j = connection
     app.state.repository_fallback = repository_fallback
+    from backend.app.services.proactive_intelligence_service import ProactiveIntelligenceService
+    app.state.proactive_intelligence_service = ProactiveIntelligenceService(repository)
+    app.state.proactive_intelligence_service.compute_network_diff()
+    app.state.evidence_object_storage = None
+    if cfg.evidence_storage_backend == "s3":
+        from backend.app.services.object_storage import EvidenceObjectStorage
+        app.state.evidence_object_storage = EvidenceObjectStorage(cfg)
     
     # Store shared pipeline instance to maintain resolution registries
     app.state.pipeline = CsvIngestionPipeline()

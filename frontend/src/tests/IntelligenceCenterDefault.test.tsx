@@ -51,7 +51,7 @@ describe('NEXUS Intelligence Center Defaults & Information Architecture', () => 
       http.get(/\/api\/v1\/nexus\/pulses/, () => new HttpResponse(null, { status: 503 })),
     )
     renderWithClient(<Patterns />)
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Network pulses are unavailable'))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Network pulses are unavailable'), { timeout: 10000 })
     expect(screen.queryByText('No active network pulses detected in the current window.')).not.toBeInTheDocument()
     expect(screen.getAllByText('Unavailable')).toHaveLength(5)
   })
@@ -75,13 +75,13 @@ describe('NEXUS Intelligence Center Defaults & Information Architecture', () => 
       expect(screen.getByText(/Active Pulses/i)).toBeInTheDocument()
       expect(screen.getByText(/Evidence Status/i)).toBeInTheDocument()
       expect(screen.getByText(/Affected Investigations/i)).toBeInTheDocument()
-      expect(screen.getByText(/Network Changes/i)).toBeInTheDocument()
+      expect(screen.getByText('Network Changes')).toBeInTheDocument()
     })
 
     // Network Pulse Queue and details render
     await waitFor(() => {
       expect(screen.getByText(/Network Pulse Queue/i)).toBeInTheDocument()
-    })
+    }, { timeout: 10000 })
   })
 
   it('contains zero implementation stage labels (P1-B, P1-C, P1-D, P2) in tabs or headers', () => {

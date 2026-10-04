@@ -9,6 +9,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { setupServer } from 'msw/node'
+import { http, HttpResponse } from 'msw'
 import { nexusHandlers } from '@/lib/mocks/nexusHandlers'
 import Patterns from '@/pages/Patterns'
 
@@ -153,6 +154,10 @@ describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
   })
 
   it('switches to Network Communities & Connectors tab and renders communities', async () => {
+    server.use(
+      http.get('*/api/v1/communities', () => HttpResponse.json([])),
+      http.get('*/api/v1/influence/bridges', () => HttpResponse.json([])),
+    )
     renderPatterns()
 
     const commTab = screen.getByRole('button', { name: /Network Communities & Connectors/i })

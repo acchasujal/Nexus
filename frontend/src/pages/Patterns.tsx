@@ -99,19 +99,22 @@ export default function Patterns() {
   const [communities, setCommunities] = useState<CommunityItem[]>([])
   const [graphBridges, setGraphBridges] = useState<BridgeItem[]>([])
   const [isGraphAlgoLoading, setIsGraphAlgoLoading] = useState<boolean>(true)
+  const [graphAlgoError, setGraphAlgoError] = useState(false)
   const isMountedRef = useRef<boolean>(true)
 
   const loadGraphAlgos = (setLoading = true) => {
     if (setLoading && isMountedRef.current) setIsGraphAlgoLoading(true)
+    if (isMountedRef.current) setGraphAlgoError(false)
     return Promise.all([
-      apiClient.getCommunities().catch(() => []),
-      apiClient.getBridges().catch(() => []),
+      apiClient.getCommunities(),
+      apiClient.getBridges(),
     ])
       .then(([commData, bridgeData]) => {
         if (!isMountedRef.current) return
         setCommunities(Array.isArray(commData) ? (commData as CommunityItem[]) : [])
         setGraphBridges(Array.isArray(bridgeData) ? (bridgeData as BridgeItem[]) : [])
       })
+      .catch(() => { if (isMountedRef.current) setGraphAlgoError(true) })
       .finally(() => {
         if (isMountedRef.current) {
           setIsGraphAlgoLoading(false)
@@ -136,10 +139,10 @@ export default function Patterns() {
     await Promise.all([
       bootstrapQuery.refetch(),
       refetchPulses(),
-      refetchHotspots(),
-      refetchRadar(),
-      refetchBridges(),
-      loadGraphAlgos(),
+      ...(activeTab === 'hotspots' ? [refetchHotspots()] : []),
+      ...(activeTab === 'radar' ? [refetchRadar()] : []),
+      ...(activeTab === 'combined' ? [refetchBridges()] : []),
+      ...(activeTab === 'communities' ? [loadGraphAlgos()] : []),
     ])
   }
 
@@ -240,7 +243,7 @@ export default function Patterns() {
           }`}
         >
           <GitBranch className="h-4 w-4 text-purple-600" />
-          Cross-District Bridges ({isBridgeLoading ? '...' : bridgeSignals?.length ?? 0})
+          Cross-District Bridges ({bridgeError ? 'Unavailable' : isBridgeLoading ? '...' : bridgeSignals?.length ?? 'Not loaded'})
         </button>
 
         <button
@@ -264,7 +267,7 @@ export default function Patterns() {
           }`}
         >
           <Users className="h-4 w-4 text-blue-600" />
-          Network Communities &amp; Connectors ({isGraphAlgoLoading ? '...' : communities.length + graphBridges.length})
+          Network Communities &amp; Connectors ({graphAlgoError ? 'Unavailable' : isGraphAlgoLoading ? '...' : communities.length + graphBridges.length})
         </button>
 
         <button
@@ -276,7 +279,7 @@ export default function Patterns() {
           }`}
         >
           <Flame className="h-4 w-4 text-red-600" />
-          Crime Hotspots ({isHotspotsLoading ? '...' : hotspots?.length ?? 0})
+          Crime Hotspots ({hotspotsError ? 'Unavailable' : isHotspotsLoading ? '...' : hotspots?.length ?? 'Not loaded'})
         </button>
 
         <button
@@ -288,7 +291,7 @@ export default function Patterns() {
           }`}
         >
           <Radio className="h-4 w-4 text-amber-600" />
-          Repeat-Case Entities ({isRadarLoading ? '...' : repeatOffenders?.length ?? 0})
+          Repeat-Case Entities ({radarError ? 'Unavailable' : isRadarLoading ? '...' : repeatOffenders?.length ?? 'Not loaded'})
         </button>
       </div>
 
@@ -427,7 +430,9 @@ export default function Patterns() {
       {/* TAB 7: NETWORK COMMUNITIES & CONNECTORS */}
       {activeTab === 'communities' && (
         <div className="space-y-6">
-          {isGraphAlgoLoading ? (
+          {graphAlgoError ? (
+            <ErrorState message="Live graph analysis is unavailable. Other intelligence remains available." onRetry={() => void loadGraphAlgos()} />
+          ) : isGraphAlgoLoading ? (
             <div className="text-center py-12 text-neutral-500">Computing graph algorithms &amp; community modules...</div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

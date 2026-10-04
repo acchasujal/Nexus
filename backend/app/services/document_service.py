@@ -63,10 +63,12 @@ class DocumentService:
         repository: Any,
         audit_service: AuditService,
         intelligence_event_service: Any | None = None,
+        object_storage: Any | None = None,
     ) -> None:
         self._repo = repository
         self._audit = audit_service
         self._event_service = intelligence_event_service
+        self._object_storage = object_storage
 
     # ── Upload & Ingestion ───────────────────────────────────────────────────
 
@@ -205,6 +207,8 @@ class DocumentService:
         }
 
         # 10. Persist in repository
+        if self._object_storage is not None:
+            doc_record.update(self._object_storage.put(data, mime_type))
         if hasattr(self._repo, "store_document"):
             self._repo.store_document(doc_record)
         if hasattr(self._repo, "store_source_record"):
