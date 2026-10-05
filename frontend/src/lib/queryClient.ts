@@ -6,9 +6,9 @@ export function retryTransientRequest(failureCount: number, error: Error) {
   return failureCount < 1 && !(error instanceof ApiError && error.status >= 400 && error.status < 600)
 }
 
-// Only lightweight canonical reads use the cold-start recovery budget.
+// Designated read queries opt into bounded cold-start recovery; mutations retain their own policy.
 export function retryColdStartRequest(failureCount: number, error: Error) {
-  return failureCount < 2 && (
+  return failureCount < 3 && (
     error instanceof ApiError
       ? [502, 503, 504].includes(error.status)
       : error instanceof TypeError || error.name === 'TimeoutError'
@@ -16,8 +16,9 @@ export function retryColdStartRequest(failureCount: number, error: Error) {
 }
 
 export function coldStartRetryDelay(attempt: number) {
-  // The final attempt also covers a 37s wake-up when proxies return 503 immediately.
-  return attempt === 0 ? 2000 : 40000
+  // Preserve the early recovery window, then cover the observed ~89s idle wake
+  // even when proxies fail immediately rather than holding the 20s request deadline.
+  return attempt === 0 ? 2000 : attempt === 1 ? 40000 : 70000
 }
 
 export const queryClient = new QueryClient({

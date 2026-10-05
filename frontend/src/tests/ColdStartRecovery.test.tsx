@@ -41,7 +41,7 @@ describe('bounded cold-start recovery', () => {
     expect(screen.queryByText('Unavailable')).not.toBeInTheDocument()
   })
 
-  it('stops at three attempts and never converts failure to empty', async () => {
+  it('stops at four attempts and never converts failure to empty', async () => {
     const error = new ApiError(503, 'Starting', 'Starting')
     const boot = vi.spyOn(apiClient, 'getIntelligenceBootstrap').mockRejectedValue(error)
     const pulses = vi.spyOn(apiClient, 'getPulses').mockRejectedValue(error)
@@ -49,14 +49,22 @@ describe('bounded cold-start recovery', () => {
     await waitFor(() => expect(screen.getAllByText(/synchronization paused after bounded retries/)).toHaveLength(2))
     expect(screen.getByRole('button', { name: `Network Pulse (${DEMO_BASELINE.pulses.length})` })).toBeInTheDocument()
     expect(screen.queryByText('Unavailable')).not.toBeInTheDocument()
-    expect(boot).toHaveBeenCalledTimes(3)
-    expect(pulses).toHaveBeenCalledTimes(3)
+    expect(boot).toHaveBeenCalledTimes(4)
+    expect(pulses).toHaveBeenCalledTimes(4)
     expect(screen.queryByText('No active network pulses detected in the current window.')).not.toBeInTheDocument()
+  })
+
+  it('covers a minute-plus cold wake even when proxies reject immediately', async () => {
+    const { coldStartRetryDelay: delay } = await vi.importActual<typeof import('@/lib/queryClient')>('@/lib/queryClient')
+    expect([0, 1, 2].map(delay)).toEqual([2000, 40000, 70000])
+    expect([0, 1, 2].reduce((sum, attempt) => sum + delay(attempt), 0)).toBe(112000)
+    expect(retryColdStartRequest(2, new ApiError(503, '', 'Starting'))).toBe(true)
+    expect(retryColdStartRequest(3, new ApiError(503, '', 'Starting'))).toBe(false)
   })
 
   it('does not retry authentication refusals or aborts', () => {
     for (const status of [400, 401, 403, 404, 500]) expect(retryColdStartRequest(0, new ApiError(status, '', ''))).toBe(false)
     expect(retryColdStartRequest(0, new DOMException('cancelled', 'AbortError'))).toBe(false)
-    expect(retryColdStartRequest(2, new TypeError('fetch failed'))).toBe(false)
+    expect(retryColdStartRequest(3, new TypeError('fetch failed'))).toBe(false)
   })
 })

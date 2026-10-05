@@ -41,11 +41,11 @@ describe('shared recovery and baseline honesty', () => {
     const fn = vi.fn().mockRejectedValue(new ApiError(503, '', 'Starting'))
     const { result } = renderHook(() => useRecoveringQuery({ queryKey: ['exhausted'], queryFn: fn }, [3]), { wrapper })
     await waitFor(() => expect(result.current.syncState).toBe('baseline'))
-    expect(fn).toHaveBeenCalledTimes(3)
-    await client.fetchQuery({ queryKey: ['healthy-one'], queryFn: async () => [1], meta: { recoveringRead: true } })
-    await waitFor(() => expect(fn).toHaveBeenCalledTimes(4))
-    await client.fetchQuery({ queryKey: ['healthy-two'], queryFn: async () => [2], meta: { recoveringRead: true } })
     expect(fn).toHaveBeenCalledTimes(4)
+    await client.fetchQuery({ queryKey: ['healthy-one'], queryFn: async () => [1], meta: { recoveringRead: true } })
+    await waitFor(() => expect(fn).toHaveBeenCalledTimes(5))
+    await client.fetchQuery({ queryKey: ['healthy-two'], queryFn: async () => [2], meta: { recoveringRead: true } })
+    expect(fn).toHaveBeenCalledTimes(5)
     expect(result.current.data).toEqual([3])
   })
 
@@ -66,10 +66,10 @@ describe('shared recovery and baseline honesty', () => {
     const { rerender } = renderHook(({ enabled }) => useRecoveringQuery({ queryKey: ['tab'], queryFn: fn, enabled }), {
       wrapper, initialProps: { enabled: true },
     })
-    await waitFor(() => expect(fn).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(fn).toHaveBeenCalledTimes(4))
     rerender({ enabled: false })
     await client.fetchQuery({ queryKey: ['healthy'], queryFn: async () => [1], meta: { recoveringRead: true } })
-    expect(fn).toHaveBeenCalledTimes(3)
+    expect(fn).toHaveBeenCalledTimes(4)
   })
 
   it('shows an unknown summary metric rather than zero after a failed summary request', async () => {
@@ -80,7 +80,7 @@ describe('shared recovery and baseline honesty', () => {
     const card = await screen.findByText('Hardware IMEI Hops')
     await waitFor(() => expect(card.closest('.rounded-xl')).toHaveTextContent('Unavailable'))
     expect(card.closest('.rounded-xl')).not.toHaveTextContent(/\b0\b/)
-    expect(summary).toHaveBeenCalledTimes(3)
+    expect(summary).toHaveBeenCalledTimes(4)
   })
 
   it('hydrates Worklist without replacing the baseline with a failed empty array', async () => {
@@ -90,6 +90,8 @@ describe('shared recovery and baseline honesty', () => {
     render(<UIProvider><MemoryRouter><Worklist /></MemoryRouter></UIProvider>, { wrapper })
     expect(screen.getByText(/Canonical demo baseline/)).toBeInTheDocument()
     expect(screen.getByText(DEMO_BASELINE.worklist[0].fir_number)).toBeInTheDocument()
+    expect(screen.getByText('Accused Tracked').closest('.rounded-xl')).toHaveTextContent('Unknown')
+    expect(screen.getByText('All Offence Categories')).toBeInTheDocument()
     await waitFor(() => expect(screen.getByText('Confirmed investigation')).toBeInTheDocument())
     expect(screen.getByText('Confirmed API data')).toBeInTheDocument()
     expect(screen.queryByText(DEMO_BASELINE.worklist[0].fir_number)).not.toBeInTheDocument()

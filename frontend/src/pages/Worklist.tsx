@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { DataTable, type ColumnDef } from '@/components/DataTable'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
@@ -57,7 +57,7 @@ export default function Worklist() {
     staleTime: 5 * 60 * 1000,
   }, DEMO_BASELINE.worklist)
   const { data: investigations = [], isLoading, error } = investigationQuery
-  const fetchInvestigations = () => { void investigationQuery.refetch() }
+  const fetchInvestigations = useCallback(() => { void investigationQuery.refetch() }, [investigationQuery.refetch])
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('')
@@ -91,7 +91,8 @@ export default function Worklist() {
   }, [investigations])
 
   const totalAccused = useMemo(() => {
-    return investigations.reduce((acc, i) => acc + (i.accused_count || 0), 0)
+    if (investigations.some(i => typeof i.accused_count !== 'number')) return 'Unknown'
+    return investigations.reduce((acc, i) => acc + (i.accused_count ?? 0), 0)
   }, [investigations])
 
   const activeInvestigations = useMemo(() => {
@@ -155,7 +156,7 @@ export default function Worklist() {
       accessorKey: 'accused_count',
       cell: (row) => (
         <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
-          <Users className="h-3 w-3 text-neutral-500" /> {row.accused_count || 0}
+          <Users className="h-3 w-3 text-neutral-500" /> {row.accused_count ?? 'Unknown'}
         </span>
       ),
     },
@@ -241,7 +242,7 @@ export default function Worklist() {
           label="Accused Tracked"
           value={totalAccused}
           icon={Users}
-          badge={{ text: 'Resolved', variant: 'success' }}
+          badge={totalAccused === 'Unknown' ? { text: 'Awaiting sync', variant: 'neutral' } : { text: 'Resolved', variant: 'success' }}
           subtext="Unique accused entities"
         />
         <MetricCard
@@ -298,7 +299,7 @@ export default function Worklist() {
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-lg text-xs sm:text-sm text-neutral-800 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors shadow-2xs appearance-none cursor-pointer"
               >
-                <option value="all">All Offence Categories ({categories.length})</option>
+                <option value="all">All Offence Categories{categories.length > 0 ? ` (${categories.length})` : ''}</option>
                 {categories.map((c) => (
                   <option key={c} value={c}>
                     {c}
