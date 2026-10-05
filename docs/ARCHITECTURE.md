@@ -135,3 +135,7 @@ To maintain sub-second UI responsiveness across high-volume crime records:
 - **Deterministic Candidate Blocking:** Entity resolution uses phonetic keys and prefix indexes to bound pairwise comparisons.
 - **O(N + E) Snapshot Diffing:** Diff operations compare dictionaries and adjacency sets in linear time without expensive recursive database joins.
 - **Graceful Degradation:** Local in-memory graph engine operates completely self-contained if external database connections are lost.
+
+
+### Production startup authority (2026-10-05)
+Production graph initialization runs in a lifespan-owned background task by default; NEO4J_BACKGROUND_STARTUP=false opts into blocking startup. PostgreSQL schema/hydration and canonical read preparation complete first. Repository-backed reads/auth may then serve while graph projection initializes. Live graph analytics and mutations remain gated until sync and durable graph read are both complete. Required /ready reports 503 during this interval; /health is liveness. This staging does not permit fallback to a competing graph or relaxed authorization. The task is canceled and awaited before driver/repository shutdown.

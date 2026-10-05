@@ -25,6 +25,8 @@ export function IntelligenceSummaryMetrics() {
         badge={
           isErrorState
             ? { text: 'Sync Error', variant: 'danger' }
+            : isInitialLoading ? { text: 'Connecting', variant: 'neutral' }
+            : isBootstrapError ? { text: 'Stale', variant: 'neutral' }
             : criticalPulsesCount > 0
             ? { text: `${criticalPulsesCount} Critical Review`, variant: 'danger' }
             : { text: 'Queue Normal', variant: 'success' }
@@ -39,6 +41,8 @@ export function IntelligenceSummaryMetrics() {
         badge={
           isErrorState
             ? { text: 'Offline', variant: 'neutral' }
+            : isInitialLoading ? { text: 'Connecting', variant: 'neutral' }
+            : isBootstrapError ? { text: 'Stale', variant: 'neutral' }
             : displayTotalClaims > 0
             ? { text: `${displaySupportedClaims}/${displayTotalClaims} verified claims`, variant: 'neutral' }
             : { text: 'Baseline verified', variant: 'success' }
@@ -50,7 +54,7 @@ export function IntelligenceSummaryMetrics() {
         label="Affected Investigations"
         value={isErrorState ? 'Unavailable' : (isInitialLoading ? '...' : (affectedCasesCount ?? 'Unavailable'))}
         icon={Briefcase}
-        badge={{ text: 'Cross-Jurisdiction', variant: 'neutral' }}
+        badge={{ text: isBootstrapError && kpis ? 'Stale' : 'Cross-Jurisdiction', variant: 'neutral' }}
         tooltip="Unique active police investigations intersecting with detected network changes"
       />
 
@@ -58,7 +62,7 @@ export function IntelligenceSummaryMetrics() {
         label="Network Changes"
         value={isErrorState ? 'Unavailable' : (isInitialLoading ? '...' : `+${totalChanges}`)}
         icon={GitCompare}
-        badge={{ text: kpis ? `+${addedNodes} nodes, +${addedEdges} edges` : (isInitialLoading ? 'Loading' : 'Unavailable'), variant: 'neutral' }}
+        badge={{ text: isBootstrapError && kpis ? 'Stale' : kpis ? `+${addedNodes} nodes, +${addedEdges} edges` : (isInitialLoading ? 'Loading' : 'Unavailable'), variant: 'neutral' }}
         tooltip="Structural network delta between baseline snapshot and current intelligence window"
       />
     </div>

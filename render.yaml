@@ -17,6 +17,8 @@ services:
         generateValue: true
       - key: ARTIFACT_PATH
         value: "artifacts/nexus_graph/nexus_graph.json"
+      - key: NEO4J_BACKGROUND_STARTUP
+        value: "true"
       - key: AUTH_MODE
         value: "demo"
     healthCheckPath: /health

@@ -163,6 +163,7 @@ export const apiClient = {
     return apiFetch<AuthTokenResponse>('/api/v1/auth/login', {
       method: 'POST',
       body: JSON.stringify(req),
+      signal: AbortSignal.timeout(INTELLIGENCE_REQUEST_TIMEOUT_MS),
     })
   },
 

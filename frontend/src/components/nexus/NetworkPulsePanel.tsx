@@ -10,8 +10,8 @@ import { buildInvestigativeUrl } from '@/lib/investigationContext'
 import type { NetworkPulseItem } from '@shared/contracts/api'
 
 export function NetworkPulsePanel() {
-  const { data: bootstrap, isPending: isBootstrapLoading, isError: isBootstrapError, refetch: refetchBootstrap } = useIntelligenceBootstrap()
-  const { data: pulses, isPending: isPulsesLoading, isError: isPulsesError, refetch } = useNetworkPulses(undefined, undefined, !isBootstrapLoading)
+  const { data: bootstrap, isPending: isBootstrapLoading, refetch: refetchBootstrap } = useIntelligenceBootstrap()
+  const { data: pulses, isPending: isPulsesLoading, isError: isPulsesError, refetch } = useNetworkPulses()
   const [selectedPulse, setSelectedPulse] = useState<NetworkPulseItem | null>(null)
   const [isWhyExpanded, setIsWhyExpanded] = useState<boolean>(true)
 
@@ -19,25 +19,27 @@ export function NetworkPulsePanel() {
     ? pulses
     : (bootstrap?.primary_pulse ? [bootstrap.primary_pulse] : [])
 
-  if (isBootstrapLoading && effectivePulses.length === 0) {
+  if ((isBootstrapLoading || isPulsesLoading) && effectivePulses.length === 0) {
     return (
       <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 text-xs text-blue-800 flex items-center gap-2">
         <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-        <span>Scanning for proactive network changes...</span>
+        <span>Connecting to intelligence service…</span>
       </div>
     )
   }
 
-  if (isBootstrapError && isPulsesError && pulses === undefined) {
+  if (isPulsesError && effectivePulses.length === 0) {
     return <div role="alert" className="rounded-xl border border-neutral-200 bg-white p-4">
       Network pulses are unavailable. <button onClick={() => { void refetchBootstrap(); void refetch() }}>Retry</button>
     </div>
   }
 
-  const active = selectedPulse || effectivePulses[0]
+  const active = effectivePulses.find(p => p.pulse_id === selectedPulse?.pulse_id) || effectivePulses[0]
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-xs space-y-4">
+      {(isPulsesError && pulses !== undefined) && <div role="status" className="text-xs text-amber-700">Showing stale pulse data; the latest refresh failed.</div>}
+      {(isPulsesError && pulses === undefined && effectivePulses.length > 0) && <div role="status" className="text-xs text-amber-700">Showing the bootstrap pulse summary; the full queue is unavailable.</div>}
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 pb-3">
         <div className="flex items-center gap-2">
@@ -65,7 +67,7 @@ export function NetworkPulsePanel() {
 
       {effectivePulses.length === 0 ? (
         <div className="text-center py-6 text-xs text-neutral-500">
-          No active network pulses detected in the current window.
+          {pulses === undefined ? 'Fetching investigation intelligence…' : 'No active network pulses detected in the current window.'}
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

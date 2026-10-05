@@ -5,7 +5,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/apiClient'
-import { retryTransientRequest } from '@/lib/queryClient'
+import { retryColdStartRequest, coldStartRetryDelay } from '@/lib/queryClient'
 import type { NexusLeadDecisionRequest, ResolutionDecisionRequest } from '@shared/contracts/api'
 
 export function useResolutionCandidates() {
@@ -228,7 +228,9 @@ export function useNetworkPulses(priority?: string, caseId?: string, enabled = t
     queryKey: ['nexus', 'pulses', priority, caseId],
     queryFn: () => apiClient.getPulses(priority, caseId),
     enabled,
-    retry: retryTransientRequest,
+    retry: retryColdStartRequest,
+    retryDelay: coldStartRetryDelay,
+    refetchOnWindowFocus: (query) => query.state.status === 'error',
     staleTime: 2 * 60 * 1000,
   })
 }
@@ -238,7 +240,9 @@ export function useIntelligenceBootstrap() {
     queryKey: ['nexus', 'intelligence', 'bootstrap'],
     queryFn: () => apiClient.getIntelligenceBootstrap(),
     staleTime: 5 * 60 * 1000,
-    retry: retryTransientRequest,
+    retry: retryColdStartRequest,
+    retryDelay: coldStartRetryDelay,
+    refetchOnWindowFocus: (query) => query.state.status === 'error',
   })
 }
 

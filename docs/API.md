@@ -99,3 +99,7 @@ The following endpoints represent the target interface for upcoming P0 and P1 ca
 ### 2.5 Explainable Case DNA (P2)
 - **`GET /api/v1/nexus/case-dna/{case_id}`**
   - Returns structural and topological similarity breakdown against historical syndicates.
+
+
+### Staged startup availability (2026-10-05)
+With NEO4J_BACKGROUND_STARTUP=true, repository-backed bootstrap/pulses and authentication are available before graph projection completes. Live graph traversals and graph-changing operations return 503 until both sync and durable graph read finish. /health remains process liveness; /ready retains the required dependency policy. No payload contract changes. Bootstrap KPIs derive from the same active pulse assessments as the queue; they are not static historical demo counts.

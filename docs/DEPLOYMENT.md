@@ -126,3 +126,10 @@ in `skills-lock.json`. `.codex/config.toml` adds the project-scoped OAuth MCP
 endpoint. CLI sign-in and MCP authentication are separate; reconnect/authenticate
 the MCP client if its tools are not available. Generated `.neon` and `.env*.local`
 files are ignored. Existing global Codex providers and configuration are preserved.
+
+
+### Cold-start initialization (2026-10-05)
+Production defaults to background graph startup. NEO4J_BACKGROUND_STARTUP=true explicitly enables it (declared by the Render blueprint); false opts into blocking graph startup. Development retains blocking startup by default. PostgreSQL schema/hydration and audit bootstrap remain mandatory. HTTP then serves canonical reads and login while Neo4j connects, validates schema, syncs and reads its durable projection. /health is liveness; required /ready stays 503 until graph readiness. Live graph mutations/reads stay gated. Failure does not switch to an in-memory graph. Background work is canceled and awaited on shutdown.
+Startup logs emit elapsed_ms for PostgreSQL connection, schema, hydration, index rebuild, audit bootstrap, Neo4j connection, schema, sync, read, graph total and factory-to-HTTP readiness. Factory timing excludes earlier Python imports and platform process scheduling; compare Render process timestamps for end-to-end cold-start time. Schema DDL remains unchanged because the current additive schema strategy has no verified cheaper version check.
+The lightweight frontend queries and login allow three attempts, each with a 20s request deadline, and backoffs of 2s then 40s. Immediate proxy 503s therefore get a final attempt after 42s; hung requests finish within about 102s. No infinite polling or new warm-up service was added. Secondary intelligence remains activated by its tab; graph analytics does not block first paint.
+Production cold verification must use a clean browser, an actually cold Render instance, and no refresh. Local simulation alone does not establish production recovery or startup improvement.

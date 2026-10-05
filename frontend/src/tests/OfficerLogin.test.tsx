@@ -22,8 +22,13 @@ import { Header } from '@/components/Header'
 import { AuthProvider, AuthContext, useAuth } from '@/contexts/AuthContext'
 import { UIProvider } from '@/contexts/UIContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { apiClient } from '@/lib/apiClient'
+import { apiClient, ApiError } from '@/lib/apiClient'
 import type { OfficerUser } from '@/contexts/AuthContext'
+
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/lib/queryClient')>(),
+  coldStartRetryDelay: () => 10,
+}))
 
 // Helper component to display auth status
 function DummyWorklist() {
@@ -117,6 +122,21 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
     expect(screen.getByRole('main')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: /Officer Authentication Form/i })).toBeInTheDocument()
     expect(screen.getByText('Officer Authentication Console')).toBeInTheDocument()
+  })
+
+  it('recovers from a cold backend and persists the authoritative session before navigating', async () => {
+    const user = userEvent.setup()
+    const login = vi.spyOn(apiClient, 'login')
+      .mockRejectedValueOnce(new ApiError(503, 'Starting', 'Starting'))
+      .mockRejectedValueOnce(new TypeError('fetch failed'))
+      .mockResolvedValueOnce({ access_token: 'backend-issued-test-token', token_type: 'bearer', user_id: 'KA-1001', role: 'IO', expires_in: 86400 })
+    renderLoginWithRouter()
+    await user.type(screen.getByTestId('officer-id-input'), 'KA-1001')
+    await user.type(screen.getByTestId('password-input'), 'secure-password')
+    await user.click(screen.getByTestId('login-submit-button'))
+    await waitFor(() => expect(screen.getByTestId('worklist-content')).toBeInTheDocument())
+    expect(login).toHaveBeenCalledTimes(3)
+    expect(window.localStorage.getItem('nexus_token')).toBe('backend-issued-test-token')
   })
 
   it('authenticates officer successfully and redirects to /worklist', async () => {

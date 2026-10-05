@@ -72,7 +72,7 @@ export default function Patterns() {
     data: pulses,
     isLoading: isPulsesLoading,
     refetch: refetchPulses,
-  } = useNetworkPulses(undefined, undefined, !bootstrapQuery.isPending)
+  } = useNetworkPulses()
 
   const {
     data: hotspots,
@@ -98,7 +98,7 @@ export default function Patterns() {
   // Graph Modularity / Bridges queries
   const [communities, setCommunities] = useState<CommunityItem[]>([])
   const [graphBridges, setGraphBridges] = useState<BridgeItem[]>([])
-  const [isGraphAlgoLoading, setIsGraphAlgoLoading] = useState<boolean>(true)
+  const [isGraphAlgoLoading, setIsGraphAlgoLoading] = useState<boolean>(false)
   const [graphAlgoError, setGraphAlgoError] = useState(false)
   const isMountedRef = useRef<boolean>(true)
 
@@ -267,7 +267,7 @@ export default function Patterns() {
           }`}
         >
           <Users className="h-4 w-4 text-blue-600" />
-          Network Communities &amp; Connectors ({graphAlgoError ? 'Unavailable' : isGraphAlgoLoading ? '...' : communities.length + graphBridges.length})
+          Network Communities &amp; Connectors ({graphAlgoError ? 'Unavailable' : isGraphAlgoLoading ? '...' : !hasLoadedGraphAlgos.current ? 'Not loaded' : communities.length + graphBridges.length})
         </button>
 
         <button

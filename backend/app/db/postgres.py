@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+from time import perf_counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -120,19 +121,29 @@ class PostgresBackendRepository(InMemoryBackendRepository):
             kwargs={"connect_timeout": 5}, open=False,
         )
         try:
+            started = perf_counter()
             self._pool.open(wait=True, timeout=5)
+            logger.info("startup stage=postgres_connect elapsed_ms=%.1f", (perf_counter() - started) * 1000)
+            started = perf_counter()
             self._init_schema()
+            logger.info("startup stage=postgres_schema elapsed_ms=%.1f", (perf_counter() - started) * 1000)
+            started = perf_counter()
             self._load_from_postgres()
+            logger.info("startup stage=postgres_hydration elapsed_ms=%.1f", (perf_counter() - started) * 1000)
             if not self.nodes or "CASE-141" not in self.nodes:
                 logger.info("Initializing missing canonical synthetic dataset records...")
+                started = perf_counter()
                 self._seed_from_artifact()
                 self._load_from_postgres()
+                logger.info("startup stage=postgres_seed_reload elapsed_ms=%.1f", (perf_counter() - started) * 1000)
         except Exception:
             self._pool.close()
             raise
 
         # 4. Rebuild graph indices
+        started = perf_counter()
         self._rebuild_indexes()
+        logger.info("startup stage=repository_indexes elapsed_ms=%.1f", (perf_counter() - started) * 1000)
 
     def _get_connection(self) -> Any:
         """Borrow a bounded connection; transaction context returns it to the pool."""

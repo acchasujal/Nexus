@@ -10,7 +10,9 @@ Wires together:
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from time import perf_counter
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -46,8 +48,10 @@ def create_app(
     settings: Settings | None = None,
 ) -> FastAPI:
     """Application factory for NEXUS backend."""
+    factory_started = perf_counter()
     cfg = settings or get_settings()
     repository_fallback = False
+    background_graph = cfg.neo4j_background_startup if cfg.neo4j_background_startup is not None else cfg.is_production
 
     # ── Repository ───────────────────────────────────────────────────────────
     if repository is None:
@@ -84,27 +88,57 @@ def create_app(
             )
             logger.info("NEXUS backend initialized with in-memory repository.")
 
+    logger.info("startup stage=repository_total elapsed_ms=%.1f", (perf_counter() - factory_started) * 1000)
     connection = Neo4jConnection(cfg)
+
+    async def initialize_graph(app: FastAPI) -> None:
+        started = perf_counter()
+        try:
+            step = perf_counter()
+            await connection.start()
+            logger.info("startup stage=neo4j_connect elapsed_ms=%.1f", (perf_counter() - step) * 1000)
+            if cfg.graph_backend == "neo4j" and connection.status == "connected":
+                step = perf_counter()
+                await connection.ensure_schema()
+                logger.info("startup stage=neo4j_schema elapsed_ms=%.1f", (perf_counter() - step) * 1000)
+                step = perf_counter()
+                await connection.sync_projection(list(repository.nodes.values()), repository.edges)
+                # Keep mutation/traversal gates closed until the durable read completes.
+                connection.is_operational = False
+                logger.info("startup stage=neo4j_sync elapsed_ms=%.1f", (perf_counter() - step) * 1000)
+                step = perf_counter()
+                app.state.graph_repo.replace_store(await connection.to_graph_store())
+                connection.is_operational = True
+                logger.info("startup stage=neo4j_read elapsed_ms=%.1f", (perf_counter() - step) * 1000)
+        except asyncio.CancelledError:
+            connection.is_operational = False
+            raise
+        except Exception:
+            connection.is_operational = False
+            logger.warning("Graph initialization failed; live graph operations remain gated.")
+            if not background_graph and cfg.neo4j_failure_policy == "required":
+                raise
+        finally:
+            logger.info("startup stage=graph_total elapsed_ms=%.1f", (perf_counter() - started) * 1000)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        graph_task = None
         try:
-            await connection.start()
-            if cfg.graph_backend == "neo4j" and connection.status == "connected":
-                try:
-                    await connection.ensure_schema()
-                    nodes = list(repository.nodes.values())
-                    edges = repository.edges
-                    await connection.sync_projection(nodes, edges)
-                    app.state.graph_repo.replace_store(await connection.to_graph_store())
-                except Exception as ex:
-                    logger.warning("Failed to project graph into Neo4j: %s", ex)
-                    if cfg.neo4j_failure_policy == "required":
-                        await connection.close()
-                        raise
+            if cfg.graph_backend == "neo4j" and background_graph:
+                graph_task = asyncio.create_task(initialize_graph(app))
+            else:
+                await initialize_graph(app)
             async with original_lifespan(app):
+                logger.info("startup stage=http_ready elapsed_ms=%.1f", (perf_counter() - factory_started) * 1000)
                 yield
         finally:
+            if graph_task is not None:
+                graph_task.cancel()
+                try:
+                    await graph_task
+                except asyncio.CancelledError:
+                    pass
             await connection.close()
             if hasattr(repository, "_pool"):
                 repository.close()
@@ -127,8 +161,10 @@ def create_app(
     app.state.neo4j = connection
     app.state.repository_fallback = repository_fallback
     from backend.app.services.proactive_intelligence_service import ProactiveIntelligenceService
+    diff_started = perf_counter()
     app.state.proactive_intelligence_service = ProactiveIntelligenceService(repository)
     app.state.proactive_intelligence_service.compute_network_diff()
+    logger.info("startup stage=canonical_diff elapsed_ms=%.1f", (perf_counter() - diff_started) * 1000)
     app.state.evidence_object_storage = None
     if cfg.evidence_storage_backend == "s3":
         from backend.app.services.object_storage import EvidenceObjectStorage
@@ -149,6 +185,7 @@ def create_app(
     )
 
     # Explicit, idempotent demo bootstrap (production startup only verifies state)
+    audit_started = perf_counter()
     if cfg.auth_mode == "demo" or not cfg.is_production:
         try:
             app.state.audit_anchor_service.bootstrap_demo_audit()
@@ -157,6 +194,8 @@ def create_app(
             logger.warning("Failed to bootstrap demo audit events: %s", exc)
     else:
         logger.info("Production mode: Audit bootstrap skipped; production audit ledger state verified.")
+
+    logger.info("startup stage=audit_bootstrap elapsed_ms=%.1f", (perf_counter() - audit_started) * 1000)
 
     # ── Middleware and error handlers ────────────────────────────────────────
     install_error_handlers(app)

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from 'react'
 import type { UserRole, AuthLoginRequest } from '@shared/contracts/api'
 import { apiClient } from '@/lib/apiClient'
+import { retryColdStartRequest, coldStartRetryDelay } from '@/lib/queryClient'
 
 export interface OfficerUser {
   userId: string
@@ -248,7 +249,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       // Call authoritative backend login API
-      const authRes = await apiClient.login(credentials)
+      const authenticate = async () => {
+        for (let attempt = 0; ; attempt++) {
+          try {
+            return await apiClient.login(credentials)
+          } catch (error) {
+            if (!(error instanceof Error) || !retryColdStartRequest(attempt, error)) throw error
+            await new Promise(resolve => setTimeout(resolve, coldStartRetryDelay(attempt)))
+          }
+        }
+      }
+      const authRes = await authenticate()
       const token = authRes.access_token
       const resolvedRole = authRes.role
       safeSetStorage('nexus_token', token)

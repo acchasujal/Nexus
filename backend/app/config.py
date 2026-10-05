@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     storage_access_key: SecretStr = Field(default=SecretStr(""), alias="AWS_ACCESS_KEY_ID", repr=False, exclude=True)
     storage_secret_key: SecretStr = Field(default=SecretStr(""), alias="AWS_SECRET_ACCESS_KEY", repr=False, exclude=True)
     graph_backend: Literal["memory", "neo4j"] = Field(default="memory", alias="GRAPH_BACKEND")
+    neo4j_background_startup: bool | None = Field(default=None, alias="NEO4J_BACKGROUND_STARTUP")
     neo4j_uri: str = Field(default="", alias="NEO4J_URI", repr=False)
     neo4j_user: str = Field(default="", alias="NEO4J_USER", validation_alias=AliasChoices("NEO4J_USER", "NEO4J_USERNAME"), repr=False)
     neo4j_password: SecretStr = Field(default=SecretStr(""), alias="NEO4J_PASSWORD", exclude=True)

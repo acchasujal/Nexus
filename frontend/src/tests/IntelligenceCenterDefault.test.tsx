@@ -9,7 +9,7 @@
  * 5. Operational Early Warning and Evidence support terminology are used
  * 6. Sidebar shows grouped navigation hierarchy
  */
-import { describe, it, expect, beforeEach, beforeAll, afterAll, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route, Navigate } from 'react-router-dom'
@@ -19,6 +19,11 @@ import { nexusHandlers } from '@/lib/mocks/nexusHandlers'
 import Patterns from '@/pages/Patterns'
 import { Sidebar } from '@/components/Sidebar'
 import { AuthProvider } from '@/contexts/AuthContext'
+
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/lib/queryClient')>(),
+  coldStartRetryDelay: () => 10,
+}))
 
 const server = setupServer(...nexusHandlers)
 
