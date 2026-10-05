@@ -103,3 +103,5 @@ The following endpoints represent the target interface for upcoming P0 and P1 ca
 
 ### Staged startup availability (2026-10-05)
 With NEO4J_BACKGROUND_STARTUP=true, repository-backed bootstrap/pulses and authentication are available before graph projection completes. Live graph traversals and graph-changing operations return 503 until both sync and durable graph read finish. /health remains process liveness; /ready retains the required dependency policy. No payload contract changes. Bootstrap KPIs derive from the same active pulse assessments as the queue; they are not static historical demo counts.
+
+Readiness also reports `startup.factory_to_http_ready_ms` (excludes earlier imports/platform scheduling) and `graph_initialization` status, stage, elapsed_ms and sanitized exception type if initialization fails. These diagnostics contain no credential or exception-message data and do not replace operational graph readiness.

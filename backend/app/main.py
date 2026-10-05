@@ -93,32 +93,42 @@ def create_app(
 
     async def initialize_graph(app: FastAPI) -> None:
         started = perf_counter()
+        app.state.graph_initialization = {"status": "starting", "stage": "connect"}
         try:
             step = perf_counter()
             await connection.start()
             logger.info("startup stage=neo4j_connect elapsed_ms=%.1f", (perf_counter() - step) * 1000)
             if cfg.graph_backend == "neo4j" and connection.status == "connected":
                 step = perf_counter()
+                app.state.graph_initialization["stage"] = "schema"
                 await connection.ensure_schema()
                 logger.info("startup stage=neo4j_schema elapsed_ms=%.1f", (perf_counter() - step) * 1000)
                 step = perf_counter()
+                app.state.graph_initialization["stage"] = "sync"
                 await connection.sync_projection(list(repository.nodes.values()), repository.edges)
                 # Keep mutation/traversal gates closed until the durable read completes.
                 connection.is_operational = False
                 logger.info("startup stage=neo4j_sync elapsed_ms=%.1f", (perf_counter() - step) * 1000)
                 step = perf_counter()
+                app.state.graph_initialization["stage"] = "read"
                 app.state.graph_repo.replace_store(await connection.to_graph_store())
                 connection.is_operational = True
                 logger.info("startup stage=neo4j_read elapsed_ms=%.1f", (perf_counter() - step) * 1000)
+            app.state.graph_initialization["status"] = "ready" if connection.is_operational else "unavailable"
+            if connection.is_operational:
+                app.state.graph_initialization["stage"] = "complete"
         except asyncio.CancelledError:
             connection.is_operational = False
             raise
-        except Exception:
+        except Exception as exc:
             connection.is_operational = False
-            logger.warning("Graph initialization failed; live graph operations remain gated.")
+            app.state.graph_initialization.update(status="failed", failure_type=type(exc).__name__)
+            logger.warning("Graph initialization failed; stage=%s type=%s; live graph operations remain gated.",
+                           app.state.graph_initialization["stage"], type(exc).__name__)
             if not background_graph and cfg.neo4j_failure_policy == "required":
                 raise
         finally:
+            app.state.graph_initialization["elapsed_ms"] = round((perf_counter() - started) * 1000, 1)
             logger.info("startup stage=graph_total elapsed_ms=%.1f", (perf_counter() - started) * 1000)
 
     @asynccontextmanager
@@ -130,6 +140,7 @@ def create_app(
             else:
                 await initialize_graph(app)
             async with original_lifespan(app):
+                app.state.startup_timings["factory_to_http_ready_ms"] = round((perf_counter() - factory_started) * 1000, 1)
                 logger.info("startup stage=http_ready elapsed_ms=%.1f", (perf_counter() - factory_started) * 1000)
                 yield
         finally:
@@ -156,6 +167,8 @@ def create_app(
     app.router.lifespan_context = lifespan
 
     # Store repository on app.state for dependency injection
+    app.state.startup_timings = {}
+    app.state.graph_initialization = {"status": "not_started", "stage": "not_started"}
     app.state.repository = repository
     app.state.settings = cfg
     app.state.neo4j = connection

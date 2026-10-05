@@ -39,7 +39,10 @@ def test_http_serves_while_graph_is_starting_and_shutdown_cancels(monkeypatch):
         assert bootstrap.json()["kpis"]["active_pulses_count"] > 0
         assert client.get("/api/v1/graph/stats", headers=headers).status_code == 503
         assert client.post("/api/v1/nexus/demo/reset", headers=headers).status_code == 503
-        assert client.get("/ready").status_code == 503
+        ready = client.get("/ready")
+        assert ready.status_code == 503
+        assert ready.json()["startup"]["factory_to_http_ready_ms"] >= 0
+        assert ready.json()["graph_initialization"]["status"] == "starting"
     assert cancelled == [True]
 
 
@@ -65,6 +68,11 @@ def test_background_projection_publication_and_failure(monkeypatch, fail):
     with TestClient(app) as client:
         assert client.get("/health").status_code == 200
         assert app.state.neo4j.is_operational is (not fail)
+        state = app.state.graph_initialization
+        assert state["status"] == ("failed" if fail else "ready")
+        assert state["stage"] == ("read" if fail else "complete")
+        if fail:
+            assert state["failure_type"] == "RuntimeError"
         assert client.get("/api/v1/graph/stats").status_code == (503 if fail else 200)
         assert client.get("/api/v1/nexus/intelligence/bootstrap").status_code == 200
 

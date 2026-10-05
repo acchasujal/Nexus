@@ -82,6 +82,8 @@ def create_system_router() -> APIRouter:
             "storage": "postgres" if postgres else "in_memory",
             "storage_available": storage_ok,
             "dependencies_ready": storage_ok and (graph_connected or not graph_required),
+            "startup": getattr(request.app.state, "startup_timings", {}),
+            "graph_initialization": getattr(request.app.state, "graph_initialization", {}),
             "graph": {
                 "backend": cfg.graph_backend,
                 "connection": connection.status,
