@@ -109,6 +109,7 @@ export async function apiFetch<T>(
 
   const response = await fetch(fullUrl, {
     ...options,
+    signal: options?.signal ?? (!isMutating ? AbortSignal.timeout(INTELLIGENCE_REQUEST_TIMEOUT_MS) : undefined),
     headers,
   })
 

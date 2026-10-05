@@ -2,6 +2,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './styles/index.css'
+import { installAssetRecovery } from './lib/assetRecovery'
+
+installAssetRecovery()
 
 async function enableMocking(): Promise<void> {
   // Only run MSW in non-production mode

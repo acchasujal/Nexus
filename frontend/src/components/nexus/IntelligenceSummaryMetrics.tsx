@@ -3,7 +3,7 @@ import { useIntelligenceBootstrap } from '@/hooks/useNexus'
 import { MetricCard } from '@/components/ui/MetricCard'
 
 export function IntelligenceSummaryMetrics() {
-  const { data: bootstrap, isPending: isInitialLoading, isError: isBootstrapError } = useIntelligenceBootstrap()
+  const { data: bootstrap, isPending: isInitialLoading, isError: isBootstrapError, isBaseline } = useIntelligenceBootstrap()
   const kpis = bootstrap?.kpis
   const activePulsesCount = kpis?.active_pulses_count
   const criticalPulsesCount = kpis?.critical_pulses_count ?? 0
@@ -14,6 +14,7 @@ export function IntelligenceSummaryMetrics() {
   const addedNodes = kpis?.added_nodes
   const addedEdges = kpis?.added_edges
   const totalChanges = kpis?.total_changes
+  const baselineBadge = isBaseline ? { text: 'Demo baseline', variant: 'neutral' as const } : null
   const isErrorState = isBootstrapError && !kpis
 
   return (
@@ -22,7 +23,7 @@ export function IntelligenceSummaryMetrics() {
         label="Active Pulses"
         value={isErrorState ? 'Unavailable' : (isInitialLoading ? '...' : (activePulsesCount ?? 'Unavailable'))}
         icon={Activity}
-        badge={
+        badge={baselineBadge ?? (
           isErrorState
             ? { text: 'Sync Error', variant: 'danger' }
             : isInitialLoading ? { text: 'Connecting', variant: 'neutral' }
@@ -30,7 +31,7 @@ export function IntelligenceSummaryMetrics() {
             : criticalPulsesCount > 0
             ? { text: `${criticalPulsesCount} Critical Review`, variant: 'danger' }
             : { text: 'Queue Normal', variant: 'success' }
-        }
+        )}
         tooltip="Proactive network change intelligence pulses currently awaiting verification"
       />
 
@@ -38,7 +39,7 @@ export function IntelligenceSummaryMetrics() {
         label="Evidence Status"
         value={isErrorState ? 'Unavailable' : (isInitialLoading ? '...' : `Evidence-linked: ${evidencePercent}%`)}
         icon={ShieldCheck}
-        badge={
+        badge={baselineBadge ?? (
           isErrorState
             ? { text: 'Offline', variant: 'neutral' }
             : isInitialLoading ? { text: 'Connecting', variant: 'neutral' }
@@ -46,7 +47,7 @@ export function IntelligenceSummaryMetrics() {
             : displayTotalClaims > 0
             ? { text: `${displaySupportedClaims}/${displayTotalClaims} verified claims`, variant: 'neutral' }
             : { text: 'Baseline verified', variant: 'success' }
-        }
+        )}
         tooltip="Proportion of verified claims with corroborating evidence references in active pulse scope"
       />
 
@@ -54,7 +55,7 @@ export function IntelligenceSummaryMetrics() {
         label="Affected Investigations"
         value={isErrorState ? 'Unavailable' : (isInitialLoading ? '...' : (affectedCasesCount ?? 'Unavailable'))}
         icon={Briefcase}
-        badge={{ text: isBootstrapError && kpis ? 'Stale' : 'Cross-Jurisdiction', variant: 'neutral' }}
+        badge={baselineBadge ?? { text: isBootstrapError && kpis ? 'Stale' : 'Cross-Jurisdiction', variant: 'neutral' }}
         tooltip="Unique active police investigations intersecting with detected network changes"
       />
 
@@ -62,7 +63,7 @@ export function IntelligenceSummaryMetrics() {
         label="Network Changes"
         value={isErrorState ? 'Unavailable' : (isInitialLoading ? '...' : `+${totalChanges}`)}
         icon={GitCompare}
-        badge={{ text: isBootstrapError && kpis ? 'Stale' : kpis ? `+${addedNodes} nodes, +${addedEdges} edges` : (isInitialLoading ? 'Loading' : 'Unavailable'), variant: 'neutral' }}
+        badge={baselineBadge ?? { text: isBootstrapError && kpis ? 'Stale' : kpis ? `+${addedNodes} nodes, +${addedEdges} edges` : (isInitialLoading ? 'Loading' : 'Unavailable'), variant: 'neutral' }}
         tooltip="Structural network delta between baseline snapshot and current intelligence window"
       />
     </div>

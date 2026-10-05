@@ -1,9 +1,12 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { DataTable, type ColumnDef } from '@/components/DataTable'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
 import { apiClient } from '@/lib/apiClient'
+import { useRecoveringQuery } from '@/hooks/useRecoveringQuery'
+import { DEMO_BASELINE } from '@/lib/demoBaseline'
+import { SyncStatus } from '@/components/SyncStatus'
 import { buildInvestigativeUrl } from '@/lib/investigationContext'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { MetricCard } from '@/components/ui/MetricCard'
@@ -48,54 +51,18 @@ interface InvestigationItem {
 
 export default function Worklist() {
   const navigate = useNavigate()
-  const [investigations, setInvestigations] = useState<InvestigationItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const investigationQuery = useRecoveringQuery<InvestigationItem[]>({
+    queryKey: ['nexus', 'investigations'],
+    queryFn: () => apiClient.getInvestigations(),
+    staleTime: 5 * 60 * 1000,
+  }, DEMO_BASELINE.worklist)
+  const { data: investigations = [], isLoading, error } = investigationQuery
+  const fetchInvestigations = () => { void investigationQuery.refetch() }
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('')
   const [districtFilter, setDistrictFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
-
-  const fetchInvestigations = useCallback(() => {
-    setIsLoading(true)
-    apiClient.getInvestigations()
-      .then((data) => {
-        setInvestigations(Array.isArray(data) ? (data as InvestigationItem[]) : [])
-        setError(null)
-      })
-      .catch((err) => {
-        console.error('Failed to load investigations:', err)
-        setError('Unable to connect to NEXUS backend intelligence service.')
-      })
-      .finally(() => setIsLoading(false))
-  }, [])
-
-  useEffect(() => {
-    let isMounted = true
-    apiClient.getInvestigations()
-      .then((data) => {
-        if (isMounted) {
-          setInvestigations(Array.isArray(data) ? (data as InvestigationItem[]) : [])
-          setError(null)
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          console.error('Failed to load investigations:', err)
-          setError('Unable to connect to NEXUS backend intelligence service.')
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoading(false)
-        }
-      })
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
 
   // Filtered dataset
   const filteredData = useMemo(() => {
@@ -238,7 +205,7 @@ export default function Worklist() {
     return (
       <ErrorState
         title="Failed to Load Investigations"
-        description={error}
+        description={error.message}
         onRetry={fetchInvestigations}
       />
     )
@@ -252,6 +219,8 @@ export default function Worklist() {
         title="Active Investigation Worklist"
         subtitle="Browse and query ongoing criminal investigations, accused suspects, and cross-case intelligence graphs."
       />
+
+      <SyncStatus state={investigationQuery.syncState} isBaseline={investigationQuery.isBaseline} />
 
       {/* Summary Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

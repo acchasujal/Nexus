@@ -12,7 +12,7 @@
  * 8. Crime Hotspots (Concentration density, drilldown)
  * 9. Repeat-Case Entities (Entity-resolved aliases, district spread)
  */
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Layers, Network, Users, Share2, AlertTriangle, ShieldCheck, Inbox,
@@ -27,6 +27,7 @@ import {
   useIntelligenceBootstrap,
 } from '@/hooks/useNexus'
 import { apiClient } from '@/lib/apiClient'
+import { useRecoveringQuery } from '@/hooks/useRecoveringQuery'
 import { HotspotDrilldownModal } from '@/components/nexus/HotspotDrilldownModal'
 import { EvidenceDrawer } from '@/components/nexus/EvidenceDrawer'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
@@ -38,6 +39,7 @@ import { NetworkAdaptationSection } from '@/components/nexus/NetworkAdaptationSe
 import { DigitalShadowSection } from '@/components/nexus/DigitalShadowSection'
 import { CaseDNASection } from '@/components/nexus/CaseDNASection'
 import { NetworkPulsePanel } from '@/components/nexus/NetworkPulsePanel'
+import { SyncStatus } from '@/components/SyncStatus'
 import { IntelligenceSummaryMetrics } from '@/components/nexus/IntelligenceSummaryMetrics'
 
 type HubTab = 'pulse' | 'drift' | 'adaptation' | 'dna' | 'combined' | 'shadow' | 'communities' | 'hotspots' | 'radar'
@@ -79,6 +81,7 @@ export default function Patterns() {
     isLoading: isHotspotsLoading,
     error: hotspotsError,
     refetch: refetchHotspots,
+    syncState: hotspotsSyncState,
   } = useIntelligenceHotspots(activeTab === 'hotspots')
 
   const {
@@ -86,6 +89,7 @@ export default function Patterns() {
     isLoading: isRadarLoading,
     error: radarError,
     refetch: refetchRadar,
+    syncState: radarSyncState,
   } = useRepeatOffenderRadar(minCasesFilter, 50, activeTab === 'radar')
 
   const {
@@ -93,47 +97,24 @@ export default function Patterns() {
     isLoading: isBridgeLoading,
     error: bridgeError,
     refetch: refetchBridges,
+    syncState: bridgesSyncState,
   } = useCombinedBridgeSignals(activeTab === 'combined')
 
   // Graph Modularity / Bridges queries
-  const [communities, setCommunities] = useState<CommunityItem[]>([])
-  const [graphBridges, setGraphBridges] = useState<BridgeItem[]>([])
-  const [isGraphAlgoLoading, setIsGraphAlgoLoading] = useState<boolean>(false)
-  const [graphAlgoError, setGraphAlgoError] = useState(false)
-  const isMountedRef = useRef<boolean>(true)
-
-  const loadGraphAlgos = (setLoading = true) => {
-    if (setLoading && isMountedRef.current) setIsGraphAlgoLoading(true)
-    if (isMountedRef.current) setGraphAlgoError(false)
-    return Promise.all([
-      apiClient.getCommunities(),
-      apiClient.getBridges(),
-    ])
-      .then(([commData, bridgeData]) => {
-        if (!isMountedRef.current) return
-        setCommunities(Array.isArray(commData) ? (commData as CommunityItem[]) : [])
-        setGraphBridges(Array.isArray(bridgeData) ? (bridgeData as BridgeItem[]) : [])
-      })
-      .catch(() => { if (isMountedRef.current) setGraphAlgoError(true) })
-      .finally(() => {
-        if (isMountedRef.current) {
-          setIsGraphAlgoLoading(false)
-        }
-      })
-  }
-
-  // Lazy load graph modularity when its tab is active
-  const hasLoadedGraphAlgos = useRef(false)
-  useEffect(() => {
-    isMountedRef.current = true
-    if (activeTab === 'communities' && !hasLoadedGraphAlgos.current) {
-      loadGraphAlgos(true)
-      hasLoadedGraphAlgos.current = true
-    }
-    return () => {
-      isMountedRef.current = false
-    }
-  }, [activeTab])
+  const graphQuery = useRecoveringQuery({
+    queryKey: ['nexus', 'intelligence', 'communities-and-bridges'],
+    queryFn: async () => {
+      const [communities, bridges] = await Promise.all([apiClient.getCommunities(), apiClient.getBridges()])
+      return { communities: communities as CommunityItem[], bridges: bridges as BridgeItem[] }
+    },
+    enabled: activeTab === 'communities',
+    staleTime: 5 * 60 * 1000,
+  })
+  const communities = graphQuery.data?.communities ?? []
+  const graphBridges = graphQuery.data?.bridges ?? []
+  const isGraphAlgoLoading = graphQuery.isLoading
+  const graphAlgoError = graphQuery.isError
+  const loadGraphAlgos = () => graphQuery.refetch()
 
   const handleRefreshAll = async () => {
     await Promise.all([
@@ -182,6 +163,7 @@ export default function Patterns() {
       </div>
 
       {/* Real Intelligence Summary Metrics */}
+      <SyncStatus state={bootstrapQuery.syncState} isBaseline={bootstrapQuery.isBaseline} />
       <IntelligenceSummaryMetrics />
 
       {/* Primary Tab Navigation */}
@@ -267,7 +249,7 @@ export default function Patterns() {
           }`}
         >
           <Users className="h-4 w-4 text-blue-600" />
-          Network Communities &amp; Connectors ({graphAlgoError ? 'Unavailable' : isGraphAlgoLoading ? '...' : !hasLoadedGraphAlgos.current ? 'Not loaded' : communities.length + graphBridges.length})
+          Network Communities &amp; Connectors ({graphAlgoError ? 'Unavailable' : isGraphAlgoLoading ? '...' : graphQuery.data === undefined ? 'Not loaded' : communities.length + graphBridges.length})
         </button>
 
         <button
@@ -318,6 +300,7 @@ export default function Patterns() {
       {/* TAB 5: CROSS-DISTRICT BRIDGES */}
       {activeTab === 'combined' && (
         <div className="space-y-6">
+          <SyncStatus state={bridgesSyncState} />
           {isBridgeLoading ? (
             <LoadingSkeleton layout="card" />
           ) : bridgeError ? (
@@ -430,6 +413,7 @@ export default function Patterns() {
       {/* TAB 7: NETWORK COMMUNITIES & CONNECTORS */}
       {activeTab === 'communities' && (
         <div className="space-y-6">
+          <SyncStatus state={graphQuery.syncState} />
           {graphAlgoError ? (
             <ErrorState message="Live graph analysis is unavailable. Other intelligence remains available." onRetry={() => void loadGraphAlgos()} />
           ) : isGraphAlgoLoading ? (
@@ -533,6 +517,7 @@ export default function Patterns() {
       {/* TAB 8: CRIME HOTSPOTS */}
       {activeTab === 'hotspots' && (
         <div className="space-y-6">
+          <SyncStatus state={hotspotsSyncState} />
 
           {isHotspotsLoading ? (
             <LoadingSkeleton layout="card" />
@@ -641,6 +626,7 @@ export default function Patterns() {
       {/* TAB 2: REPEAT OFFENDER RADAR */}
       {activeTab === 'radar' && (
         <div className="space-y-6">
+          <SyncStatus state={radarSyncState} />
           {/* Filter Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-neutral-200 bg-white shadow-xs">
             <div className="space-y-0.5">

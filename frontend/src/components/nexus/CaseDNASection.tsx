@@ -33,6 +33,7 @@ import {
   FileText,
 } from 'lucide-react'
 import { useCaseDNA } from '@/hooks/useNexus'
+import { SyncStatus } from '@/components/SyncStatus'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
@@ -53,6 +54,7 @@ export function CaseDNASection({ initialCaseId = 'CASE-141' }: CaseDNASectionPro
     isLoading,
     error,
     refetch,
+    syncState,
   } = useCaseDNA(selectedCaseId, 10)
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -65,6 +67,7 @@ export function CaseDNASection({ initialCaseId = 'CASE-141' }: CaseDNASectionPro
 
   return (
     <div className="space-y-6">
+      <SyncStatus state={syncState} />
       {/* Top Banner & Explanation */}
       <div className="bg-gradient-to-r from-indigo-900/10 via-sky-900/5 to-transparent border border-indigo-200/50 rounded-xl p-5">
         <div className="flex items-start gap-4">

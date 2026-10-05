@@ -45,7 +45,7 @@ describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
     renderPatterns()
 
     // Default tab is Network Pulse
-    expect(screen.getByRole('button', { name: /Network Pulse/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Network Pulse \(/i })).toBeInTheDocument()
 
     // Tab buttons exist
     expect(screen.getByRole('button', { name: /Crime Hotspots/i })).toBeInTheDocument()
@@ -150,7 +150,7 @@ describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
     expect(screen.getAllByText(/RED FLAG — Cross-District Criminal Network Bridge/i).length).toBeGreaterThan(0)
     expect(screen.getByText(/Crime hotspot: District Mumbai Central \(87 cases\)/i)).toBeInTheDocument()
     expect(screen.getByText(/Cross-case bridge detected\./i)).toBeInTheDocument()
-    expect(screen.getByText(/Bridges Mumbai Central ↔ Pune City, Thane/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Bridges Mumbai Central ↔ Pune City, Thane/i)).toBeInTheDocument()
   })
 
   it('switches to Network Communities & Connectors tab and renders communities', async () => {

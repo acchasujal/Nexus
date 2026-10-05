@@ -1,3 +1,4 @@
+import { SyncStatus } from '@/components/SyncStatus'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -11,7 +12,7 @@ import type { NetworkPulseItem } from '@shared/contracts/api'
 
 export function NetworkPulsePanel() {
   const { data: bootstrap, isPending: isBootstrapLoading, refetch: refetchBootstrap } = useIntelligenceBootstrap()
-  const { data: pulses, isPending: isPulsesLoading, isError: isPulsesError, refetch } = useNetworkPulses()
+  const { data: pulses, isPending: isPulsesLoading, isError: isPulsesError, isBaseline, syncState, refetch } = useNetworkPulses()
   const [selectedPulse, setSelectedPulse] = useState<NetworkPulseItem | null>(null)
   const [isWhyExpanded, setIsWhyExpanded] = useState<boolean>(true)
 
@@ -40,6 +41,7 @@ export function NetworkPulsePanel() {
     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-xs space-y-4">
       {(isPulsesError && pulses !== undefined) && <div role="status" className="text-xs text-amber-700">Showing stale pulse data; the latest refresh failed.</div>}
       {(isPulsesError && pulses === undefined && effectivePulses.length > 0) && <div role="status" className="text-xs text-amber-700">Showing the bootstrap pulse summary; the full queue is unavailable.</div>}
+      <SyncStatus state={syncState} isBaseline={isBaseline} />
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 pb-3">
         <div className="flex items-center gap-2">

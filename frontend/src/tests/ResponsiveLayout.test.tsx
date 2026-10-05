@@ -81,7 +81,7 @@ describe('Responsive Workspace & Viewport Adaptation', () => {
 
     // Expect Intelligence Center banner & tabs
     expect(screen.getByText(/Intelligence Center/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Network Pulse/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Network Pulse \(/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Crime Hotspots/i })).toBeInTheDocument()
 
     // Switch to Crime Hotspots tab

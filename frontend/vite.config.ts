@@ -5,7 +5,24 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), {
+    name: 'preload-deployment-modules',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, context) {
+        const tags = Object.values(context.bundle ?? {})
+          .filter(output => output.type === 'chunk' && !html.includes(output.fileName))
+          .map(output => ({
+            tag: 'link',
+            attrs: { rel: 'modulepreload', href: `/${output.fileName}`, crossorigin: '', fetchpriority: 'low' },
+            injectTo: 'head' as const,
+          }))
+        return { html, tags }
+      },
+    },
+  }],
+  define: { 'import.meta.env.VITE_BUILD_ID': JSON.stringify(process.env.VERCEL_GIT_COMMIT_SHA || 'local') },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -22,6 +39,7 @@ export default defineConfig({
     },
   },
   build: {
+    manifest: true,
     // Raise the warning threshold — our chunks are now split intentionally
     chunkSizeWarningLimit: 600,
     rollupOptions: {

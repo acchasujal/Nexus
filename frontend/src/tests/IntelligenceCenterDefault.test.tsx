@@ -50,15 +50,16 @@ function renderWithClient(ui: React.ReactElement, initialPath = '/intelligence')
 }
 
 describe('NEXUS Intelligence Center Defaults & Information Architecture', () => {
-  it('shows unavailable rather than an empty queue when intelligence requests fail', async () => {
+  it('retains the labelled canonical baseline rather than an empty queue when intelligence requests fail', async () => {
     server.use(
       http.get(/\/api\/v1\/nexus\/intelligence\/bootstrap/, () => new HttpResponse(null, { status: 503 })),
       http.get(/\/api\/v1\/nexus\/pulses/, () => new HttpResponse(null, { status: 503 })),
     )
     renderWithClient(<Patterns />)
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Network pulses are unavailable'), { timeout: 10000 })
+    await waitFor(() => expect(screen.getAllByText(/synchronization paused after bounded retries/)).toHaveLength(2), { timeout: 10000 })
     expect(screen.queryByText('No active network pulses detected in the current window.')).not.toBeInTheDocument()
-    expect(screen.getAllByText('Unavailable')).toHaveLength(5)
+    expect(screen.queryByText('Unavailable')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Network Pulse (3)' })).toBeInTheDocument()
   })
   beforeEach(() => {
     window.localStorage.setItem('nexus_role', 'INVESTIGATOR')
@@ -71,7 +72,7 @@ describe('NEXUS Intelligence Center Defaults & Information Architecture', () => 
     expect(screen.getByRole('heading', { name: /Intelligence Center/i })).toBeInTheDocument()
 
     // Network Pulse tab is selected/active
-    const pulseTab = screen.getByRole('button', { name: /Network Pulse/i })
+    const pulseTab = screen.getByRole('button', { name: /^Network Pulse \(/i })
     expect(pulseTab).toBeInTheDocument()
     expect(pulseTab.className).toContain('border-indigo-600')
 

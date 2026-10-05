@@ -48,7 +48,7 @@ function renderLoginWithRouter(initialEntry = '/login') {
     defaultOptions: { queries: { retry: false } },
   })
 
-  return render(
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <MemoryRouter initialEntries={[initialEntry]}>
@@ -61,6 +61,7 @@ function renderLoginWithRouter(initialEntry = '/login') {
       </AuthProvider>
     </QueryClientProvider>
   )
+  return { ...view, queryClient }
 }
 
 function renderHeaderWithAuth(officer: OfficerUser | null) {
@@ -130,13 +131,19 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
       .mockRejectedValueOnce(new ApiError(503, 'Starting', 'Starting'))
       .mockRejectedValueOnce(new TypeError('fetch failed'))
       .mockResolvedValueOnce({ access_token: 'backend-issued-test-token', token_type: 'bearer', user_id: 'KA-1001', role: 'IO', expires_in: 86400 })
-    renderLoginWithRouter()
+    const { queryClient } = renderLoginWithRouter()
+    queryClient.setQueryData(['nexus', 'investigations'], [{ id: 'previous-officer-case' }])
     await user.type(screen.getByTestId('officer-id-input'), 'KA-1001')
     await user.type(screen.getByTestId('password-input'), 'secure-password')
     await user.click(screen.getByTestId('login-submit-button'))
     await waitFor(() => expect(screen.getByTestId('worklist-content')).toBeInTheDocument())
     expect(login).toHaveBeenCalledTimes(3)
+    expect(queryClient.getQueryData(['nexus', 'investigations'])).toBeUndefined()
     expect(window.localStorage.getItem('nexus_token')).toBe('backend-issued-test-token')
+    queryClient.setQueryData(['nexus', 'investigations'], [{ id: 'current-officer-case' }])
+    await user.click(screen.getByTestId('test-logout-btn'))
+    expect(queryClient.getQueryData(['nexus', 'investigations'])).toBeUndefined()
+    expect(window.localStorage.getItem('nexus_token')).toBeNull()
   })
 
   it('authenticates officer successfully and redirects to /worklist', async () => {

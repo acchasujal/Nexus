@@ -3,6 +3,7 @@ import { render, screen, waitFor, cleanup } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { apiClient, ApiError } from '@/lib/apiClient'
+import { DEMO_BASELINE } from '@/lib/demoBaseline'
 import { retryColdStartRequest } from '@/lib/queryClient'
 import Patterns from '@/pages/Patterns'
 
@@ -30,9 +31,9 @@ describe('bounded cold-start recovery', () => {
     const pulses = vi.spyOn(apiClient, 'getPulses').mockRejectedValueOnce(error).mockRejectedValueOnce(error).mockResolvedValue([])
     const heavy = vi.spyOn(apiClient, 'getCommunities')
     mount()
-    expect(screen.getByText('Connecting to intelligence service…')).toBeInTheDocument()
+    expect(screen.getAllByText(/Canonical demo baseline/).length).toBeGreaterThan(0)
     expect(screen.queryByText('No active network pulses detected in the current window.')).not.toBeInTheDocument()
-    await waitFor(() => expect(screen.getByText('+16')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getAllByText('Confirmed API data')).toHaveLength(2))
     await waitFor(() => expect(screen.getByText('No active network pulses detected in the current window.')).toBeInTheDocument())
     expect(boot).toHaveBeenCalledTimes(3)
     expect(pulses).toHaveBeenCalledTimes(3)
@@ -45,7 +46,9 @@ describe('bounded cold-start recovery', () => {
     const boot = vi.spyOn(apiClient, 'getIntelligenceBootstrap').mockRejectedValue(error)
     const pulses = vi.spyOn(apiClient, 'getPulses').mockRejectedValue(error)
     mount()
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Network pulses are unavailable'))
+    await waitFor(() => expect(screen.getAllByText(/synchronization paused after bounded retries/)).toHaveLength(2))
+    expect(screen.getByRole('button', { name: `Network Pulse (${DEMO_BASELINE.pulses.length})` })).toBeInTheDocument()
+    expect(screen.queryByText('Unavailable')).not.toBeInTheDocument()
     expect(boot).toHaveBeenCalledTimes(3)
     expect(pulses).toHaveBeenCalledTimes(3)
     expect(screen.queryByText('No active network pulses detected in the current window.')).not.toBeInTheDocument()

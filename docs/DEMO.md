@@ -71,3 +71,7 @@ journey
   1. Click **[Dispatch Intelligence Pulse]** to send the packet to the affected investigation.
   2. Open **Copilot** (`/copilot`). Query: *"Show phone and syndicate links connected to case-0001"*. Show verifiable citations.
   3. Query: *"Is the accused guilty?"*. Show the immediate ethical refusal interceptor explanation.
+
+
+### Judge first-paint state (2026-10-05)
+After authentication, Intelligence Center immediately displays the existing versioned canonical synthetic read-model artifact. Its snapshot contains three pulses and six affected investigations; these are historical demo-baseline values, not confirmed current queue counts. The separate syncing label remains visible until API confirmation. Bootstrap/pulse/Worklist responses replace their own baseline independently; a confirmed API queue can differ from the historical snapshot. Temporary failures never become zero or an empty queue. After bounded retries, the baseline remains explicitly labelled with synchronization paused; a later healthy recovering read coordinates one catch-up request for active exhausted observers. Secondary analytics hydrate only when selected. Login commits its issued session and navigates before analytics requests finish.

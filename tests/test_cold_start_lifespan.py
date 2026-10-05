@@ -42,6 +42,8 @@ def test_http_serves_while_graph_is_starting_and_shutdown_cancels(monkeypatch):
         ready = client.get("/ready")
         assert ready.status_code == 503
         assert ready.json()["startup"]["factory_to_http_ready_ms"] >= 0
+        for stage in ("module_imports_ms", "repository_ms", "storage_pipeline_audit_prepare_ms", "routes_and_services_ms"):
+            assert ready.json()["startup"][stage] >= 0
         assert ready.json()["graph_initialization"]["status"] == "starting"
     assert cancelled == [True]
 

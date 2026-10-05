@@ -40,6 +40,7 @@ import {
   useDecideIdentityDrift,
   useIdentityDriftSummary,
 } from '@/hooks/useNexus'
+import { SyncStatus } from '@/components/SyncStatus'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
@@ -100,9 +101,10 @@ export function IdentityDriftRadarSection({ personId }: IdentityDriftRadarSectio
     isLoading,
     error,
     refetch,
+    syncState,
   } = useIdentityDrifts(personId || undefined)
 
-  const { data: summary, refetch: refetchSummary } = useIdentityDriftSummary()
+  const { data: summary, refetch: refetchSummary, syncState: summaryState, isError: summaryError } = useIdentityDriftSummary()
   const decideMutation = useDecideIdentityDrift()
 
   const [typeFilter, setTypeFilter] = useState<string>('ALL')
@@ -144,32 +146,33 @@ export function IdentityDriftRadarSection({ personId }: IdentityDriftRadarSectio
 
   return (
     <div className="space-y-6">
+      <SyncStatus state={syncState === 'confirmed' ? summaryState : syncState} />
       {/* KPI Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           label="Total Drift Events"
           value={summary?.total_drifts ?? drifts.length}
           icon={Radio}
-          badge={{ text: `${summary?.phone_turnovers ?? 0} SIM Shifts`, variant: 'info' }}
+          badge={{ text: `${summary?.phone_turnovers ?? (summaryError ? 'Unavailable' : '...')} SIM Shifts`, variant: 'info' }}
           subtext="Identifier transitions across records"
         />
         <MetricCard
           label="Hardware IMEI Hops"
-          value={summary?.device_hops ?? 0}
+          value={summary?.device_hops ?? (summaryError ? 'Unavailable' : '...')}
           icon={Smartphone}
           badge={{ text: 'Device Hopping', variant: 'warning' }}
           subtext="Telecom switch device movements"
         />
         <MetricCard
           label="Moniker Evolutions"
-          value={summary?.alias_evolutions ?? 0}
+          value={summary?.alias_evolutions ?? (summaryError ? 'Unavailable' : '...')}
           icon={UserCheck}
           badge={{ text: 'Multi-Jurisdiction', variant: 'neutral' }}
           subtext="Cross-case suspect alias variants"
         />
         <MetricCard
           label="Confirmed Links"
-          value={summary?.confirmed_drifts ?? 0}
+          value={summary?.confirmed_drifts ?? (summaryError ? 'Unavailable' : '...')}
           icon={ShieldCheck}
           badge={{ text: 'Officer Audited', variant: 'success' }}
           subtext="Signed into investigation record"

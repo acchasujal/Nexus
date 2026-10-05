@@ -39,6 +39,7 @@ import {
   useDecideNetworkAdaptation,
   useNetworkAdaptationSummary,
 } from '@/hooks/useNexus'
+import { SyncStatus } from '@/components/SyncStatus'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
@@ -94,9 +95,10 @@ export function NetworkAdaptationSection() {
     isLoading,
     error,
     refetch,
+    syncState,
   } = useNetworkAdaptations()
 
-  const { data: summary, refetch: refetchSummary } = useNetworkAdaptationSummary()
+  const { data: summary, refetch: refetchSummary, syncState: summaryState, isError: summaryError } = useNetworkAdaptationSummary()
   const decideMutation = useDecideNetworkAdaptation()
 
   const [typeFilter, setTypeFilter] = useState<string>('ALL')
@@ -137,32 +139,33 @@ export function NetworkAdaptationSection() {
 
   return (
     <div className="space-y-6">
+      <SyncStatus state={syncState === 'confirmed' ? summaryState : syncState} />
       {/* KPI Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           label="Total Structural Adaptations"
           value={summary?.total_adaptations ?? adaptations.length}
           icon={GitFork}
-          badge={{ text: `${summary?.intermediary_replacements ?? 0} Proxy Hops`, variant: 'info' }}
+          badge={{ text: `${summary?.intermediary_replacements ?? (summaryError ? 'Unavailable' : '...')} Proxy Hops`, variant: 'info' }}
           subtext="Reconfigurations post-enforcement"
         />
         <MetricCard
           label="Bridge Broker Substitutions"
-          value={summary?.bridge_substitutions ?? 0}
+          value={summary?.bridge_substitutions ?? (summaryError ? 'Unavailable' : '...')}
           icon={Layers}
           badge={{ text: 'Inter-Syndicate', variant: 'warning' }}
           subtext="Articulation points replaced"
         />
         <MetricCard
           label="Financial Layering Reroutes"
-          value={summary?.financial_reroutings ?? 0}
+          value={summary?.financial_reroutings ?? (summaryError ? 'Unavailable' : '...')}
           icon={Landmark}
           badge={{ text: 'Mule Layering', variant: 'neutral' }}
           subtext="Transaction path redirections"
         />
         <MetricCard
           label="Confirmed Adaptations"
-          value={summary?.confirmed_adaptations ?? 0}
+          value={summary?.confirmed_adaptations ?? (summaryError ? 'Unavailable' : '...')}
           icon={ShieldCheck}
           badge={{ text: 'IO Corroborated', variant: 'success' }}
           subtext="Signed into investigation record"

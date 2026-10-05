@@ -5,7 +5,8 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/apiClient'
-import { retryColdStartRequest, coldStartRetryDelay } from '@/lib/queryClient'
+import { useRecoveringQuery } from '@/hooks/useRecoveringQuery'
+import { DEMO_BASELINE } from '@/lib/demoBaseline'
 import type { NexusLeadDecisionRequest, ResolutionDecisionRequest } from '@shared/contracts/api'
 
 export function useResolutionCandidates() {
@@ -169,7 +170,7 @@ export function useScanLeads() {
 // ── Intelligence Hub Hooks ──────────────────────────────────────────────────
 
 export function useIntelligenceHotspots(enabled: boolean = true) {
-  return useQuery({
+  return useRecoveringQuery({
     queryKey: ['nexus', 'intelligence', 'hotspots'],
     queryFn: () => apiClient.getIntelligenceHotspots(),
     enabled,
@@ -178,7 +179,7 @@ export function useIntelligenceHotspots(enabled: boolean = true) {
 }
 
 export function useHotspotDrilldown(district: string | null, enabled: boolean = true) {
-  return useQuery({
+  return useRecoveringQuery({
     queryKey: ['nexus', 'intelligence', 'hotspots', district],
     queryFn: () => apiClient.getHotspotDrilldown(district!),
     enabled: Boolean(enabled && district && district.trim() !== ''),
@@ -187,7 +188,7 @@ export function useHotspotDrilldown(district: string | null, enabled: boolean = 
 }
 
 export function useRepeatOffenderRadar(minCases: number = 2, topK: number = 50, enabled: boolean = true) {
-  return useQuery({
+  return useRecoveringQuery({
     queryKey: ['nexus', 'intelligence', 'offenders', minCases, topK],
     queryFn: () => apiClient.getRepeatOffenderRadar(minCases, topK),
     enabled,
@@ -196,7 +197,7 @@ export function useRepeatOffenderRadar(minCases: number = 2, topK: number = 50, 
 }
 
 export function useCombinedBridgeSignals(enabled: boolean = true) {
-  return useQuery({
+  return useRecoveringQuery({
     queryKey: ['nexus', 'intelligence', 'combined'],
     queryFn: () => apiClient.getCombinedBridgeSignals(),
     enabled,
@@ -224,26 +225,20 @@ export function useProactiveDiff(before = 'snap-baseline-v1', after = 'snap-curr
 }
 
 export function useNetworkPulses(priority?: string, caseId?: string, enabled = true) {
-  return useQuery({
+  return useRecoveringQuery({
     queryKey: ['nexus', 'pulses', priority, caseId],
     queryFn: () => apiClient.getPulses(priority, caseId),
     enabled,
-    retry: retryColdStartRequest,
-    retryDelay: coldStartRetryDelay,
-    refetchOnWindowFocus: (query) => query.state.status === 'error',
     staleTime: 2 * 60 * 1000,
-  })
+  }, DEMO_BASELINE.pulses.filter(p => (!priority || p.review_priority === priority) && (!caseId || p.affected_cases.includes(caseId))))
 }
 
 export function useIntelligenceBootstrap() {
-  return useQuery({
+  return useRecoveringQuery({
     queryKey: ['nexus', 'intelligence', 'bootstrap'],
     queryFn: () => apiClient.getIntelligenceBootstrap(),
     staleTime: 5 * 60 * 1000,
-    retry: retryColdStartRequest,
-    retryDelay: coldStartRetryDelay,
-    refetchOnWindowFocus: (query) => query.state.status === 'error',
-  })
+  }, DEMO_BASELINE.bootstrap)
 }
 
 // ── P1-A Cross-Jurisdiction Intelligence Pulse Dissemination Hooks ───────────
@@ -280,7 +275,7 @@ export function useAcknowledgeIntelligencePulse() {
 // ── P1-B Identity Drift Radar Hooks ───────────────────────────────────────────
 
 export function useIdentityDrifts(personId?: string, driftType?: string, status?: string) {
-  return useQuery({
+  return useRecoveringQuery({
     queryKey: ['nexus', 'intelligence', 'identity-drift', personId, driftType, status],
     queryFn: () => apiClient.getIdentityDrifts(personId, driftType, status),
     staleTime: 5 * 60 * 1000,
@@ -299,7 +294,7 @@ export function useDecideIdentityDrift() {
 }
 
 export function useIdentityDriftSummary() {
-  return useQuery({
+  return useRecoveringQuery({
     queryKey: ['nexus', 'intelligence', 'identity-drift', 'summary'],
     queryFn: () => apiClient.getIdentityDriftSummary(),
     staleTime: 5 * 60 * 1000,
@@ -309,7 +304,7 @@ export function useIdentityDriftSummary() {
 // ── P1-C Network Adaptation Radar Hooks ─────────────────────────────────────
 
 export function useNetworkAdaptations(adaptationType?: string, status?: string) {
-  return useQuery({
+  return useRecoveringQuery({
     queryKey: ['nexus', 'intelligence', 'network-adaptation', adaptationType, status],
     queryFn: () => apiClient.getNetworkAdaptations(adaptationType, status),
     staleTime: 5 * 60 * 1000,
@@ -328,7 +323,7 @@ export function useDecideNetworkAdaptation() {
 }
 
 export function useNetworkAdaptationSummary() {
-  return useQuery({
+  return useRecoveringQuery({
     queryKey: ['nexus', 'intelligence', 'network-adaptation', 'summary'],
     queryFn: () => apiClient.getNetworkAdaptationSummary(),
     staleTime: 5 * 60 * 1000,
@@ -338,7 +333,7 @@ export function useNetworkAdaptationSummary() {
 // ── P1-D Digital Shadow (SOCMINT Governance) Hooks ──────────────────────────
 
 export function useDigitalShadows(personId?: string, platform?: string, lifecycleState?: string) {
-  return useQuery({
+  return useRecoveringQuery({
     queryKey: ['nexus', 'intelligence', 'digital-shadow', personId, platform, lifecycleState],
     queryFn: () => apiClient.getDigitalShadows(personId, platform, lifecycleState),
     staleTime: 5 * 60 * 1000,
@@ -357,7 +352,7 @@ export function useDecideDigitalShadow() {
 }
 
 export function useDigitalShadowSummary() {
-  return useQuery({
+  return useRecoveringQuery({
     queryKey: ['nexus', 'intelligence', 'digital-shadow', 'summary'],
     queryFn: () => apiClient.getDigitalShadowSummary(),
     staleTime: 5 * 60 * 1000,
@@ -367,7 +362,7 @@ export function useDigitalShadowSummary() {
 // ── P2 Case DNA Explainable Structural Similarity Hooks ─────────────────────
 
 export function useCaseDNA(caseId?: string, topK?: number) {
-  return useQuery({
+  return useRecoveringQuery({
     queryKey: ['nexus', 'intelligence', 'case-dna', caseId, topK],
     queryFn: () => (caseId ? apiClient.getCaseDNA(caseId, topK) : Promise.resolve(null)),
     enabled: Boolean(caseId),

@@ -16,6 +16,8 @@ from time import perf_counter
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+module_import_started = perf_counter()
+
 from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO)
@@ -41,6 +43,8 @@ from backend.app.services.audit_service import AuditService
 from backend.app.services.ingestion_service import IngestionService
 
 logger = logging.getLogger(__name__)
+module_import_elapsed_ms = round((perf_counter() - module_import_started) * 1000, 1)
+logger.info("startup stage=module_imports elapsed_ms=%.1f", module_import_elapsed_ms)
 
 
 def create_app(
@@ -88,7 +92,8 @@ def create_app(
             )
             logger.info("NEXUS backend initialized with in-memory repository.")
 
-    logger.info("startup stage=repository_total elapsed_ms=%.1f", (perf_counter() - factory_started) * 1000)
+    repository_elapsed_ms = round((perf_counter() - factory_started) * 1000, 1)
+    logger.info("startup stage=repository_total elapsed_ms=%.1f", repository_elapsed_ms)
     connection = Neo4jConnection(cfg)
 
     async def initialize_graph(app: FastAPI) -> None:
@@ -182,7 +187,7 @@ def create_app(
     app.router.lifespan_context = lifespan
 
     # Store repository on app.state for dependency injection
-    app.state.startup_timings = {}
+    app.state.startup_timings = {"module_imports_ms": module_import_elapsed_ms, "repository_ms": repository_elapsed_ms}
     app.state.graph_initialization = {"status": "not_started", "stage": "not_started"}
     app.state.repository = repository
     app.state.settings = cfg
@@ -193,6 +198,7 @@ def create_app(
     app.state.proactive_intelligence_service = ProactiveIntelligenceService(repository)
     app.state.proactive_intelligence_service.compute_network_diff()
     logger.info("startup stage=canonical_diff elapsed_ms=%.1f", (perf_counter() - diff_started) * 1000)
+    preparation_started = perf_counter()
     app.state.evidence_object_storage = None
     if cfg.evidence_storage_backend == "s3":
         from backend.app.services.object_storage import EvidenceObjectStorage
@@ -212,6 +218,9 @@ def create_app(
         audit_service=audit_svc,
     )
 
+    app.state.startup_timings["storage_pipeline_audit_prepare_ms"] = round((perf_counter() - preparation_started) * 1000, 1)
+    logger.info("startup stage=storage_pipeline_audit_prepare elapsed_ms=%.1f", app.state.startup_timings["storage_pipeline_audit_prepare_ms"])
+
     # Explicit, idempotent demo bootstrap (production startup only verifies state)
     audit_started = perf_counter()
     if cfg.auth_mode == "demo" or not cfg.is_production:
@@ -226,6 +235,7 @@ def create_app(
     logger.info("startup stage=audit_bootstrap elapsed_ms=%.1f", (perf_counter() - audit_started) * 1000)
 
     # ── Middleware and error handlers ────────────────────────────────────────
+    routes_started = perf_counter()
     install_error_handlers(app)
 
     app.add_middleware(
@@ -281,6 +291,8 @@ def create_app(
     # Chat / Copilot routes
     app.include_router(chat.router, prefix="/api")
 
+    app.state.startup_timings["routes_and_services_ms"] = round((perf_counter() - routes_started) * 1000, 1)
+    logger.info("startup stage=routes_and_services elapsed_ms=%.1f", app.state.startup_timings["routes_and_services_ms"])
     return app
 
 

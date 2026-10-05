@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { UserRole, AuthLoginRequest } from '@shared/contracts/api'
 import { apiClient } from '@/lib/apiClient'
 import { retryColdStartRequest, coldStartRetryDelay } from '@/lib/queryClient'
@@ -220,6 +221,7 @@ function safeRemoveStorage(key: string): void {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryCache = useQueryClient()
   const [role, setRole] = useState<UserRole | null>(() => {
     return getStoredRole()
   })
@@ -239,6 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof credentials === 'string') {
       // Legacy role-based login (used in test fixtures)
       const newRole = credentials as UserRole
+      queryCache.clear()
       const token = createSessionToken(newRole)
       safeSetStorage('nexus_role', newRole)
       safeSetStorage('nexus_token', token)
@@ -260,6 +263,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       const authRes = await authenticate()
+      queryCache.clear()
       const token = authRes.access_token
       const resolvedRole = authRes.role
       safeSetStorage('nexus_token', token)
@@ -282,6 +286,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           throw err
         }
         // Otherwise offline fallback
+        queryCache.clear()
         const fallbackToken = createSessionToken(fallbackRole, credentials.username)
         safeSetStorage('nexus_token', fallbackToken)
         safeSetStorage('nexus_role', fallbackRole)
@@ -294,6 +299,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = () => {
+    queryCache.clear()
     setRole(null)
     setUser(null)
     safeRemoveStorage('nexus_role')
