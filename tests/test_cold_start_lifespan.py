@@ -90,3 +90,60 @@ def test_identical_fresh_sessions_have_identical_metrics_and_reads_do_not_mutate
             assert first["total_claims"] == sum(len(p["assessment"]) for p in pulses)
             metrics.append(first)
     assert metrics[0] == metrics[1]
+
+
+@pytest.mark.parametrize("recover", [True, False])
+def test_background_connect_retries_are_bounded_and_projection_runs_only_once(monkeypatch, recover):
+    original_sleep = asyncio.sleep
+    backoffs = []
+
+    async def short_sleep(delay):
+        backoffs.append(delay)
+        await original_sleep(0)
+
+    async def start(self):
+        self.status = "unavailable"
+        self.failure_type = "TimeoutError"
+
+    async def check(self, **kwargs):
+        self.status = "connected" if recover else "unavailable"
+        return recover
+
+    async def sync(self, nodes, edges):
+        self.is_operational = True
+
+    async def read(self):
+        return InMemoryBackendRepository().to_graph_store()
+
+    monkeypatch.setattr("backend.app.main.asyncio.sleep", short_sleep)
+    start_mock = AsyncMock(side_effect=start)
+    check_mock = AsyncMock(side_effect=check)
+    schema = AsyncMock()
+    sync_mock = AsyncMock(side_effect=sync)
+    # Bind explicit wrappers because AsyncMock does not provide descriptor binding.
+    async def wrapped_start(self):
+        await start_mock(self)
+
+    async def wrapped_check(self, **kwargs):
+        return await check_mock(self, **kwargs)
+
+    async def wrapped_sync(self, nodes, edges):
+        await sync_mock(self, nodes, edges)
+
+    monkeypatch.setattr(Neo4jConnection, "start", wrapped_start)
+    monkeypatch.setattr(Neo4jConnection, "check", wrapped_check)
+    monkeypatch.setattr(Neo4jConnection, "ensure_schema", schema)
+    monkeypatch.setattr(Neo4jConnection, "sync_projection", wrapped_sync)
+    monkeypatch.setattr(Neo4jConnection, "to_graph_store", read)
+    app = make_app()
+    with TestClient(app) as client:
+        assert client.get("/health").status_code == 200
+        assert client.get("/api/v1/nexus/intelligence/bootstrap").status_code == 200
+        assert app.state.neo4j.is_operational is recover
+        assert app.state.graph_initialization["attempt"] == (2 if recover else 3)
+        assert client.get("/api/v1/graph/stats").status_code == (200 if recover else 503)
+    start_mock.assert_awaited_once()
+    assert check_mock.await_count == (1 if recover else 2)
+    assert schema.await_count == (1 if recover else 0)
+    assert sync_mock.await_count == (1 if recover else 0)
+    assert backoffs == ([2] if recover else [2, 4])

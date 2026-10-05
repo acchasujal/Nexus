@@ -35,7 +35,7 @@ from backend.app.config import Settings, get_settings
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.db.postgres import PostgresBackendRepository
-from backend.app.db.neo4j import Neo4jConnection
+from backend.app.db.neo4j import Neo4jConnection, Neo4jUnavailableError
 from backend.app.db.ingestion.pipeline import CsvIngestionPipeline
 from backend.app.services.audit_service import AuditService
 from backend.app.services.ingestion_service import IngestionService
@@ -96,7 +96,22 @@ def create_app(
         app.state.graph_initialization = {"status": "starting", "stage": "connect"}
         try:
             step = perf_counter()
-            await connection.start()
+            for attempt in range(3 if background_graph else 1):
+                app.state.graph_initialization["attempt"] = attempt + 1
+                if attempt:
+                    await asyncio.sleep(2 ** attempt)
+                try:
+                    if attempt == 0 or connection.status == "closed":
+                        await connection.start()
+                    else:
+                        await connection.check(verify=True)
+                except Neo4jUnavailableError:
+                    if not background_graph:
+                        raise
+                if cfg.graph_backend == "memory" or connection.status == "connected":
+                    break
+            if connection.status != "connected" and cfg.graph_backend == "neo4j":
+                app.state.graph_initialization["failure_type"] = connection.failure_type
             logger.info("startup stage=neo4j_connect elapsed_ms=%.1f", (perf_counter() - step) * 1000)
             if cfg.graph_backend == "neo4j" and connection.status == "connected":
                 step = perf_counter()
