@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import type { UserRole } from '@shared/contracts/api'
@@ -76,6 +76,7 @@ export default function Login() {
   const { role, login, isAuthenticated } = useAuth()
   const location = useLocation()
 
+  const submitting = useRef(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -91,6 +92,7 @@ export default function Login() {
 
   const handleSubmit = async (e?: React.FormEvent, overrideCreds?: { username: string; role?: UserRole }) => {
     if (e) e.preventDefault()
+    if (submitting.current) return
     
     const targetUsername = (overrideCreds?.username || username).trim()
     let targetRole = overrideCreds?.role || selectedRole
@@ -121,13 +123,14 @@ export default function Login() {
       }
     }
 
+    submitting.current = true
     setIsLoading(true)
     setErrorMessage(null)
 
     try {
       await login({
         username: targetUsername,
-        password: password || 'nexus-demo-passcode',
+        password: overrideCreds ? 'nexus-demo-passcode' : password || 'nexus-demo-passcode',
         role: targetRole,
       })
       // The authenticated render above redirects after session state commits.
@@ -136,6 +139,7 @@ export default function Login() {
       const msg = err?.message || 'Authentication failed. Please verify your officer credentials.'
       setErrorMessage(msg)
     } finally {
+      submitting.current = false
       setIsLoading(false)
     }
   }
@@ -143,7 +147,7 @@ export default function Login() {
   const handleSelectOfficer = (officer: OfficerProfile) => {
     setUsername(officer.badge)
     setSelectedRole(officer.role)
-    setPassword('••••••••••••')
+    setPassword('')
     setErrorMessage(null)
     handleSubmit(undefined, { username: officer.badge, role: officer.role })
   }
@@ -191,93 +195,16 @@ export default function Login() {
             </div>
           )}
 
-          {/* Login Form */}
-          <form onSubmit={(e) => handleSubmit(e)} className="space-y-2.5 sm:space-y-3">
-            <div>
-              <label 
-                htmlFor="officer-id-input" 
-                className="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-1"
-              >
-                Officer ID / Service Identifier
-              </label>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400">
-                  <User className="h-4 w-4" />
-                </div>
-                <input
-                  id="officer-id-input"
-                  name="username"
-                  type="text"
-                  autoComplete="username"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. KA-1001"
-                  disabled={isLoading}
-                  className="w-full h-9 sm:h-9.5 rounded-lg border border-neutral-300 bg-white pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition-[border-color,box-shadow] duration-150 shadow-2xs disabled:bg-neutral-100"
-                  data-testid="officer-id-input"
-                />
-              </div>
+          {isLoading && selectedRole && (
+            <div role="status" className="flex items-center gap-2 rounded-lg bg-blue-50 p-3 text-sm font-semibold text-blue-900">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              Opening {selectedRole} Investigation Workspace...
             </div>
-
-            <div>
-              <label 
-                htmlFor="password-input" 
-                className="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-1"
-              >
-                Security Passcode / Token
-              </label>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400">
-                  <KeyRound className="h-4 w-4" />
-                </div>
-                <input
-                  id="password-input"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  disabled={isLoading}
-                  className="w-full h-9 sm:h-9.5 rounded-lg border border-neutral-300 bg-white pl-9 pr-9 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition-[border-color,box-shadow] duration-150 shadow-2xs disabled:bg-neutral-100"
-                  data-testid="password-input"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-neutral-400 hover:text-neutral-700 active:scale-90 transition-transform duration-100 cursor-pointer"
-                  aria-label={showPassword ? 'Hide passcode' : 'Show passcode'}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full h-9.5 sm:h-10 flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-sm font-semibold shadow-xs transition-[transform,background-color,box-shadow] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-              data-testid="login-submit-button"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Verifying Credentials...</span>
-                </>
-              ) : (
-                <>
-                  <span>Sign In to Intelligence Workspace</span>
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-          </form>
-
+          )}
           {/* Authorized Officer Duty Profiles — Dropdown on Mobile, Rich Cards on Desktop */}
           <div className="border-t border-neutral-200/90 pt-2.5 space-y-1.5">
             <div className="flex items-center justify-between">
-              <label 
+              <label
                 htmlFor="evaluation-profile-select" 
                 className="text-xs font-bold uppercase tracking-wider text-neutral-700 cursor-pointer sm:cursor-default"
               >
@@ -331,7 +258,7 @@ export default function Login() {
                     type="button"
                     onClick={() => handleSelectOfficer(officer)}
                     disabled={isLoading}
-                    className="group flex flex-col items-start p-2 rounded-lg border border-neutral-200 bg-neutral-50/70 hover:bg-blue-50/40 hover:border-blue-300 active:scale-[0.98] text-left transition-[background-color,border-color,transform,box-shadow] duration-150 ease-out cursor-pointer disabled:opacity-50 shadow-2xs"
+                    className="group flex flex-col items-start p-2 rounded-lg border border-neutral-200 bg-neutral-50/70 hover:bg-blue-50/40 hover:border-blue-300 active:scale-[0.98] text-left transition-[background-color,border-color,transform,box-shadow] duration-150 ease-out cursor-pointer disabled:opacity-50 shadow-2xs focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
                     data-testid={`demo-officer-${officer.role.toLowerCase()}`}
                     aria-label={`Authenticate as ${officer.name} (${officer.role})`}
                   >
@@ -361,6 +288,93 @@ export default function Login() {
               })}
             </div>
           </div>
+
+          <details className="border-t border-neutral-200 pt-3">
+            <summary className="cursor-pointer text-sm font-semibold focus-visible:outline-blue-600">Sign in with officer credentials</summary>
+          {/* Login Form */}
+          <form onSubmit={(e) => handleSubmit(e)} className="space-y-2.5 sm:space-y-3">
+            <div>
+              <label
+                htmlFor="officer-id-input"
+                className="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-1"
+              >
+                Officer ID / Service Identifier
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400">
+                  <User className="h-4 w-4" />
+                </div>
+                <input
+                  id="officer-id-input"
+                  name="username"
+                  type="text"
+                  autoComplete="username"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g. KA-1001"
+                  disabled={isLoading}
+                  className="w-full h-9 sm:h-9.5 rounded-lg border border-neutral-300 bg-white pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition-[border-color,box-shadow] duration-150 shadow-2xs disabled:bg-neutral-100"
+                  data-testid="officer-id-input"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="password-input"
+                className="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-1"
+              >
+                Security Passcode / Token
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400">
+                  <KeyRound className="h-4 w-4" />
+                </div>
+                <input
+                  id="password-input"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  disabled={isLoading}
+                  className="w-full h-9 sm:h-9.5 rounded-lg border border-neutral-300 bg-white pl-9 pr-9 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition-[border-color,box-shadow] duration-150 shadow-2xs disabled:bg-neutral-100"
+                  data-testid="password-input"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-neutral-400 hover:text-neutral-700 active:scale-90 transition-transform duration-100 cursor-pointer"
+                  aria-label={showPassword ? 'Hide passcode' : 'Show passcode'}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full h-9.5 sm:h-10 flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-sm font-semibold shadow-xs transition-[transform,background-color,box-shadow] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+              data-testid="login-submit-button"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>{selectedRole ? `Opening ${selectedRole} Investigation Workspace...` : 'Verifying Credentials...'}</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In to Intelligence Workspace</span>
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          </details>
 
         </div>
       </main>

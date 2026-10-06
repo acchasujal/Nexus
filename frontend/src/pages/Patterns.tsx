@@ -72,7 +72,6 @@ export default function Patterns() {
   // Intelligence queries
   const {
     data: pulses,
-    isLoading: isPulsesLoading,
     refetch: refetchPulses,
   } = useNetworkPulses()
 
@@ -177,7 +176,7 @@ export default function Patterns() {
           }`}
         >
           <Activity className="h-4 w-4 text-indigo-600" />
-          Network Pulse ({bootstrapQuery.isPending || isPulsesLoading ? '...' : pulses?.length ?? bootstrapQuery.data?.kpis.active_pulses_count ?? 'Unavailable'})
+          Network Pulse ({pulses?.length ?? bootstrapQuery.data?.kpis.active_pulses_count ?? (bootstrapQuery.isError ? 'Error' : 'Loading...')})
         </button>
 
         <button
@@ -225,7 +224,7 @@ export default function Patterns() {
           }`}
         >
           <GitBranch className="h-4 w-4 text-purple-600" />
-          Cross-District Bridges ({bridgeError ? 'Unavailable' : isBridgeLoading ? '...' : bridgeSignals?.length ?? 'Not loaded'})
+          Cross-District Bridges ({bridgeSignals?.length ?? (bridgeError ? 'Error' : bridgesSyncState === 'retrying' ? 'Syncing...' : isBridgeLoading ? 'Loading...' : 'Load on selection')})
         </button>
 
         <button
@@ -249,7 +248,7 @@ export default function Patterns() {
           }`}
         >
           <Users className="h-4 w-4 text-blue-600" />
-          Network Communities &amp; Connectors ({graphAlgoError ? 'Unavailable' : isGraphAlgoLoading ? '...' : graphQuery.data === undefined ? 'Not loaded' : communities.length + graphBridges.length})
+          Network Communities &amp; Connectors ({graphQuery.data !== undefined ? communities.length + graphBridges.length : graphAlgoError ? 'Error' : graphQuery.syncState === 'retrying' ? 'Syncing...' : isGraphAlgoLoading ? 'Preparing network view...' : 'Load on selection'})
         </button>
 
         <button
@@ -261,7 +260,7 @@ export default function Patterns() {
           }`}
         >
           <Flame className="h-4 w-4 text-red-600" />
-          Crime Hotspots ({hotspotsError ? 'Unavailable' : isHotspotsLoading ? '...' : hotspots?.length ?? 'Not loaded'})
+          Crime Hotspots ({hotspots?.length ?? (hotspotsError ? 'Error' : hotspotsSyncState === 'retrying' ? 'Syncing...' : isHotspotsLoading ? 'Loading...' : 'Load on selection')})
         </button>
 
         <button
@@ -273,7 +272,7 @@ export default function Patterns() {
           }`}
         >
           <Radio className="h-4 w-4 text-amber-600" />
-          Repeat-Case Entities ({radarError ? 'Unavailable' : isRadarLoading ? '...' : repeatOffenders?.length ?? 'Not loaded'})
+          Repeat-Case Entities ({repeatOffenders?.length ?? (radarError ? 'Error' : radarSyncState === 'retrying' ? 'Syncing...' : isRadarLoading ? 'Loading...' : 'Load on selection')})
         </button>
       </div>
 

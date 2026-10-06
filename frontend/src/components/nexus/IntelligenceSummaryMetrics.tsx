@@ -21,11 +21,11 @@ export function IntelligenceSummaryMetrics() {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <MetricCard
         label="Active Pulses"
-        value={isErrorState ? 'Unavailable' : (isInitialLoading ? '...' : (activePulsesCount ?? 'Unavailable'))}
+        value={isErrorState ? 'Error' : (isInitialLoading ? '...' : (activePulsesCount ?? 'Loading...'))}
         icon={Activity}
         badge={baselineBadge ?? (
           isErrorState
-            ? { text: 'Sync Error', variant: 'danger' }
+            ? { text: 'Request error', variant: 'danger' }
             : isInitialLoading ? { text: 'Connecting', variant: 'neutral' }
             : isBootstrapError ? { text: 'Stale', variant: 'neutral' }
             : criticalPulsesCount > 0
@@ -37,7 +37,7 @@ export function IntelligenceSummaryMetrics() {
 
       <MetricCard
         label="Evidence Status"
-        value={isErrorState ? 'Unavailable' : (isInitialLoading ? '...' : `Evidence-linked: ${evidencePercent}%`)}
+        value={isErrorState ? 'Error' : (isInitialLoading ? '...' : `Evidence-linked: ${evidencePercent}%`)}
         icon={ShieldCheck}
         badge={baselineBadge ?? (
           isErrorState
@@ -53,7 +53,7 @@ export function IntelligenceSummaryMetrics() {
 
       <MetricCard
         label="Affected Investigations"
-        value={isErrorState ? 'Unavailable' : (isInitialLoading ? '...' : (affectedCasesCount ?? 'Unavailable'))}
+        value={isErrorState ? 'Error' : (isInitialLoading ? '...' : (affectedCasesCount ?? 'Loading...'))}
         icon={Briefcase}
         badge={baselineBadge ?? { text: isBootstrapError && kpis ? 'Stale' : 'Cross-Jurisdiction', variant: 'neutral' }}
         tooltip="Unique active police investigations intersecting with detected network changes"
@@ -61,9 +61,9 @@ export function IntelligenceSummaryMetrics() {
 
       <MetricCard
         label="Network Changes"
-        value={isErrorState ? 'Unavailable' : (isInitialLoading ? '...' : `+${totalChanges}`)}
+        value={isErrorState ? 'Error' : (isInitialLoading ? '...' : `+${totalChanges}`)}
         icon={GitCompare}
-        badge={baselineBadge ?? { text: isBootstrapError && kpis ? 'Stale' : kpis ? `+${addedNodes} nodes, +${addedEdges} edges` : (isInitialLoading ? 'Loading' : 'Unavailable'), variant: 'neutral' }}
+        badge={baselineBadge ?? { text: isBootstrapError && kpis ? 'Stale' : kpis ? `+${addedNodes} nodes, +${addedEdges} edges` : (isInitialLoading ? 'Loading' : 'Error'), variant: 'neutral' }}
         tooltip="Structural network delta between baseline snapshot and current intelligence window"
       />
     </div>

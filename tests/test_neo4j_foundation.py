@@ -253,6 +253,9 @@ def test_canonical_intelligence_survives_external_graph_failure(driver_factory):
         assert bootstrap.status_code == 200
         payload = bootstrap.json()
         assert payload["snapshot_id"] == CANONICAL_SNAPSHOT_CURRENT
+        readiness = client.get("/ready").json()
+        assert readiness["total_nodes"] == len(app.state.repository.nodes)
+        assert readiness["total_edges"] == len(app.state.repository.edges)
         assert payload["kpis"]["active_pulses_count"] > 0
         assert payload["kpis"]["added_edges"] > 0
         pulses = client.get("/api/v1/nexus/pulses", headers=headers)

@@ -140,9 +140,10 @@ MCP client authentication is separate and has not been verified in this session.
 
 Copied exact pooled/direct database and Neon storage credentials into the ignored
 `backend/.env`, preserving unrelated settings. The user copied them into Render
-and redeployed. Render readiness confirmed PostgreSQL available, Neo4j unavailable,
-and zero repository nodes/edges on the older deployed code. This is not a successful
-application-data initialization result.
+and redeployed. Render readiness confirmed PostgreSQL available and Neo4j unavailable.
+Its older count fields were gated to zero by graph availability and did not establish
+that the repository was empty. The extension now reports actual repository counts
+independently of graph projection availability.
 
 Local changes narrow the shared graph gate to live graph operations, align bootstrap
 counts with the actual pulse queue, share cached deterministic canonical diffs,
@@ -167,6 +168,19 @@ synthetic nodes, 504 edges, 10 sources, and 12 persisted deterministic leads.
 Lead reads and decisions reuse the durable read model across service restarts.
 Atomic cross-service fusion/outbox recovery and external Neo4j restoration are not
 verified and must not be described as completed by this extension.
+
+Commit `09f2d53` pushed to main with a clean working tree. Production verification:
+all affected operational reads returned 200 (investigations, timeline, audit/anchors,
+leads, candidates, canonical network, drift/adaptation summaries, Case DNA, offenders,
+and pulses). Bootstrap and queue both contain four pulses. `/system/status` confirms
+465 repository nodes and 504 edges. Live `/graph/stats` correctly remains 503 because
+Neo4j is unavailable. A fresh Chrome session verified login without refresh and HTTP
+200 for Identity Drift, Network Adaptation, and Case DNA tab data. A synthetic document
+upload and authorized download returned 200 with matching SHA-256; scoped SHO access
+returned 403. The explicitly synthetic verification document remains in the private
+bucket with its metadata/audit trail. A follow-up readiness correction reports actual
+repository counts while retaining the degraded graph state; its 37 affected tests and
+Ruff passed. The user is obtaining Aura details from a friend; no credentials changed.
 
 
 ## 2026-10-05 — Cold-start and frontend recovery (IMPLEMENTED; PRODUCTION RECOVERY VERIFIED)
@@ -203,3 +217,14 @@ Remaining measurement: supplied baseline is ~37s process-to-ready; the new 12.8s
 - Validation: 178 frontend tests across 32 files; 22 targeted backend startup/read-model/audit/auth tests; full backend regression 919 passed, 2 opt-in skips; Ruff and 100% ground-truth precision/recall passed. Production build passed (26 manifest entries, 25 preloaded modules). Local clean Chrome: baseline 1.07s on 503; Worklist/Timeline/Settings opened with all asset URLs blocked and HTTP caching disabled, zero late asset requests/page errors. Secondary sections label syncing/stale states and retain known data. Worklist ingestion callback is stable to prevent repeated success-effect refetches; absent accused counts remain Unknown and category totals come from the actual records.
 - Deployed abbdf24 and measured an actual 17-minute idle production trial: baseline 0.87s, automatic API confirmation approximately 89s without refresh; changed startup durations confirm a restarted process. Confirmation timing is reconstructed from screenshot timestamps because the helper later failed on its logout selector, so it is not a direct stopwatch measurement. The fourth bounded retry covers immediate proxy failures past that observed cold interval. Final production verification of b6b1adb passed: the abbdf24 tab retained Worklist/Timeline/Settings modules across the alias deployment without reload or late asset requests, despite its old Worklist URL now returning 404. A fresh clean browser received exactly three injected 503s per bootstrap/pulse read, then the fourth real API responses confirmed at 114.21s. Attempt times were 0.44/2.51/42.57/112.63s (bootstrap) and 0.48/2.51/42.58/112.65s (pulses). Labelled baseline appeared at 0.53s from login initiation; authoritative SHO and IO sessions persisted and navigated 0.14s/0.06s after successful responses. All seven secondary intelligence tabs, Worklist, Entities, Lead Inbox, Timeline and Settings passed; 27 asset responses were 200, zero page errors, zero request failures, no refresh or false empty/unavailable state. These injected failures verify recovery policy separately from the actual idle cold trial.
 - Verification artifacts are in the OS-temp nexus-loading-proof-20261005 directory (results.json, rollout-results.json and screenshots); no session tokens were saved. Next recommended task: use the measured import/platform overhead to assess further cold-start optimization only if needed; keep factory timing separate from end-to-end wake-up. Preserve the three unrelated pre-existing working-tree edits.
+
+
+## 2026-10-06 - Final investigator-facing polish
+- CURRENT (local implementation): retained the canonical artifact, TanStack cache, bounded retries and healthy-read catch-up. No stale error surviving successful cache reconciliation was reproduced. Added regression coverage for that same-cache catch-up and retention of live data during refresh. Temporary failures without a baseline previously exposed Unavailable/error states; they now retain loading context with explicit exhausted-retry status. HTTP 4xx stays an error and cannot disclose fallback data.
+- CURRENT (local implementation): Intelligence tab labels distinguish deferred loading, recovery, successful counts and actual errors; valid known counts win during refresh. KPI request failures use explicit error language. Status stages derive from request/cache state: connecting with baseline, loading without known data, refreshing cached live data, confirmed, or paused recovery. Heavy graph reads remain deferred.
+- CURRENT (local implementation): demo profiles precede collapsed credential entry, role selection immediately shows its workspace transition, concurrent submissions are guarded, and demo credentials are independent of stale form state. Backend authentication and navigation after session commit remain intact.
+- CURRENT (local implementation): audit hash presence is labelled recorded rather than verified; verification results come from the existing API. Event proof and anchor hash fields use progressive disclosure; hash, previous-hash and Merkle-root copy controls report success/failure. Cryptographic computations are unchanged.
+- Verification: 919 backend tests passed, two opt-in skips; the first run encountered Windows temporary-directory permissions and the clean run used a fresh OS-temp basetemp with pytest caching disabled. Ruff passed; ground-truth precision/recall 100%. Frontend lint has zero errors and 87 existing warnings. Final frontend results/build are recorded below.
+- Browser verification: fresh deployed login returned 200, SHO navigation and API confirmation succeeded without refresh or page errors. This checks the existing deployment only. Chrome with the edited build served through browser-only asset interception against real live services passed role-first login, immediate ADMIN transition, reconciliation, refresh/revisit, audit proof disclosure and clipboard confirmation, with zero page errors. A separate preview test injected two 503s per bootstrap/pulse read, showed the canonical three-pulse baseline and then reconciled real responses on attempt three without refresh or page errors; live counts are not hardcoded to the baseline.
+- Remaining verification: these changes are not deployed. A production smoke of this revision and a genuine idle-cold backend trial remain unverified; the injected outage is a simulation. Preserve pre-existing system_routes.py, test_neo4j_foundation.py and earlier progress.md edits. No architecture/API/data-model change or new dependency.
+- Final frontend validation: all 182 tests across 32 files passed, including staged refresh/retention and 400/401/403/404 refusal coverage. TypeScript/Vite production build and manifest closure verification passed: 26 manifest entries and 25 preloaded modules. Git whitespace/status checks passed with only intended edits and the three pre-existing modified files; no temporary artifacts were added.

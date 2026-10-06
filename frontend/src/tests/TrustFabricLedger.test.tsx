@@ -10,7 +10,7 @@
  *   5. Renders Merkle inclusion certificate modal with proof path steps.
  */
 
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -119,6 +119,19 @@ function renderWithClient(ui: React.ReactElement) {
 }
 
 describe('Trust Fabric & Merkle Ledger UI (Audit.tsx)', () => {
+  it('does not claim verification from hash presence and copies the disclosed hash', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    renderWithClient(<Audit />)
+    expect(await screen.findByText('Recorded; verify proof')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Copy hash' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'View technical proof for evt-001' }))
+    expect(await screen.findByText('Verified')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Copy hash' }))
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(mockLogs[0].integrity_hash))
+    expect(await screen.findByText('Copy hash confirmed')).toBeInTheDocument()
+  })
+
   it('renders statutory Section 63 BSA compliance banner', async () => {
     renderWithClient(<Audit />)
 
@@ -154,7 +167,7 @@ describe('Trust Fabric & Merkle Ledger UI (Audit.tsx)', () => {
     expect(await screen.findByText('officer_sp', {}, { timeout: 10000 })).toBeInTheDocument()
 
     // Click expand chevron
-    const chevronButton = screen.getByTitle('Inspect cryptographic fingerprint')
+    const chevronButton = screen.getByRole('button', { name: 'View technical proof for evt-001' })
     fireEvent.click(chevronButton)
 
     // Inspect Merkle inclusion proof button should be present

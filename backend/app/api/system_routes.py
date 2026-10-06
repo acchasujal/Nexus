@@ -92,8 +92,8 @@ def create_system_router() -> APIRouter:
                 "projection": projection_status,
                 "failure_type": connection.failure_type,
             },
-            "total_nodes": len(nodes) if graph_operational else 0,
-            "total_edges": len(edges) if graph_operational else 0,
+            "total_nodes": len(nodes),
+            "total_edges": len(edges),
         }
 
     @router.get("/system/status", response_model=SystemHealthResponse)

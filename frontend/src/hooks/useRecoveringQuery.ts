@@ -5,7 +5,7 @@ import { retryColdStartRequest, coldStartRetryDelay } from '@/lib/queryClient'
 
 const catchUpUsed = new WeakSet<object>()
 
-export type SyncState = 'baseline' | 'syncing' | 'confirmed' | 'stale' | 'unavailable'
+export type SyncState = 'baseline' | 'syncing' | 'confirmed' | 'stale' | 'unavailable' | 'retrying' | 'refreshing'
 
 export function useRecoveringQuery<T>(options: UseQueryOptions<T, Error>, baseline?: T) {
   const client = useQueryClient()
@@ -37,18 +37,18 @@ export function useRecoveringQuery<T>(options: UseQueryOptions<T, Error>, baseli
 
   // Keep the baseline outside the cache so it cannot delay or masquerade as API confirmation.
   // Permission failures must remain visible and must not reveal baseline detail as a fallback.
-  const refused = query.error instanceof ApiError && [401, 403].includes(query.error.status)
+  const refused = query.error instanceof ApiError && query.error.status >= 400 && query.error.status < 500
   const isBaseline = !refused && query.data === undefined && baseline !== undefined
   const data = refused ? undefined : query.data ?? baseline
   const transient = query.error && retryColdStartRequest(0, query.error)
-  const showError = query.isError && !(transient && data !== undefined)
+  const showError = query.isError && !transient
   const syncState: SyncState = isBaseline
     ? query.isFetching ? 'syncing' : 'baseline'
-    : query.isFetching ? 'syncing'
-    : query.isError ? data !== undefined && !showError ? 'stale' : 'unavailable'
+    : query.isFetching ? query.data !== undefined ? 'refreshing' : 'syncing'
+    : query.isError ? transient ? data !== undefined ? 'stale' : 'retrying' : 'unavailable'
     : data !== undefined ? 'confirmed' : 'syncing'
   return { ...query, data, isBaseline, syncState,
-    isPending: query.isPending && data === undefined,
-    isLoading: query.isLoading && data === undefined,
+    isPending: (query.isPending || !!transient) && data === undefined,
+    isLoading: (query.isLoading || !!transient) && data === undefined,
     isError: showError, error: showError ? query.error : null, syncError: query.error }
 }

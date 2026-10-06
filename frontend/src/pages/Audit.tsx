@@ -139,6 +139,15 @@ function formatAuditDetails(details?: Record<string, unknown>): React.ReactNode 
 }
 
 export default function Audit() {
+  const [copyMessage, setCopyMessage] = useState('')
+  const copyHash = async (hash: string) => {
+    try {
+      await navigator.clipboard.writeText(hash)
+      setCopyMessage('Copy hash confirmed')
+    } catch {
+      setCopyMessage('Unable to copy hash; select the value to copy manually.')
+    }
+  }
   const [logs, setLogs] = useState<AuditLogEntry[]>([])
   const [anchors, setAnchors] = useState<BlockchainAnchor[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -369,6 +378,8 @@ export default function Audit() {
                         <span>Anchored Events:</span>
                         <span className="font-semibold text-neutral-900">{anc.event_count} events</span>
                       </div>
+                      <details>
+                        <summary className="cursor-pointer font-semibold text-blue-700">View technical proof</summary>
                       <div className="pt-1">
                         <span className="text-neutral-500 text-[11px] block">Merkle Batch Root Hash:</span>
                         <div className="font-mono text-[11px] text-blue-700 break-all select-all font-semibold">
@@ -381,6 +392,7 @@ export default function Audit() {
                           {anc.block_hash}
                         </div>
                       </div>
+                      </details>
                     </div>
                   </div>
 
@@ -425,7 +437,7 @@ export default function Audit() {
                 <th className="px-4 py-3.5">Actor / Role</th>
                 <th className="px-4 py-3.5">Action Executed</th>
                 <th className="px-4 py-3.5">Target Entity</th>
-                <th className="px-4 py-3.5">Cryptographic Integrity</th>
+                <th className="px-4 py-3.5">Integrity status</th>
                 <th className="px-4 py-3.5">Audit Context Details</th>
               </tr>
             </thead>
@@ -459,9 +471,12 @@ export default function Audit() {
                         <button
                           onClick={() => toggleRow(log.id)}
                           className="p-1 rounded hover:bg-neutral-200 text-neutral-500 transition-colors"
-                          title="Inspect cryptographic fingerprint"
+                          title="View technical proof"
+                          aria-label={`View technical proof for ${log.id}`}
+                          aria-expanded={isExpanded}
                         >
                           {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          <span className="text-xs">View technical proof</span>
                         </button>
                       </td>
                       <td className="px-4 py-3 text-xs text-neutral-500 font-mono tabular-nums whitespace-nowrap">
@@ -487,9 +502,9 @@ export default function Audit() {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         {log.integrity_hash ? (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-neutral-50 text-neutral-800 border border-neutral-200">
                             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                            <span>VERIFIED</span>
+                            <span>{verifyInfo?.loading ? 'Verifying...' : verifyInfo?.verified === true ? 'Verified' : verifyInfo?.verified === false ? 'Not Verified' : 'Recorded; verify proof'}</span>
                           </div>
                         ) : (
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
@@ -522,6 +537,7 @@ export default function Audit() {
                               <span className="text-neutral-500">Integrity Hash:</span>
                               <div className="break-all text-blue-300 select-all font-semibold">
                                 {log.integrity_hash || 'None'}
+                                {log.integrity_hash && <button type="button" title="Digest of the canonical event; verification checks for modification." onClick={() => void copyHash(log.integrity_hash!)} className="ml-2 rounded border border-blue-400 px-2 py-1 focus-visible:ring-2 focus-visible:ring-white">Copy hash</button>}
                               </div>
                             </div>
                             {log.previous_hash && (
@@ -529,6 +545,7 @@ export default function Audit() {
                                 <span className="text-neutral-500">Previous Event Hash (Audit Chain):</span>
                                 <div className="break-all text-neutral-400 select-all">
                                   {log.previous_hash}
+                                  <button type="button" title="Links this event to the preceding audit event." onClick={() => void copyHash(log.previous_hash!)} className="ml-2 rounded border border-neutral-400 px-2 py-1">Copy previous hash</button>
                                 </div>
                               </div>
                             )}
@@ -558,6 +575,7 @@ export default function Audit() {
         </div>
       </SectionCard>
 
+      <div role="status" className="text-sm text-blue-700">{copyMessage}</div>
       {/* Merkle Inclusion Proof Modal */}
       {selectedProof && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
@@ -651,6 +669,7 @@ export default function Audit() {
                   <span className="text-neutral-500 block">Anchored Merkle Batch Root:</span>
                   <div className="p-2 bg-neutral-950 border border-neutral-800 rounded break-all text-blue-300 font-semibold select-all">
                     {selectedProof.data.root_hash}
+                    <button type="button" title="Commits to the anchored batch; inclusion verification checks membership." onClick={() => void copyHash(selectedProof.data!.root_hash)} className="ml-2 rounded border border-blue-400 px-2 py-1">Copy Merkle root</button>
                   </div>
                 </div>
 

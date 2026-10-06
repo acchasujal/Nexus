@@ -34,6 +34,13 @@ describe('shared recovery and baseline honesty', () => {
     await waitFor(() => expect(result.current.syncState).toBe('confirmed'))
     expect(result.current.data).toEqual([4])
     expect(result.current.isBaseline).toBe(false)
+    const refresh = result.current.refetch()
+    await waitFor(() => expect(result.current.syncState).toBe('refreshing'))
+    expect(result.current.data).toEqual([4])
+    resolve([5])
+    await refresh
+    await waitFor(() => expect(result.current.syncState).toBe('confirmed'))
+    expect(result.current.data).toEqual([5])
   })
 
   it('allows only one catch-up request after a different healthy read', async () => {
@@ -49,7 +56,20 @@ describe('shared recovery and baseline honesty', () => {
     expect(result.current.data).toEqual([3])
   })
 
-  it.each([401, 403])('does not retry or show baseline for permission refusal %s', async status => {
+  it('reconciles the same exhausted observer after a healthy read', async () => {
+    const { client, wrapper } = setup()
+    const fn = vi.fn().mockRejectedValue(new ApiError(503, '', 'Starting'))
+    const { result } = renderHook(() => useRecoveringQuery({ queryKey: ['recover-live'], queryFn: fn }, [3]), { wrapper })
+    await waitFor(() => expect(result.current.syncState).toBe('baseline'))
+    fn.mockResolvedValue([9])
+    await client.fetchQuery({ queryKey: ['healthy-live'], queryFn: async () => [1], meta: { recoveringRead: true } })
+    await waitFor(() => expect(result.current.syncState).toBe('confirmed'))
+    expect(result.current.data).toEqual([9])
+    expect(result.current.error).toBeNull()
+    expect(client.getQueryData(['recover-live'])).toEqual([9])
+  })
+
+  it.each([400, 401, 403, 404])('does not retry or show baseline for permission refusal %s', async status => {
     const { client, wrapper } = setup()
     const fn = vi.fn().mockRejectedValue(new ApiError(status, '', 'Refused'))
     const { result } = renderHook(() => useRecoveringQuery({ queryKey: ['refused'], queryFn: fn }, [3]), { wrapper })
@@ -78,9 +98,9 @@ describe('shared recovery and baseline honesty', () => {
     const summary = vi.spyOn(apiClient, 'getIdentityDriftSummary').mockRejectedValue(new ApiError(503, '', 'Starting'))
     render(<MemoryRouter><IdentityDriftRadarSection /></MemoryRouter>, { wrapper })
     const card = await screen.findByText('Hardware IMEI Hops')
-    await waitFor(() => expect(card.closest('.rounded-xl')).toHaveTextContent('Unavailable'))
+    await waitFor(() => expect(card.closest('.rounded-xl')).toHaveTextContent('...'))
     expect(card.closest('.rounded-xl')).not.toHaveTextContent(/\b0\b/)
-    expect(summary).toHaveBeenCalledTimes(4)
+    await waitFor(() => expect(summary).toHaveBeenCalledTimes(4))
   })
 
   it('hydrates Worklist without replacing the baseline with a failed empty array', async () => {
