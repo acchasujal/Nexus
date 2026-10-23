@@ -154,7 +154,7 @@ export default function Login() {
   }
 
   return (
-    <div className="nexus-login min-h-screen min-h-[100dvh] flex flex-col justify-center items-center bg-neutral-50 text-neutral-800 selection:bg-blue-100 selection:text-blue-900 px-3.5 py-4 sm:p-6 overflow-y-auto">
+    <div className="nexus-login selection:bg-blue-100 selection:text-blue-900">
       <aside className="login-identity" aria-label="NEXUS intelligence workspace">
         <div className="login-wordmark"><Network aria-hidden="true" /><span>NEXUS</span><span className="login-edition">INTELLIGENCE WORKSPACE</span></div>
         <div className="login-identity-content">
@@ -167,9 +167,9 @@ export default function Login() {
           </svg>
           <p className="login-caption">Evidence-grounded network intelligence</p>
         </div>
-        <div className="login-identity-footer"><ShieldCheck size={16} aria-hidden="true" /> Authorized access ? Synthetic evaluation workspace</div>
+        <div className="login-identity-footer"><ShieldCheck size={16} aria-hidden="true" /> Authorized access · Synthetic evaluation workspace</div>
       </aside>
-      {/* Main Container — Purely Centered Authentication Console */}
+      {/* Vertically centered authentication console */}
       <main className="login-access w-full">
         {/* Authentication Console Card */}
         <div 

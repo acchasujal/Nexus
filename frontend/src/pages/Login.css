@@ -1,19 +1,24 @@
 .nexus-login {
-  display:grid;
-  grid-template-columns:minmax(0,1.1fr) minmax(430px,1fr);
-  padding:0;
-  background:#f5f3ee;
-  color:#17263a
+  display: grid;
+  grid-template-columns: minmax(0, 55fr) minmax(420px, 45fr);
+  width: min(100%, 1600px);
+  min-height: 100svh;
+  margin: 0 auto;
+  padding: 0;
+  overflow: hidden;
+  background: #f5f3ee;
+  color: #17263a;
 }
 .login-identity {
-  min-height:100dvh;
-  padding:48px clamp(32px,5vw,88px);
-  background:#101f32;
-  color:#e8edf4;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  overflow:hidden
+  display: flex;
+  min-width: 0;
+  min-height: 100svh;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(32px, 5vh, 52px) clamp(32px, 5vw, 76px);
+  overflow: hidden;
+  background: #101f32;
+  color: #e8edf4;
 }
 .login-wordmark {
   display:flex;
@@ -69,11 +74,17 @@
   padding-top:30px
 }
 .login-access {
-  padding:48px clamp(24px,4vw,72px);
-  max-width:640px;
-  justify-self:center
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(28px, 4vh, 48px) clamp(28px, 4vw, 56px);
+  overflow-y: auto;
+  background: #f5f3ee;
 }
 .nexus-login .login-console {
+  width: min(100%, 560px);
   border:0;
   border-radius:0;
   box-shadow:none;
@@ -157,37 +168,29 @@
   outline:3px solid #2563eb;
   outline-offset:4px
 }
-@media(max-width:900px) {
+@media (max-width: 879px) {
   .nexus-login {
-    grid-template-columns:minmax(0,1fr)
+    display: block;
+    width: 100%;
+    min-height: 100svh;
+    overflow-x: hidden;
   }
   .login-identity {
-    min-height:auto;
-    padding:24px
-  }
-  .login-identity-content {
-    padding-top:35px
-  }
-  .login-identity h2 {
-    font-size:30px
-  }
-  .login-topology,.login-caption,.login-identity-footer {
-    display:none
-  }
-  .login-eyebrow {
-    margin-bottom:12px
+    display: none;
   }
   .login-access {
-    padding:32px 24px;
-    max-width:520px
+    min-height: 100svh;
+    padding:
+      max(24px, env(safe-area-inset-top))
+      max(20px, env(safe-area-inset-right))
+      max(24px, env(safe-area-inset-bottom))
+      max(20px, env(safe-area-inset-left));
+    overflow: visible;
   }
 }
-@media(max-width:639px) {
-  .login-identity-content {
-    display:none
-  }
+@media (max-width: 639px) {
   .nexus-login .login-console-heading h1 {
-    font-size:25px
+    font-size: 25px;
   }
 }
 @media(prefers-reduced-motion:reduce) {
