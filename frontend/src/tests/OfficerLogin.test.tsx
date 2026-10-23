@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import Login from '@/pages/Login'
@@ -23,6 +23,9 @@ import { AuthProvider, AuthContext, useAuth } from '@/contexts/AuthContext'
 import { UIProvider } from '@/contexts/UIContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { apiClient, ApiError } from '@/lib/apiClient'
+import { AppShell } from '@/components/AppShell'
+import { RoleGuard } from '@/components/RoleGuard'
+import { useQuery } from '@tanstack/react-query'
 import type { OfficerUser } from '@/contexts/AuthContext'
 
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -97,11 +100,94 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
     vi.restoreAllMocks()
   })
 
+  it.each([
+    ['IO', 'KA-1001'], ['SHO', 'KA-1002'], ['SP', 'KA-1003'], ['ADMIN', 'KA-1000'],
+  ] as const)('enters the default workspace as %s with one authoritative request', async (role, badge) => {
+    const login = vi.spyOn(apiClient, 'login').mockResolvedValueOnce({
+      access_token: 'server-issued-session', token_type: 'bearer', user_id: badge, role, expires_in: 86400,
+    })
+    renderLoginWithRouter()
+    await userEvent.click(screen.getByTestId(`demo-officer-${role.toLowerCase()}`))
+    await waitFor(() => expect(screen.getByTestId('auth-role')).toHaveTextContent(role))
+    expect(login).toHaveBeenCalledExactlyOnceWith({ username: badge, role, password: 'nexus-demo-passcode' })
+    expect(localStorage.getItem('nexus_token')).toBe('server-issued-session')
+  })
+
+  it('guards repeated clicks synchronously and preserves the selected officer on failure', async () => {
+    let reject!: (error: Error) => void
+    const login = vi.spyOn(apiClient, 'login').mockImplementationOnce(() => new Promise((_, fail) => { reject = fail }))
+    renderLoginWithRouter()
+    const button = screen.getByTestId('demo-officer-sho')
+    fireEvent.click(button)
+    fireEvent.click(button)
+    fireEvent.click(screen.getByTestId('demo-officer-admin'))
+    expect(login).toHaveBeenCalledTimes(1)
+    expect(button).toBeDisabled()
+    expect(button).toHaveAttribute('aria-pressed', 'true')
+    await act(async () => reject(new ApiError(401, 'Unauthorized', 'Please check your badge')))
+    expect(screen.getByRole('alert')).toHaveTextContent(/retry sign-in/i)
+    expect(button).toBeEnabled()
+    expect(button).toHaveAttribute('aria-pressed', 'true')
+    expect(localStorage.getItem('nexus_token')).toBeNull()
+    login.mockResolvedValueOnce({ access_token: 'server-issued', token_type: 'bearer', user_id: 'KA-1002', role: 'SHO', expires_in: 86400 })
+    await userEvent.click(button)
+    await waitFor(() => expect(screen.getByTestId('auth-role')).toHaveTextContent('SHO'))
+  })
+
+  it('keeps an exhausted transport failure unauthenticated and retryable', async () => {
+    const login = vi.spyOn(apiClient, 'login').mockRejectedValue(new TypeError('Service connection failed'))
+    renderLoginWithRouter()
+    await userEvent.click(screen.getByTestId('demo-officer-io'))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/retry sign-in/i))
+    expect(login).toHaveBeenCalledTimes(4)
+    expect(localStorage.getItem('nexus_token')).toBeNull()
+    expect(screen.queryByTestId('worklist-content')).not.toBeInTheDocument()
+  })
+
+  it('does not restore a role-only or expired stored session', () => {
+    localStorage.setItem('nexus_role', 'ADMIN')
+    const view = renderLoginWithRouter()
+    expect(screen.getByRole('heading', { name: 'NEXUS' })).toBeInTheDocument()
+    expect(localStorage.getItem('nexus_token')).toBeNull()
+    view.unmount()
+    localStorage.setItem('nexus_token', btoa(JSON.stringify({ role: 'ADMIN', exp: 1 })))
+    renderLoginWithRouter()
+    expect(screen.queryByTestId('worklist-content')).not.toBeInTheDocument()
+  })
+
+  it('supports keyboard demo entry and keeps credentials collapsed', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(apiClient, 'login').mockResolvedValueOnce({ access_token: 'server-issued', token_type: 'bearer', user_id: 'KA-1001', role: 'IO', expires_in: 86400 })
+    renderLoginWithRouter()
+    expect(screen.getByText('Sign in with officer credentials').closest('details')).not.toHaveAttribute('open')
+    expect(screen.getByRole('group', { name: 'Choose your workspace' })).toBeInTheDocument()
+    await user.tab()
+    expect(screen.getByTestId('demo-officer-io')).toHaveFocus()
+    await user.keyboard('{Enter}')
+    await waitFor(() => expect(screen.getByTestId('auth-role')).toHaveTextContent('IO'))
+  })
+
+  it.each(['pending', 'failed'])('opens the protected shell while intelligence is %s', async state => {
+    function Intelligence() {
+      const query = useQuery({ queryKey: ['slow-intelligence'], retry: false,
+        queryFn: () => state === 'pending' ? new Promise<string>(() => {}) : Promise.reject(new Error('Intelligence offline')) })
+      return <p>{query.isError ? 'Intelligence retry available' : 'Intelligence loading'}</p>
+    }
+    vi.spyOn(apiClient, 'login').mockResolvedValueOnce({ access_token: 'server-issued', token_type: 'bearer', user_id: 'KA-1001', role: 'IO', expires_in: 86400 })
+    render(<QueryClientProvider client={new QueryClient()}><AuthProvider><UIProvider><MemoryRouter initialEntries={['/login']}><Routes>
+      <Route path="/login" element={<Login />} />
+      <Route element={<AppShell />}><Route path="/intelligence" element={<RoleGuard allowedRoles={['IO']}><Intelligence /></RoleGuard>} /></Route>
+    </Routes></MemoryRouter></UIProvider></AuthProvider></QueryClientProvider>)
+    await userEvent.click(screen.getByTestId('demo-officer-io'))
+    await waitFor(() => expect(screen.getByTestId('logout-button')).toBeInTheDocument())
+    expect(await screen.findByText(state === 'pending' ? 'Intelligence loading' : 'Intelligence retry available')).toBeInTheDocument()
+  })
+
   it('renders login page with professional branding and inputs', () => {
     renderLoginWithRouter()
 
     // Brand and subtitle
-    expect(screen.getByText('NEXUS')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'NEXUS', level: 1 })).toBeInTheDocument()
     expect(screen.getByText(/Investigative Network Intelligence Platform/i)).toBeInTheDocument()
     expect(screen.getByText('Officer Authentication Console')).toBeInTheDocument()
 
@@ -253,7 +339,7 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
     })
   })
 
-  it('authenticates via mobile demo officer dropdown selector', async () => {
+  it('authenticates with the compact SP officer choice', async () => {
     const user = userEvent.setup()
 
     vi.spyOn(apiClient, 'login').mockResolvedValueOnce({
@@ -266,10 +352,7 @@ describe('NEXUS Officer Login UI & Authentication Flow', () => {
 
     renderLoginWithRouter()
 
-    const mobileSelect = screen.getByTestId('demo-officer-select-mobile')
-    expect(mobileSelect).toBeInTheDocument()
-
-    await user.selectOptions(mobileSelect, 'KA-1003')
+    await user.click(screen.getByTestId('demo-officer-sp'))
 
     await waitFor(() => {
       expect(screen.getByTestId('worklist-content')).toBeInTheDocument()

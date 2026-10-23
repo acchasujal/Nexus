@@ -27,6 +27,8 @@ export interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Canonical default details for fallback and demo roles
+const MAX_LOGIN_RETRY_DELAY_MS = 6000
+
 const CANONICAL_OFFICERS: Record<string, OfficerUser> = {
   INVESTIGATOR: {
     userId: 'officer_io',
@@ -136,7 +138,7 @@ function parseTokenPayload(token: string): Record<string, any> | null {
 function resolveUserFromTokenOrRole(token: string | null, role: UserRole | null): OfficerUser | null {
   if (!role && !token) return null
   const payload = token ? parseTokenPayload(token) : null
-  const resolvedRole = (payload?.role || role || 'INVESTIGATOR') as UserRole
+  const resolvedRole = (role || payload?.role || 'INVESTIGATOR') as UserRole
   const fallback = CANONICAL_OFFICERS[resolvedRole] || CANONICAL_OFFICERS.INVESTIGATOR
 
   if (payload) {
@@ -156,28 +158,6 @@ function resolveUserFromTokenOrRole(token: string | null, role: UserRole | null)
   return { ...fallback, role: resolvedRole }
 }
 
-function createSessionToken(role: UserRole, username?: string): string {
-  const canonical = CANONICAL_OFFICERS[role] || CANONICAL_OFFICERS.INVESTIGATOR
-  const u = (username || '').trim()
-  const isCustomBadge = u.toUpperCase().startsWith('KA-') && !['KA-1000', 'KA-1001', 'KA-1002', 'KA-1003'].includes(u.toUpperCase())
-  const badgeNumber = isCustomBadge ? u.toUpperCase() : canonical.badgeNumber
-  const officerName = isCustomBadge ? `Officer ${u.toUpperCase()}` : canonical.name
-
-  const payload = {
-    sub: username || canonical.userId,
-    email: canonical.email || `${username || canonical.userId}@nexus.internal`,
-    role: role,
-    officer_id: isCustomBadge ? `OFFICER-${u.toUpperCase()}` : canonical.officerId,
-    badge_number: badgeNumber,
-    name: officerName,
-    rank: canonical.rank,
-    station_id: canonical.stationId,
-    district: canonical.district,
-    iat: Math.floor(Date.now() / 1000),
-  }
-  return btoa(JSON.stringify(payload))
-}
-
 function getStoredRole(): UserRole | null {
   try {
     if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
@@ -192,7 +172,10 @@ function getStoredRole(): UserRole | null {
 function getStoredToken(): string | null {
   try {
     if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
-      return window.localStorage.getItem('nexus_token')
+      const token = window.localStorage.getItem('nexus_token')
+      const payload = token ? parseTokenPayload(token) : null
+      if (typeof payload?.exp === 'number' && payload.exp <= Date.now() / 1000) return null
+      return token
     }
   } catch {
     // Ignore storage errors
@@ -223,79 +206,43 @@ function safeRemoveStorage(key: string): void {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryCache = useQueryClient()
   const [role, setRole] = useState<UserRole | null>(() => {
-    return getStoredRole()
+    return getStoredToken() ? getStoredRole() : null
   })
 
   const [user, setUser] = useState<OfficerUser | null>(() => {
     const savedRole = getStoredRole()
     const savedToken = getStoredToken()
-    if (savedRole && !savedToken) {
-      const token = createSessionToken(savedRole)
-      safeSetStorage('nexus_token', token)
-      return resolveUserFromTokenOrRole(token, savedRole)
-    }
-    return resolveUserFromTokenOrRole(savedToken, savedRole)
+    return savedToken ? resolveUserFromTokenOrRole(savedToken, savedRole) : null
   })
 
   const login = async (credentials: AuthLoginRequest | UserRole): Promise<void> => {
-    if (typeof credentials === 'string') {
-      // Legacy role-based login (used in test fixtures)
-      const newRole = credentials as UserRole
-      queryCache.clear()
-      const token = createSessionToken(newRole)
-      safeSetStorage('nexus_role', newRole)
-      safeSetStorage('nexus_token', token)
-      setRole(newRole)
-      setUser(resolveUserFromTokenOrRole(token, newRole))
-      return
-    }
+    const request = typeof credentials === 'string'
+      ? { username: CANONICAL_OFFICERS[credentials].badgeNumber, password: 'nexus-demo-passcode', role: credentials }
+      : credentials
 
-    try {
-      // Call authoritative backend login API
-      const authenticate = async () => {
-        for (let attempt = 0; ; attempt++) {
-          try {
-            return await apiClient.login(credentials)
-          } catch (error) {
-            if (!(error instanceof Error) || !retryColdStartRequest(attempt, error)) throw error
-            await new Promise(resolve => setTimeout(resolve, coldStartRetryDelay(attempt)))
-          }
+    // Login retries stay responsive; long wake-up delays belong to background reads.
+    // Only a server response may establish a new session.
+    const authenticate = async () => {
+      for (let attempt = 0; ; attempt++) {
+        try {
+          return await apiClient.login(request)
+        } catch (error) {
+          if (!(error instanceof Error) || !retryColdStartRequest(attempt, error)) throw error
+          await new Promise(resolve => setTimeout(resolve, Math.min(coldStartRetryDelay(0) * (attempt + 1), MAX_LOGIN_RETRY_DELAY_MS)))
         }
       }
-      const authRes = await authenticate()
-      queryCache.clear()
-      const token = authRes.access_token
-      const resolvedRole = authRes.role
-      safeSetStorage('nexus_token', token)
-      safeSetStorage('nexus_role', resolvedRole)
-      setRole(resolvedRole)
-      setUser(resolveUserFromTokenOrRole(token, resolvedRole))
-    } catch (err) {
-      // If network fails in demo mode without backend running, fallback to deterministic demo session
-      if (typeof credentials === 'object' && credentials.username) {
-        const u = credentials.username.toLowerCase().trim()
-        let fallbackRole: UserRole = credentials.role || 'INVESTIGATOR'
-        if (!credentials.role) {
-          if (u.includes('sho') || u.includes('ka-1002') || u.includes('analyst')) fallbackRole = 'SHO'
-          else if (u.includes('sp') || u.includes('ka-1003') || u.includes('supervisor')) fallbackRole = 'SP'
-          else if (u.includes('admin') || u.includes('ka-1000')) fallbackRole = 'ADMIN'
-          else if (u.includes('io') || u.includes('ka-1001') || u.includes('investigator') || u.startsWith('ka-')) fallbackRole = 'IO'
-        }
-        // If error was an explicit invalid API error with status 401 or 403, re-throw
-        if (err && typeof err === 'object' && 'status' in err && (err.status === 401 || err.status === 403)) {
-          throw err
-        }
-        // Otherwise offline fallback
-        queryCache.clear()
-        const fallbackToken = createSessionToken(fallbackRole, credentials.username)
-        safeSetStorage('nexus_token', fallbackToken)
-        safeSetStorage('nexus_role', fallbackRole)
-        setRole(fallbackRole)
-        setUser(resolveUserFromTokenOrRole(fallbackToken, fallbackRole))
-        return
-      }
-      throw err
     }
+    const authRes = await authenticate()
+    if (typeof authRes.access_token !== 'string' || !authRes.access_token || !CANONICAL_OFFICERS[authRes.role]) {
+      throw new Error('The server returned an invalid session. Please retry sign-in.')
+    }
+    queryCache.clear()
+    const token = authRes.access_token
+    const resolvedRole = authRes.role
+    safeSetStorage('nexus_token', token)
+    safeSetStorage('nexus_role', resolvedRole)
+    setRole(resolvedRole)
+    setUser(resolveUserFromTokenOrRole(token, resolvedRole))
   }
 
   const logout = () => {

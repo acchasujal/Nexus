@@ -106,6 +106,7 @@ function renderSection() {
 describe('P1-B: Identity Drift Radar Section', () => {
   beforeEach(() => {
     window.localStorage.setItem('nexus_role', 'INVESTIGATOR')
+    window.localStorage.setItem('nexus_token', 'test-server-session')
   })
 
   it('renders summary metric cards and detected drift records', async () => {

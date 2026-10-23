@@ -38,6 +38,7 @@ function renderPatterns() {
 describe('Criminal Network Intelligence Hub & Crime Hotspots', () => {
   beforeEach(() => {
     window.localStorage.setItem('nexus_role', 'INVESTIGATOR')
+    window.localStorage.setItem('nexus_token', 'test-server-session')
   })
 
 

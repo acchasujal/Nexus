@@ -466,3 +466,7 @@ Production diagnostics from 03eb4a7 established factory-to-HTTP readiness at 117
 - Retain working PostgreSQL/Neo4j initialization and required readiness. Instrument imports, storage/audit preparation, and route registration before considering further startup changes. Historical rationale for earlier unmeasured startup gaps: UNKNOWN.
 
 Production idle evidence established an approximately 89s wake-up. Add one final bounded retry with 70s backoff (attempts at 0/2/42/112s for immediate failures), preserving the original faster recovery window while covering immediate proxy rejection throughout the observed cold interval. Login shares this policy and still navigates immediately after issued-session persistence.
+
+
+## 2026-10-23 - Authoritative login and separate interactive retry timing (EXTENSION)
+A new frontend session requires a successful backend login response, including legacy role-string callers. Remove local token fabrication after transport errors and role-only session restoration; refuse expired token claims on restoration. Keep existing backend demo configuration and RBAC unchanged. Login retains the existing request deadline and bounded transient retry count, with 2/4/6-second pauses instead of background intelligence's 2/40/70 seconds. Exhaustion shows a retryable error without authenticating. Intelligence retains its longer wake-up recovery and loads independently after committed authentication and navigation. This supersedes the earlier decision that login shares background-read retry timing; no production timing improvement is claimed.

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import './Login.css'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import type { UserRole } from '@shared/contracts/api'
@@ -15,7 +16,6 @@ import {
   AlertCircle,
   KeyRound,
   ArrowRight,
-  ChevronDown,
 } from 'lucide-react'
 
 interface OfficerProfile {
@@ -37,7 +37,7 @@ const AUTHORIZED_OFFICERS: OfficerProfile[] = [
     badge: 'KA-1001',
     role: 'IO',
     roleName: 'Investigating Officer (IO)',
-    scope: 'Case-level evidence, telecom CDRs, suspect pathfinding & grounded copilot',
+    scope: 'Trace case evidence and connections',
     icon: UserCheck,
   },
   {
@@ -47,7 +47,7 @@ const AUTHORIZED_OFFICERS: OfficerProfile[] = [
     badge: 'KA-1002',
     role: 'SHO',
     roleName: 'SHO / Intelligence Analyst',
-    scope: 'Louvain cohesive communities, betweenness brokers & lead actioning',
+    scope: 'Review network signals and action leads',
     icon: ShieldAlert,
   },
   {
@@ -57,7 +57,7 @@ const AUTHORIZED_OFFICERS: OfficerProfile[] = [
     badge: 'KA-1003',
     role: 'SP',
     roleName: 'Superintendent of Police (SP)',
-    scope: 'District hotspot rollup, cross-jurisdiction bridges & tamper-proof audit trail',
+    scope: 'Coordinate intelligence across districts',
     icon: ShieldCheck,
   },
   {
@@ -67,7 +67,7 @@ const AUTHORIZED_OFFICERS: OfficerProfile[] = [
     badge: 'KA-1000',
     role: 'ADMIN',
     roleName: 'Forensic Governance Officer (Admin)',
-    scope: 'National cybercrime operations, ledger anchors & full forensic governance',
+    scope: 'Oversee operations and forensic governance',
     icon: Shield,
   },
 ]
@@ -95,7 +95,7 @@ export default function Login() {
     if (submitting.current) return
     
     const targetUsername = (overrideCreds?.username || username).trim()
-    let targetRole = overrideCreds?.role || selectedRole
+    let targetRole = overrideCreds?.role
 
     if (!targetUsername) {
       setErrorMessage('Please enter your Officer ID or Service Number.')
@@ -130,14 +130,14 @@ export default function Login() {
     try {
       await login({
         username: targetUsername,
-        password: overrideCreds ? 'nexus-demo-passcode' : password || 'nexus-demo-passcode',
+        password: overrideCreds ? 'nexus-demo-passcode' : password,
         role: targetRole,
       })
       // The authenticated render above redirects after session state commits.
       // Navigating here can race the protected shell's authentication check.
-    } catch (err: any) {
-      const msg = err?.message || 'Authentication failed. Please verify your officer credentials.'
-      setErrorMessage(msg)
+    } catch (err: unknown) {
+      const msg = (err && typeof err === 'object' && 'message' in err ? String(err.message) : '') || 'Authentication failed. Please verify your officer credentials.'
+      setErrorMessage(`${msg} Please retry sign-in.`)
     } finally {
       submitting.current = false
       setIsLoading(false)
@@ -145,6 +145,7 @@ export default function Login() {
   }
 
   const handleSelectOfficer = (officer: OfficerProfile) => {
+    if (submitting.current) return
     setUsername(officer.badge)
     setSelectedRole(officer.role)
     setPassword('')
@@ -153,17 +154,31 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen min-h-[100dvh] flex flex-col justify-center items-center bg-neutral-50 text-neutral-800 selection:bg-blue-100 selection:text-blue-900 px-3.5 py-4 sm:p-6 overflow-y-auto">
+    <div className="nexus-login min-h-screen min-h-[100dvh] flex flex-col justify-center items-center bg-neutral-50 text-neutral-800 selection:bg-blue-100 selection:text-blue-900 px-3.5 py-4 sm:p-6 overflow-y-auto">
+      <aside className="login-identity" aria-label="NEXUS intelligence workspace">
+        <div className="login-wordmark"><Network aria-hidden="true" /><span>NEXUS</span><span className="login-edition">INTELLIGENCE WORKSPACE</span></div>
+        <div className="login-identity-content">
+          <p className="login-eyebrow">OBSERVE / CONNECT / VERIFY</p>
+          <h2>See the connections.<br /><span>Ground every finding.</span></h2>
+          <svg className="login-topology" viewBox="0 0 560 250" fill="none" aria-hidden="true">
+            <g stroke="currentColor" strokeWidth="1"><path d="M30 180 115 75 230 125 330 40 430 95 525 35M30 180 170 215 230 125 355 205 430 95 530 200M115 75 170 215M230 125 430 95M355 205 530 200" /><path d="M0 125H560M0 65H560M0 185H560M100 0V250M220 0V250M340 0V250M460 0V250" opacity=".15" /></g>
+            {[[30,180],[115,75],[230,125],[330,40],[430,95],[525,35],[170,215],[355,205],[530,200]].map(([cx,cy], i) => <g key={i}><circle cx={cx} cy={cy} r="12" fill="#14263d" /><circle cx={cx} cy={cy} r={i === 2 ? 6 : 4} fill={i === 2 ? '#76a8ff' : '#a5b4c6'} /></g>)}
+            <circle cx="230" cy="125" r="23" stroke="#76a8ff" strokeDasharray="3 5" />
+          </svg>
+          <p className="login-caption">Evidence-grounded network intelligence</p>
+        </div>
+        <div className="login-identity-footer"><ShieldCheck size={16} aria-hidden="true" /> Authorized access ? Synthetic evaluation workspace</div>
+      </aside>
       {/* Main Container — Purely Centered Authentication Console */}
-      <main className="w-full max-w-[390px] sm:max-w-[440px] mx-auto flex flex-col items-center my-auto">
+      <main className="login-access w-full">
         {/* Authentication Console Card */}
         <div 
           role="region" 
           aria-label="Officer Authentication Form" 
-          className="w-full rounded-xl sm:rounded-2xl border border-neutral-200/80 bg-white p-4 sm:p-5.5 shadow-sm sm:shadow-[0_1px_3px_0_rgb(0_0_0_/_0.04),0_8px_24px_-4px_rgb(0_0_0_/_0.06)] space-y-3 sm:space-y-3.5"
+          className="login-console w-full rounded-xl sm:rounded-2xl border border-neutral-200/80 bg-white p-4 sm:p-5.5 shadow-sm sm:shadow-[0_1px_3px_0_rgb(0_0_0_/_0.04),0_8px_24px_-4px_rgb(0_0_0_/_0.06)] space-y-3 sm:space-y-3.5"
         >
           {/* Integrated Brand Emblem & Title */}
-          <div className="text-center pb-2.5 border-b border-neutral-100 space-y-1">
+          <div className="login-console-heading text-center pb-2.5 border-b border-neutral-100 space-y-1">
             <div className="mx-auto inline-flex h-9.5 w-9.5 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs ring-4 ring-blue-50">
               <Network className="h-5 w-5" />
             </div>
@@ -197,59 +212,27 @@ export default function Login() {
 
           {isLoading && selectedRole && (
             <div role="status" className="flex items-center gap-2 rounded-lg bg-blue-50 p-3 text-sm font-semibold text-blue-900">
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
               Opening {selectedRole} Investigation Workspace...
             </div>
           )}
           {/* Authorized Officer Duty Profiles — Dropdown on Mobile, Rich Cards on Desktop */}
           <div className="border-t border-neutral-200/90 pt-2.5 space-y-1.5">
             <div className="flex items-center justify-between">
-              <label
-                htmlFor="evaluation-profile-select" 
+              <span
+                id="evaluation-profile-label"
                 className="text-xs font-bold uppercase tracking-wider text-neutral-700 cursor-pointer sm:cursor-default"
               >
-                Evaluation Workspace Access
-              </label>
+                Choose your workspace
+              </span>
               <span className="text-[11px] text-neutral-500">
                 <span className="inline sm:hidden">Demo Accounts</span>
-                <span className="hidden sm:inline">Select profile to sign in</span>
+                <span className="hidden sm:inline">Select an officer to enter</span>
               </span>
             </div>
 
-            {/* Mobile / Smaller screens: Compact dropdown selector */}
-            <div className="block sm:hidden relative">
-              <select
-                id="evaluation-profile-select"
-                aria-label="Evaluation Workspace Access"
-                value=""
-                onChange={(e) => {
-                  const officer = AUTHORIZED_OFFICERS.find((o) => o.id === e.target.value)
-                  if (officer) handleSelectOfficer(officer)
-                }}
-                disabled={isLoading}
-                data-testid="demo-officer-select-mobile"
-                className="w-full h-9 rounded-lg border border-neutral-300 bg-neutral-50/70 hover:bg-white focus:bg-white pl-3 pr-8 text-xs font-medium text-neutral-800 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition-all shadow-2xs appearance-none cursor-pointer disabled:bg-neutral-100 disabled:cursor-not-allowed"
-              >
-                <option value="" disabled>
-                  Select evaluation account to sign in...
-                </option>
-                {AUTHORIZED_OFFICERS.map((officer) => (
-                  <option
-                    key={officer.id}
-                    value={officer.id}
-                    data-testid={`demo-officer-mobile-${officer.role.toLowerCase()}`}
-                  >
-                    {officer.name} ({officer.role}) · {officer.badge}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-neutral-400">
-                <ChevronDown className="h-4 w-4" />
-              </div>
-            </div>
-
-            {/* Desktop / Larger screens: Rich 2-column officer grid */}
-            <div className="hidden sm:grid sm:grid-cols-2 gap-2">
+            {/* Shared keyboard-accessible choices at every viewport */}
+            <div role="group" aria-labelledby="evaluation-profile-label" className="login-officers grid gap-2">
               {AUTHORIZED_OFFICERS.map((officer) => {
                 const Icon = officer.icon
                 return (
@@ -258,7 +241,8 @@ export default function Login() {
                     type="button"
                     onClick={() => handleSelectOfficer(officer)}
                     disabled={isLoading}
-                    className="group flex flex-col items-start p-2 rounded-lg border border-neutral-200 bg-neutral-50/70 hover:bg-blue-50/40 hover:border-blue-300 active:scale-[0.98] text-left transition-[background-color,border-color,transform,box-shadow] duration-150 ease-out cursor-pointer disabled:opacity-50 shadow-2xs focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                    aria-pressed={selectedRole === officer.role}
+                    className="login-officer group flex flex-col items-start p-2 rounded-lg border border-neutral-200 bg-neutral-50/70 hover:bg-blue-50/40 hover:border-blue-300 active:scale-[0.98] text-left transition-[background-color,border-color,transform,box-shadow] duration-150 ease-out cursor-pointer disabled:opacity-50 shadow-2xs focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
                     data-testid={`demo-officer-${officer.role.toLowerCase()}`}
                     aria-label={`Authenticate as ${officer.name} (${officer.role})`}
                   >
@@ -267,9 +251,9 @@ export default function Login() {
                         <Icon className="h-3 w-3" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <span className="text-xs font-bold text-neutral-900 group-hover:text-blue-900 truncate block transition-colors duration-150">
+                        <span className="text-xs font-bold text-neutral-900 group-hover:text-blue-900 block transition-colors duration-150">
                           {officer.name}
-                        </span>
+                        </span><span className="login-rank">{officer.rank}</span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between w-full text-xs text-neutral-500">
@@ -280,7 +264,7 @@ export default function Login() {
                         {officer.role}
                       </span>
                     </div>
-                    <p className="text-xs text-neutral-500 line-clamp-1 mt-0.5">
+                    <p className="text-xs text-neutral-500 mt-0.5">
                       {officer.scope}
                     </p>
                   </button>
@@ -362,7 +346,7 @@ export default function Login() {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
                   <span>{selectedRole ? `Opening ${selectedRole} Investigation Workspace...` : 'Verifying Credentials...'}</span>
                 </>
               ) : (

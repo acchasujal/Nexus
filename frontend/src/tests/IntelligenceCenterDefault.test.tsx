@@ -63,6 +63,7 @@ describe('NEXUS Intelligence Center Defaults & Information Architecture', () => 
   })
   beforeEach(() => {
     window.localStorage.setItem('nexus_role', 'INVESTIGATOR')
+    window.localStorage.setItem('nexus_token', 'test-server-session')
   })
 
   it('renders Intelligence Center with Network Pulse as the active default tab', async () => {
