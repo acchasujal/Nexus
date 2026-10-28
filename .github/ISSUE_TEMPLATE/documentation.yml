@@ -1,26 +1,31 @@
 name: Documentation
-description: Update to docs/ files — triggered when implementation makes a doc stale
+description: Correct or improve the canonical project documentation
 labels: ["type/docs"]
 body:
   - type: markdown
     attributes:
       value: |
-        Per `EXECUTION_RULES.md` §"Documentation Update Rules" — architectural changes update `ARCHITECTURE.md` and `DECISION_LOG.md` in the **same commit/session**, not deferred. New or cut features update `FEATURE_REGISTRY.md`. `TASK.md` is updated at the start and end of every session.
+        Follow AGENTS.md. Update canonical documentation alongside implementation.
+        Keep status in progress.md and architectural decisions in decisions.md.
+        Archive superseded plans instead of creating competing guides.
   - type: dropdown
     id: doc
     attributes:
-      label: Document(s) being updated
+      label: Document being updated
       options:
-        - ARCHITECTURE.md
-        - DECISION_LOG.md
-        - EXECUTION_RULES.md
-        - FEATURE_REGISTRY.md
-        - HACKATHON_MASTER_GUIDE.md
-        - IMPLEMENTATION_PLAN.md
-        - PROJECT_CONTEXT.md
-        - TASK.md
-        - TEAM_PLAYBOOK.md
         - README.md
+        - docs/PROJECT_REPORT.md
+        - docs/ARCHITECTURE.md
+        - docs/DATA_MODEL.md
+        - docs/API.md
+        - docs/INTELLIGENCE_PIPELINE.md
+        - docs/SECURITY.md
+        - docs/BENCHMARKS.md
+        - docs/DEMO.md
+        - docs/DEPLOYMENT.md
+        - docs/DEVELOPMENT.md
+        - progress.md
+        - decisions.md
         - CONTRIBUTING.md
         - Other
     validations:
@@ -28,6 +33,7 @@ body:
   - type: textarea
     id: why
     attributes:
-      label: What changed in the implementation that makes this doc stale?
+      label: What is inaccurate or missing?
+      description: Include the relevant implementation, test or source evidence.
     validations:
       required: true

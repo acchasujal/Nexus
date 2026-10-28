@@ -1,62 +1,35 @@
 name: Bug
-description: Something is broken, or a deterministic component produced an incorrect result
+description: Report a reproducible problem using synthetic data
 labels: ["type/bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Per `EXECUTION_RULES.md` §"Debugging Methodology" — identify whether this is deterministic (clock/escalation/dependency) or generative (copilot/NL) before filing. These have different root causes and different fixes.
-  - type: dropdown
-    id: lane
+        Describe expected and actual behavior. Use synthetic records and redact secrets. Follow AGENTS.md and include the relevant environment.
+  - type: input
+    id: environment
     attributes:
-      label: Owning Lane
-      options:
-        - Lane 1 — Backend Core
-        - Lane 2 — Frontend
-        - Lane 3 — Graph Intelligence
-        - Lane 4 — AI + Architecture + Integration
-        - Unknown
-    validations:
-      required: true
-  - type: dropdown
-    id: layer
-    attributes:
-      label: Deterministic or Generative?
-      options:
-        - Deterministic — clock engine
-        - Deterministic — escalation rules
-        - Deterministic — dependency tracker
-        - Generative — copilot / NL query
-        - Generative — refusal gate (under-refusal is more dangerous than over-refusal)
-        - UI / Frontend
-        - Infrastructure / Catalyst
-        - Unknown
+      label: Environment and commit
+      description: Local or hosted; browser/runtime and commit SHA.
     validations:
       required: true
   - type: textarea
     id: repro
     attributes:
-      label: Minimal Reproduction
-      description: Smallest synthetic case that triggers it. Do NOT use a real case.
+      label: Minimal reproduction
+      description: Include the smallest synthetic example.
     validations:
       required: true
   - type: textarea
     id: expected
     attributes:
-      label: Expected Behavior
+      label: Expected behavior
     validations:
       required: true
   - type: textarea
     id: actual
     attributes:
-      label: Actual Behavior
+      label: Actual behavior and evidence
+      description: Include sanitized errors and relevant screenshots.
     validations:
       required: true
-  - type: checkboxes
-    id: safety
-    attributes:
-      label: Safety Check
-      options:
-        - label: "If deterministic layer (clock/escalation): DECISION_LOG.md entry will be created BEFORE the fix"
-        - label: Fix does not silently remove a working feature (per EXECUTION_RULES.md §"Error Recovery Process")
-        - label: Root cause is understood — not a forward-fix under time pressure

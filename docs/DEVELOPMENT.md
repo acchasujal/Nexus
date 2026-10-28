@@ -1,125 +1,133 @@
-# NEXUS Developer Setup & Testing Guide
+# Development guide
 
-This guide covers local environment setup, dependencies, running the application stack, automated test suites, code quality tooling, synthetic dataset generation, and ground-truth benchmark verification.
+> Reviewed 2026-10-28. CURRENT setup instructions; deployment-specific observations belong in [progress](../progress.md).
 
----
+## Prerequisites
 
-## 1. Prerequisites
-- **Python:** Version 3.11+ (Python 3.13 tested and verified)
-- **Node.js:** Version 20+ with `npm`
-- **Docker & Docker Compose:** *(Optional)* For containerized PostgreSQL 16 and Neo4j 5 Community.
+- Python 3.11+ as declared in [pyproject.toml](../pyproject.toml). CI uses 3.11; recent local checks used 3.12 x64. Do not assume every newer Python/ARM combination has compatible dependency wheels.
+- Node 22.12+ is recommended. CI uses Node 20; the installed toolchain requires a sufficiently recent patch release.
+- Git. Docker is optional for local database services.
 
----
+Install backend dependencies from [backend/requirements.txt](../backend/requirements.txt) and frontend dependencies with `npm ci` in `frontend/`. Root npm dependencies support optional Neon infrastructure configuration, not the React build.
 
-## 2. Local Environment Setup
+## Local application
 
-### 2.1 Backend Setup (FastAPI)
-```bash
-# 1. Create and activate virtual environment
-python -m venv venv
-.\venv\Scripts\Activate.ps1   # Windows PowerShell
-source venv/bin/activate       # Linux / macOS
+From the repository root:
 
-# 2. Install dependencies
-pip install -r backend/requirements.txt
-
-# 3. Start development server
-uvicorn backend.app.main:app --reload --port 8000
+```sh
+python -m venv .venv
 ```
-Interactive Swagger API documentation is available at: `http://localhost:8000/docs`
 
-### 2.2 Frontend Setup (React & Vite)
-```bash
+Activate the environment:
+
+| Shell | Command |
+| --- | --- |
+| PowerShell | `.\.venv\Scripts\Activate.ps1` |
+| Linux/macOS | `source .venv/bin/activate` |
+
+```sh
+python -m pip install -r backend/requirements.txt
+python -m uvicorn backend.app.main:app --reload --port 8000
+```
+
+In another terminal:
+
+```sh
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
-Frontend development server is available at: `http://localhost:5173`
 
----
+Open `http://localhost:5173`; OpenAPI is at `http://localhost:8000/docs`. On Windows with script-execution restrictions, use `npm.cmd` in place of `npm`.
 
-## 3. Full Stack Docker Compose (Optional)
-To run the complete integrated stack locally (PostgreSQL 16, Neo4j 5 Community, FastAPI, Vite):
-```bash
-docker compose up --build
-```
-- Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:8000`
-- Neo4j Browser: `http://localhost:7474` (User: `neo4j`, Password: `nexuspassword`)
+Default settings use the checked-in synthetic artifact with an in-memory repository and graph. No LLM key is required for deterministic fallback behavior. Do not connect a development session to a shared production database unintentionally.
 
----
+## Environment configuration
 
-## 4. Testing & Verification Suite
+[.env.example](../.env.example) is the minimal local template. [backend/.env.example](../backend/.env.example) provides additional examples. Copy a template into an ignored `.env` only when configuring a fresh local environment; preserve an existing file and its private values.
 
-NEXUS maintains comprehensive automated test coverage across all subsystems:
+Backend configuration is defined by [Settings](../backend/app/config.py). The root launch reads the root environment; do not assume an arbitrary nested `backend/.env` is loaded by every command.
 
-### 4.1 Backend Test Suite (Pytest)
-```bash
-# Run all 708 automated backend tests
-pytest
+| Setting | Local default / purpose |
+| --- | --- |
+| `ENVIRONMENT` | `development` |
+| `NEXUS_REPOSITORY` | `memory`; select `postgres` only with a private `DATABASE_URL` |
+| `GRAPH_BACKEND` | `memory`; select `neo4j` with valid URI, user, password, and database |
+| `AUTH_MODE` | `demo`; this is not a production identity provider |
+| `JWT_SECRET_KEY` | Development can generate an ephemeral process key; production validation requires a private configured key |
+| `ARTIFACT_PATH` | Defaults to `artifacts/nexus_graph/nexus_graph.json` |
+| `STATE_PATH` | Optional local state file; use an ignored runtime directory |
+| `VITE_API_BASE_URL` | Frontend API origin; local development file points to port 8000 |
+| `VITE_ENABLE_MOCKS` | `false` in the checked-in development configuration |
+| `VITE_DEMO_MODE` | Explicitly enables read-only local demo entry; defaults off outside the production demo configuration |
 
-# Run tests with execution timing breakdown
-pytest -v --durations=10
+For local instant demo entry, add `VITE_DEMO_MODE=true` to ignored `frontend/.env.development.local`. Restart Vite after changing frontend environment values. Vite values are public build inputs: never put secrets in them.
 
-# Run specific functional suites
-pytest tests/test_neo4j_projection.py
-pytest tests/test_evidence_tamper_audit.py
-pytest tests/test_nexus_api.py
-pytest tests/test_nexus_copilot_api.py
-pytest tests/test_nexus_entity_resolution.py
-```
+## Optional local databases
 
-### 4.2 Frontend Test Suite (Vitest) & Build
-```bash
-cd frontend
+[Compose](../docker-compose.yml) declares PostgreSQL and Neo4j with private passwords supplied through the local environment. It binds ports to loopback and uses named volumes.
 
-# Run all 114 Vitest unit and integration tests
-npm test -- --run
-
-# Run TypeScript compilation and production bundle build
-npm run build
+```sh
+docker compose up -d postgres neo4j
 ```
 
-### 4.3 Linting & Code Quality
-```bash
-# Backend lint check (0 errors required)
+Set private `POSTGRES_PASSWORD` and `NEO4J_PASSWORD` values first. PostgreSQL exposes 5432; Neo4j exposes Browser on 7474 and Bolt on 7687. There is no shared default password.
+
+The frontend container recipe/build context has not been revalidated for the current cross-directory snapshot inputs. Use the native frontend quick-start above; do not describe full `docker compose up --build` as a verified turnkey path. See [deployment](DEPLOYMENT.md).
+
+## Verification commands
+
+Run from the root unless indicated:
+
+```sh
 python -m ruff check backend/ shared/ tests/
-
-# Frontend lint check (0 errors required)
-cd frontend && npm run lint
-```
-
-### 4.4 Ground-Truth Benchmark Evaluation
-Validate the Entity Resolution engine against planted criminal syndicate ground truth:
-```bash
+python -m pytest
 python scripts/evaluate_ground_truth.py
-```
-**Expected Output:** 100% Precision, 100% Recall, 100% F1 score.
-
----
-
-## 5. Synthetic Dataset Generation & Demo Seeding
-
-### 5.1 Regenerating the Synthetic Dataset
-To regenerate the deterministic synthetic dataset and ground-truth validation fixtures:
-```bash
-python -c "from synthetic_data.nexus_generator import export_nexus_synthetic_dataset; export_nexus_synthetic_dataset()"
-```
-- Generated graph: `artifacts/nexus_graph/nexus_graph.json` (445 nodes, 530 relationships)
-- Planted ground truth: `artifacts/nexus_graph/ground_truth.json`
-
-### 5.2 Seeding Production & Demo Database
-On deployment or reset, run the database seed script:
-```bash
-python scripts/seed_production_demo.py
-```
-Dry-run validation:
-```bash
-python scripts/seed_production_demo.py --dry-run
+npm --prefix frontend run lint
+npm --prefix frontend run test:run
+npm --prefix frontend run build
 ```
 
-### 5.3 Resetting Demo State During Live Presentations
-In the NEXUS UI:
-1. Navigate to **Settings** (`/settings`).
-2. Click **Reset Demo Fixture**.
-3. In-memory graph state, candidate decisions, and lead triage immediately revert to the clean evaluation baseline without server restart.
+Focused recovery checks:
+
+```sh
+python -m pytest tests/test_cold_start_lifespan.py tests/test_auth_verifier.py tests/test_evidence_object_storage.py
+npm --prefix frontend run test:run -- src/tests/DemoEntry.test.tsx src/tests/OfficerLogin.test.tsx src/tests/RecoveryPolicy.test.tsx
+```
+
+Test totals change with implementation. [progress.md](../progress.md) records dated results, including existing failures; CI output is authoritative for its own revision and environment. Do not weaken assertions or replace failures with empty data to obtain a green run.
+
+On Windows, if a default temporary directory is inaccessible, use a fresh writable directory with `python -m pytest --basetemp <new-temporary-directory> -p no:cacheprovider`. Keep test logs outside the repository.
+
+## Synthetic artifacts
+
+The checked-in base graph contains 445 nodes and 486 edges. Runtime enrichment can produce different counts; a stored deployment is not identical to an untouched artifact.
+
+Regeneration **overwrites generated fixture files**. Review the generator and use a disposable checkout when experimenting:
+
+```sh
+python -m synthetic_data.nexus_generator --demo
+python scripts/evaluate_ground_truth.py
+python scripts/verify_canonical_invariants.py
+```
+
+The generator also updates `backend/app/db/synthetic_graph.json`. [generate_read_model.py](../scripts/generate_read_model.py) maintains the canonical intelligence read model; its regeneration changes timestamps/checksums and should be deliberate.
+
+The frontend build independently derives ten initial worklist rows from the synthetic graph:
+
+```sh
+node frontend/scripts/generate-demo-snapshot.mjs
+node frontend/scripts/generate-demo-snapshot.mjs --check
+```
+
+It validates the demo profile and seed and uses a normalized source checksum. Do not manually edit [demoEntrySnapshot.json](../frontend/src/lib/demoEntrySnapshot.json).
+
+## Seeding, reset, and migrations
+
+Inspect [seed_production_demo.py](../scripts/seed_production_demo.py), [migrate_to_postgres.py](../scripts/migrate_to_postgres.py), and [migrate_to_neo4j.py](../scripts/migrate_to_neo4j.py) before running them. A script name is not proof of its target: confirm which repository/connection it constructs and whether a dry run writes anything.
+
+The UI demo reset is a backend mutation, not a local snapshot toggle. It requires an appropriate server session and can be gated by graph readiness. Do not reset a shared deployment merely to prepare a screenshot.
+
+## Documentation and changes
+
+Follow [CONTRIBUTING.md](../CONTRIBUTING.md) and [AGENTS.md](../AGENTS.md). Extend existing algorithms and shared contracts. Update the relevant canonical guide, `progress.md`, and `decisions.md` when applicable. Historical plans live in [archive](archive/README.md), not alongside current specifications.

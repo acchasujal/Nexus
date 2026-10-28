@@ -1,110 +1,137 @@
-# NEXUS REST API Documentation
+# API reference
 
-All API endpoints are served with prefix `/api/v1` (or root where configured) and communicate via JSON payloads.
+> Reviewed 2026-10-28. CURRENT route inventory with prototype scope noted. Router code and generated OpenAPI take precedence over prose.
 
----
+## Contract sources
 
-## 1. Current Implemented APIs (Verified Baseline)
+- [Core routes](../backend/app/api/core_routes.py): investigations, evidence, documents, resolution, copilot, export, and audit.
+- [NEXUS routes](../backend/app/api/nexus_routes.py): snapshots, pulses, analytical prototypes, and workflow extensions.
+- [Graph routes](../backend/app/api/graph_routes.py): graph-intelligence projections.
+- [System routes](../backend/app/api/system_routes.py): dependency readiness and telemetry.
+- [Python contracts](../shared/contracts/api.py), [TypeScript contracts](../shared/contracts/api.ts), and [graph API models](../backend/app/api/graph_models.py).
 
-### 1.1 Investigations & Case Management
-- **`GET /api/v1/investigations`**
-  - Query parameters: `district`, `category`, `status`
-  - Returns: `list[InvestigationSummaryResponse]`
-- **`GET /api/v1/investigations/{case_id}`**
-  - Returns comprehensive case details, accused persons, evidence items, and timestamps.
-- **`GET /api/v1/cases/{case_id}/overview`**
-  - Returns quick executive dashboard metrics for a specific FIR.
+Run the local server and open `http://localhost:8000/docs` or `/openapi.json` for the complete parameter, validation, and response schemas. Core and NEXUS routers are mounted at root and `/api/v1`; the graph router is mounted at `/api/v1/graph`. Chat also has an `/api/chat` route.
 
-### 1.2 Network Explorer & Graph Analytics
-- **`GET /api/v1/network/cases/{case_id}?depth=2`**
-  - Executes multi-hop BFS neighborhood expansion centered on a case node or suspect entity.
-- **`GET /api/v1/communities`**
-  - Returns Louvain modularity clusters identifying criminal syndicates.
-- **`GET /api/v1/influence/bridges`**
-  - Identifies critical articulation points bridging distinct syndicate cells.
-- **`GET /api/v1/influence/rankings`**
-  - Returns betweenness and degree centrality rankings.
-- **`GET /api/v1/nexus/network/path`**
-  - Pathfinder endpoint finding shortest paths and financial routes between two entities with edge citations.
+## Identity and availability
 
-### 1.3 Explainable Entity Resolution
-- **`POST /api/v1/entity-resolution/resolve`**
-  - Resolves suspect candidate records against the knowledge graph using Indian phonetic matching and multi-attribute corroboration.
-  - Returns match confidence, matched fields, and mathematical contribution breakdowns.
-- **`GET /api/v1/nexus/entity-resolution/candidates`**
-  - Returns flagged cross-case resolution candidate pairs for human review.
-- **`POST /api/v1/nexus/entity-resolution/decide`**
-  - Records an investigator's decision (`CONFIRMED`, `REJECTED`, `DEFERRED`) on a candidate match.
+`POST /api/v1/auth/login` accepts `AuthLoginRequest` and returns `AuthTokenResponse`. The current handler resolves predefined demo identities and issues a signed token; it does not implement a production password directory. Demo verifier shortcuts remain in the backend. See [security](SECURITY.md).
 
-### 1.4 Patterns & Temporal Intelligence
-- **`GET /api/v1/patterns/repeat-offenders`**
-  - Lists repeat accused appearing across multiple FIRs.
-- **`GET /api/v1/patterns/shared-clusters`**
-  - Detects clusters of persons sharing phone numbers, vehicles, or addresses.
-- **`GET /api/v1/timeline?case_id={case_id}`**
-  - Returns chronological sequences of calls, transactions, and meetings.
+The frontend's local `/demo` is a browser route, not an API login or an authorization bypass. Before server-session establishment it only shows bundled synthetic records.
 
-### 1.5 Grounded Investigator Copilot
-- **`POST /api/v1/copilot/query`**
-  - Translates natural language investigative inquiries into verified graph facts with clickable Section 63 BSA evidence citations.
-  - Gated by an architectural **Ethical Refusal Gate** that halts queries requesting guilt, dangerousness, or recidivism predictions.
+Ordinary JSON responses can return validation/access errors. Live graph operations return 503 while the configured projection is unavailable. A successful health response or server login does not imply that every dataset/graph request will succeed.
 
-### 1.6 Evidence Provenance & Cryptographic Integrity
-- **`GET /api/v1/evidence/{evidence_id}`**
-  - Returns evidence item details and chain-of-custody provenance.
-- **`POST /api/v1/nexus/sources/{source_id}/verify`**
-  - Verifies raw evidence payload against stored SHA-256 digest, raising an audit alert if tampered.
+## Implemented endpoint groups
 
-### 1.7 Audit & System Telemetry
-- **`GET /api/v1/audit?limit=50`**
-  - Returns immutable append-only audit trail logs (Requires `SUPERVISOR` or `ADMIN` role).
-- **`GET /api/v1/system/status`**
-  - Returns real-time graph size, node counts, index build latencies, and Neo4j connection status.
-- **`GET /health`** & **`GET /ready`**
-  - Liveness and readiness probes for cloud container orchestration.
+Paths below include the preferred `/api/v1` prefix. This is a navigation index, not a replacement for OpenAPI.
 
----
+### Investigation, entity, and evidence foundation — CURRENT
 
-## 2. Target API Contracts (Proactive Network Change Plane)
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| POST | `/api/v1/auth/login` | Establish a server-issued demo session |
+| GET | `/api/v1/investigations` | Worklist; supports district/category/status filters |
+| GET | `/api/v1/investigations/{case_id}` | Investigation detail |
+| GET | `/api/v1/network/cases/{case_id}` | Case-centred network expansion |
+| GET | `/api/v1/entities` | Entity list/search |
+| GET | `/api/v1/entities/{entity_id}` | Entity profile |
+| GET | `/api/v1/entities/{entity_id}/network` | Entity-centred network |
+| POST | `/api/v1/entity-resolution/resolve` | Explainable candidate matching |
+| GET | `/api/v1/communities` | Community analysis |
+| GET | `/api/v1/influence/bridges` | Bridge-node analysis |
+| GET | `/api/v1/influence/rankings` | Centrality ranking |
+| GET | `/api/v1/timeline` | Investigation timeline |
+| GET | `/api/v1/evidence` | Evidence list |
+| GET | `/api/v1/evidence/{evidence_id}` | Evidence record |
+| POST | `/api/v1/evidence/verify` | Evidence integrity verification |
+| POST | `/api/v1/copilot/query` | Citation-bearing investigative response |
+| GET | `/api/v1/audit` | Audit records subject to policy |
 
-The following endpoints represent the target interface for upcoming P0 and P1 capabilities:
+Legacy aliases such as `/worklist` and `/cases/{case_id}` are marked deprecated in the core router. New clients should use the preferred routes.
 
-### 2.1 Graph Snapshots & Network Diff (P0)
-- **`GET /api/v1/nexus/snapshots`**
-  - List available point-in-time graph snapshots for an investigation.
-- **`GET /api/v1/nexus/diff?before={snapshot_id}&after={snapshot_id}`**
-  - Executes deterministic snapshot comparison using `NetworkDiffService`.
-  - Returns: Added/removed nodes, added/removed relationships, bridge transitions, community splits/merges, and identifier drift records.
+### Ingestion, documents, and candidate decisions — CURRENT / EXTENSION
 
-### 2.2 Network Pulse Queue (P0)
-- **`GET /api/v1/nexus/pulses?priority={CRITICAL_REVIEW}`**
-  - Retrieve filtered high-significance network change events.
-- **`GET /api/v1/nexus/pulses/{pulse_id}`**
-  - Inspect detailed pulse metrics, supporting evidence, and action windows.
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| POST | `/api/v1/ingest` | Core ingestion batch |
+| POST | `/api/v1/nexus/ingest` | NEXUS ingestion flow |
+| POST | `/api/v1/documents` | Upload a document |
+| GET | `/api/v1/documents/{document_id}` | Document metadata |
+| GET | `/api/v1/documents/{document_id}/download` | Authorized source-byte download |
+| GET | `/api/v1/documents/{document_id}/text` | Extracted text |
+| POST | `/api/v1/documents/{document_id}/extract` | Candidate extraction |
+| GET | `/api/v1/documents/{document_id}/candidates` | Review extracted candidates |
+| POST | `/api/v1/candidates/{candidate_id}/accept-entity` | Link a reviewed candidate to an entity |
+| POST | `/api/v1/candidates/{candidate_id}/accept-new` | Accept a reviewed new entity |
+| GET | `/api/v1/nexus/resolution/candidates` | Resolution review queue |
+| POST | `/api/v1/nexus/resolution/{candidate_id}/decision` | Record CONFIRM/REJECT/DEFER-style decisions as defined by the request contract |
 
-### 2.3 Evidence Sufficiency & Early Warning (P0)
-- **`POST /api/v1/nexus/pulses/{pulse_id}/assess-evidence`**
-  - Evaluates evidence state (`SUPPORTS`, `CONFLICTS`, `MISSING`) for claims in a pulse.
-- **`GET /api/v1/nexus/forecasts?case_id={case_id}`**
-  - Returns constrained operational state forecasts (`JURISDICTION_SHIFT`, `IDENTIFIER_DRIFT`) with explicit uncertainty and abstention status.
-- **`GET /api/v1/nexus/verification/{pulse_id}`**
-  - Returns suggested next-best verification actions.
+Use the actual request enums from shared contracts; UI wording and older plans are not payload definitions. Upload endpoints use multipart form data where declared.
 
-### 2.4 Cross-Branch Intelligence Pulse (P1)
-- **`GET /api/v1/nexus/intelligence-pulses`**
-  - Retrieve inbound cross-case intelligence packets affecting the investigator's assigned cases.
-- **`POST /api/v1/nexus/intelligence-pulses/{pulse_id}/acknowledge`**
-  - Acknowledge or reject receipt of routed intelligence, recorded in the audit log.
+### Snapshots and intelligence — EXTENSION
 
-### 2.5 Explainable Case DNA (P2)
-- **`GET /api/v1/nexus/case-dna/{case_id}`**
-  - Returns structural and topological similarity breakdown against historical syndicates.
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/nexus/network` | Snapshot-aware canonical network |
+| GET | `/api/v1/nexus/network/diff` | Existing snapshot-diff response |
+| GET | `/api/v1/nexus/path` | Evidence-linked pathfinding |
+| GET | `/api/v1/nexus/relationships/{rel_id}/evidence` | Relationship evidence |
+| GET | `/api/v1/nexus/sources/{source_id}` | Source record |
+| POST | `/api/v1/nexus/sources/{source_id}/verify` | Recompute source integrity |
+| GET / POST | `/api/v1/nexus/snapshots` | List/create snapshots |
+| GET | `/api/v1/nexus/diff` | Proactive network diff |
+| GET | `/api/v1/nexus/pulses` | Filtered review pulses |
+| GET | `/api/v1/nexus/intelligence/bootstrap` | Dashboard KPIs derived from the current pulse/assessment scope |
+| GET | `/api/v1/nexus/leads` | Lead queue |
+| POST | `/api/v1/nexus/leads/{lead_id}/decision` | Lead review |
+| POST | `/api/v1/nexus/copilot/query` | NEXUS copilot flow |
 
+Forecast and verification recommendation objects can be attached to pulse responses. They are prototype outputs, not a separately deployed general forecasting API.
 
-### Staged startup availability (2026-10-05)
-With NEO4J_BACKGROUND_STARTUP=true, repository-backed bootstrap/pulses and authentication are available before graph projection completes. Live graph traversals and graph-changing operations return 503 until both sync and durable graph read finish. /health remains process liveness; /ready retains the required dependency policy. No payload contract changes. Bootstrap KPIs derive from the same active pulse assessments as the queue; they are not static historical demo counts.
+### Analytical radars — NEW PROTOTYPE
 
-Readiness also reports `startup.factory_to_http_ready_ms` (excludes earlier imports/platform scheduling) and `graph_initialization` status, stage, elapsed_ms and sanitized exception type if initialization fails. These diagnostics contain no credential or exception-message data and do not replace operational graph readiness.
+GET collections under:
 
+- `/api/v1/nexus/intelligence/identity-drift`
+- `/api/v1/nexus/intelligence/network-adaptation`
+- `/api/v1/nexus/intelligence/digital-shadow`
+- `/api/v1/nexus/intelligence/case-dna/{case_id}`
 
-Readiness startup diagnostics additionally expose `module_imports_ms`, `repository_ms`, `storage_pipeline_audit_prepare_ms`, and `routes_and_services_ms`. They measure elapsed startup stages only and contain no exception messages or credentials. Imports plus factory readiness remain a lower bound on process/platform cold-start time.
+The first three also expose summary and decision operations as declared in the router. Hotspot, repeat-case, and combined intelligence views live under `/nexus/intelligence/`. These do not establish a real-world identity or guilt finding.
+
+### Workflow and integrity extensions
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| POST | `/api/v1/nexus/intelligence/pulses/dispatch` | Create an internal intelligence packet |
+| GET | `/api/v1/nexus/intelligence/pulses/inbox` | Authorized packet inbox |
+| POST | `/api/v1/nexus/intelligence/pulses/{packet_id}/acknowledge` | Packet acknowledgement |
+| POST | `/api/v1/nexus/routing/evaluate` | Evaluate affected investigations |
+| GET | `/api/v1/nexus/routing/inbox` | Affected-investigation inbox |
+| GET / POST | `/api/v1/nexus/intelligence/events` | Intelligence event records |
+| GET / POST | `/api/v1/nexus/verification/tasks` | Persistent verification tasks |
+| GET / POST | `/api/v1/nexus/evidence/assessments` | First-class evidence assessments |
+| GET | `/api/v1/nexus/propagation/{decision_id}` | Closed-loop propagation result |
+| POST | `/api/v1/nexus/propagation/retry/{decision_id}` | Explicit propagation recovery |
+| POST | `/api/v1/nexus/evidence/dossier` | Generate a dossier |
+| GET | `/api/v1/nexus/evidence/dossier/{dossier_id}/download` | Authorized PDF download |
+| POST | `/api/v1/nexus/evidence/dossier/{dossier_id}/verify` | Dossier integrity check |
+
+Task assignment/transitions/evidence/decisions and assessment revisions are explicit mutations. Do not automatically replay them after a network error.
+
+## Graph projection API — CURRENT
+
+The `/api/v1/graph` family includes case/person networks, co-accused, paths, similarity/compare, dashboard aggregates, hotspots, repeat-case profiles, components, centrality, and stats. These operate on the graph-intelligence repository and must not be conflated with canonical snapshot reads.
+
+## Health and readiness
+
+| Endpoint | Meaning |
+| --- | --- |
+| `GET /health` | Process liveness; not dependency health |
+| `GET /ready` | Storage and configured graph failure policy; 200 ready/degraded or 503 not ready |
+| `GET /api/v1/system/status` | Application telemetry; not a replacement for readiness |
+
+Readiness includes storage availability, graph connection/operational distinction, graph initialization stage/attempts, and startup timings. Diagnostics omit credentials and raw exception messages.
+
+## Not implemented as production integrations
+
+External police-system connectors, production identity federation, cross-agency ledger consensus, general calibrated forecasting, and arbitrary real-time social-media collection are TARGET / FUTURE or excluded scope. Older proposed URLs in the [archive](archive/README.md) are not current API contracts.

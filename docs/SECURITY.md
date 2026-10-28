@@ -1,98 +1,83 @@
-# NEXUS Security, Governance & Evidence Integrity
+# Security, evidence integrity, and responsible use
 
-This document outlines the security architecture, statutory compliance guardrails, role-based access control (RBAC), immutable audit logging, and cryptographic evidence verification implemented in NEXUS.
+> Reviewed 2026-10-28. This is an implementation and limitations guide, not a compliance certification or legal opinion.
 
----
+## Scope and data policy
 
-## 1. Statutory Boundaries & Responsible AI
+NEXUS is an evaluation prototype using synthetic records. The MHA/NCRB problem context does not imply official deployment, accreditation, or access to police systems.
 
-NEXUS strictly complies with the Constitution of India, criminal procedure jurisprudence, the Digital Personal Data Protection (DPDP) Act 2023, and the Bharatiya Sakshya Adhiniyam (BSA) 2023.
+Do not put real citizen records, credentials, or private case material into development fixtures, public issues, screenshots, logs, or public ledgers. Hashes are not anonymization by themselves.
 
-### 1.1 Absolute Prohibition on Automated Guilt Scoring
-- **Constitutional Principle:** Under the Indian legal system, determining criminal guilt, innocence, and penal culpability is the exclusive constitutional prerogative of the judiciary.
-- **Architectural Firewall:** No algorithm, statistical model, or LLM in NEXUS is permitted to compute or display:
-  - "Guilt Scores" or "Probability of Criminality"
-  - "Future Crime / Offense Predictions"
-  - "Recidivism Risk / Dangerousness Ratings"
-  - "Credibility / Deception Ratings"
-- **Refusal Gate Implementation:** The `CopilotService` inspects incoming queries and halts on prohibited terms (`guilty`, `culpable`, `reoffend`, `predict guilt`, `convict`, `dangerous`). Refused queries return an explicit explanation directing officers to primary evidentiary records.
+## Authentication: important prototype boundary
 
-### 1.2 Mandatory Epistemic Abstention
-- When generating operational early-warning signals, if evidence is sparse, stale (>90 days old), or contradictory, the system must explicitly abstain:
-  $$\text{Early Warning Result: } \mathbf{INSUFFICIENT\ EVIDENCE\ /\ NO\ FORECAST}$$
-- The system never outputs speculative guesses to fill intelligence gaps.
+**CURRENT:** The frontend separates a local read-only demo from a server-issued session. The local role never creates a JWT or an authenticated AuthContext identity. Its controls do not expose backend mutations.
 
----
+The backend login handler resolves demo roles and issues signed demo tokens. It does **not** validate credentials against a production officer directory. The current `DevelopmentVerifier` supports signed JWTs as well as demonstration shortcuts, including role headers/query parameters and legacy base64 tokens. Changing `AUTH_MODE` alone is not a replacement for a hardened identity integration.
 
-## 2. Evidence Provenance & Section 63 BSA Compliance
+Relevant code:
 
-Under Section 61 and Section 63 of the Bharatiya Sakshya Adhiniyam, 2023, digital evidence and intelligence dossiers are admissible in court only with verifiable, continuous chain-of-custody provenance:
+- [Login handler](../backend/app/api/core_routes.py)
+- [Verifier](../backend/app/auth/verifier.py)
+- [Principal resolution](../backend/app/auth/principal.py)
+- [Authorization policy](../backend/app/auth/policy.py)
+- [Frontend session context](../frontend/src/contexts/AuthContext.tsx)
 
-1. **Edge-Level Attribution:** Every relationship carries an `EvidenceProvenance` citation record capturing:
-   - `source_type`: Category of source document (`FIR`, `CDR`, `BANK_TXN`, `SEIZED_DEVICE`, `INTELLIGENCE_REPORT`, `SOCMINT`)
-   - `source_id`: Unique identifier (FIR number, call detail record ID, bank transaction UTR)
-   - `timestamp`: UTC event creation timestamp
-   - `extracted_fact`: Concrete verifiable factual assertion
-   - `derivation_method`: Algorithmic or forensic verification method (`OFFICIAL_RECORD`, `TELECOM_LOG`, `ALGORITHMIC_MATCH`)
-   - `confidence`: Quantitative confidence score [0.0 - 1.0]
-2. **Section 63 BSA Dossier Export:** Generates tamper-evident forensic intelligence packages with cryptographic hash chains and certificate metadata.
+**TARGET / FUTURE:** A production identity provider, verified credential exchange, robust expiry/revocation, stronger session lifecycle, restricted CORS, and operational access auditing require a separate security review before any real-data deployment. Do not describe the demo credential form as production authentication.
 
----
+## Authorization and role semantics
 
-## 3. Cryptographic Evidence Integrity (SHA-256)
+Policy code and service-level checks—not visible frontend buttons—define backend access. Roles include IO/INVESTIGATOR, SHO/ANALYST, SP/SUPERVISOR, and ADMIN; specific actions and case/station/district scopes differ by policy. Do not assume aliases imply identical permissions for every endpoint.
 
-To guarantee that source records underpinning analytical graphs remain untampered:
+Representative boundaries include scoped case/evidence access, investigator review decisions, audit/dossier permissions, and graph-readiness gates. Tests exercise these boundaries but do not constitute an independent penetration test.
 
-### 3.1 Canonicalization & Hashing
-1. **Source Record Hashing:** During ingestion, raw rows are canonicalized (keys sorted alphabetically, strict separators, deterministic JSON serialization) and hashed using SHA-256.
-2. **Evidence Record Hashing:** `EvidenceService` hashes the canonical payload (`evidence_type`, `title`, `description`, `file_name`, `source_system`, `case_id`, `metadata`).
+Frontend logout clears stored role/token/demo selection and query cache. Obsolete login responses are rejected after logout, a new session attempt, or cancellation. If session storage cannot be written and verified, the frontend does not claim a usable stored server session.
 
-### 3.2 Dynamic Tamper Verification Flow
-1. Investigators click **[Verify Integrity]** in the Evidence Drawer.
-2. Backend endpoint `POST /api/v1/nexus/sources/{source_id}/verify` recomputes the SHA-256 digest from the canonical raw excerpt.
-3. If the computed hash differs from the stored hash, an `INTEGRITY MISMATCH` alert is raised, and the event is recorded in the immutable audit trail.
+## Responsible analysis
 
----
+**CURRENT policy / tested refusal behavior:**
 
-## 4. Role-Based Access Control (RBAC) & Signal Authorization
+- No guilt, criminal-propensity, recidivism, dangerousness, or credibility scoring.
+- Deterministic graph computation before generative explanation.
+- Evidence attribution and explicit distinction between facts, derived associations, hypotheses, and decisions.
+- Prohibited-query checks in the copilot.
 
-NEXUS enforces least-privilege role boundaries across the law enforcement hierarchy:
+**NEW PROTOTYPE:** Forecast/abstention cards illustrate constrained operational targets. They are not calibrated probabilities or blanket guarantees that every weak-data case is detected. See [pipeline scope](INTELLIGENCE_PIPELINE.md).
 
-| Role | Domain Scope | Analytical Permissions | Proactive Signal Permissions |
-| :--- | :--- | :--- | :--- |
-| **`INVESTIGATOR`** (IO) | Assigned Case Workspace | View assigned cases, run entity resolution, inspect multi-hop suspect networks, query copilot. | Review Network Pulses for assigned cases; execute suggested verification workflows. |
-| **`ANALYST`** | Crime Branch / Special Cell | Cross-case syndicate clustering, bridge broker identification, temporal pattern queries. | Inspect network diffs across jurisdictions; prepare cross-branch Intelligence Pulses. |
-| **`SUPERVISOR`** (SP / DCP) | District / Division Oversight | District-wide intelligence rollup, cross-station correlation, immutable audit review. | Authorize cross-jurisdiction Intelligence Pulse dispatches; review tamper alerts. |
-| **`ADMIN`** | System Administration | User provisioning, role assignment, security telemetry, health monitoring. | System configuration, database synchronization, key rotation. |
+## Integrity mechanisms
 
----
+| Mechanism | What it establishes | What it does not establish |
+| --- | --- | --- |
+| Source/evidence digest | Whether canonicalized content matches an expected digest | Whether the original statement is true |
+| Audit hash chain | Detectable inconsistencies in chained records | Protection from every privileged/storage attack |
+| Merkle proof and local permissioned ledger | Inclusion/integrity evidence within the implemented local structure | Deployed cross-agency consensus |
+| PDF/dossier hashing | Whether exported bytes match a recorded hash | Automatic court admissibility or legal certification |
+| Private content-addressed objects | Controlled source-byte storage and checked retrieval | A complete retention/incident-response program |
 
-## 5. Controlled SOCMINT & Digital Shadow Governance
+The source-record digest, evidence metadata digest, audit-chain hash, Merkle root, and PDF digest have separate scopes. A “recorded” hash must not be labelled “verified” without the corresponding verification operation.
 
-When fusing digital signals (social media handles, forum identifiers, digital marketplace posts):
-- **Lawful Sourcing:** Only publicly accessible, lawful, or officially subpoenaed digital data is ingested. Private account hacking or unverified automated scraping is prohibited.
-- **Strict Association Lifecycle:** Digital connections follow a mandatory 4-stage progression:
-  $$\text{OBSERVED} \to \text{CANDIDATE LINK} \to \text{CORROBORATED} \to \text{INVESTIGATOR CONFIRMED}$$
-- **Non-Equivalence Rule:** A matching username or online handle is NEVER treated as legal proof of person identity by itself. It must be corroborated by a hard physical identifier (phone, IMEI, bank account, or Aadhaar token).
+Dossier formats reference the Section 63 BSA workflow. Their existence is not a legal finding that a particular record meets every evidentiary requirement. Human/legal review remains necessary.
 
----
+## Digital identifier corroboration
 
-## 6. Immutable Audit Trail
+**NEW PROTOTYPE:** Digital Shadow works with authorized structured/public identifiers and explicit association states. A handle match does not establish identity. Do not add covert scraping, account intrusion, or automatic promotion of an unverified association.
 
-Every analytical query, data export, and administrative action is immutably logged via `AuditService`:
-- Entity resolution searches and candidate decisions (`CONFIRMED`, `REJECTED`, `DEFERRED`)
-- Multi-hop graph expansion actions and BFS queries
-- Copilot queries, grounded citations, and safety refusal events
-- SHA-256 integrity verification results and tamper alerts
-- Intelligence Pulse generation, transmission, and acknowledgement
-- Exported case intelligence dossiers
+Production source authorization, minimization, retention, and legal review remain requirements—not accomplishments inferred from a demo screen.
 
-Audit records include timestamp, actor user ID, role, client IP, case ID, and unique request ID.
+## Secrets and deployment configuration
 
----
+- Use ignored local environment files and hosting-provider secrets.
+- Never put secrets in Vite variables; they become public bundle contents.
+- Production configuration validates a private JWT secret, but a strong secret does not harden the demo login/verifier.
+- Inspect actual CORS behavior; the current middleware includes broad preview-origin patterns and is not a certified least-privilege production policy.
+- Keep raw exception/provider details and connection credentials out of diagnostics.
+- Do not store FIRs, CDRs, accounts, or citizen PII on public blockchains. Naive `SHA256(phone)` is not production private-set intersection.
 
-## 7. Trust Fabric & Blockchain Strategy (Current vs. Target)
+## Availability is not authorization
 
-- **Current Implementation:** SHA-256 cryptographic hashing of canonical payloads, immutable append-only PostgreSQL audit trails, and Section 63 BSA evidence dossier generation.
-- **Target Architecture (Vision):** Selective Merkle-tree anchoring on permissioned ledgers (Hyperledger Fabric or sovereign state node) for inter-agency audit non-repudiation.
-- **Explicit Non-Goal:** Sensitive crime data (raw FIRs, CDRs, bank statements, victim details) will NEVER be stored on public blockchains.
+Read-only snapshots remain usable during service outages. Live reads require the selected flow's server session, and full-workspace mutations retain their backend checks. Graph operations remain gated until schema/sync/durable read complete. Never bypass those gates merely to produce a successful demo response.
+
+See [deployment](DEPLOYMENT.md) for liveness versus readiness and bounded recovery.
+
+## Reporting a concern
+
+Report the affected revision and a synthetic reproduction through a private maintainer channel when details are sensitive. Do not post credentials, real records, exploit tokens, or private service dumps in public issues. A formal vulnerability disclosure program and response SLA have not been established.

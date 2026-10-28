@@ -1,77 +1,47 @@
-# NEXUS — 3-Minute Live Demonstration Script
+# Judge walkthrough
 
-> **Scenario:** Inter-state extortion and cyber-fraud syndicate adapting its network through burner device rotation and cross-border bank layering.
+This is a suggested three-minute presentation, not a promise that a sleeping backend wakes within three minutes. Use only the repository's synthetic dataset. Check [current status](../progress.md) and [deployment readiness](DEPLOYMENT.md) before presenting.
 
----
+## Before the session
 
-## 1. Proactive Demonstration Flow (3 Minutes)
+- Open the [evaluation deployment](https://nexus-eight-weld-33.vercel.app/login) in a fresh browser.
+- Confirm the synthetic demo label, selected officer and snapshot version.
+- Check the API health and readiness separately. Neo4j can be degraded while core data remains available.
+- Prepare a local native setup using [development instructions](DEVELOPMENT.md) if hosted services are unavailable.
+- Do not reset shared deployment data or depend on unverified external integrations during judging.
 
-```mermaid
-journey
-    title 3-Minute Live Demonstration Journey
-    section 0:00 - 0:35 Ingestion & Baseline
-      Load Disparate Crime Telemetry: 5: Investigator
-      Verify SHA-256 Provenance Hashes: 5: NEXUS
-    section 0:35 - 1:15 Entity Resolution & Fusion
-      Disambiguate 'Vikram' vs 'Bikram': 5: NEXUS
-      Investigator Confirms Candidate Match: 5: Investigator
-    section 1:15 - 2:00 Network Diff & Network Pulse
-      Inject New Batch of CDR & Bank Logs: 5: Investigator
-      O(N+E) Network Diff detects Bridge: 5: NEXUS
-      Network Pulse alerts on Jurisdiction Shift: 5: Investigator
-    section 2:00 - 2:30 Evidence & Early Warning
-      Inspect Supports/Conflicts/Missing Badges: 5: Investigator
-      Constrained Forecast with Abstention: 5: NEXUS
-      Next Best Verification suggests Action: 5: Investigator
-    section 2:30 - 3:00 Intelligence Pulse & Copilot
-      Dispatch Intelligence Pulse to Mumbai Cell: 5: Investigator
-      Copilot Explains Facts with BSA Citations: 5: NEXUS
-      Ethical Refusal Gate rejects Guilt Score: 5: NEXUS
-```
+## 0:00–0:30 — Enter a useful workspace
 
----
+Choose one of the four officer profiles. With explicit demo mode enabled, selection enters the read-only local demo workspace without waiting for backend login. Show the initial metrics and ten generated worklist rows.
 
-## 2. Minute-by-Minute Demonstration Script
+Explain the connection label: **Demo snapshot · Connecting**, **Live data connected**, or **Offline demo**. A local demo role is not server authentication. The versioned snapshot comes from the canonical synthetic artifact; it is not a live queue count.
 
-### Minute 0:00 – 0:35: Multi-Source Ingestion & Evidence Provenance
-- **Investigator Narrative:**  
-  *"Organized criminal networks do not respect district boundaries. In Indian policing, intelligence arrives piecemeal: an extortion FIR in Bengaluru, a CDR dump from a cyber cell in Haryana, and a bank transaction sheet from Mumbai. NEXUS ingests these multi-modal streams and immediately locks every record into an immutable SHA-256 cryptographic chain conforming to Section 63 of the Bharatiya Sakshya Adhiniyam, 2023."*
-- **Action on Screen:**  
-  1. Navigate to **Investigations** (`/worklist`). Open **FIR-2026-0001**.
-  2. Open the **Evidence Drawer**. Click **[Verify Integrity]** to show real-time SHA-256 validation passing with 0 mismatches.
+## 0:30–1:10 — Follow a lead to its evidence
 
-### Minute 0:35 – 1:15: Explainable Entity Resolution & Human Decision
-- **Investigator Narrative:**  
-  *"Notice the primary suspects: 'Vikram Sharma' in Bengaluru and 'Bikram Sarma' in Mumbai. Traditional databases treat them as separate individuals. NEXUS applies phonetic normalization and matches a shared IMEI and vehicle, resolving them with 95% confidence. But AI does not make the final call—the officer reviews the mathematical breakdown and confirms the merge."*
-- **Action on Screen:**  
-  1. Open **Entity Fusion** (`/fusion`).
-  2. Inspect candidate pair `Vikram Sharma` ↔ `Bikram Sarma`. Show the phonetic and identifier contribution weights.
-  3. Click **[Confirm Match]**. Show that the decision is immediately logged in the immutable audit log.
+When the server session is available, use the workspace link to enter the full interface. Open an investigation from Worklist and inspect its supporting records. Use the displayed identifiers rather than a memorized case number that may belong to an older fixture.
 
-### Minute 1:15 – 2:00: Network Diff & Network Pulse
-- **Investigator Narrative:**  
-  *"NEXUS does not stop at showing static connections. When new CDR logs or financial transactions arrive, our deterministic Network Diff engine compares graph snapshots in sub-millisecond time. Rather than flooding the officer with hundreds of trivial calls, Network Pulse isolates the emergence of an articulation bridge connecting an extortion cell to a hawala syndicate."*
-- **Action on Screen:**  
-  1. Navigate to **Network Explorer** (`/network`). Toggle the **Snapshot Diff Overlay**.
-  2. Green highlights show newly added relationship edges; dashed borders highlight the newly emerged bridge node.
-  3. Show the **Network Pulse** review card flagged with `CRITICAL_REVIEW`.
+Show provenance and integrity verification. Explain that a matching digest establishes consistency with the recorded artifact, not the truth of an allegation or automatic legal admissibility.
 
-### Minute 2:00 – 2:30: Evidence Assessment, Early Warning & Abstention
-- **Investigator Narrative:**  
-  *"How do we know this lead is sound? Our Evidence Assessment engine classifies supporting documentation into SUPPORTS, CONFLICTS, and MISSING. Furthermore, NEXUS features a constrained Early-Warning Engine: it forecasts operational movements like JURISDICTION_SHIFT, but if evidence is contradictory or stale, it explicitly abstains. Next Best Verification immediately recommends the exact legal step required—such as obtaining a Section 94 BNSS subscriber verification."*
-- **Action on Screen:**  
-  1. Click the Pulse card to display the **Evidence Assessment** panel. Highlight the `SUPPORTS` and `MISSING` badges.
-  2. Show the **Early Warning Card** indicating `Target State: JURISDICTION_SHIFT (Action Window: 48h)`.
-  3. Demonstrate the **Next Best Verification** recommendation.
+## 1:10–1:50 — Explain a network change
 
-### Minute 2:30 – 3:00: Cross-Branch Intelligence Pulse & Refusal Firewall
-- **Investigator Narrative:**  
-  *"Finally, how do we alert the Mumbai Cyber Cell? NEXUS packages the verified lead into a structured Intelligence Pulse, routing it securely based on RBAC clearance. To interrogate the case, the officer turns to the Grounded Copilot. If an officer asks 'Is the suspect guilty?', our ethical refusal firewall intercepts the query, preserving the constitutional prerogative of the judiciary."*
-- **Action on Screen:**  
-  1. Click **[Dispatch Intelligence Pulse]** to send the packet to the affected investigation.
-  2. Open **Copilot** (`/copilot`). Query: *"Show phone and syndicate links connected to case-0001"*. Show verifiable citations.
-  3. Query: *"Is the accused guilty?"*. Show the immediate ethical refusal interceptor explanation.
+Open Network Explorer and compare the available before/after snapshots. In Intelligence Center, inspect a Network Pulse and its contributing changes. Distinguish an observed connection, a derived signal and an investigator hypothesis.
 
+**CURRENT / EXTENSION:** graph exploration, deterministic snapshot comparison and pulse review. **NEW PROTOTYPE:** constrained operational early-warning suggestions. No guilt or criminality score is produced.
 
-### Judge first-paint state (2026-10-05)
-After authentication, Intelligence Center immediately displays the existing versioned canonical synthetic read-model artifact. Its snapshot contains three pulses and six affected investigations; these are historical demo-baseline values, not confirmed current queue counts. The separate syncing label remains visible until API confirmation. Bootstrap/pulse/Worklist responses replace their own baseline independently; a confirmed API queue can differ from the historical snapshot. Temporary failures never become zero or an empty queue. After bounded retries, the baseline remains explicitly labelled with synchronization paused; a later healthy recovering read coordinates one catch-up request for active exhausted observers. Secondary analytics hydrate only when selected. Login commits its issued session and navigates before analytics requests finish.
+## 1:50–2:30 — Review evidence gaps and verification
+
+Open the pulse's evidence assessment. Explain supporting, conflicting and missing evidence, then inspect suggested verification actions. Show an abstention example when supported by the active fixture.
+
+An example forecast window or support value is a synthetic rule output, not a calibrated prediction. A suggested verification step is not a completed task or an automatic graph mutation.
+
+## 2:30–3:00 — Demonstrate accountable assistance
+
+Use Grounded Copilot to ask a factual question about the case currently open. Inspect citations and explain the limits of the answer. A request to decide guilt should be refused.
+
+If demonstrating a backend-dependent decision, use an authorized session and verify the actual server response. Never describe an optimistic UI state as a persisted success.
+
+## If connectivity fails
+
+Stay in the usable read-only snapshot and show the truthful offline state. Explain automatic bounded recovery; do not refresh repeatedly or promise a wake-up time. Graph-specific failures should be presented as degraded functionality, not fabricated results.
+
+The local demo snapshot and the full server workspace have different capabilities. See [security](SECURITY.md), [API](API.md) and the [project report](PROJECT_REPORT.md) for boundaries and future work.

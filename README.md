@@ -1,186 +1,156 @@
-# NEXUS — Evidence-Grounded Criminal Network Change Intelligence Platform
+<p align="center">
+  <img src="frontend/public/favicon.svg" width="64" height="64" alt="NEXUS network mark" />
+</p>
 
-> **Smart India Hackathon (SIH) 2026** — Problem Statement ID: 26189  
-> **Client Organization:** Ministry of Home Affairs (MHA) / National Crime Records Bureau (NCRB)  
-> **Division:** Women Safety Division | **Theme:** Blockchain & Cybersecurity  
+<h1 align="center">NEXUS</h1>
+<p align="center"><strong>Evidence-grounded criminal network change intelligence</strong></p>
+<p align="center">Smart India Hackathon 2026 · Problem Statement 26189 · Blockchain & Cybersecurity</p>
 
-[![Pytest Tests](https://img.shields.io/badge/Pytest-708%20Passed-emerald.svg)](docs/DEVELOPMENT.md)
-[![Vitest Tests](https://img.shields.io/badge/Vitest-114%20Passed-blue.svg)](docs/DEVELOPMENT.md)
-[![ER Precision](https://img.shields.io/badge/ER%20Precision-100%25-green.svg)](docs/BENCHMARKS.md)
-[![ER Recall](https://img.shields.io/badge/ER%20Recall-100%25-green.svg)](docs/BENCHMARKS.md)
-[![Code Quality](https://img.shields.io/badge/Ruff-0%20Errors-blue.svg)](docs/DEVELOPMENT.md)
-[![Docker Ready](https://img.shields.io/badge/Docker-Postgres%20%7C%20Neo4j%20%7C%20FastAPI%20%7C%20Vite-blueviolet.svg)](docker-compose.yml)
+<p align="center">
+  <a href="https://github.com/acchasujal/Nexus/actions/workflows/ci.yml"><img src="https://github.com/acchasujal/Nexus/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
+  <a href="docs/SECURITY.md"><img src="https://img.shields.io/badge/data-synthetic_only-2563eb" alt="Synthetic data only" /></a>
+  <a href="docs/ARCHITECTURE.md"><img src="https://img.shields.io/badge/analysis-deterministic-334155" alt="Deterministic analysis" /></a>
+</p>
 
----
+<p align="center">
+  <a href="https://nexus-eight-weld-33.vercel.app/login">Try the demo</a> ·
+  <a href="docs/PROJECT_REPORT.md">Project report</a> ·
+  <a href="docs/DEMO.md">Judge walkthrough</a> ·
+  <a href="docs/DEVELOPMENT.md">Developer guide</a>
+</p>
 
-## 1. What is NEXUS?
+## From fragmented records to explainable network changes
 
-**NEXUS** transforms criminal network analysis from static, retrospective link charts into **proactive, evidence-grounded criminal network change intelligence**.
+An FIR, a call record, and a bank transfer can describe different parts of the same network. NEXUS connects those records, shows how the network changes, and gives an investigator the evidence and verification steps behind each finding.
 
-Operating on the continuous investigative loop:
-$$\text{observe} \to \text{connect} \to \text{detect change} \to \text{forecast only what is justified} \to \text{alert} \to \text{verify} \to \text{act} \to \text{learn}$$
+The central question is **“What changed, why does it matter, and what should we verify next?”**
 
-NEXUS bridges disconnected First Information Reports (FIRs), Call Detail Records (CDRs), and banking transactions into an explainable, multi-relational knowledge graphs. It detects how an observed network adapts over time, grounds every insight in verifiable source evidence, identifies evidence gaps, suggests next-best verification actions, and securely propagates actionable intelligence across police station jurisdictions.
-
----
-
-## 2. Core Value Proposition & Headline Differentiators
-
-Traditional law enforcement software displays static connections after crimes occur. NEXUS introduces three transformative capabilities:
-
-1. **Early-Warning Network Intelligence:** Detects meaningful structural adaptations (bridge emergence, intermediary substitution, community splits, identifier shifts) and produces evidence-supported forecasts of narrowly defined operational next states—with mandatory abstention whenever evidence is sparse, stale, or conflicting.
-2. **Digital Shadow & Identity Drift Radar:** Correlates public and authorized digital signals with offline case telemetry to detect when syndicate kingpins discard burner devices, rotate mule bank accounts, or adopt phonetic aliases.
-3. **Trusted Cross-Branch Intelligence Exchange:** Binds every link to an immutable Section 63 Bharatiya Sakshya Adhiniyam (BSA) evidence provenance record with SHA-256 cryptographic verification, allowing verified intelligence to be safely routed to affected investigations across state lines.
-
----
-
-## 3. Strict Legal & Ethical Guardrails
-
-- ❌ **Zero Predictive Guilt Scoring:** NEXUS does NOT predict individual criminality, recidivism risk, or guilt probability. Determination of criminal guilt is the exclusive constitutional prerogative of the judiciary under Indian law.
-- 🔒 **Deterministic Before Generative:** All graph traversals, entity resolution, community clustering, and snapshot diffing run via deterministic mathematical algorithms. Generative AI is restricted to summarization and is gated by an architectural refusal interceptor.
-- 🛡️ **Zero Real Citizen PII:** All development, testing, CI benchmarks, and demonstrations operate strictly on high-fidelity synthetic datasets.
-- ⚖️ **Abstention as an Output:** If evidence is insufficient or contradictory, the system explicitly outputs `INSUFFICIENT EVIDENCE / NO FORECAST`.
-- 🚫 **No Raw Data on Public Blockchains:** Sensitive case records and citizen PII never touch public ledgers. Trust mechanisms rely on cryptographic hashing and Merkle proofs.
-
----
-
-## 4. System Architecture Overview
-
-NEXUS employs a hybrid polyglot persistence architecture engineered for sub-millisecond graph query SLAs and durable persistence:
-
-```mermaid
-graph TD
-    subgraph Client ["1. Presentation Layer (React 19 + Vite)"]
-        Worklist["Investigator Worklist & Pulse Queue"]
-        Canvas["React Flow Graph Canvas (with Diff Overlays)"]
-        CopilotUI["Evidence-Grounded Copilot (Refusal Gated)"]
-        EvidenceUI["Evidence Drawer & SHA-256 Verifier"]
-    end
-
-    subgraph API ["2. API & Security Layer (FastAPI)"]
-        Router["REST Core Routers (/api/v1)"]
-        RBAC["Role-Based Access Control (RBAC)"]
-        RefusalGate["Ethical Guardrail Refusal Gate"]
-        Audit["Immutable Append-Only Audit Service"]
-    end
-
-    subgraph ChangePlane ["3. Network Change & Proactive Intelligence Plane"]
-        DiffSvc["Network Diff Engine (Snapshot Comparison)"]
-        PulseSvc["Network Pulse Service (Significance Filtering)"]
-        SufficiencySvc["Evidence Assessment (Supports/Conflicts/Missing)"]
-        WarningSvc["Early Warning Engine (Constrained Forecast + Abstention)"]
-        VerifyPlanner["Next Best Verification Planner"]
-    end
-
-    subgraph Analytics ["4. Graph Analytics & Resolution Subsystem"]
-        ER["Multi-Attribute Entity Resolution Engine"]
-        Louvain["Louvain Syndicate Community Detection"]
-        Centrality["Betweenness Centrality & Bridge Discovery"]
-        BFS["Multi-Hop BFS Traversal Engine (<0.025ms)"]
-    end
-
-    subgraph Storage ["5. Polyglot Persistence & Graph Index"]
-        MemGraph["In-Memory Double-Adjacency GraphStore (adj & radj)"]
-        Postgres["Cloud PostgreSQL 16 (Relational Cases & Audit Log)"]
-        Neo4j["Neo4j 5 Community / AuraDB (Durable Cypher Projection)"]
-    end
-
-    Client --> Router
-    Router --> RBAC
-    Router --> RefusalGate
-    Router --> Audit
-    Router --> ChangePlane
-    Router --> Analytics
-    ChangePlane --> Storage
-    Analytics --> Storage
+```text
+Observe → Connect → Compare → Review evidence → Verify → Act → Audit
 ```
 
----
+Built for the MHA/NCRB problem context, this is an independent synthetic-data evaluation prototype—not an official government deployment. It supports investigation; it does not determine guilt or predict individual criminality.
 
-## 5. Repository Structure & Single Source of Truth
+## What you can explore
 
+| Capability | What it does | Lifecycle |
+| --- | --- | --- |
+| Investigative graph | Case-centred exploration, paths, communities, and bridge analysis | CURRENT |
+| Explainable entity resolution | Compares names and identifiers; exposes reviewable candidate decisions | CURRENT |
+| Network change intelligence | Compares snapshots and surfaces evidence-linked review pulses | EXTENSION |
+| Evidence workflow | Source verification, evidence assessments, verification tasks, and affected-case routing | EXTENSION |
+| Identity and network radars | Identity drift, network adaptation, digital identifier corroboration, and Case DNA | NEW PROTOTYPE |
+| Grounded copilot | Uses deterministic tools and source citations, with refusal checks for prohibited questions | CURRENT |
+| Audit and dossiers | Hash-chain checks, local Merkle anchoring, and evidence-oriented PDF exports | CURRENT |
+| Instant demo entry | Read-only synthetic metrics and ten initial worklist rows, followed by live reconciliation | EXTENSION |
+
+These labels describe implementation scope, not operational certification. Forecast cards are constrained prototype outputs, not calibrated predictions. See [architecture](docs/ARCHITECTURE.md) and [limitations](docs/PROJECT_REPORT.md#limitations-and-next-steps).
+
+## Try the evaluation demo
+
+Open **[NEXUS](https://nexus-eight-weld-33.vercel.app/login)** and choose an officer:
+
+| Demo role | Profile | Focus |
+| --- | --- | --- |
+| IO | Inspector Rajesh Kumar | Case evidence and connections |
+| SHO | SHO Sunita Sharma | Network signals and lead review |
+| SP | SP Vikram Hegde | Cross-district coordination |
+| ADMIN | Director Priya Mehta | Governance and audit review |
+
+The explicitly configured demo opens a **read-only synthetic workspace immediately**. Its labelled snapshot is bundled with the frontend; it does not represent server authentication.
+
+Background server login enables live metrics, the complete worklist, and a link to the full workspace. The interface distinguishes **Demo snapshot · Connecting**, **Live data connected**, and **Offline demo**. Backend-dependent actions are not exposed in the local demo.
+
+The backend is hosted on Render and may wake slowly. Neo4j-dependent operations can remain unavailable while repository-backed reads work. [Liveness](https://nexus-4djk.onrender.com/health) and [readiness](https://nexus-4djk.onrender.com/ready) answer different questions; the static site loading does not prove database readiness.
+
+## Run locally
+
+Use Python **3.11 or 3.12** and Node.js **22.12+**. CI currently exercises Python 3.11 and Node 20; dependency-wheel availability varies on newer Python/ARM combinations.
+
+From a fresh checkout:
+
+```sh
+git clone https://github.com/acchasujal/Nexus.git
+cd Nexus
+python -m venv .venv
 ```
-/
-├── README.md               # Executive overview, value proposition, quick-start
-├── AGENTS.md               # AI coding governance & development rules
-├── progress.md             # Single source of truth for ongoing progress
-├── decisions.md            # Single source of truth for architectural ADRs (DEC-001 - DEC-012)
-├── docs/                   # Canonical documentation set (strictly authoritative)
-│   ├── ARCHITECTURE.md     # Polyglot persistence, change plane, subsystems (Layers 1-9)
-│   ├── DATA_MODEL.md       # 12 graph entities, typed edges, and target domain objects
-│   ├── API.md              # Core REST endpoints & request/response contracts
-│   ├── INTELLIGENCE_PIPELINE.md # 11-stage proactive intelligence processing lifecycle
-│   ├── SECURITY.md         # Responsible AI, Section 63 BSA, SHA-256 integrity, RBAC
-│   ├── BENCHMARKS.md       # Measured SLA latency and scale evaluation protocols
-│   ├── DEMO.md             # 3-minute live demonstration journey for evaluators
-│   ├── DEPLOYMENT.md       # Production hosting on Render & Vercel
-│   ├── DEVELOPMENT.md      # Setup, test commands, lint, benchmark verification, seeding
-│   ├── archive/            # Historical documents & milestone reports (reference only)
-│   └── NEXUS_ROADMAP_CONTEXT/ # Target product reference pack (non-authoritative)
-├── backend/                # FastAPI application, core graph, db, services
-├── frontend/               # React 19, TypeScript, Tailwind, React Flow
-├── shared/                 # Canonical schemas & contracts
-├── synthetic_data/         # Deterministic synthetic intelligence generator
-├── scripts/                # Benchmarking, evaluation, and seeding scripts
-└── tests/                  # Pytest backend & scale test suites
+
+Activate the environment with `source .venv/bin/activate` on Linux/macOS or `.\.venv\Scripts\Activate.ps1` in PowerShell. Then:
+
+```sh
+python -m pip install -r backend/requirements.txt
+python -m uvicorn backend.app.main:app --reload --port 8000
 ```
 
----
+In a second terminal:
 
-## 6. Local Quick-Start
-
-### Using Docker Compose:
-```bash
-docker compose up --build
-```
-- Frontend UI: `http://localhost:5173`
-- Backend Swagger API: `http://localhost:8000/docs`
-- Neo4j Browser: `http://localhost:7474` (User: `neo4j`, Password: `nexuspassword`)
-
-### Using Local Virtual Environment:
-```bash
-# 1. Backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1   # or source venv/bin/activate
-pip install -r backend/requirements.txt
-uvicorn backend.app.main:app --reload --port 8000
-
-# 2. Frontend (in separate terminal)
+```sh
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
----
+- Frontend: **http://localhost:5173**
+- Interactive API: **http://localhost:8000/docs**
+- Default local setup: synthetic in-memory repository and graph; no cloud credentials required.
+- For local instant entry, put `VITE_DEMO_MODE=true` in ignored `frontend/.env.development.local` and restart Vite.
 
-## 7. Testing & Quality Verification Gates
+Use the [developer guide](docs/DEVELOPMENT.md) for environment files, persistent storage, fixture regeneration, and platform notes. The [deployment guide](docs/DEPLOYMENT.md) covers Vercel, Render, and dependency recovery.
 
-```bash
-# Backend unit & integration tests (708 passing)
-pytest
+## How it fits together
 
-# Backend linting (0 errors required)
-python -m ruff check backend/ shared/ tests/
-
-# Frontend tests & production build (114 passing, 0 TypeScript errors)
-cd frontend && npm test -- --run && npm run build
-
-# Ground-truth entity resolution benchmark (100% Precision / Recall)
-python scripts/evaluate_ground_truth.py
+```mermaid
+flowchart LR
+    Records["Synthetic FIR / CDR / bank records"] --> API["FastAPI services"]
+    API --> Analysis["Deterministic resolution and graph analysis"]
+    Analysis --> Findings["Changes, evidence, and verification workflows"]
+    Findings --> UI["React investigative workspace"]
+    API <--> PG["PostgreSQL repository"]
+    API <--> Graph["Neo4j projection / GraphStore"]
+    Snapshot["Versioned read-only snapshot"] --> Demo["Local demo entry"]
+    Demo -. "Server-issued session and live reconciliation" .-> UI
 ```
 
----
+PostgreSQL stores application records when configured. Neo4j is a complementary durable projection with explicit readiness gates. The in-memory `GraphStore` supports deterministic graph algorithms. Optional language-model providers explain tool results; they do not replace graph computation or human verification.
 
-## 8. Authoritative Documentation Navigation
+## Evidence and responsible use
 
-- **[Progress & Status Board](progress.md)** — Active workstreams, completed milestones, verification matrix.
-- **[Architectural Decisions](decisions.md)** — Record of accepted ADRs (DEC-001 through DEC-012).
-- **[System Architecture](docs/ARCHITECTURE.md)** — Detailed subsystem architecture and data flows.
-- **[Data Model & Ontology](docs/DATA_MODEL.md)** — 12 core graph entities, typed edges, and target domain models.
-- **[API Reference](docs/API.md)** — REST API contracts, request payloads, and response structures.
-- **[Intelligence Pipeline](docs/INTELLIGENCE_PIPELINE.md)** — 11-stage intelligence processing lifecycle.
-- **[Security & Governance](docs/SECURITY.md)** — Ethical AI firewall, Section 63 BSA compliance, and RBAC.
-- **[Performance Benchmarks](docs/BENCHMARKS.md)** — SLA measurements and scale evaluation protocols.
-- **[Live Demo Script](docs/DEMO.md)** — 3-minute end-to-end judge demonstration walkthrough.
-- **[Deployment Guide](docs/DEPLOYMENT.md)** — Production deployment on Render and Vercel.
-- **[Developer Guide](docs/DEVELOPMENT.md)** — Environment setup, tests, and dataset seeding.
+- Development and demonstrations use synthetic records only.
+- Graph relationships retain provenance; a computed association is not proof of identity or guilt.
+- The system separates observed facts, derived links, hypotheses, and investigator decisions.
+- Source hashes, audit chains, and Merkle proofs support integrity checking; they do not establish the truth or legal admissibility of a record.
+- No raw case records or citizen data belong on a public blockchain.
+- The current backend login/verifier is a **demo identity implementation**, not a production identity provider. Do not deploy it with real citizen data.
+
+Read [security and governance](docs/SECURITY.md) before changing authentication, evidence handling, or deployment scope.
+
+## Verification
+
+```sh
+python -m ruff check backend/ shared/ tests/
+python -m pytest
+python scripts/evaluate_ground_truth.py
+npm --prefix frontend run test:run
+npm --prefix frontend run build
+```
+
+The build type-checks TypeScript, regenerates the demo worklist snapshot, and verifies asset closure. [Benchmarks](docs/BENCHMARKS.md) distinguish historical in-memory measurements from deployed latency; [progress](progress.md) records the latest test results and known failures. No static “all tests passed” badge is used as a substitute for a current run.
+
+## Repository guide
+
+| Path | Purpose |
+| --- | --- |
+| [`backend/app/`](backend/app/) | API, deterministic graph analysis, repositories, and application services |
+| [`frontend/src/`](frontend/src/) | Login, read-only demo, investigative pages, and query recovery |
+| [`shared/contracts/`](shared/contracts/) | Python and TypeScript API/domain contracts |
+| [`synthetic_data/`](synthetic_data/) | Synthetic generators and planted ground truth |
+| [`tests/`](tests/) · [`scripts/`](scripts/) | Backend tests, evaluation, migration, and benchmark tooling |
+| [`artifacts/`](artifacts/) | Checked-in synthetic inputs and historical measurement records |
+| [`docs/`](docs/) | Current technical guides and project report |
+| [`docs/archive/`](docs/archive/) | Historical plans, audits, and superseded documentation |
+
+### Documentation
+
+[Project report](docs/PROJECT_REPORT.md) · [Architecture](docs/ARCHITECTURE.md) · [Data model](docs/DATA_MODEL.md) · [API](docs/API.md) · [Intelligence pipeline](docs/INTELLIGENCE_PIPELINE.md) · [Security](docs/SECURITY.md) · [Benchmarks](docs/BENCHMARKS.md) · [Demo](docs/DEMO.md) · [Development](docs/DEVELOPMENT.md) · [Deployment](docs/DEPLOYMENT.md)
+
+[Contributing](CONTRIBUTING.md) · [Architectural decisions](decisions.md) · [Implementation status](progress.md) · [Agent governance](AGENTS.md)

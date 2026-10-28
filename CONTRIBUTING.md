@@ -1,56 +1,55 @@
 # Contributing to NEXUS
 
-> **SIH 2026 PS 26189** — AI-Powered Criminal Network Analysis System  
-> Ministry of Home Affairs (MHA) / National Crime Records Bureau (NCRB)
+NEXUS is a synthetic-data investigative intelligence prototype for SIH 2026 PS 26189. Start with the [README](README.md), [developer guide](docs/DEVELOPMENT.md), and [agent governance](AGENTS.md).
 
----
+## Before changing code
 
-## 1. Development Principles
+- Inspect the implementation and tests before relying on older plans.
+- Reuse graph algorithms, services, and frontend components.
+- Preserve shared Python/TypeScript contracts and evidence provenance.
+- Keep deterministic analysis separate from generative explanation.
+- Do not introduce guilt/criminality scoring, real citizen PII, or public-ledger case data.
+- Preserve unrelated working-tree changes. Keep credentials and generated logs out of commits.
 
-1. **Deterministic Before Generative:** Always implement deterministic graph analysis, phonetic disambiguation, and structured traversals before using LLMs.
-2. **Evidence Provenance:** Every derived lead or graph edge must be bound to verifiable source records (`EvidenceProvenance`).
-3. **Strict Ethical Boundaries:** Never implement or deploy features that predict guilt, criminality, or recidivism risk.
-4. **Search Before Write:** Inspect existing graph algorithms and utilities before creating new functions. Avoid duplicate logic.
+## Verification
 
----
+From the repository root:
 
-## 2. Local Quality Gate
-
-Before submitting pull requests, ensure the full quality gate passes:
-
-```bash
-# 1. Backend Tests (Pytest)
-pytest
-
-# 2. Ground-Truth Accuracy Evaluation
+```sh
+python -m ruff check backend/ shared/ tests/
+python -m pytest
 python scripts/evaluate_ground_truth.py
-
-# 3. Graph Latency Benchmarks
-python scripts/benchmark_nexus.py
-
-# 4. Frontend Tests (Vitest) & Build
-cd frontend
-npm test -- --run
-npm run build
+npm --prefix frontend run lint
+npm --prefix frontend run test:run
+npm --prefix frontend run build
 ```
 
----
+Use focused tests while developing; report the full checks required by [AGENTS.md](AGENTS.md) before declaring completion. State baseline failures, skipped integration requirements, and platform blockers explicitly. Never disable tests or claim an unexecuted check passed.
 
-## 3. Commit Convention
+The latest dated verification is in [progress.md](progress.md). Historical counts are not fixed contribution requirements.
 
-NEXUS uses conventional commit formatting:
-- `feat: ...` for new capabilities or algorithms
-- `fix: ...` for bug fixes
-- `refactor: ...` for code structural changes
-- `test: ...` for test cases and ground-truth validations
-- `docs: ...` for documentation updates
-- `perf: ...` for performance optimizations
+## Documentation
 
----
+| Change | Update |
+| --- | --- |
+| API payload/route | Shared contracts and [API guide](docs/API.md) |
+| Graph/domain model | [Data model](docs/DATA_MODEL.md) and relevant tests |
+| Architecture or security decision | [decisions.md](decisions.md) and the relevant canonical guide |
+| Setup/deployment | Environment examples and [development](docs/DEVELOPMENT.md)/[deployment](docs/DEPLOYMENT.md) |
+| Implementation or verification status | [progress.md](progress.md) |
 
-## 4. Pull Request Checklist
+Use CURRENT, EXTENSION, NEW PROTOTYPE, TARGET / FUTURE, or REJECTED to qualify capability claims. Keep historical material in the [archive](docs/archive/README.md); do not create competing task boards or decision logs.
 
-- [ ] All 296 backend Pytest tests pass.
-- [ ] All 35 frontend Vitest tests pass and `vite build` completes cleanly.
-- [ ] No live citizen PII or hardcoded credentials are included.
-- [ ] Any new API endpoint is typed in `shared/contracts/` and documented in `docs/API.md`.
+## Pull requests and commits
+
+Describe the problem, resulting behavior, and validation evidence. Include a concrete before/after example for behavioral changes. Explain remaining limitations.
+
+Use focused commit messages such as `feat:`, `fix:`, `test:`, `docs:`, `perf:`, or `refactor:`. Do not mix unrelated formatting or generated artifacts into a functional change.
+
+The active [CI workflow](.github/workflows/ci.yml) runs backend lint/tests/ground truth and frontend lint/tests/build. It does not deploy to Catalyst or certify production readiness.
+
+## Security and licensing
+
+Use synthetic reproductions when reporting defects. Never publish credentials, real case records, or citizen identifiers in issues. See [SECURITY.md](docs/SECURITY.md) for the prototype's authentication and deployment limits.
+
+No repository license has been declared. Public visibility alone does not grant a license; obtain maintainer permission before redistribution or reuse that requires it.

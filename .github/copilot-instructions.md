@@ -1,20 +1,12 @@
-# NEXUS GitHub Copilot Instructions
+# NEXUS contributor context
 
-## Project Context
-- **System:** NEXUS (Evidence-Grounded Criminal Network Intelligence System)
-- **Competition:** SIH 2026 Problem Statement 26189
-- **Domain:** Law Enforcement & Criminal Network Analytics (CCTNS/ICJS/CDR/Banking)
+Read [repository governance](../AGENTS.md), [current status](../progress.md) and [decisions](../decisions.md) before editing. Actual code and tests take precedence over documentation; archived plans are historical references, not active instructions.
 
-## Key References
-- Primary Specification: `NEXUS.md`
-- Active Task Board: `PROGRESS.md`
-- AI Rules & Constraints: `AGENTS.md`
-- System Architecture: `docs/ARCHITECTURE.md`
-- Graph Ontology & Data Model: `docs/DATA_MODEL.md`
-
-## Development Constraints
-- Use Python 3.11+ (FastAPI, Pydantic v2, NetworkX) for backend services.
-- Use React 18 (TypeScript, Vite, Tailwind CSS, React Flow) for frontend interfaces.
-- Strictly adhere to deterministic analysis first (no autonomous guilt scoring or recidivism predictions).
-- Bind all graph relationship edges to `EvidenceProvenance` records.
-- Run `pytest` and `npm test` before committing any changes.
+- Backend: Python 3.11+, FastAPI, Pydantic v2 and deterministic graph algorithms.
+- Frontend: React 19, TypeScript, Vite, TanStack Query and React Flow.
+- Use synthetic data only. Preserve relationship provenance and explicit abstention.
+- Never introduce guilt, criminality or recidivism scoring.
+- Local demo roles are not server authorization. Do not weaken backend checks.
+- Reuse existing services and components; make focused changes and preserve unrelated edits.
+- Keep active documentation in the canonical [docs](../docs/) set, progress in the root status file and architectural decisions in the root decision log.
+- Run the verification commands in [CONTRIBUTING](../CONTRIBUTING.md). Report existing failures honestly; do not disable tests or invent green counts.

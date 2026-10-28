@@ -1,37 +1,29 @@
 name: Refactor
-description: Code change with no behavior change — must be justified and separated from feature work
+description: Propose a focused structural change
 labels: ["type/refactor"]
 body:
   - type: markdown
     attributes:
       value: |
-        Per `EXECUTION_RULES.md` §"Refactoring Rules" — never refactor and add a feature in the same change.
-        Refactoring the clock engine or graph schema requires a `DECISION_LOG.md` entry BEFORE this PR.
-  - type: dropdown
-    id: lane
-    attributes:
-      label: Owning Lane
-      options:
-        - Lane 1 — Backend Core
-        - Lane 2 — Frontend
-        - Lane 3 — Graph Intelligence
-        - Lane 4 — AI + Architecture + Integration
-    validations:
-      required: true
+        Reuse existing services and keep behavior changes separate. Record architectural decisions in decisions.md when applicable.
   - type: textarea
     id: why
     attributes:
-      label: Why now? What does this unblock?
-      description: A refactor with no clear unblocking justification is deferred until after submission.
+      label: Problem and reason for the change
+      description: Explain the concrete maintenance benefit.
     validations:
       required: true
-  - type: checkboxes
-    id: safety
+  - type: textarea
+    id: scope
     attributes:
-      label: Safety
-      options:
-        - label: No feature change is bundled into this PR
-          required: true
-        - label: "If touching clock/escalation/graph schema: DECISION_LOG.md entry exists (link it in the PR)"
-        - label: All existing tests still pass
-          required: true
+      label: Scope and compatibility
+      description: List affected modules and contracts.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification plan
+      description: Preserve assertions and report any existing baseline failures.
+    validations:
+      required: true

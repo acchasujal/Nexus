@@ -1,165 +1,127 @@
-# NEXUS Deployment Guide
+# Deployment and operations
 
-This guide covers deployment architectures, cloud hosting instructions, configuration parameters, and verification procedures for NEXUS.
+> Reviewed 2026-10-28. CURRENT deployment topology and explicit limitations. Dated observations are in [progress.md](../progress.md).
 
----
+## Evaluation topology
 
-## 1. Minimal Public SIH Demo Architecture
-
-For public hackathon demonstrations, NEXUS supports an ultra-lightweight deployment topology:
-
-```
-                    INVESTIGATOR / JUDGE BROWSER
-                                 │
-                 ┌───────────────┴───────────────┐
-                 │ HTTPS (Static UI)             │ HTTPS (API Calls)
-                 ▼                               ▼
-     ┌───────────────────────┐       ┌───────────────────────┐
-     │        VERCEL         │       │        RENDER         │
-     │  React 19 / Vite SPA  │       │    FastAPI Backend    │
-     │  (Global CDN & SPA    │       │ (Uvicorn on Free Tier │
-     │   Rewrite Routing)    │       │   $PORT & 0.0.0.0)    │
-     └───────────────────────┘       └───────────┬───────────┘
-                                                 │
-                                 ┌───────────────┴───────────────┐
-                                 ▼                               ▼
-                 ┌───────────────────────────────┐ ┌───────────────────────────┐
-                 │  In-Memory GraphStore         │ │  BSA Section 63 Proofs    │
-                 │  445 Nodes, 530 Edges         │ │  SHA-256 Provenance       │
-                 │  Zero Cloud DB Required       │ │  Cryptographic Evidence   │
-                 └───────────────────────────────┘ └───────────────────────────┘
-```
-
-> **Note:** Standalone demo mode boots completely in `<6ms` from the bundled synthetic dataset without mandatory external PostgreSQL or Neo4j instances.
-
----
-
-## 2. Enterprise Cloud Architecture
-
-In full production or multi-station enterprise setups:
-- **Relational Storage:** PostgreSQL 16 on Render or Neon for case registries, RBAC, and audit trails.
-- **Graph Storage:** Neo4j AuraDB or containerized Neo4j 5 Community for durable Cypher projection.
-- **Backend Service:** Render Docker Web Service or Kubernetes cluster.
-- **Frontend SPA:** Vercel edge deployment with global CDN caching.
-
----
-
-## 3. Step-by-Step Deployment Protocol
-
-### Part A: Deploy FastAPI Backend on Render
-1. Log into [Render Dashboard](https://dashboard.render.com).
-2. Click **New +** $\rightarrow$ **Web Service**.
-3. Connect repository: `https://github.com/acchasujal/Nexus` (or fork).
-4. Configure parameters:
-   - **Runtime:** `Python 3`
-   - **Build Command:** `pip install -r backend/requirements.txt`
-   - **Start Command:** `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`
-   - **Health Check Path:** `/health`
-5. Configure Environment Variables:
-   | Variable | Recommended Value | Description |
-   | :--- | :--- | :--- |
-   | `ENVIRONMENT` | `production` | Enables production settings |
-   | `AUTH_MODE` | `demo` | Enables role-switching in demonstration mode |
-   | `CORS_ORIGINS` | `https://your-nexus.vercel.app` | Comma-separated allowed frontend domains |
-   | `NEO4J_URI` | *(optional)* `neo4j+s://...` | Neo4j AuraDB URI |
-   | `NEO4J_USERNAME` | *(optional)* `neo4j` | Neo4j user |
-   | `NEO4J_PASSWORD` | *(optional)* `secret` | Neo4j password |
-
-### Part B: Deploy React Frontend on Vercel
-1. Log into [Vercel Dashboard](https://vercel.com).
-2. Click **Add New...** $\rightarrow$ **Project**.
-3. Import the repository and configure:
-   - **Framework Preset:** `Vite`
-   - **Root Directory:** `frontend`
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
-4. Environment Variables:
-   | Variable | Value | Description |
-   | :--- | :--- | :--- |
-   | `VITE_API_BASE_URL` | `https://nexus-backend.onrender.com` | Base URL of deployed Render backend |
-
----
-
-## 4. Pre-Flight Readiness Checklist
-
-- [x] Clean working tree on `main` branch.
-- [x] Zero hardcoded secrets, API tokens, or `.env` files committed.
-- [x] Root `/health` liveness probe endpoint returns `200 OK`.
-- [x] Root `/ready` readiness probe endpoint operational.
-- [x] Frontend SPA rewrite rule (`/*` $\rightarrow$ `/index.html`) enabled via `vercel.json`.
-- [x] Dynamic production CORS origin parsing verified.
-- [x] Ground-truth precision/recall benchmark verified at 100%.
-
-## Neon database and private evidence storage (EXTENSION)
-
-The existing project `delicate-frost-27919131` uses branch `production` in
-`aws-us-east-2`. `neon.ts` declares the private `object` bucket and the standalone
-`api` hello function. NEXUS continues to run its Python API on Render; the hello
-function does not serve investigative data. PostgreSQL uses the existing psycopg
-repository and bounded connection pool. Schema initialization uses the direct URL,
-and runtime queries use the pooled URL. Neo4j remains the complementary graph
-projection. Repository reads stay available while that projection is degraded;
-live graph operations report an explicit unavailable state.
-
-Copy these values from the ignored `backend/.env` into Render's environment:
-
-| Key | Source/value |
+| Component | Location / role |
 | --- | --- |
-| `DATABASE_URL` | Neon pooled connection string |
-| `DATABASE_URL_UNPOOLED` | Neon direct connection string |
-| `NEXUS_REPOSITORY` | `postgres` |
-| `EVIDENCE_STORAGE_BACKEND` | `s3` (Neon's S3-compatible API) |
-| `EVIDENCE_BUCKET` | `object` |
-| `AWS_ENDPOINT_URL_S3` | Neon Object Storage endpoint |
-| `AWS_ACCESS_KEY_ID` | Neon storage access key |
-| `AWS_SECRET_ACCESS_KEY` | Neon storage secret |
-| `AWS_REGION` | Neon generated signing region |
+| Frontend | [Vercel evaluation login](https://nexus-eight-weld-33.vercel.app/login) |
+| API | `https://nexus-4djk.onrender.com` on Render |
+| Application repository | PostgreSQL when configured; in-memory mode for standalone development |
+| Graph projection | Neo4j with explicit connectivity/projection gates |
+| Evidence source bytes | Optional private S3-compatible object storage |
+| Demo snapshot | Static build inputs; independent of API readiness |
 
-The AWS-prefixed keys configure the compatible client; they do not require an AWS
-account or AWS bucket. Keep existing `NEO4J_*` settings. Source bytes are stored in
-the private bucket under SHA-256 content-addressed keys; document metadata and
-hashes are stored in PostgreSQL. Authorized downloads verify the stored hash and
-record an audit event. No public object URLs are returned.
+This is a public synthetic-data demonstration, not a production law-enforcement deployment. See [security limits](SECURITY.md), especially the demo identity implementation.
 
-Project-local Neon skills are installed in `.agents/skills/`; their provenance is
-in `skills-lock.json`. `.codex/config.toml` adds the project-scoped OAuth MCP
-endpoint. CLI sign-in and MCP authentication are separate; reconnect/authenticate
-the MCP client if its tools are not available. Generated `.neon` and `.env*.local`
-files are ignored. Existing global Codex providers and configuration are preserved.
+## Render API
 
+The current [blueprint](../render.yaml) uses:
 
-### Cold-start initialization (2026-10-05)
-Production defaults to background graph startup. NEO4J_BACKGROUND_STARTUP=true explicitly enables it (declared by the Render blueprint); false opts into blocking graph startup. Development retains blocking startup by default. PostgreSQL schema/hydration and audit bootstrap remain mandatory. HTTP then serves canonical reads and login while Neo4j connects, validates schema, syncs and reads its durable projection. /health is liveness; required /ready stays 503 until graph readiness. Live graph mutations/reads stay gated. Failure does not switch to an in-memory graph. Background work is canceled and awaited on shutdown.
-Startup logs emit elapsed_ms for PostgreSQL connection, schema, hydration, index rebuild, audit bootstrap, Neo4j connection, schema, sync, read, graph total and factory-to-HTTP readiness. Factory timing excludes earlier Python imports and platform process scheduling; compare Render process timestamps for end-to-end cold-start time. Schema DDL remains unchanged because the current additive schema strategy has no verified cheaper version check.
-The lightweight frontend queries and login allow three attempts, each with a 20s request deadline, and backoffs of 2s then 40s. Immediate proxy 503s therefore get a final attempt after 42s; hung requests finish within about 102s. No infinite polling or new warm-up service was added. Secondary intelligence remains activated by its tab; graph analytics does not block first paint.
-Production cold verification must use a clean browser, an actually cold Render instance, and no refresh. Local simulation alone does not establish production recovery or startup improvement.
+```text
+Build: pip install -r backend/requirements.txt
+Start: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+Health check: /health
+```
 
-Readiness also reports `startup.factory_to_http_ready_ms` (excludes earlier imports/platform scheduling) and `graph_initialization` status, stage, elapsed_ms and sanitized exception type if initialization fails. These diagnostics contain no credential or exception-message data and do not replace operational graph readiness.
+Configure settings privately through the hosting environment:
 
+| Variable | Purpose |
+| --- | --- |
+| `ENVIRONMENT` | Production configuration validation |
+| `AUTH_MODE` | Current demo verifier behavior; not an identity-provider integration |
+| `JWT_SECRET_KEY` | Private signing key; never a Vite value |
+| `CORS_ORIGINS` | Intended frontend origins; inspect middleware preview patterns too |
+| `NEXUS_REPOSITORY` | `postgres` for the persistent deployment |
+| `DATABASE_URL` | Runtime PostgreSQL connection |
+| `DATABASE_URL_UNPOOLED` | Optional direct/schema-initialization connection |
+| `ARTIFACT_PATH` | Synthetic graph input |
+| `GRAPH_BACKEND` | `neo4j` or explicit standalone `memory` |
+| `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`, `NEO4J_DATABASE` | Graph connection configuration |
+| `NEO4J_BACKGROUND_STARTUP` | Explicitly stage graph initialization after HTTP readiness |
+| `NEO4J_FAILURE_POLICY` | Required versus degraded readiness policy |
+| `EVIDENCE_STORAGE_BACKEND`, `EVIDENCE_BUCKET` | Optional private object storage |
+| `AWS_ENDPOINT_URL_S3`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | S3-compatible endpoint/signing configuration |
 
-Production diagnostics from 03eb4a7 established factory-to-HTTP readiness at 11790.1ms and initial graph connection failure (stage=connect, 6592.9ms), while a later readiness probe connected successfully. Initialization had stopped before schema/sync/read. Background initialization now permits at most three connection attempts with 2s/4s backoff, reusing the existing driver when available. Schema/sync/read run once only after connection success; exhausted retries keep live graph routes gated. Blocking development/explicit-false startup preserves the required failure policy. This recovery addresses observed connection-stage failure and does not aggressively retry expensive graph work. Factory timing excludes prior imports and is not the full Render cold-start interval.
+A URI/secret declaration is not proof of successful connectivity. Confirm dependencies with readiness and representative authorized reads.
 
+## Vercel frontend
 
-### Production first paint and asset integrity (2026-10-05)
-The frontend imports `backend/app/db/canonical_read_model.json` through one `DEMO_BASELINE` adapter. Bootstrap KPIs, pulses, and Worklist initially display that versioned synthetic snapshot with an explicit demo-baseline/syncing label. It is never inserted as successful query-cache data. Confirmed API responses replace it, including legitimate empty results. Permission refusals remain errors and suppress fallback details.
-Affected intelligence reads and Worklist share four attempts for 502/503/504, transport failure, or timeout, with 2s/40s/70s backoff and 20s request deadlines. An active exhausted query gets at most one additional request after another recovering read succeeds. Disabled tabs stay dormant. Retry exhaustion retains labelled baseline or last confirmed data; focus, reconnect, and explicit retry remain available. Session transitions clear the query cache to prevent retaining another officer's results.
-Current production HTML referenced `Worklist-D3JDnS2I.js`; the reported older `Worklist-C4i2wvt8.js` and `DataTable-Bmd_hf_2.js` returned 404. Existing HTML revalidation did not protect already-running tabs. Vercel immutable deployment URLs redirect anonymous users to Vercel login, so cross-origin immutable asset pinning is unsuitable here. Vercel platform Skew Protection requires Pro/Enterprise and does not list plain Vite as a supported framework (https://vercel.com/docs/skew-protection).
-The build now preloads generated JS modules from the same deployment into the browser module map, with secondary preloads at low fetch priority. React route evaluation remains lazy. SPA documents use `no-store, max-age=0`; hashed assets use one-year immutable caching and remain excluded from SPA rewrites. A build manifest and mandatory `verify-build.mjs` check reject missing assets/dependencies or secondary modules omitted from preloads. A Vite preload-error listener allows at most one automatic reload per build for an initial-download/deployment race; persistent failure reaches the existing boundary. See https://vite.dev/guide/build#load-error-handling.
-Tradeoff: secondary route code downloads earlier; network/backend hydration still happens only when the route/tab is used. Local Chrome verified 1.07s baseline visibility while APIs returned 503 and zero late asset requests/page errors when navigating Worklist, Timeline, and Settings after all asset URLs were blocked and HTTP caching was disabled. This is local evidence, not an idle-production measurement. Production verification records below distinguish the actual idle run from injected failures.
-Startup retains mandatory repository and audit work and the existing background graph lifecycle. New timings cover module imports, storage/pipeline/audit preparation, and router/service registration, exposing previously unmeasured gaps. No database schema, graph policy, audit invariant, or startup-order changes were justified by the supplied working-Neo4j logs.
+- Project root: `frontend`.
+- Install from the committed lockfile.
+- Build: `npm run build`; output: `dist`.
+- `VITE_API_BASE_URL`: actual API origin, currently the Render origin above.
+- `VITE_DEMO_MODE=true`: explicitly enables the read-only synthetic entry route. Set false for a build that must not offer it.
 
-The additional startup stage durations are also available in `/ready.startup` for production verification without exposing logs or credentials.
+The build reads shared contracts, the canonical intelligence artifact, and the synthetic graph outside `frontend/`. A deployment checkout must retain those repository paths. The build derives ten initial worklist rows and validates their synthetic profile/seed.
 
-### Explicit local demo entry (2026-10-28, EXTENSION)
+[vercel.json](../frontend/vercel.json) controls SPA fallback and cache headers. Module preloads and [verify-build.mjs](../frontend/scripts/verify-build.mjs) validate asset closure. A one-reload-per-build asset recovery path handles a racing deployment; it is not a general backend refresh mechanism.
 
-`frontend/.env.production` explicitly enables `VITE_DEMO_MODE=true` for the synthetic evaluation deployment. Set it to `false` for any deployment that must require server authentication before showing a workspace. Demo role selection opens `/demo` immediately and never creates a local JWT or authenticated role. This read-only surface bundles canonical intelligence KPIs and a build-generated ten-row worklist from `artifacts/nexus_graph/nexus_graph.json`; the generator checks the demo profile/seed and records the source checksum. Search is local. Upload, decisions, persistence, and graph actions are not exposed there.
+## Entry and recovery behavior
 
-Server login runs in the background with four bounded attempts and a 120-second overall deadline, including the existing 2/40/70-second backoff. A server-issued session enables parallel metric/worklist reads and the link to the full authorized workspace. Read recovery remains bounded and retains snapshot or last confirmed data. After exhaustion the view says `Offline demo` and offers explicit reconnect; no infinite polling or automatic mutation replay. Ordinary credential sign-in remains separate. Leaving demo or logging out cancels background work and rejects late session responses; blocked browser storage leaves the read-only snapshot usable without claiming authentication.
+| Flow | Behavior |
+| --- | --- |
+| Local demo role | Opens `/demo` without a JWT, using read-only synthetic metrics/worklist |
+| Background demo login | Four bounded attempts; 120-second overall deadline including backoff |
+| Regular credential form | Separate server-login flow with existing per-request deadline and bounded retries |
+| Live read recovery | Four attempts for selected transient errors, 2/40/70-second backoff, normally 20-second read deadlines |
+| Exhausted reads | Retain labelled snapshot/last confirmed values; explicit retry and bounded healthy-read catch-up |
+| Mutations | Never automatically replayed by the read-recovery policy |
+| Exit/logout | Cancel pending demo connection work and invalidate obsolete session responses |
 
-Monitor the actual API separately from Vercel: `https://nexus-4djk.onrender.com/health` is process liveness and does not establish PostgreSQL/Neo4j readiness. `https://nexus-4djk.onrender.com/ready` probes storage and reports graph connection versus operational projection. On October 28, liveness returned 200 while readiness returned 503 with `storage_available=false` and a non-operational graph. A Vercel 200 cannot establish API availability. No UptimeRobot configuration was changed.
+The local snapshot has **Demo snapshot · Connecting**, **Live data connected**, or **Offline demo** states. It is not inserted into successful API cache entries. A live empty response is different from a failed request.
 
-The supplied Neo4j host `c2518e1c.databases.neo4j.io` also returned NXDOMAIN in a local DNS check. Confirm the active Aura instance connection URI and database in the deployment configuration; do not substitute a guessed host, change credentials, or treat DNS resolution as a permission problem. Background connection attempts now use 0/2/4/30/60-second delays, with at most five attempts and schema/sync/read only after connection success. Exhaustion leaves graph routes gated; correcting a permanently invalid hostname still requires deployment configuration access. Optional PDF and S3 client imports are deferred until first use; mandatory repository/schema/hydration and audit integrity remain unchanged.
+## Startup lifecycle
 
-The 17-minute idle production run confirmed baseline visibility in 0.87s and automatic confirmation at approximately 89s (confirmation timing reconstructed from screenshots after a helper selector failure). Startup durations changed, confirming a restarted backend. The original three attempts can all fall before that wake-up if proxies fail immediately; a fourth attempt at 112s from the first failure is now allowed. Four held requests finish within about 192s; one healthy-read catch-up adds at most a single 20s request. The first three attempt timings remain unchanged.
+1. Import application modules.
+2. Validate configuration and construct the repository.
+3. Connect/validate PostgreSQL schema and hydrate indexes when configured.
+4. Prepare canonical reads and integrity/audit services.
+5. Expose HTTP and start the lifespan-owned graph task in background mode.
+6. Connect Neo4j, validate schema, synchronize, and read the durable projection before opening graph gates.
 
-Production verification of b6b1adb: an already-open abbdf24 tab navigated Worklist/Timeline/Settings after deployment with HTTP caching disabled and all further asset requests blocked; zero late asset requests, zero page errors, unchanged document. The old Worklist URL returned an actual 404 on the new alias. In a fresh clean browser, exactly three injected 503s per initial read were followed by fourth real API 200 responses at 114.21s, automatically replacing the labelled baseline without refresh. All seven secondary intelligence tabs and Worklist returned 200; Entities, Lead Inbox, Timeline and Settings loaded. All 27 asset responses were 200, zero page errors and request failures. Backend-issued SHO/IO tokens persisted; successful login-to-navigation took 0.14s/0.06s. Baseline appeared at 0.53s from login initiation in this warm/injected-failure trial. This does not replace the separately recorded 17-minute idle cold evidence.
+Optional PDF imports and S3 client creation happen at first feature use. Mandatory repository/persistence/integrity work remains synchronous.
+
+Background graph connection delays are **0/2/4/30/60 seconds**, at most five attempts. They do not block the already-running HTTP service. Schema/sync/read are not blindly replayed after arbitrary failures. Exhaustion keeps graph-specific routes unavailable; a permanently invalid hostname needs configuration correction, not infinite retries.
+
+## Monitoring
+
+| Probe | Meaning |
+| --- | --- |
+| [`/health`](https://nexus-4djk.onrender.com/health) | Process liveness; can succeed while dependencies are degraded |
+| [`/ready`](https://nexus-4djk.onrender.com/ready) | Storage and configured graph policy; reports connection versus operational projection |
+| Representative authenticated read | Confirms the actual user-facing path, not just container liveness |
+
+Monitor the Render API separately from the Vercel URL. A static-page monitor cannot establish that the API is awake. No external monitor configuration is changed by this repository.
+
+Readiness exposes stage timings and sanitized failure types. `factory_to_http_ready_ms` excludes module imports and platform scheduling; do not compare it directly with a launch-to-ready or browser wake-up stopwatch.
+
+On October 28 the logged Neo4j hostname returned NXDOMAIN locally. Confirm the active Aura URI and database privately; do not guess a replacement or print credentials. The latest observed rollout had available PostgreSQL and degraded graph readiness. These observations are historical, not a promise of current uptime.
+
+## Private evidence infrastructure
+
+`neon.ts` declares a private bucket and an optional standalone hello function. Root `package.json`/`package-lock.json` support that configuration. `hello.ts` is not the NEXUS Python API. Preserve these files unless intentionally changing infrastructure.
+
+The S3-compatible client uses private content-addressed keys, repository metadata, and checked downloads. No public object URL is required. Never place secrets or project credentials in this guide.
+
+## Local containers and deployment boundaries
+
+[Compose](../docker-compose.yml) is local-only, uses private password inputs, and binds services to loopback. It is useful for database services.
+
+The full frontend container path needs build-context validation for the current shared/canonical snapshot inputs; native development is the verified setup path. Do not advertise Docker, Kubernetes, AKS, or sovereign production hosting as independently validated deployments.
+
+The active [CI workflow](../.github/workflows/ci.yml) runs verification. The former Catalyst/CaseClock tag-release placeholder is [archived](archive/2026-10-28-legacy-catalyst-release.yml), not an active deployment pipeline.
+
+## Release verification
+
+Before describing a release as deployed:
+
+1. Verify the intended commit/branch and push normally.
+2. Confirm the served frontend build/commit, not merely a 200 page response.
+3. Inspect Render readiness and current startup diagnostics.
+4. Exercise an authorized core read and a graph-specific route separately.
+5. Record browser and actual idle-cold results separately from component tests, warm HTTP requests, or injected failures.
+6. Keep secrets and temporary logs out of the repository.
+
+No deployment access, browser availability, or successful database recovery should be inferred from a screenshot alone.

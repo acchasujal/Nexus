@@ -1,141 +1,95 @@
-# NEXUS System Architecture
+# Architecture
 
-NEXUS is engineered as a **proactive, evidence-grounded criminal network change intelligence platform**. It combines a local-first, hybrid polyglot persistence core with a deterministic network change plane, structured evidence sufficiency evaluation, and role-gated intelligence routing.
+> Reviewed 2026-10-28. Code is authoritative; this guide describes implemented boundaries and explicitly qualified prototypes.
 
----
+## System boundary
 
-## 1. High-Level Architectural Diagram
+NEXUS is a synthetic investigative intelligence prototype. It combines deterministic graph processing, evidence review workflows, a React workspace, and optional persistent infrastructure. It is not an autonomous policing system or a production identity platform.
 
 ```mermaid
-graph TD
-    subgraph ClientLayer ["1. Presentation Layer (React 19 + Vite)"]
-        Worklist["Investigator Worklist & Pulse Review Queue"]
-        RF["React Flow Graph Explorer Canvas (with Diff Overlays)"]
-        CopilotUI["Evidence-Grounded Copilot Interface"]
-        TimelineUI["Chronological Event Timeline & Temporal Slider"]
-        FusionUI["Entity Fusion & Disambiguation Workbench"]
-        EvidenceUI["Evidence Drawer & SHA-256 Tamper Verifier"]
-    end
-
-    subgraph APILayer ["2. API & Security Layer (FastAPI)"]
-        Router["REST Core Routers (/api/v1)"]
-        Auth["RBAC / ABAC Security Verifier"]
-        RefusalGate["Ethical Guardrail Refusal Gate"]
-        AuditSvc["Immutable Audit Service"]
-    end
-
-    subgraph ChangePlane ["3. Network Change & Proactive Intelligence Plane"]
-        DiffSvc["Network Diff Engine (Snapshot Comparison)"]
-        PulseSvc["Network Pulse Service (Significance Filtering)"]
-        SufficiencySvc["Evidence Assessment (Supports/Conflicts/Missing)"]
-        WarningSvc["Early Warning Engine (Constrained Forecast + Abstention)"]
-        VerifyPlanner["Next Best Verification Planner"]
-        CrossBranchSvc["Intelligence Pulse Service (Affected-Case Routing)"]
-        DriftSvc["Identity Drift & Network Adaptation Radar"]
-    end
-
-    subgraph AnalyticsLayer ["4. Graph Analytics & Resolution Engine"]
-        ER["Deterministic Multi-Attribute Entity Resolution"]
-        Louvain["Louvain Syndicate Community Detection"]
-        Centrality["Betweenness Centrality & Bridge Discovery"]
-        BFS["Multi-Hop BFS Traversal Engine (<0.025ms)"]
-        CaseDNA["Case DNA Explainable Structural Retrieval"]
-    end
-
-    subgraph StorageLayer ["5. Polyglot Persistence & Graph Index"]
-        MemGraph["In-Memory Double-Adjacency GraphStore (adj & radj)"]
-        Postgres["PostgreSQL 16 (Relational State, Cases & Audit Log)"]
-        Neo4j["Neo4j 5 Community / AuraDB (Durable Cypher Projection)"]
-    end
-
-    ClientLayer --> Router
-    Router --> Auth
-    Router --> RefusalGate
-    Router --> AuditSvc
-    Router --> ChangePlane
-    Router --> AnalyticsLayer
-    ChangePlane --> StorageLayer
-    AnalyticsLayer --> StorageLayer
+flowchart TB
+    Browser["React 19 / TypeScript / Vite"]
+    Demo["Read-only demo snapshot"]
+    API["FastAPI routers and authorization policies"]
+    Services["Investigation, evidence, routing, verification services"]
+    Algorithms["Deterministic graph algorithms"]
+    Repository["Memory or PostgreSQL repository"]
+    Projection["Neo4j durable projection"]
+    LLM["Optional provider-backed explanations"]
+    Browser --> Demo
+    Browser --> API
+    API --> Services
+    Services --> Algorithms
+    Services --> Repository
+    Services --> Projection
+    Services -. "Tool results and refusal checks" .-> LLM
 ```
 
----
+## Implemented subsystems
 
-## 2. Nine-Layer System Breakdown
+| Subsystem | Lifecycle | Implementation boundary |
+| --- | --- | --- |
+| Record ingestion and normalization | CURRENT | CSV parsers/mappers, document ingestion, and source provenance under `backend/app/db/ingestion/` and `backend/app/services/` |
+| Identity resolution | CURRENT | Deterministic names/identifiers, explicit candidate review, and graph mutation services |
+| Graph analysis | CURRENT | `GraphStore` traversals, clustering, centrality, similarity, and bounded subgraph services |
+| Snapshots, diffs, and pulses | EXTENSION | `ProactiveIntelligenceService`, snapshot algorithms, canonical read models, and pulse routes |
+| Evidence assessments and verification tasks | EXTENSION | First-class records, lifecycle operations, audit events, and closed-loop propagation |
+| Identity drift, adaptation, digital shadow, Case DNA | NEW PROTOTYPE | Deterministic analytical slices with dedicated services, routes, and frontend sections |
+| Operational forecast cards | NEW PROTOTYPE | Rule-based/demo-derived outputs in the proactive service and canonical fixture; not a calibrated general forecasting model |
+| Cross-case routing | EXTENSION | Affected-investigation routes and intelligence packet acknowledgement; not an external inter-agency network |
+| Audit and integrity | CURRENT | Source hashes, chained audit records, Merkle proofs, local permissioned ledger, and dossiers |
+| Immediate read-only demo | EXTENSION | Explicit frontend demo configuration; no local fabricated authentication |
 
-### Layer 1 — Multi-Source Intelligence Fusion
-- **Ingestion Sources:** Police FIR narratives (unstructured), Call Detail Records (CDRs / IPDR), bank transfer logs (IMPS / UPI / NEFT), field intelligence memos, and authorized/public digital signals.
-- **Output:** Canonical, provenance-preserving evidence records with cryptographic SHA-256 digests.
+## Storage authority
 
-### Layer 2 — Identity & Knowledge Graph
-- **Core Entities:** 12 modeled entity types (`Person`, `Case`, `Phone`, `Vehicle`, `Location`, `Organization`, `Device`, `Account`, `Transaction`, `Event`, `IntelligenceReport`, `Evidence`).
-- **Entity Resolution Engine:** Deterministic multi-attribute resolution using Indian phonetic normalization (`phonetic_normalize`), character-bigram Jaccard similarity, and hard-identifier corroboration (phones, IMEIs, vehicle registrations, national IDs).
-- **Human Confirmation:** Automated merges remain suggestions (`PROBABLE_MATCH`, `REVIEW_REQUIRED`) until confirmed or rejected by an authorized investigating officer.
+### Repository
 
-### Layer 3 — Network Change & Temporal Snapshots
-- **Snapshots (`GraphSnapshot`):** Deterministic state serialization capturing point-in-time graph topologies.
-- **Network Diff Engine (`backend/app/core/graph/algorithms/snapshot_diff.py`):** Pure $O(N + E)$ non-mutating comparison detecting added/removed entities, added/removed relationships, bridge transitions, community splits/merges, and identifier transitions between two snapshots or temporal windows.
+`InMemoryBackendRepository` supports standalone synthetic development. `PostgresBackendRepository` persists application records and maintains hydrated in-memory indexes. PostgreSQL schema initialization, hydration, and audit preparation are part of application construction.
 
-### Layer 4 — Network Pulse & Structural Significance
-- **Significance Filtering:** Filters raw graph modifications into high-value operational signals (`NetworkPulse`). Routine call logs do not trigger alerts; critical topological phase shifts (bridge emergence to dormant syndicates, sudden identifier shifts, inter-state route changes) generate a Pulse.
-- **Review Priority:** Categorizes pulses strictly by investigator review urgency (`CRITICAL_REVIEW`, `PRIORITY_REVIEW`, `ROUTINE_REVIEW`). Zero guilt or dangerousness scores are generated.
+In PostgreSQL mode, this repository remains the source for cases, evidence metadata, workflow records, and audit records. It is not replaced by a different store when a required dependency fails. Legacy fallback paths expose an unready state rather than silently claiming healthy persistent storage.
 
-### Layer 5 — Evidence Sufficiency & Contradiction Engine
-- **Discrete Epistemic States:** Every analytical assertion separates:
-  - `SUPPORTS`: Directly substantiated by primary forensic documentation.
-  - `CONFLICTS`: Contradicted by independent evidence (e.g. tower location vs. alibi statement).
-  - `MISSING`: Relationship suspected but uncorroborated.
-  - `INFERRED`: Derived via graph clustering or phonetic similarity.
-  - `VERIFIED`: Confirmed by an investigating officer following primary source review.
+### Graph analysis and projection
 
-### Layer 6 — Constrained Early-Warning & Mandatory Abstention
-- **Permitted Forecast Targets:** Strictly restricted to operational and topological state transitions (`JURISDICTION_SHIFT`, `COMMUNICATION_PATTERN_SHIFT`, `FINANCIAL_ROUTE_TRANSITION`, `IDENTIFIER_DRIFT`, `NETWORK_RESTRUCTURING`).
-- **Prohibited Targets:** Guilt probability, criminal propensity, future crime commission, recidivism risk.
-- **Mandatory Abstention Gate:** If evidence is sparse, stale (>90 days), or conflicting, the engine outputs `INSUFFICIENT EVIDENCE / NO FORECAST`.
+`GraphStore` contains indexed in-memory graph structures used by deterministic algorithms. It is distinct from the repository and from the Neo4j projection.
 
-### Layer 7 — Next Best Verification Planner
-- **Actionable Verification:** Maps evidence gaps into recommended investigative verification steps (e.g. subpoena subscriber record, request cross-case CDR, inspect CCTV timestamp).
-- **Human Responsibility:** Recommendations are marked as AI suggestions; investigating officers execute and verify findings.
+Neo4j is the complementary durable graph projection. Startup validates connectivity, ensures schema, synchronizes repository nodes/edges, and reads the durable projection before marking it operational. Parameterized queries and projection gates remain in force. A successful TCP/Bolt check does not establish that schema, sync, or durable reads completed.
 
-### Layer 8 — Cross-Branch Intelligence Pulse Routing
-- **Intelligence Packets:** Structured packets (`IntelligencePulse`) containing source case, affected investigations, observed structural change, attached evidence provenance, action window, and authorization basis.
-- **Access Gating:** RBAC/ABAC ensures intelligence is routed only to authorized officers handling affected cases, with full transmission and acknowledgement logged in the audit trail.
+Repository-backed reads can serve during Neo4j degradation. Live graph traversal/analytics and graph-changing actions are explicitly gated by [dependencies.py](../backend/app/api/dependencies.py). Do not describe this as an automatic in-memory replacement for a required live projection.
 
-### Layer 9 — Trust Fabric, Provenance & Closed-Loop Learning
-- **Cryptographic Provenance:** Every relationship edge carries an `EvidenceProvenance` record with source ID, timestamp, fact, and derivation method.
-- **SHA-256 Integrity Verification:** Dynamic tamper detection verifies raw source payloads against stored hashes, raising immediate audit alerts upon alteration.
-- **Investigator Feedback Loop:** Human confirmations, rejections, and added evidence update the graph, generate a new snapshot, and trigger fresh diff analysis.
+### Private evidence objects
 
----
+When configured, `EvidenceObjectStorage` stores source bytes in a private S3-compatible bucket using content-addressed keys. Metadata and hashes remain in the repository. Reads verify bytes against the expected digest. S3 client construction is deferred to first use; configuration remains validated at construction.
 
-## 3. Polyglot Persistence Architecture
+## Demo and authenticated entry
 
-NEXUS maintains a strict separation across three database layers:
+1. A production evaluation build explicitly sets `VITE_DEMO_MODE=true`.
+2. Selecting a role navigates to `/demo` without awaiting an API request.
+3. That route shows a labelled, read-only synthetic snapshot. The local role is not an AuthContext session.
+4. Background demo login has bounded retry/backoff and an overall 120-second deadline.
+5. Only a usable server-issued session enables parallel live bootstrap/worklist reads and the full-workspace link.
+6. Server results replace snapshot values. Timeout/failure retains snapshot or last confirmed data with a truthful sync label.
+7. Logout, a new login, or cancellation invalidates obsolete responses.
 
-1. **In-Memory `GraphStore` (High-Speed Analytical Plane):**
-   - Dual adjacency lists (`adj` and `radj`) indexed by entity and edge type in Python memory.
-   - Executes 1-hop, 2-hop, and 3-hop BFS expansions in sub-millisecond time (<0.025ms).
-   - Powers interactive UI canvas manipulations, pathfinding, and snapshot diffing without database roundtrips.
+The regular credential form stays separate. Its current backend is still a demo identity implementation; a signed demo token is not proof that a production identity provider verified an officer.
 
-2. **Neo4j 5 Community / AuraDB (Durable Graph Projection):**
-   - Authoritative graph database for durable Cypher analytics and multi-analyst persistence.
-   - Idempotent schema constraints on `NexusNode(id)` and `Case(case_id)`.
-   - Parameterized batch synchronization via Cypher `UNWIND ... MERGE`.
-   - Bidirectional projection (`read_projection` $\to$ `GraphStore`).
-   - Graceful non-fatal fallback when offline.
+The frontend uses TanStack Query to deduplicate reads and scope caches. Baseline data stays outside successful query-cache entries. Session transitions clear cached results. Recovery is bounded; it does not repeatedly replay mutations.
 
-3. **PostgreSQL 16 (Relational State & Audit):**
-   - Case registries, user authentication, RBAC roles, and immutable append-only audit trail.
+## Startup and readiness
 
----
+Production normally starts the graph task in the application lifespan. `NEO4J_BACKGROUND_STARTUP=false` preserves blocking behavior; development defaults differ. Background connection delays are 0, 2, 4, 30, and 60 seconds, with at most five attempts. Projection schema/sync/read run only after connection succeeds.
 
-## 4. Scaling & Performance Strategy
+Mandatory repository and integrity preparation remain synchronous. Optional PDF libraries and S3 client setup move to their actual operations. Shutdown cancels and awaits background work before closing resources.
 
-To maintain sub-second UI responsiveness across high-volume crime records:
-- **Bounded Local Subgraphs:** Canvas expansions default to 2–3 hops rather than full-graph traversals.
-- **Deterministic Candidate Blocking:** Entity resolution uses phonetic keys and prefix indexes to bound pairwise comparisons.
-- **O(N + E) Snapshot Diffing:** Diff operations compare dictionaries and adjacency sets in linear time without expensive recursive database joins.
-- **Graceful Degradation:** Local in-memory graph engine operates completely self-contained if external database connections are lost.
+- `/health`: process liveness.
+- `/ready`: storage and configured dependency policy; distinguishes graph connectivity from an operational projection.
+- Startup diagnostics expose stage timings without credentials. Factory-to-ready timing excludes module imports and platform scheduling.
 
+See [deployment](DEPLOYMENT.md) for configuration and dated observations in [progress](../progress.md).
 
-### Production startup authority (2026-10-05)
-Production graph initialization runs in a lifespan-owned background task by default; NEO4J_BACKGROUND_STARTUP=false opts into blocking startup. PostgreSQL schema/hydration and canonical read preparation complete first. Repository-backed reads/auth may then serve while graph projection initializes. Live graph analytics and mutations remain gated until sync and durable graph read are both complete. Required /ready reports 503 during this interval; /health is liveness. This staging does not permit fallback to a competing graph or relaxed authorization. The task is canceled and awaited before driver/repository shutdown.
+## Intelligence and trust boundaries
+
+Deterministic code owns entity matching, traversal, clustering, and diff computation. Optional LLM use is limited to intent handling/explanation over tool results and citation-bearing responses, with prohibited-query checks. An explanation is not an independent evidence source.
+
+Observed records, algorithmic associations, prototype forecasts, and investigator decisions remain distinct. The model supports abstention, including `INSUFFICIENT EVIDENCE / NO FORECAST`; prototype constants and fixture scenarios are not operational probability estimates.
+
+The local ledger is not a deployed Hyperledger network. Cross-service atomic recovery, external-agency federation, production-grade identity, and field validation are TARGET / FUTURE work. Read [security](SECURITY.md) and the [project report](PROJECT_REPORT.md) for limits.

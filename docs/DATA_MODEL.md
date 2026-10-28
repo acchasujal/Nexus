@@ -1,232 +1,98 @@
-# NEXUS Knowledge Graph Data Model & Ontology
+# Data model
 
-This document is the **authoritative single source of truth** for the NEXUS graph ontology, relationship semantics, evidence provenance contracts, and target domain models.
+> Reviewed 2026-10-28. CURRENT contracts are defined in code; examples here explain boundaries rather than invent alternate schemas.
 
----
+## Sources of truth
 
-## 1. Core Graph Entities (12 Entity Types)
+| Layer | Source |
+| --- | --- |
+| Graph entity/relationship enums | [enums.py](../backend/app/core/graph/enums.py) |
+| Typed graph entities | [entities.py](../backend/app/core/graph/entities.py) |
+| Edges and provenance | [edges.py](../backend/app/core/graph/edges.py) |
+| API/domain models | [api.py](../shared/contracts/api.py) and [api.ts](../shared/contracts/api.ts) |
+| Graph-intelligence payloads | [graph_models.py](../backend/app/api/graph_models.py) |
 
-NEXUS models 12 distinct intelligence entities representing physical, digital, and legal objects in law enforcement investigations:
+Do not infer the complete schema from a screenshot or copy a model declaration from an archived design document.
 
-| Entity Type | Description | Key Attributes (Verified in Code) | Status |
-| :--- | :--- | :--- | :--- |
-| **`Person`** | Suspect, co-accused, witness, victim, or informant | `id`, `full_name`, `first_name`, `last_name`, `aliases`, `phone_numbers`, `vehicle_numbers`, `address_text`, `national_id`, `is_known_offender` | CURRENT |
-| **`Case`** | First Information Report (FIR) or court proceeding | `id`, `fir_number`, `title`, `station_name`, `district`, `offence_category`, `status`, `incident_date` | CURRENT |
-| **`Phone`** | Monitored mobile phone or SIM identity | `id`, `phone_number`, `imei`, `imsi`, `telecom_circle`, `carrier`, `is_burner` | CURRENT |
-| **`Vehicle`** | Seized or monitored vehicle | `id`, `registration_number`, `chassis_number`, `make_model`, `color`, `registered_owner` | CURRENT |
-| **`Location`** | Incident scene, hideout, or meeting point | `id`, `name`, `address_text`, `city`, `district`, `latitude`, `longitude`, `location_type` | CURRENT |
-| **`Organization`** | Front company, cartel, or gang | `id`, `name`, `org_type`, `registration_number`, `known_front`, `operating_districts` | CURRENT |
-| **`Device`** | Seized digital device / burner hardware | `id`, `device_type`, `serial_number`, `mac_address`, `seized_from_person_id` | CURRENT |
-| **`Account`** | Bank account or digital wallet | `id`, `account_number`, `bank_name`, `ifsc_code`, `account_type`, `is_flagged_mule` | CURRENT |
-| **`Transaction`** | Financial wire transfer or Hawala ledger | `id`, `transaction_ref`, `amount`, `currency`, `timestamp`, `channel`, `is_suspicious` | CURRENT |
-| **`Event`** | Temporal intelligence occurrence | `id`, `event_type`, `timestamp`, `description`, `participant_ids`, `location_id` | CURRENT |
-| **`IntelligenceReport`** | Field intelligence briefing note | `id`, `report_number`, `source_agency`, `classification`, `summary`, `target_person_ids` | CURRENT |
-| **`Evidence`** | Physical or digital seized evidence item | `id`, `evidence_number`, `case_id`, `evidence_type`, `description`, `collected_at`, `provenance` | CURRENT |
+## Graph entities — CURRENT
 
----
+The model includes the core domains below, plus source and supporting entities. The old “12 types” description was incomplete: `GraphEntityType` also declares `SourceRecord`, `Officer`, `Unit`, `Court`, `Act`, `Section`, `CrimeHead`, and `CrimeSubHead`.
 
-## 2. Relationship Edge Types
+| Domain | Representative entity types | Interpretation |
+| --- | --- | --- |
+| People and investigations | Person, Case | Case participants and investigation records; participation does not establish guilt |
+| Communication | Phone, Device | Identifiers and observed usage, with source attribution |
+| Financial | Account, Transaction | Recorded accounts and transfers |
+| Physical context | Vehicle, Location, Organization | Referenced assets, places, and organizations |
+| Events and evidence | Event, IntelligenceReport, Evidence, SourceRecord | Observations, source payloads, and evidentiary lineage |
+| Supporting classification | Officer, Unit, Court, Act, Section, CrimeHead, CrimeSubHead | Operational and classification context |
 
-| Edge Type | Source Entity | Target Entity | Semantics | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **`ACCUSED_IN`** | `Person` | `Case` | Individual formally named as accused in FIR chargesheet | CURRENT |
-| **`VICTIM_IN`** | `Person` | `Case` | Individual registered as complainant or victim | CURRENT |
-| **`WITNESS_IN`** | `Person` | `Case` | Individual providing recorded witness statement | CURRENT |
-| **`CO_ACCUSED_WITH`** | `Person` | `Person` | Joint accused named in shared criminal proceeding | CURRENT |
-| **`COMMUNICATED_WITH`** | `Person` / `Phone` | `Person` / `Phone` | Telecommunication call or SMS interaction from CDR | CURRENT |
-| **`ASSOCIATED_WITH`** | `Person` | `Person` / `Organization` | Syndicate, gang, or commercial affiliation | CURRENT |
-| **`TRANSFERRED_MONEY_TO`**| `Account` | `Account` | Financial flow, bank transfer, or Hawala ledger entry | CURRENT |
-| **`OWNS_ACCOUNT`** | `Person` / `Organization` | `Account` | Beneficial ownership of banking or wallet node | CURRENT |
-| **`USES_PHONE`** | `Person` | `Phone` | Subscriber or confirmed device user | CURRENT |
-| **`DRIVES_VEHICLE`** | `Person` | `Vehicle` | Driver or registered owner of vehicle | CURRENT |
-| **`LOCATED_AT`** | `Person` / `Event` | `Location` | Spatial presence, tower ping, or incident scene | CURRENT |
-| **`MENTIONED_IN`** | `Person` / `Organization` | `IntelligenceReport` | Referenced in intelligence briefing memo | CURRENT |
-| **`RESOLVED_TO`** | `Person` | `Person` | Cross-source entity resolution link with match confidence | CURRENT |
-| **`HAS_EVIDENCE`** | `Case` | `Evidence` | Evidence item tagged to specific investigation | CURRENT |
+Entity properties differ by model. Repository artifact nodes use `id`, `entity_type`, and `properties`; API views can add display labels, case scopes, or computed summaries.
 
----
+## Relationships and epistemic class
 
-## 3. Evidence Provenance Contract (Section 63 BSA Compliant)
+Examples include `ACCUSED_IN`, `COMMUNICATED_WITH`, `USES_PHONE`, `OWNS_ACCOUNT`, `TRANSFERRED_MONEY_TO`, `HAS_EVIDENCE`, and `RESOLVED_TO`. The enum and edge validators define allowed types/endpoints; this list is not exhaustive.
 
-Every edge and derived intelligence relationship retains an unbroken chain of custody:
+A `GraphEdge` carries source/target identifiers, edge type, provenance, optional temporal bounds, derivation class, and storage mode. It can distinguish stored records from computed relationships.
 
-```python
-class EvidenceProvenance(BaseModel):
-    source_type: str        # "FIR", "CDR", "BANK_TXN", "SEIZED_DEVICE", "INTELLIGENCE_REPORT", "SOCMINT"
-    source_id: str          # Source document ID / Transaction UTR / Call log ID
-    timestamp: datetime     # Timestamp of extraction or collection
-    extracted_fact: str     # Specific verifiable fact extracted
-    derivation_method: str  # "OFFICIAL_RECORD", "TELECOM_LOG", "FINANCIAL_LEDGER", "ALGORITHMIC_MATCH"
-    confidence: float       # Confidence score (0.0 to 1.0)
-```
+| Classification | Meaning |
+| --- | --- |
+| FACT | Represented directly in a source record |
+| DERIVED | Computed from source-backed facts by an identified method |
+| HYPOTHESIS | A proposition requiring verification; not an observed fact |
 
----
+Confidence values describe a modelled association or source assessment. They must not be relabelled as guilt, criminal propensity, or judicial certainty.
 
-## 4. Target Domain Models (Proactive Network Change Plane)
+## Evidence provenance — CURRENT
 
-The following domain models represent the target capabilities of the proactive change intelligence plane:
+The implemented `EvidenceProvenance` includes:
 
-### 4.1 `GraphSnapshot`
-Represents an immutable, point-in-time state of an investigative graph.
-```python
-class GraphSnapshot(BaseModel):
-    snapshot_id: str
-    case_scope: str | None       # Specific case ID or "GLOBAL"
-    created_at: datetime
-    source_revision: str        # Hash or sequence revision of source data
-    node_count: int
-    edge_count: int
-    version: str = "v1"
-```
+- `source_type`, `source_id`, and optional `source_record_id`.
+- `timestamp` and `extracted_fact`.
+- `derivation_method` and `derivation_class`.
+- Bounded `confidence` in [0, 1].
 
-### 4.2 `NetworkChange`
-Represents a deterministic structural difference between two snapshots.
-```python
-class NetworkChangeType(str, Enum):
-    EDGE_ADDED = "EDGE_ADDED"
-    EDGE_REMOVED = "EDGE_REMOVED"
-    NODE_ADDED = "NODE_ADDED"
-    NODE_REMOVED = "NODE_REMOVED"
-    BRIDGE_EMERGED = "BRIDGE_EMERGED"
-    BRIDGE_LOST = "BRIDGE_LOST"
-    COMMUNITY_MERGED = "COMMUNITY_MERGED"
-    COMMUNITY_SPLIT = "COMMUNITY_SPLIT"
-    JURISDICTION_SHIFT = "JURISDICTION_SHIFT"
-    IDENTIFIER_DRIFT = "IDENTIFIER_DRIFT"
-    ROUTE_CHANGE = "ROUTE_CHANGE"
-    OTHER = "OTHER"
+The data contract supports attribution; meaningful source linkage still depends on ingestion validation and the source record. A hash/provenance object does not prove the content is true or legally sufficient.
 
-class NetworkChange(BaseModel):
-    change_id: str
-    before_snapshot_id: str
-    after_snapshot_id: str
-    change_type: NetworkChangeType
-    affected_entities: list[str]
-    affected_relationships: list[str]
-    affected_cases: list[str]
-    significance_score: float    # 0.0 to 1.0 (structural importance)
-    observed_at: datetime
-    evidence_refs: list[str]
-```
+Source bytes, canonical source-record payloads, evidence metadata, audit-chain records, and generated PDFs have different integrity checks. Do not substitute one digest for another.
 
-### 4.3 `NetworkPulse`
-A filtered, high-significance change qualified for investigator review.
-```python
-class ReviewPriority(str, Enum):
-    CRITICAL_REVIEW = "CRITICAL_REVIEW"
-    PRIORITY_REVIEW = "PRIORITY_REVIEW"
-    ROUTINE_REVIEW = "ROUTINE_REVIEW"
+## Intelligence domain records — EXTENSION / NEW PROTOTYPE
 
-class NetworkPulse(BaseModel):
-    pulse_id: str
-    change_ids: list[str]
-    signal_headline: str
-    review_priority: ReviewPriority  # For investigator queue priority only — NEVER guilt
-    time_window: tuple[datetime, datetime]
-    evidence_refs: list[str]
-    support_level: float             # Evidence sufficiency score
-    uncertainty: float
-    action_window: str               # e.g. "Within 48 hours"
-    abstained: bool = False
-    generated_at: datetime
-```
+| Contract family | Purpose | Lifecycle |
+| --- | --- | --- |
+| GraphSnapshotSummary, NetworkDiffResponse | Versioned graph views and structural deltas | EXTENSION |
+| NetworkPulseItem | Review headline, evidence references, affected scope, and review priority | EXTENSION |
+| EvidenceAssessmentItem | Pulse-embedded assessment view | EXTENSION |
+| EvidenceAssessment | First-class assessable record with revision history and contextual linkage | EXTENSION |
+| VerificationActionItem | Suggested verification action attached to a pulse | EXTENSION |
+| VerificationTask | Persistent task with assignment, transition history, attached evidence, and decisions | EXTENSION |
+| IntelligenceEvent | Typed operational occurrence with provenance and contextual links | EXTENSION |
+| IntelligencePulsePacket, AffectedInvestigationRoute | Internal packet delivery and affected-case routing | EXTENSION |
+| ForecastItem | Constrained prototype target/uncertainty/abstention representation | NEW PROTOTYPE |
+| IdentityDriftEvent, NetworkAdaptationEvent, DigitalShadowCorroboration | Reviewable analytical/corroboration records | NEW PROTOTYPE |
+| CaseDNA and associated match responses | Explainable structural similarity | NEW PROTOTYPE |
 
-### 4.4 `EvidenceAssessment`
-Models the epistemic state of evidence supporting an investigative claim.
-```python
-class EpistemicState(str, Enum):
-    SUPPORTS = "SUPPORTS"
-    CONFLICTS = "CONFLICTS"
-    MISSING = "MISSING"
-    INFERRED = "INFERRED"
-    VERIFIED = "VERIFIED"
+Consult shared contracts for exact fields and enums. A contract's existence does not certify a general-purpose production engine.
 
-class EvidenceAssessment(BaseModel):
-    claim_id: str
-    target_relationship_id: str
-    evidence_ref: str
-    state: EpistemicState
-    rationale: str
-    source_quality: float            # 0.0 to 1.0 based on official verification
-    freshness_days: int
-```
+## Canonical synthetic artifacts and counts
 
-### 4.5 `Forecast`
-Constrained operational forecast with mandatory abstention support.
-```python
-class ForecastTarget(str, Enum):
-    JURISDICTION_SHIFT = "JURISDICTION_SHIFT"
-    COMMUNICATION_PATTERN_SHIFT = "COMMUNICATION_PATTERN_SHIFT"
-    FINANCIAL_ROUTE_TRANSITION = "FINANCIAL_ROUTE_TRANSITION"
-    IDENTIFIER_DRIFT = "IDENTIFIER_DRIFT"
-    NETWORK_RESTRUCTURING = "NETWORK_RESTRUCTURING"
+| Source | Role |
+| --- | --- |
+| [nexus_graph.json](../artifacts/nexus_graph/nexus_graph.json) | Base generated synthetic graph; 445 nodes / 486 edges in the checked-in artifact |
+| [ground_truth.json](../artifacts/nexus_graph/ground_truth.json) | Planted identities, communities, bridge, and transaction chains |
+| [canonical_read_model.json](../backend/app/db/canonical_read_model.json) | Versioned intelligence snapshot, pulse examples, and KPI scope |
+| [demoEntrySnapshot.json](../frontend/src/lib/demoEntrySnapshot.json) | Build-generated ten-row worklist projection and normalized source checksum |
 
-class Forecast(BaseModel):
-    forecast_id: str
-    pulse_id: str
-    target_state: ForecastTarget
-    time_window: tuple[datetime, datetime]
-    support_level: float
-    uncertainty: float
-    action_window: str
-    suggested_verification: str
-    abstained: bool
-    abstention_reason: str | None    # e.g. "INSUFFICIENT EVIDENCE / NO FORECAST"
-```
+The base graph, enriched repository, historical benchmark workloads, and deployed database need not have identical counts. For example, a deployment can contain enrichment and investigator state beyond the untouched artifact. Keep every count attached to its source and timestamp.
 
-### 4.6 `VerificationPlan`
-Actionable suggestions to resolve missing or conflicting evidence.
-```python
-class VerificationPlan(BaseModel):
-    verification_id: str
-    target_claim: str
-    missing_evidence_type: str
-    recommended_action: str          # e.g. "Obtain Section 94 BNSS telecom subscriber record"
-    responsible_role: str            # "INVESTIGATOR" or "ANALYST"
-    status: str = "PENDING"
-    result: str | None = None
-```
+The canonical intelligence read model has six golden-path worklist entries; the instant-entry projection deliberately uses ten records from the larger graph artifact. These are related views with different scopes, not interchangeable “total case” counts.
 
-### 4.7 `IntelligencePulse`
-Structured cross-branch/jurisdiction intelligence propagation packet.
-```python
-class IntelligencePulse(BaseModel):
-    pulse_id: str
-    source_case_id: str
-    affected_case_ids: list[str]
-    signal_summary: str
-    observed_change: str
-    evidence_refs: list[str]
-    action_window: str
-    authorization_role: str
-    acknowledged_by: str | None = None
-    status: str = "UNROUTED"         # "UNROUTED", "DISPATCHED", "ACKNOWLEDGED", "REJECTED"
-```
+## Ownership and persistence
 
-### 4.8 `CaseDNA`
-Explainable structural case similarity record.
-```python
-class CaseDNA(BaseModel):
-    case_pair: tuple[str, str]
-    structure_similarity: float      # Graph topology & modularity similarity
-    communication_similarity: float  # CDR burst & frequency profile
-    financial_similarity: float      # Peeling chain & transaction flow similarity
-    location_similarity: float       # Geographic spatial overlap
-    temporal_similarity: float       # Modus operandi timing match
-    shared_entities: list[str]
-    explanation: str
-    retrieval_score: float
-```
+PostgreSQL-backed mode persists application/workflow records while hydrating indexes. Neo4j is a complementary graph projection, not the credential or workflow source of truth. Private object storage holds source bytes when enabled. See [architecture](ARCHITECTURE.md).
 
----
+Snapshot baseline objects are read-only frontend inputs, not successful query-cache responses or server sessions. Live API results replace their own baseline scope only after authorized reads.
 
-## 5. Critical Epistemic Separation
+## TARGET / FUTURE
 
-To preserve judicial credibility and Section 63 BSA compliance, NEXUS maintains an absolute architectural boundary across four tiers of data:
-
-$$\text{OBSERVED FACT} \ne \text{DERIVED RELATIONSHIP} \ne \text{HYPOTHESIS / FORECAST} \ne \text{INVESTIGATOR DECISION}$$
-
-1. **Observed Fact:** Ground-truth records from official filings (FIR registration, CDR log, bank transaction UTR).
-2. **Derived Relationship:** Algorithmically computed graph edges (Louvain syndicate module, BFS path, Double Metaphone match).
-3. **Hypothesis / Forecast:** Constrained operational predictions (`JURISDICTION_SHIFT`) with explicit uncertainty and abstention.
-4. **Investigator Decision:** Legal determinations recorded by an authorized human investigating officer (accused arrest, charge confirmation, match acceptance).
+Production identity-directory records, inter-agency federation, independently validated forecast calibration, and cross-system atomic delivery guarantees require additional design and verification. Do not add speculative copies of those schemas here; record accepted changes in [decisions.md](../decisions.md) and implement shared contracts first.
