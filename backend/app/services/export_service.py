@@ -19,18 +19,6 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.platypus import (
-    HRFlowable,
-    Paragraph,
-    SimpleDocTemplate,
-    Spacer,
-    Table,
-    TableStyle,
-)
-
 from backend.app.services.audit_service import AuditEventType, AuditService
 from backend.app.services.evidence_service import EvidenceService, compute_evidence_hash
 from shared.contracts.api import DossierExportRequest, DossierExportResponse
@@ -62,6 +50,11 @@ class ExportService:
         request_id: str | None = None,
     ) -> tuple[bytes, DossierExportResponse]:
         """Generate PDF bytes and export metadata for an investigation."""
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+        from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
         self._audit.record(
             AuditEventType.EXPORT_INITIATED,
             actor_id=actor_id,

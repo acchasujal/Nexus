@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from functools import cached_property
 from typing import Any
 
 from backend.app.config import Settings
@@ -10,13 +11,19 @@ from backend.app.config import Settings
 
 class EvidenceObjectStorage:
     def __init__(self, settings: Settings) -> None:
-        import boto3
-        from botocore.config import Config
-
         if not settings.storage_endpoint or not settings.storage_access_key.get_secret_value() or not settings.storage_secret_key.get_secret_value():
             raise ValueError("Private evidence storage requires endpoint and credentials")
         self.bucket = settings.evidence_bucket
-        self.client = boto3.client(
+        self._settings = settings
+
+    @cached_property
+    def client(self) -> Any:
+        # Optional evidence upload/download dependencies are not HTTP readiness dependencies.
+        import boto3
+        from botocore.config import Config
+
+        settings = self._settings
+        return boto3.client(
             "s3", endpoint_url=settings.storage_endpoint, region_name=settings.storage_region,
             aws_access_key_id=settings.storage_access_key.get_secret_value(),
             aws_secret_access_key=settings.storage_secret_key.get_secret_value(),

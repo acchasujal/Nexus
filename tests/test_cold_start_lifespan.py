@@ -94,8 +94,9 @@ def test_identical_fresh_sessions_have_identical_metrics_and_reads_do_not_mutate
     assert metrics[0] == metrics[1]
 
 
-@pytest.mark.parametrize("recover", [True, False])
-def test_background_connect_retries_are_bounded_and_projection_runs_only_once(monkeypatch, recover):
+@pytest.mark.parametrize("recovery_attempt", [2, 4, None])
+def test_background_connect_retries_are_bounded_and_projection_runs_only_once(monkeypatch, recovery_attempt):
+    recover = recovery_attempt is not None
     original_sleep = asyncio.sleep
     backoffs = []
 
@@ -105,11 +106,12 @@ def test_background_connect_retries_are_bounded_and_projection_runs_only_once(mo
 
     async def start(self):
         self.status = "unavailable"
-        self.failure_type = "TimeoutError"
+        self.failure_type = "gaierror"
 
     async def check(self, **kwargs):
-        self.status = "connected" if recover else "unavailable"
-        return recover
+        connected = recover and check_mock.await_count >= recovery_attempt - 1
+        self.status = "connected" if connected else "unavailable"
+        return connected
 
     async def sync(self, nodes, edges):
         self.is_operational = True
@@ -142,10 +144,10 @@ def test_background_connect_retries_are_bounded_and_projection_runs_only_once(mo
         assert client.get("/health").status_code == 200
         assert client.get("/api/v1/nexus/intelligence/bootstrap").status_code == 200
         assert app.state.neo4j.is_operational is recover
-        assert app.state.graph_initialization["attempt"] == (2 if recover else 3)
+        assert app.state.graph_initialization["attempt"] == (recovery_attempt if recover else 5)
         assert client.get("/api/v1/graph/stats").status_code == (200 if recover else 503)
     start_mock.assert_awaited_once()
-    assert check_mock.await_count == (1 if recover else 2)
+    assert check_mock.await_count == (recovery_attempt - 1 if recover else 4)
     assert schema.await_count == (1 if recover else 0)
     assert sync_mock.await_count == (1 if recover else 0)
-    assert backoffs == ([2] if recover else [2, 4])
+    assert backoffs == [2, 4, 30, 60][:(recovery_attempt - 1 if recover else 4)]

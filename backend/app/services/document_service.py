@@ -19,8 +19,6 @@ import mimetypes
 from datetime import datetime, timezone
 from typing import Any
 
-import pypdf
-
 from backend.app.services.audit_service import AuditEventType, AuditService
 from shared.contracts.api import (
     DocumentExtractionMetadata,
@@ -382,6 +380,8 @@ class DocumentService:
         data: bytes,
     ) -> tuple[str, DocumentExtractionMetadata, ExtractionStatus]:
         """Extract text from machine-readable PDF bytes using pypdf."""
+        import pypdf
+
         try:
             stream = io.BytesIO(data)
             reader = pypdf.PdfReader(stream)

@@ -160,11 +160,11 @@ async function apiFetchBlob(path: string): Promise<Blob> {
 
 export const apiClient = {
   // Authentication
-  login: (req: AuthLoginRequest) => {
+  login: (req: AuthLoginRequest, signal?: AbortSignal) => {
     return apiFetch<AuthTokenResponse>('/api/v1/auth/login', {
       method: 'POST',
       body: JSON.stringify(req),
-      signal: AbortSignal.timeout(INTELLIGENCE_REQUEST_TIMEOUT_MS),
+      signal: signal ?? AbortSignal.timeout(INTELLIGENCE_REQUEST_TIMEOUT_MS),
     })
   },
 

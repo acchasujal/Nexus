@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useRef, useState, useCallback } from 'react'
+import { clearDemoRole } from '@/lib/demoMode'
 import { useQueryClient } from '@tanstack/react-query'
 import type { UserRole, AuthLoginRequest } from '@shared/contracts/api'
 import { apiClient } from '@/lib/apiClient'
@@ -19,7 +20,7 @@ export interface OfficerUser {
 export interface AuthContextType {
   role: UserRole | null
   user: OfficerUser | null
-  login: (credentials: AuthLoginRequest | UserRole) => Promise<void>
+  login: (credentials: AuthLoginRequest | UserRole, options?: { signal: AbortSignal; background: true }) => Promise<void>
   logout: () => void
   isAuthenticated: boolean
 }
@@ -29,7 +30,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 // Canonical default details for fallback and demo roles
 const MAX_LOGIN_RETRY_DELAY_MS = 6000
 
-const CANONICAL_OFFICERS: Record<string, OfficerUser> = {
+export const CANONICAL_OFFICERS: Record<string, OfficerUser> = {
   INVESTIGATOR: {
     userId: 'officer_io',
     officerId: 'OFFICER-DEMO-IO-01',
@@ -183,14 +184,16 @@ function getStoredToken(): string | null {
   return null
 }
 
-function safeSetStorage(key: string, value: string): void {
+function safeSetStorage(key: string, value: string): boolean {
   try {
     if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
       window.localStorage.setItem(key, value)
+      return window.localStorage.getItem(key) === value
     }
   } catch {
     // Ignore storage errors
   }
+  return false
 }
 
 function safeRemoveStorage(key: string): void {
@@ -205,6 +208,7 @@ function safeRemoveStorage(key: string): void {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryCache = useQueryClient()
+  const sessionGeneration = useRef(0)
   const [role, setRole] = useState<UserRole | null>(() => {
     return getStoredToken() ? getStoredRole() : null
   })
@@ -215,7 +219,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return savedToken ? resolveUserFromTokenOrRole(savedToken, savedRole) : null
   })
 
-  const login = async (credentials: AuthLoginRequest | UserRole): Promise<void> => {
+  const login = useCallback<AuthContextType['login']>(async (credentials, options) => {
+    const generation = ++sessionGeneration.current
     const request = typeof credentials === 'string'
       ? { username: CANONICAL_OFFICERS[credentials].badgeNumber, password: 'nexus-demo-passcode', role: credentials }
       : credentials
@@ -225,32 +230,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const authenticate = async () => {
       for (let attempt = 0; ; attempt++) {
         try {
-          return await apiClient.login(request)
+          options?.signal.throwIfAborted()
+          return options ? await apiClient.login(request, options.signal) : await apiClient.login(request)
         } catch (error) {
-          if (!(error instanceof Error) || !retryColdStartRequest(attempt, error)) throw error
-          await new Promise(resolve => setTimeout(resolve, Math.min(coldStartRetryDelay(0) * (attempt + 1), MAX_LOGIN_RETRY_DELAY_MS)))
+          if (options?.signal.aborted || !retryColdStartRequest(attempt, error)) throw error
+          const delay = options?.background ? coldStartRetryDelay(attempt)
+            : Math.min(coldStartRetryDelay(0) * (attempt + 1), MAX_LOGIN_RETRY_DELAY_MS)
+          await new Promise<void>((resolve, reject) => {
+            const signal = options?.signal
+            const abort = () => { clearTimeout(timer); reject(signal?.reason) }
+            const timer = setTimeout(() => { signal?.removeEventListener('abort', abort); resolve() }, delay)
+            signal?.addEventListener('abort', abort, { once: true })
+            if (signal?.aborted) abort()
+          })
         }
       }
     }
     const authRes = await authenticate()
+    // Logout, a new login, or leaving demo entry invalidates late responses.
+    if (generation !== sessionGeneration.current || options?.signal.aborted) throw new DOMException('Session changed', 'AbortError')
     if (typeof authRes.access_token !== 'string' || !authRes.access_token || !CANONICAL_OFFICERS[authRes.role]) {
       throw new Error('The server returned an invalid session. Please retry sign-in.')
     }
     queryCache.clear()
     const token = authRes.access_token
     const resolvedRole = authRes.role
-    safeSetStorage('nexus_token', token)
-    safeSetStorage('nexus_role', resolvedRole)
+    if (!safeSetStorage('nexus_token', token) || !safeSetStorage('nexus_role', resolvedRole)) {
+      safeRemoveStorage('nexus_token')
+      safeRemoveStorage('nexus_role')
+      throw new Error('Session storage is unavailable. Allow browser storage and retry sign-in.')
+    }
     setRole(resolvedRole)
     setUser(resolveUserFromTokenOrRole(token, resolvedRole))
-  }
+  }, [queryCache])
 
   const logout = () => {
+    sessionGeneration.current++
     queryCache.clear()
     setRole(null)
     setUser(null)
     safeRemoveStorage('nexus_role')
     safeRemoveStorage('nexus_token')
+    clearDemoRole()
   }
 
   return (

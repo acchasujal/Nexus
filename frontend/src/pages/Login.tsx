@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import './Login.css'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { isDemoMode, saveDemoRole } from '@/lib/demoMode'
 import { useAuth } from '@/contexts/AuthContext'
 import type { UserRole } from '@shared/contracts/api'
 import { 
@@ -75,6 +76,7 @@ const AUTHORIZED_OFFICERS: OfficerProfile[] = [
 export default function Login() {
   const { role, login, isAuthenticated } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
 
   const submitting = useRef(false)
   const [username, setUsername] = useState('')
@@ -146,6 +148,12 @@ export default function Login() {
 
   const handleSelectOfficer = (officer: OfficerProfile) => {
     if (submitting.current) return
+    if (isDemoMode()) {
+      submitting.current = true
+      saveDemoRole(officer.role)
+      navigate('/demo', { state: { role: officer.role } })
+      return
+    }
     setUsername(officer.badge)
     setSelectedRole(officer.role)
     setPassword('')
@@ -217,6 +225,7 @@ export default function Login() {
             </div>
           )}
           {/* Authorized Officer Duty Profiles — Dropdown on Mobile, Rich Cards on Desktop */}
+          {isDemoMode() && <p className="text-xs text-neutral-600">Demo roles open a read-only synthetic snapshot immediately. Credential sign-in requires server authentication.</p>}
           <div className="border-t border-neutral-200/90 pt-2.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span

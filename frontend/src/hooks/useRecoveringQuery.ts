@@ -28,7 +28,7 @@ export function useRecoveringQuery<T>(options: UseQueryOptions<T, Error>, baseli
       const error = target.state.error
       // One healthy read can wake an exhausted observer once. Never wake disabled tabs,
       // retry permission failures, or allow success/failure cycles to create a retry storm.
-      if (!(error instanceof Error) || !retryColdStartRequest(0, error)) return
+      if (!retryColdStartRequest(0, error)) return
       if (event.query.meta?.recoveringRead !== true) return
       catchUpUsed.add(target)
       void client.fetchQuery({ ...latestOptions.current, retry: false }).catch(() => undefined)

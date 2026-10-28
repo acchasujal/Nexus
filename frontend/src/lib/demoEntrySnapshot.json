@@ -1,0 +1,78 @@
+{
+  "source": "artifacts/nexus_graph/nexus_graph.json",
+  "version": "2.0",
+  "generated_at": "2026-09-20T16:02:52.133514+00:00",
+  "checksum": "4b9183fbc461be06b3303f0c920a607117e67de6e2b33898a01df049e069fe15",
+  "worklist": [
+    {
+      "id": "case-0016",
+      "fir_number": "FIR-2026-207",
+      "title": "Multi-District Shadow Banking Conduit — Bengaluru Rural",
+      "district": "Bengaluru Rural",
+      "status": "OPEN"
+    },
+    {
+      "id": "case-0001",
+      "fir_number": "FIR-2026-141",
+      "title": "Coastal Narcotics Supply Chain — Mangaluru",
+      "district": "Mangaluru",
+      "status": "CHARGESHEET_FILED"
+    },
+    {
+      "id": "case-0002",
+      "fir_number": "FIR-2026-483",
+      "title": "Cross-Border Synthetic Drug Distribution — Mangaluru",
+      "district": "Mangaluru",
+      "status": "CHARGESHEET_FILED"
+    },
+    {
+      "id": "case-0004",
+      "fir_number": "FIR-2026-362",
+      "title": "Maritime Cargo Narcotics Operation — Mangaluru",
+      "district": "Mangaluru",
+      "status": "CHARGESHEET_FILED"
+    },
+    {
+      "id": "case-0006",
+      "fir_number": "FIR-2026-835",
+      "title": "Coastal Narcotics Supply Chain — Mangaluru",
+      "district": "Mangaluru",
+      "status": "INVESTIGATION_IN_PROGRESS"
+    },
+    {
+      "id": "case-0009",
+      "fir_number": "FIR-2026-236",
+      "title": "Cyber-Financial Mule Account Network — Bengaluru Urban",
+      "district": "Bengaluru Urban",
+      "status": "INVESTIGATION_IN_PROGRESS"
+    },
+    {
+      "id": "case-0013",
+      "fir_number": "FIR-2026-227",
+      "title": "Cyber-Financial Mule Account Network — Bengaluru Rural",
+      "district": "Bengaluru Rural",
+      "status": "OPEN"
+    },
+    {
+      "id": "case-0014",
+      "fir_number": "FIR-2026-608",
+      "title": "Off-the-Book Cash Smurfing Network — Bengaluru Rural",
+      "district": "Bengaluru Rural",
+      "status": "CHARGESHEET_FILED"
+    },
+    {
+      "id": "case-0015",
+      "fir_number": "FIR-2026-658",
+      "title": "Unauthorized API Gateway Transfer Ring — Bengaluru Rural",
+      "district": "Bengaluru Rural",
+      "status": "CHARGESHEET_FILED"
+    },
+    {
+      "id": "case-0022",
+      "fir_number": "FIR-2026-642",
+      "title": "Clandestine Firearm Influx & Smuggling — Belagavi",
+      "district": "Belagavi",
+      "status": "CHARGESHEET_FILED"
+    }
+  ]
+}

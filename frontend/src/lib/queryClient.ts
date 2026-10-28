@@ -7,11 +7,13 @@ export function retryTransientRequest(failureCount: number, error: Error) {
 }
 
 // Designated read queries opt into bounded cold-start recovery; mutations retain their own policy.
-export function retryColdStartRequest(failureCount: number, error: Error) {
+export function retryColdStartRequest(failureCount: number, error: unknown) {
+  // AbortSignal.timeout rejects with a DOMException; it is not consistently an
+  // instanceof Error across browsers/realms. Match its standard name as well.
   return failureCount < 3 && (
     error instanceof ApiError
       ? [502, 503, 504].includes(error.status)
-      : error instanceof TypeError || error.name === 'TimeoutError'
+      : error instanceof TypeError || (typeof error === 'object' && error !== null && 'name' in error && error.name === 'TimeoutError')
   )
 }
 

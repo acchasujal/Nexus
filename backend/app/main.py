@@ -43,6 +43,7 @@ from backend.app.services.audit_service import AuditService
 from backend.app.services.ingestion_service import IngestionService
 
 logger = logging.getLogger(__name__)
+GRAPH_CONNECT_RETRY_DELAYS = (0, 2, 4, 30, 60)
 module_import_elapsed_ms = round((perf_counter() - module_import_started) * 1000, 1)
 logger.info("startup stage=module_imports elapsed_ms=%.1f", module_import_elapsed_ms)
 
@@ -101,10 +102,10 @@ def create_app(
         app.state.graph_initialization = {"status": "starting", "stage": "connect"}
         try:
             step = perf_counter()
-            for attempt in range(3 if background_graph else 1):
+            for attempt, delay in enumerate(GRAPH_CONNECT_RETRY_DELAYS if background_graph else (0,)):
                 app.state.graph_initialization["attempt"] = attempt + 1
-                if attempt:
-                    await asyncio.sleep(2 ** attempt)
+                if delay:
+                    await asyncio.sleep(delay)
                 try:
                     if attempt == 0 or connection.status == "closed":
                         await connection.start()

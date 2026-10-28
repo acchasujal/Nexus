@@ -2,11 +2,25 @@
 
 import hashlib
 from io import BytesIO
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
 from backend.app.services.object_storage import EvidenceObjectStorage
+from backend.app.config import Settings
+
+
+def test_storage_validates_configuration_but_defers_client_until_first_operation():
+    cfg = Settings(_env_file=None, AWS_ENDPOINT_URL_S3="https://synthetic.invalid",
+                   AWS_ACCESS_KEY_ID="synthetic-only", AWS_SECRET_ACCESS_KEY="synthetic-only")
+    with patch("boto3.client") as factory:
+        service = EvidenceObjectStorage(cfg)
+        factory.assert_not_called()
+        assert service.client is service.client
+        factory.assert_called_once()
+    with pytest.raises(ValueError, match="requires endpoint and credentials"):
+        EvidenceObjectStorage(Settings(_env_file=None, AWS_ENDPOINT_URL_S3="",
+                                       AWS_ACCESS_KEY_ID="", AWS_SECRET_ACCESS_KEY=""))
 
 
 def storage() -> EvidenceObjectStorage:

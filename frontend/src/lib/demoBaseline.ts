@@ -1,9 +1,12 @@
 import canonical from '../../../backend/app/db/canonical_read_model.json'
+import entry from './demoEntrySnapshot.json'
 import type { IntelligenceBootstrapResponse, NetworkPulseItem } from '@shared/contracts/api'
 
 // A bundled synthetic snapshot, never a successful API response or live query-cache entry.
 // Reuse the backend's versioned artifact; do not maintain a second set of demo numbers.
 export const DEMO_BASELINE = {
+  entryWorklist: entry.worklist,
+  entryChecksum: entry.checksum,
   bootstrap: {
     dataset_version: canonical.dataset_version,
     snapshot_id: canonical.network_delta.after_snapshot_id,
