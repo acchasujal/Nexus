@@ -59,9 +59,8 @@ Backend configuration is defined by [Settings](../backend/app/config.py). The ro
 | `STATE_PATH` | Optional local state file; use an ignored runtime directory |
 | `VITE_API_BASE_URL` | Frontend API origin; local development file points to port 8000 |
 | `VITE_ENABLE_MOCKS` | `false` in the checked-in development configuration |
-| `VITE_DEMO_MODE` | Explicitly enables read-only local demo entry; defaults off outside the production demo configuration |
 
-For local instant demo entry, add `VITE_DEMO_MODE=true` to ignored `frontend/.env.development.local`. Restart Vite after changing frontend environment values. Vite values are public build inputs: never put secrets in them.
+Officer selection requires server authentication and opens `/intelligence`. The former `VITE_DEMO_MODE` flag is retired and ignored. Restart Vite after changing frontend environment values. Vite values are public build inputs: never put secrets in them.
 
 ## Optional local databases
 

@@ -5,20 +5,18 @@ This is a suggested three-minute presentation, not a promise that a sleeping bac
 ## Before the session
 
 - Open the [evaluation deployment](https://nexus-eight-weld-33.vercel.app/login) in a fresh browser.
-- Confirm the synthetic demo label, selected officer and snapshot version.
+- Confirm the selected officer after server login; distinguish labelled snapshot panels from live data.
 - Check the API health and readiness separately. Neo4j can be degraded while core data remains available.
 - Prepare a local native setup using [development instructions](DEVELOPMENT.md) if hosted services are unavailable.
 - Do not reset shared deployment data or depend on unverified external integrations during judging.
 
 ## 0:00–0:30 — Enter a useful workspace
 
-Choose one of the four officer profiles. With explicit demo mode enabled, selection enters the read-only local demo workspace without waiting for backend login. Show the initial metrics and ten generated worklist rows.
-
-Explain the connection label: **Demo snapshot · Connecting**, **Live data connected**, or **Offline demo**. A local demo role is not server authentication. The versioned snapshot comes from the canonical synthetic artifact; it is not a live queue count.
+Choose one of the four officer profiles or use officer credentials. Wait for confirmed server authentication; the application then opens Intelligence Center at `/intelligence` directly. Show the existing navigation and independently loading panels. The retired `/demo` URL cannot provide unauthenticated entry.
 
 ## 0:30–1:10 — Follow a lead to its evidence
 
-When the server session is available, use the workspace link to enter the full interface. Open an investigation from Worklist and inspect its supporting records. Use the displayed identifiers rather than a memorized case number that may belong to an older fixture.
+Open an investigation from Worklist and inspect its supporting records. Use the displayed identifiers rather than a memorized case number that may belong to an older fixture.
 
 Show provenance and integrity verification. Explain that a matching digest establishes consistency with the recorded artifact, not the truth of an allegation or automatic legal admissibility.
 
@@ -42,6 +40,6 @@ If demonstrating a backend-dependent decision, use an authorized session and ver
 
 ## If connectivity fails
 
-Stay in the usable read-only snapshot and show the truthful offline state. Explain automatic bounded recovery; do not refresh repeatedly or promise a wake-up time. Graph-specific failures should be presented as degraded functionality, not fabricated results.
+Before authentication, remain on login and show the actionable error. After authentication, keep the existing shell visible while panels report loading/recovery states. Do not refresh repeatedly or promise a wake-up time. Graph-specific failures should be presented as degraded functionality, not fabricated results.
 
-The local demo snapshot and the full server workspace have different capabilities. See [security](SECURITY.md), [API](API.md) and the [project report](PROJECT_REPORT.md) for boundaries and future work.
+The authenticated workspace remains the only investigator application. See [security](SECURITY.md), [API](API.md) and the [project report](PROJECT_REPORT.md) for boundaries and future work.

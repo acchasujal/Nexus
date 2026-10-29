@@ -11,7 +11,7 @@
 | Application repository | PostgreSQL when configured; in-memory mode for standalone development |
 | Graph projection | Neo4j with explicit connectivity/projection gates |
 | Evidence source bytes | Optional private S3-compatible object storage |
-| Demo snapshot | Static build inputs; independent of API readiness |
+| Workspace snapshot | Labelled synthetic fallback used by existing data panels; does not authenticate |
 
 This is a public synthetic-data demonstration, not a production law-enforcement deployment. See [security limits](SECURITY.md), especially the demo identity implementation.
 
@@ -52,7 +52,7 @@ A URI/secret declaration is not proof of successful connectivity. Confirm depend
 - Install from the committed lockfile.
 - Build: `npm run build`; output: `dist`.
 - `VITE_API_BASE_URL`: actual API origin, currently the Render origin above.
-- `VITE_DEMO_MODE=true`: explicitly enables the read-only synthetic entry route. Set false for a build that must not offer it.
+- `VITE_DEMO_MODE` is retired. Remove it from hosted settings if present; it no longer changes entry behavior.
 
 The build reads shared contracts, the canonical intelligence artifact, and the synthetic graph outside `frontend/`. A deployment checkout must retain those repository paths. The build derives ten initial worklist rows and validates their synthetic profile/seed.
 
@@ -62,15 +62,15 @@ The build reads shared contracts, the canonical intelligence artifact, and the s
 
 | Flow | Behavior |
 | --- | --- |
-| Local demo role | Opens `/demo` without a JWT, using read-only synthetic metrics/worklist |
-| Background demo login | Four bounded attempts; 120-second overall deadline including backoff |
+| Officer role selection | Requires server login, then opens `/intelligence` in the existing shell |
+| Legacy `/demo` URL | Redirects to the protected workspace; unauthenticated visitors go to login |
 | Regular credential form | Separate server-login flow with existing per-request deadline and bounded retries |
 | Live read recovery | Four attempts for selected transient errors, 2/40/70-second backoff, normally 20-second read deadlines |
 | Exhausted reads | Retain labelled snapshot/last confirmed values; explicit retry and bounded healthy-read catch-up |
 | Mutations | Never automatically replayed by the read-recovery policy |
-| Exit/logout | Cancel pending demo connection work and invalidate obsolete session responses |
+| Logout/expiry | Clear the session/cache and protect subsequent navigation; obsolete login responses cannot restore a logged-out session |
 
-The local snapshot has **Demo snapshot · Connecting**, **Live data connected**, or **Offline demo** states. It is not inserted into successful API cache entries. A live empty response is different from a failed request.
+Existing workspace panels retain labelled synthetic snapshots or last confirmed data during recovery; they do not establish authentication. A live empty response is different from a failed request.
 
 ## Startup lifecycle
 

@@ -42,7 +42,7 @@ Built for the MHA/NCRB problem context, this is an independent synthetic-data ev
 | Identity and network radars | Identity drift, network adaptation, digital identifier corroboration, and Case DNA | NEW PROTOTYPE |
 | Grounded copilot | Uses deterministic tools and source citations, with refusal checks for prohibited questions | CURRENT |
 | Audit and dossiers | Hash-chain checks, local Merkle anchoring, and evidence-oriented PDF exports | CURRENT |
-| Instant demo entry | Read-only synthetic metrics and ten initial worklist rows, followed by live reconciliation | EXTENSION |
+| Investigator entry | Server-confirmed login opens the existing Intelligence Center and navigation shell | CURRENT |
 
 These labels describe implementation scope, not operational certification. Forecast cards are constrained prototype outputs, not calibrated predictions. See [architecture](docs/ARCHITECTURE.md) and [limitations](docs/PROJECT_REPORT.md#limitations-and-next-steps).
 
@@ -57,9 +57,7 @@ Open **[NEXUS](https://nexus-eight-weld-33.vercel.app/login)** and choose an off
 | SP | SP Vikram Hegde | Cross-district coordination |
 | ADMIN | Director Priya Mehta | Governance and audit review |
 
-The explicitly configured demo opens a **read-only synthetic workspace immediately**. Its labelled snapshot is bundled with the frontend; it does not represent server authentication.
-
-Background server login enables live metrics, the complete worklist, and a link to the full workspace. The interface distinguishes **Demo snapshot · Connecting**, **Live data connected**, and **Offline demo**. Backend-dependent actions are not exposed in the local demo.
+Officer selection and credential entry both require a successful server login. The issued session opens **Intelligence Center (`/intelligence`)** directly, with the existing navigation and investigative pages. Data panels load independently after the shell renders. The retired `/demo` URL is a compatibility redirect into the protected workspace, never a public alternative.
 
 The backend is hosted on Render and may wake slowly. Neo4j-dependent operations can remain unavailable while repository-backed reads work. [Liveness](https://nexus-4djk.onrender.com/health) and [readiness](https://nexus-4djk.onrender.com/ready) answer different questions; the static site loading does not prove database readiness.
 
@@ -93,7 +91,6 @@ npm run dev
 - Frontend: **http://localhost:5173**
 - Interactive API: **http://localhost:8000/docs**
 - Default local setup: synthetic in-memory repository and graph; no cloud credentials required.
-- For local instant entry, put `VITE_DEMO_MODE=true` in ignored `frontend/.env.development.local` and restart Vite.
 
 Use the [developer guide](docs/DEVELOPMENT.md) for environment files, persistent storage, fixture regeneration, and platform notes. The [deployment guide](docs/DEPLOYMENT.md) covers Vercel, Render, and dependency recovery.
 
@@ -107,8 +104,7 @@ flowchart LR
     Findings --> UI["React investigative workspace"]
     API <--> PG["PostgreSQL repository"]
     API <--> Graph["Neo4j projection / GraphStore"]
-    Snapshot["Versioned read-only snapshot"] --> Demo["Local demo entry"]
-    Demo -. "Server-issued session and live reconciliation" .-> UI
+    Session["Server-confirmed officer session"] --> UI
 ```
 
 PostgreSQL stores application records when configured. Neo4j is a complementary durable projection with explicit readiness gates. The in-memory `GraphStore` supports deterministic graph algorithms. Optional language-model providers explain tool results; they do not replace graph computation or human verification.

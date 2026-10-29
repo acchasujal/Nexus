@@ -9,7 +9,6 @@ import type { UserRole } from '@shared/contracts/api'
 // Eager-loaded Shell pages
 import Login from '@/pages/Login'
 import Patterns from '@/pages/Patterns'
-import DemoWorkspace from '@/pages/DemoWorkspace'
 
 // Lazy-loaded routes
 const Worklist = lazy(() => import('@/pages/Worklist'))
@@ -27,10 +26,10 @@ const Settings = lazy(() => import('@/pages/Settings'))
 const allRoles: UserRole[] = ['INVESTIGATOR', 'ANALYST', 'SUPERVISOR', 'ADMIN', 'IO', 'SHO', 'SP']
 const supervisorRoles: UserRole[] = ['SUPERVISOR', 'ADMIN', 'SHO', 'SP']
 
-export const router = createBrowserRouter([
+export const workspaceRoutes = [
   {
     path: '/demo',
-    element: <DemoWorkspace />,
+    element: <Navigate to="/intelligence" replace />,
     errorElement: <RouteErrorBoundary />,
   },
   // Public Route
@@ -196,7 +195,9 @@ export const router = createBrowserRouter([
     path: '*',
     element: <Navigate to="/intelligence" replace />,
   },
-], {
+]
+
+export const router = createBrowserRouter(workspaceRoutes, {
   future: {
     v7_relativeSplatPath: true,
   },

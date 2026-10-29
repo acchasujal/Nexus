@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react'
 import './Login.css'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { isDemoMode, saveDemoRole } from '@/lib/demoMode'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import type { UserRole } from '@shared/contracts/api'
 import { 
@@ -76,7 +75,6 @@ const AUTHORIZED_OFFICERS: OfficerProfile[] = [
 export default function Login() {
   const { role, login, isAuthenticated } = useAuth()
   const location = useLocation()
-  const navigate = useNavigate()
 
   const submitting = useRef(false)
   const [username, setUsername] = useState('')
@@ -88,8 +86,14 @@ export default function Login() {
 
   // Redirect if already authenticated
   if (isAuthenticated && role) {
-    const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/intelligence'
-    return <Navigate to={from} replace />
+    const from = (location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null)?.from
+    // Only internal workspace paths may be restored; entry routes cannot loop.
+    const path = from?.pathname
+    const destination = path && path.startsWith('/') && !path.startsWith('//')
+      && !path.includes('\\') && !['', '/login', '/demo'].includes(path.replace(/\/+$/, ''))
+      ? { pathname: path, search: from?.search ?? '', hash: from?.hash ?? '' }
+      : '/intelligence'
+    return <Navigate to={destination} replace />
   }
 
   const handleSubmit = async (e?: React.FormEvent, overrideCreds?: { username: string; role?: UserRole }) => {
@@ -148,12 +152,6 @@ export default function Login() {
 
   const handleSelectOfficer = (officer: OfficerProfile) => {
     if (submitting.current) return
-    if (isDemoMode()) {
-      submitting.current = true
-      saveDemoRole(officer.role)
-      navigate('/demo', { state: { role: officer.role } })
-      return
-    }
     setUsername(officer.badge)
     setSelectedRole(officer.role)
     setPassword('')
@@ -225,7 +223,6 @@ export default function Login() {
             </div>
           )}
           {/* Authorized Officer Duty Profiles — Dropdown on Mobile, Rich Cards on Desktop */}
-          {isDemoMode() && <p className="text-xs text-neutral-600">Demo roles open a read-only synthetic snapshot immediately. Credential sign-in requires server authentication.</p>}
           <div className="border-t border-neutral-200/90 pt-2.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span

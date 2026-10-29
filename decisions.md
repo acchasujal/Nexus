@@ -22,11 +22,11 @@ Essential persistence preparation remains on the startup path. Optional imports 
 
 Source: [deployment](docs/DEPLOYMENT.md).
 
-## Immediate demo entry with truthful authorization — EXTENSION
+## Server-confirmed investigator entry — CURRENT
 
-An explicitly configured local demo enters a labelled read-only workspace from a generated, versioned synthetic snapshot. It neither creates server credentials nor enables persistent operations. Background server login and bounded, deduplicated reads reconcile live data without discarding valid snapshot content on transient errors.
+Updated 2026-10-30: role selection and credentials both require server login. Successful login restores a safe internal destination or opens `/intelligence` directly. The original application shell and page/query boundaries remain intact. The standalone local demo entry was removed; `/demo` is retained only as a protected compatibility redirect. Historical instant-demo decisions are superseded.
 
-Real credential entry remains separate. The backend identity implementation is still demonstrational; production identity is **TARGET / FUTURE**, not supplied by a frontend role selector.
+Labelled synthetic fallback data remains in existing workspace panels. It does not create server credentials. The backend identity implementation remains demonstrational; production identity is **TARGET / FUTURE**.
 
 Sources: [security](docs/SECURITY.md), [development](docs/DEVELOPMENT.md).
 

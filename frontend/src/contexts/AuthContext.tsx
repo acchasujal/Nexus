@@ -1,8 +1,7 @@
-import React, { createContext, useContext, useRef, useState, useCallback } from 'react'
-import { clearDemoRole } from '@/lib/demoMode'
+import React, { createContext, useContext, useRef, useState, useCallback, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { UserRole, AuthLoginRequest } from '@shared/contracts/api'
-import { apiClient } from '@/lib/apiClient'
+import { apiClient, SESSION_EXPIRED_EVENT } from '@/lib/apiClient'
 import { retryColdStartRequest, coldStartRetryDelay } from '@/lib/queryClient'
 
 export interface OfficerUser {
@@ -162,7 +161,8 @@ function resolveUserFromTokenOrRole(token: string | null, role: UserRole | null)
 function getStoredRole(): UserRole | null {
   try {
     if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
-      return (window.localStorage.getItem('nexus_role') as UserRole) || null
+      const savedRole = window.localStorage.getItem('nexus_role')
+      return savedRole && Object.hasOwn(CANONICAL_OFFICERS, savedRole) ? savedRole as UserRole : null
     }
   } catch {
     // Ignore storage errors in test or sandbox environments
@@ -176,7 +176,7 @@ function getStoredToken(): string | null {
       const token = window.localStorage.getItem('nexus_token')
       const payload = token ? parseTokenPayload(token) : null
       if (typeof payload?.exp === 'number' && payload.exp <= Date.now() / 1000) return null
-      return token
+      return payload ? token : null
     }
   } catch {
     // Ignore storage errors
@@ -247,7 +247,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     const authRes = await authenticate()
-    // Logout, a new login, or leaving demo entry invalidates late responses.
+    // Logout or a new login invalidates late responses.
     if (generation !== sessionGeneration.current || options?.signal.aborted) throw new DOMException('Session changed', 'AbortError')
     if (typeof authRes.access_token !== 'string' || !authRes.access_token || !CANONICAL_OFFICERS[authRes.role]) {
       throw new Error('The server returned an invalid session. Please retry sign-in.')
@@ -264,15 +264,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(resolveUserFromTokenOrRole(token, resolvedRole))
   }, [queryCache])
 
-  const logout = () => {
+  const logout = useCallback(() => {
     sessionGeneration.current++
     queryCache.clear()
     setRole(null)
     setUser(null)
     safeRemoveStorage('nexus_role')
     safeRemoveStorage('nexus_token')
-    clearDemoRole()
-  }
+    try { sessionStorage.removeItem('nexus_demo_role') } catch { /* Legacy demo cleanup. */ }
+  }, [queryCache])
+
+  useEffect(() => {
+    const invalidate = () => logout()
+    const token = getStoredToken()
+    const expiry = token ? parseTokenPayload(token)?.exp : null
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const scheduleExpiry = () => {
+      if (typeof expiry !== 'number') return
+      const remaining = expiry * 1000 - Date.now()
+      if (remaining <= 0) invalidate()
+      else timer = setTimeout(scheduleExpiry, Math.min(remaining, 2_147_483_647))
+    }
+    scheduleExpiry()
+    window.addEventListener(SESSION_EXPIRED_EVENT, invalidate)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener(SESSION_EXPIRED_EVENT, invalidate)
+    }
+  }, [role, user, logout])
 
   return (
     <AuthContext.Provider value={{ role, user, login, logout, isAuthenticated: !!role }}>

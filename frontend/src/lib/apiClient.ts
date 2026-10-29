@@ -64,6 +64,7 @@ export class ApiError extends Error {
 }
 
 const INTELLIGENCE_REQUEST_TIMEOUT_MS = 20_000
+export const SESSION_EXPIRED_EVENT = 'nexus:session-expired'
 
 export async function apiFetch<T>(
   path: string,
@@ -121,10 +122,12 @@ export async function apiFetch<T>(
     } catch {
       message = response.statusText
     }
-    if ((response.status === 401 || response.status === 403) && typeof window !== 'undefined' && window.localStorage) {
-      if (message.toLowerCase().includes('token')) {
-        window.localStorage.removeItem('nexus_token')
-      }
+    // Do not invalidate a newer session for a late response from an old request.
+    const rejectedSession = response.status === 401
+      || (response.status === 403 && message === 'Invalid or expired authentication token.')
+    if (rejectedSession && token && typeof window !== 'undefined'
+      && window.localStorage.getItem('nexus_token') === token) {
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
     }
     throw new ApiError(response.status, response.statusText, message)
   }

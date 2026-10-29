@@ -16,7 +16,7 @@ Run the local server and open `http://localhost:8000/docs` or `/openapi.json` fo
 
 `POST /api/v1/auth/login` accepts `AuthLoginRequest` and returns `AuthTokenResponse`. The current handler resolves predefined demo identities and issues a signed token; it does not implement a production password directory. Demo verifier shortcuts remain in the backend. See [security](SECURITY.md).
 
-The frontend's local `/demo` is a browser route, not an API login or an authorization bypass. Before server-session establishment it only shows bundled synthetic records.
+The frontend's retired `/demo` browser URL redirects to the protected `/intelligence` workspace. It does not authenticate or grant access. Both role selection and credentials require server login.
 
 Ordinary JSON responses can return validation/access errors. Live graph operations return 503 while the configured projection is unavailable. A successful health response or server login does not imply that every dataset/graph request will succeed.
 

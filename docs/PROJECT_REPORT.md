@@ -37,7 +37,7 @@ It does not determine guilt, predict individual criminality or autonomously auth
 | Analytical radars | Identity drift, adaptation, digital identifier corroboration and Case DNA | NEW PROTOTYPE |
 | Grounded copilot | Deterministic tools, source citations and refusal checks | CURRENT |
 | Integrity and dossiers | Digests, audit-chain verification, local Merkle anchoring and PDF generation | CURRENT |
-| Immediate evaluation entry | Versioned read-only snapshot, ten initial rows and asynchronous live reconciliation | EXTENSION |
+| Investigator entry | Server-confirmed login, persistent session and independently loading workspace panels | CURRENT |
 
 Lifecycle labels describe implemented scope. They do not imply every screen is defect-free; the [status register](../progress.md) records known test failures.
 
@@ -62,9 +62,9 @@ Sources: [synthetic generator](../synthetic_data/nexus_generator.py), [developme
 
 ## Demonstration experience
 
-Four predefined profiles represent IO, SHO, SP and administrator perspectives. Explicit demo mode opens a local read-only workspace independently of backend wake-up. It shows labelled metrics and ten initial worklist rows immediately, then attempts bounded background server login and live reconciliation.
+Four predefined profiles represent IO, SHO, SP and administrator perspectives. Role selection and credential entry both require server authentication, then open the existing Intelligence Center (`/intelligence`) with the full application shell. Panel queries do not block navigation rendering. Labelled synthetic snapshots and bounded read recovery remain in the existing data layer.
 
-Local demo selection is not server authentication. Persistent operations are not exposed through the local snapshot. The full workspace requires the server-issued session; the current server login/verifier itself remains a demo identity implementation.
+The retired `/demo` URL is a compatibility redirect through the same protected routes. The current server login/verifier remains a demo identity implementation.
 
 The hosted evaluation uses Vercel and Render, with PostgreSQL and Neo4j dependencies. Cold starts and degraded graph connectivity remain operational considerations. See the [judge walkthrough](DEMO.md) and [deployment guide](DEPLOYMENT.md).
 

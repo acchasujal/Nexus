@@ -9,14 +9,12 @@ NEXUS is a synthetic investigative intelligence prototype. It combines determini
 ```mermaid
 flowchart TB
     Browser["React 19 / TypeScript / Vite"]
-    Demo["Read-only demo snapshot"]
     API["FastAPI routers and authorization policies"]
     Services["Investigation, evidence, routing, verification services"]
     Algorithms["Deterministic graph algorithms"]
     Repository["Memory or PostgreSQL repository"]
     Projection["Neo4j durable projection"]
     LLM["Optional provider-backed explanations"]
-    Browser --> Demo
     Browser --> API
     API --> Services
     Services --> Algorithms
@@ -60,17 +58,11 @@ Repository-backed reads can serve during Neo4j degradation. Live graph traversal
 
 When configured, `EvidenceObjectStorage` stores source bytes in a private S3-compatible bucket using content-addressed keys. Metadata and hashes remain in the repository. Reads verify bytes against the expected digest. S3 client construction is deferred to first use; configuration remains validated at construction.
 
-## Demo and authenticated entry
+## Authenticated entry
 
-1. A production evaluation build explicitly sets `VITE_DEMO_MODE=true`.
-2. Selecting a role navigates to `/demo` without awaiting an API request.
-3. That route shows a labelled, read-only synthetic snapshot. The local role is not an AuthContext session.
-4. Background demo login has bounded retry/backoff and an overall 120-second deadline.
-5. Only a usable server-issued session enables parallel live bootstrap/worklist reads and the full-workspace link.
-6. Server results replace snapshot values. Timeout/failure retains snapshot or last confirmed data with a truthful sync label.
-7. Logout, a new login, or cancellation invalidates obsolete responses.
+Officer selection and credential submission both call server login. Only a successful response establishes the stored session. Login then restores a safe internal protected destination, or defaults to `/intelligence`. The existing AppShell renders navigation before page queries finish. `/demo` is only a compatibility redirect; the standalone page and `VITE_DEMO_MODE` branch have been removed.
 
-The regular credential form stays separate. Its current backend is still a demo identity implementation; a signed demo token is not proof that a production identity provider verified an officer.
+Refresh restores a usable stored session; logout, token expiry or a server 401 invalidates it. Permission-denied 403 responses do not log out an otherwise valid officer. The backend remains a demo identity implementation, not a production identity provider.
 
 The frontend uses TanStack Query to deduplicate reads and scope caches. Baseline data stays outside successful query-cache entries. Session transitions clear cached results. Recovery is bounded; it does not repeatedly replay mutations.
 

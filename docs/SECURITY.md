@@ -30,7 +30,7 @@ Policy code and service-level checks—not visible frontend buttons—define bac
 
 Representative boundaries include scoped case/evidence access, investigator review decisions, audit/dossier permissions, and graph-readiness gates. Tests exercise these boundaries but do not constitute an independent penetration test.
 
-Frontend logout clears stored role/token/demo selection and query cache. Obsolete login responses are rejected after logout, a new session attempt, or cancellation. If session storage cannot be written and verified, the frontend does not claim a usable stored server session.
+Frontend logout clears stored role/token, legacy demo selection and query cache. Obsolete login responses are rejected after logout, a new session attempt, or cancellation. If session storage cannot be written and verified, the frontend does not claim a usable stored server session. Stored malformed/expired sessions do not restore workspace access. Active token expiry, server 401 and the verifier's explicit invalid-token 403 invalidate the current session; ordinary authorization-denied 403 responses preserve it. Login accepts only internal return paths and excludes entry-route loops.
 
 ## Responsible analysis
 
